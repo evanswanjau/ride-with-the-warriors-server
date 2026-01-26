@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RegistrationStatus {
+  UNPAID
+  PAID
+  CONFIRMED
+  CANCELLED
+}
+
+model Registration {
+  id              String             @id
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  circuitId       String
+  type            String             // individual, team, family
+  status          RegistrationStatus @default(UNPAID)
+
+  // flattened data
+  firstName       String
+  lastName        String
+  email           String?
+  phoneNumber     String?
+  idNumber        String?
+  dob             String?
+  gender          String?
+  
+  // group info
+  groupId         String?
+  teamName        String?
+  isCaptain       Boolean            @default(false)
+
+  // family specific
+  guardianName    String?
+  emergencyPhone  String?
+  relationship    String?
+
+  // pricing & classification summary
+  category        String?
+  totalAmount     Float              @default(0)
+
+  // full objects preserved for edge cases/details
+  payload         Json?
+  pricing         Json?
+  classifications Json?
+
+  @@index([groupId])
+  @@index([email])
+  @@index([phoneNumber])
+}
+
+model Admin {
+  id           String         @id @default(uuid())
+  email        String         @unique
+  passwordHash String
+  name         String
+  role         String         @default("admin")
+  createdAt    DateTime       @default(now())
+  lastLogin    DateTime?
+  sessions     AdminSession[]
+}
+
+model AdminSession {
+  id        String   @id @default(uuid())
+  adminId   String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  admin     Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+}
+
