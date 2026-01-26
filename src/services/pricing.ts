@@ -47,7 +47,7 @@ export function getClassification(
   familyCategory: '' | 'cubs' | 'champs' | 'tigers' = '',
 ): Classification {
   // Family Circuit / 5 KM
-  if (circuitId === 'family' || type === 'family' || (circuitId === 'family' && type === 'individual')) {
+  if (circuitId === 'family' || type === 'family') {
     // Mums on 5KM are in Tigers category
     if (familyCategory === 'tigers' || (type === 'individual' && circuitId === 'family')) {
       return { category: 'Tigers', regRange: 'T101–T199', price: 2000, colorCode: 'Pink', hexColor: '#ec4899', remarks: 'Mums' };
