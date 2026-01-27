@@ -38,7 +38,7 @@ function validateTeamRules(circuitId: 'blitz' | 'intermediate' | 'corporate' | '
   return formErrors;
 }
 
-registrationsRouter.post('/quote', async (req, res) => {
+registrationsRouter.post('/quote', async (req, res, next) => {
   try {
     const base = quoteRequestSchema.parse(req.body);
 
@@ -101,11 +101,11 @@ registrationsRouter.post('/quote', async (req, res) => {
     return res.json({ ...quote, projectedId });
   } catch (err) {
     if (err instanceof ZodError) return res.status(400).json(zodToApiError(err));
-    throw err;
+    next(err);
   }
 });
 
-registrationsRouter.post('/', async (req, res) => {
+registrationsRouter.post('/', async (req, res, next) => {
   try {
     const base = quoteRequestSchema.parse(req.body);
     const existingId = (req.body as any).registrationId;
@@ -156,6 +156,7 @@ registrationsRouter.post('/', async (req, res) => {
         }
       });
 
+      console.log(`[Registration] Duplicate check failed for: ${duplicateEmails.join(', ')}`);
       return res.status(400).json({
         error: {
           code: 'DUPLICATE',
@@ -172,6 +173,7 @@ registrationsRouter.post('/', async (req, res) => {
 
     let rec: any;
     if (existingId) {
+      console.log(`[Registration] Updating existing record ${existingId}`);
       rec = await updateRegistration(existingId, {
         circuitId: base.circuitId,
         type: base.type,
@@ -180,6 +182,7 @@ registrationsRouter.post('/', async (req, res) => {
         classifications: quote.classifications,
       });
     } else {
+      console.log(`[Registration] Creating new ${type} record`);
       rec = await createRegistration({
         circuitId: base.circuitId,
         type: base.type,
@@ -190,10 +193,14 @@ registrationsRouter.post('/', async (req, res) => {
       });
     }
 
+    const duration = Date.now() - start;
+    console.log(`[Registration] Success! ID: ${rec.id}, Duration: ${duration}ms`);
     return res.status(existingId ? 200 : 201).json({ registrationId: rec.id, status: rec.status, ...quote });
   } catch (err) {
+    const duration = Date.now() - start;
+    console.error(`[Registration] Failed after ${duration}ms:`, err);
     if (err instanceof ZodError) return res.status(400).json(zodToApiError(err));
-    throw err;
+    next(err);
   }
 });
 

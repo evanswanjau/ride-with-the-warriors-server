@@ -53,29 +53,45 @@ export async function generateNextId(category: string, usedIds: string[] = []): 
   if (!range) return Math.random().toString(36).substring(2, 10).toUpperCase();
 
   const prefix = range.prefix || '';
+  const startStr = prefix ? `${prefix}${range.start}` : range.start.toString().padStart(4, '0');
+  const endStr = prefix ? `${prefix}${range.end}` : range.end.toString().padStart(4, '0');
 
-  const existing = await prisma.registration.findMany({
-    where: { id: { startsWith: prefix } },
+  // OPTIMIZATION: Use findFirst with orderBy: 'desc' to get ONLY the highest existing ID.
+  // This is significantly faster than findMany when there are many records.
+  const lastRecord = await (prisma.registration as any).findFirst({
+    where: {
+      id: {
+        gte: startStr,
+        lte: endStr,
+        startsWith: prefix || undefined
+      }
+    },
+    orderBy: { id: 'desc' },
     select: { id: true }
   });
 
-  const numericIds = existing
-    .map(r => {
-      const val = prefix ? r.id.substring(prefix.length) : r.id;
-      return parseInt(val, 10);
-    })
+  let maxIdFromDb = range.start - 1;
+  if (lastRecord) {
+    const val = prefix ? (lastRecord.id as string).substring(prefix.length) : lastRecord.id;
+    const n = parseInt(val, 10);
+    if (!isNaN(n)) maxIdFromDb = n;
+  }
+
+  // Also check usedIds (for IDs generated in this batch but not yet saved to DB)
+  const numericUsedIds = usedIds
+    .filter(id => id.startsWith(prefix))
+    .map(id => parseInt(prefix ? id.substring(prefix.length) : id, 10))
     .filter(n => !isNaN(n) && n >= range.start && n <= range.end);
 
-  usedIds.forEach(id => {
-    if (id.startsWith(prefix)) {
-      const val = prefix ? id.substring(prefix.length) : id;
-      const n = parseInt(val, 10);
-      if (!isNaN(n) && n >= range.start && n <= range.end) numericIds.push(n);
-    }
-  });
+  const maxIdValue = Math.max(maxIdFromDb, ...numericUsedIds);
+  const nextVal = maxIdValue + 1;
 
-  const maxId = numericIds.length > 0 ? Math.max(...numericIds) : range.start;
-  const nextVal = maxId + 1;
+  // Protect against range overflow
+  if (nextVal > range.end) {
+    console.error(`Range overflow for category ${category}. Max is ${range.end}, attempted ${nextVal}`);
+    // Fallback to a random ID to prevent complete failure, though this shouldn't happen with 1000 slots per category
+    return (Math.random().toString(36).substring(2, 6) + Date.now().toString(36).substring(5)).toUpperCase();
+  }
 
   if (prefix) return `${prefix}${nextVal}`;
   return nextVal.toString().padStart(4, '0');
@@ -204,7 +220,16 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
   }
 
   // Use (prisma.registration as any) to bypass local type mismatch until user restarts server
-  await Promise.all(recordsToCreate.map(data => (prisma.registration as any).create({ data })));
+  console.time(`db-create-${input.type}`);
+  try {
+    if (recordsToCreate.length > 1 && (prisma.registration as any).createMany) {
+      await (prisma.registration as any).createMany({ data: recordsToCreate });
+    } else {
+      await Promise.all(recordsToCreate.map(data => (prisma.registration as any).create({ data })));
+    }
+  } finally {
+    console.timeEnd(`db-create-${input.type}`);
+  }
   return recordsToCreate[0] as RegistrationRecord;
 }
 

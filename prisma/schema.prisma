@@ -7,22 +7,13 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum RegistrationStatus {
-  UNPAID
-  PAID
-  CONFIRMED
-  CANCELLED
-}
-
 model Registration {
   id              String             @id
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
   circuitId       String
-  type            String             // individual, team, family
+  type            String
   status          RegistrationStatus @default(UNPAID)
-
-  // flattened data
   firstName       String
   lastName        String
   email           String?
@@ -30,22 +21,14 @@ model Registration {
   idNumber        String?
   dob             String?
   gender          String?
-  
-  // group info
   groupId         String?
   teamName        String?
   isCaptain       Boolean            @default(false)
-
-  // family specific
   guardianName    String?
   emergencyPhone  String?
   relationship    String?
-
-  // pricing & classification summary
   category        String?
   totalAmount     Float              @default(0)
-
-  // full objects preserved for edge cases/details
   payload         Json?
   pricing         Json?
   classifications Json?
@@ -75,3 +58,9 @@ model AdminSession {
   admin     Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
 }
 
+enum RegistrationStatus {
+  UNPAID
+  PAID
+  CONFIRMED
+  CANCELLED
+}
