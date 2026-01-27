@@ -1,4 +1,4 @@
-import 'dotenv/config';
+// import 'dotenv/config'; // Moved to conditional or command line
 import express from 'express';
 import cors from 'cors';
 
@@ -7,14 +7,20 @@ import { registrationsRouter } from './routes/registrations.js';
 import { adminRegistrationsRouter } from './routes/admin/registrations.js';
 import { authRouter } from './routes/admin/auth.js';
 import { profileRouter } from './routes/profile.js';
+import { prisma } from './storage/prisma.js';
 
 const app = express();
 
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 
-app.get('/health', (_req, res) => {
-  res.json({ ok: true });
+app.get('/health', async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ ok: true, database: 'connected' });
+  } catch (err: any) {
+    res.status(503).json({ ok: false, database: 'disconnected', error: err.message });
+  }
 });
 
 app.use('/api/v1/circuits', circuitsRouter);
@@ -26,15 +32,26 @@ app.use('/api/v1/admin/auth', authRouter);
 app.use('/api/v1/admin/registrations', adminRegistrationsRouter);
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error(err);
-  res.status(500).json({ error: { code: 'INTERNAL', message: 'Internal server error' } });
+app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  console.error('[Global Error Handler]:', err);
+
+  // In production, we should be careful about what we expose, 
+  // but for now we need to see why it's failing.
+  res.status(err.status || 500).json({
+    error: {
+      code: err.code || 'INTERNAL',
+      message: err.message || 'Internal server error',
+      details: process.env.NODE_ENV !== 'production' ? err : { stack: err.stack, name: err.name }
+    }
+  });
 });
 
 const port = Number(process.env.PORT ?? 4000);
-if (process.env.NODE_ENV !== 'production') {
+// In Vercel, the app is exported and doesn't need to listen
+// We check for VERCEL environment variable or if we're running locally
+if (!process.env.VERCEL || process.env.NODE_ENV === 'development') {
   app.listen(port, () => {
-    console.log(`[server] listening on http://localhost:${port}`);
+    console.log(`[server] listening on http://localhost:${port} in ${process.env.NODE_ENV || 'development'} mode`);
   });
 }
 

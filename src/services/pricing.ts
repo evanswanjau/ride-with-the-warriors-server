@@ -48,49 +48,48 @@ export function getClassification(
 ): Classification {
   // Family Circuit / 5 KM
   if (circuitId === 'family' || type === 'family') {
-    // Mums on 5KM are in Tigers category
     if (familyCategory === 'tigers' || (type === 'individual' && circuitId === 'family')) {
-      return { category: 'Tigers', regRange: 'T101–T199', price: 2000, colorCode: 'Pink', hexColor: '#ec4899', remarks: 'Mums' };
+      return { category: 'Moms', regRange: 'T101–T200', price: 2000, colorCode: 'Pink', hexColor: '#ec4899', remarks: 'Moms only' };
     }
     if (familyCategory === 'cubs') {
-      return { category: 'Cubs', regRange: '8000–8999', price: 1000, colorCode: 'Red', hexColor: '#ef4444', remarks: 'Kids 4–8' };
+      return { category: 'Cubs', regRange: '8001–9000', price: 1000, colorCode: 'Red', hexColor: '#ef4444', remarks: 'Kids 4–8' };
     }
     if (familyCategory === 'champs') {
-      return { category: 'Champs', regRange: '9000–9999', price: 1000, colorCode: 'Brown', hexColor: '#78350f', remarks: 'Kids 9–13' };
+      return { category: 'Champs', regRange: '9001–10000', price: 1000, colorCode: 'Brown', hexColor: '#78350f', remarks: 'Kids 9–13' };
     }
   }
 
   // Corporate Circuit (30 KM)
   if (circuitId === 'corporate') {
-    return { category: 'Corporate Team', regRange: '1000–1999', price: 9000, colorCode: 'Orange', hexColor: '#f97316', remarks: 'Must have a lady, Open Classification' };
+    return { category: 'Corporate Team', regRange: '1001–2000', price: 9000, colorCode: 'Orange', hexColor: '#f97316', remarks: 'Must have a lady, Open Classification' };
   }
 
   // Recon (Intermediate) Circuit (60 KM)
   if (circuitId === 'intermediate') {
     if (type === 'team') {
-      return { category: 'Recon Team', regRange: '0001–0999', price: 9000, colorCode: 'Grey', hexColor: '#6b7280', remarks: 'Must have a lady, Open Classification' };
+      return { category: 'Recon Team', regRange: '0001–1000', price: 9000, colorCode: 'Grey', hexColor: '#6b7280', remarks: 'Must have a lady, Open Classification' };
     }
-    return { category: 'Individual', regRange: '2000–2999', price: 2000, colorCode: 'Yellow', hexColor: '#eab308', remarks: 'Male & Female Classification' };
+    return { category: 'Individual', regRange: '2001–3000', price: 2000, colorCode: 'Yellow', hexColor: '#eab308', remarks: 'Male & Female Classification' };
   }
 
   // Blitz Circuit (120 KM)
   if (circuitId === 'blitz') {
     if (type === 'team') {
-      return { category: 'Blitz Team', regRange: '7000–7999', price: 9000, colorCode: 'Sky Blue', hexColor: '#0ea5e9', remarks: 'Must have a lady, Open Classification' };
+      return { category: 'Blitz Team', regRange: '7001–8000', price: 9000, colorCode: 'Sky Blue', hexColor: '#0ea5e9', remarks: 'Must have a lady, Open Classification' };
     }
 
     const a = age || 0;
 
     if (a <= 23) {
-      return { category: 'Vanguard', regRange: '5000–5999', price: 2000, colorCode: 'Green', hexColor: '#22c55e', remarks: 'Under 23, Open Classification' };
+      return { category: 'Vanguard', regRange: '5001–6000', price: 2000, colorCode: 'Green', hexColor: '#22c55e', remarks: 'Under 23, Open Classification' };
     }
     if (a >= 24 && a <= 40) {
-      return { category: 'Airborne', regRange: '4000–4999', price: 2000, colorCode: 'Purple', hexColor: '#a855f7', remarks: '24–40, Male & Female Classification' };
+      return { category: 'Airborne', regRange: '4001–5000', price: 2000, colorCode: 'Purple', hexColor: '#a855f7', remarks: '24–40, Male & Female Classification' };
     }
     if (a >= 41 && a <= 49) {
-      return { category: 'Commanders', regRange: '3000–3999', price: 2000, colorCode: 'White', hexColor: '#ffffff', remarks: '41–49, Male & Female Classification' };
+      return { category: 'Commanders', regRange: '3001–4000', price: 2000, colorCode: 'White', hexColor: '#ffffff', remarks: '41–49, Male & Female Classification' };
     }
-    return { category: 'Veterans', regRange: '6000–6999', price: 2000, colorCode: 'Navy Blue', hexColor: '#1e3a8a', remarks: 'Over 50 years, Open Classification' };
+    return { category: 'Veterans', regRange: '6001–7000', price: 2000, colorCode: 'Navy Blue', hexColor: '#1e3a8a', remarks: 'Over 50 years, Open Classification' };
   }
 
   return { category: 'Rider', regRange: 'TBD', price: 2000, colorCode: 'Black', hexColor: '#000000', remarks: '' };

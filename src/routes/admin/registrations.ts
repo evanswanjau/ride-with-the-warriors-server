@@ -12,12 +12,13 @@ adminRegistrationsRouter.get('/', requireAdmin, async (req, res) => {
         const limit = Number(req.query.limit) || 20;
         const skip = (page - 1) * limit;
 
-        const { search, circuitId, type, status } = req.query;
+        const { search, circuitId, type, status, category } = req.query;
 
         const where: any = {};
         if (circuitId) where.circuitId = circuitId;
         if (type) where.type = type;
         if (status) where.status = status;
+        if (category) where.category = category;
 
         // Efficient flat column search
         if (search) {

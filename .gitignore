@@ -46,6 +46,8 @@ out/
 .env.test.local
 .env.production.local
 .env.local
+.env.development
+.env.production
 
 # next.js build output
 .next

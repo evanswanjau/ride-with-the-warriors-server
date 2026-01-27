@@ -35,17 +35,17 @@ export type RegistrationRecord = {
 };
 
 const CATEGORY_RANGES: Record<string, { start: number, end: number, prefix?: string }> = {
-  'Blitz Team': { start: 7000, end: 7999 },
-  'Vanguard': { start: 5000, end: 5999 },
-  'Airborne': { start: 4000, end: 4999 },
-  'Commanders': { start: 3000, end: 3999 },
-  'Veterans': { start: 6000, end: 6999 },
-  'Recon Team': { start: 0, end: 999 },
-  'Individual': { start: 2000, end: 2999 },
-  'Corporate Team': { start: 1000, end: 1999 },
-  'Cubs': { start: 8000, end: 8999 },
-  'Champs': { start: 9000, end: 9999 },
-  'Tigers': { start: 100, end: 199, prefix: 'T' }
+  'Blitz Team': { start: 7001, end: 8000 },
+  'Vanguard': { start: 5001, end: 6000 },
+  'Airborne': { start: 4001, end: 5000 },
+  'Commanders': { start: 3001, end: 4000 },
+  'Veterans': { start: 6001, end: 7000 },
+  'Recon Team': { start: 1, end: 1000 },
+  'Individual': { start: 2001, end: 3000 },
+  'Corporate Team': { start: 1001, end: 2000 },
+  'Cubs': { start: 8001, end: 9000 },
+  'Champs': { start: 9001, end: 10000 },
+  'Tigers': { start: 101, end: 200, prefix: 'T' }
 };
 
 export async function generateNextId(category: string, usedIds: string[] = []): Promise<string> {
@@ -229,6 +229,9 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
     }
   } finally {
     console.timeEnd(`db-create-${input.type}`);
+  }
+  if (recordsToCreate.length === 0) {
+    throw new Error('No records to create');
   }
   return recordsToCreate[0] as RegistrationRecord;
 }

@@ -17,7 +17,9 @@ function getEmailsFromPayload(type: string, payload: any): string[] {
       if (m.email) emails.push(m.email);
     });
   } else if (type === 'family') {
-    if (payload.familyDetails?.guardian?.email) emails.push(payload.familyDetails.guardian.email);
+    if (payload.familyDetails?.guardian?.email && payload.familyDetails?.guardian?.participation === 'mom') {
+      emails.push(payload.familyDetails.guardian.email);
+    }
   }
   return emails;
 }
