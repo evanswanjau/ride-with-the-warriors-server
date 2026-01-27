@@ -106,29 +106,32 @@ registrationsRouter.post('/quote', async (req, res, next) => {
 });
 
 registrationsRouter.post('/', async (req, res, next) => {
+  const start = Date.now();
   try {
+    const { registrationId: existingId } = req.body;
     const base = quoteRequestSchema.parse(req.body);
-    const existingId = (req.body as any).registrationId;
+    const { type, circuitId } = base;
+    console.log(`[Registration] Starting ${type} registration${existingId ? ` (edit: ${existingId})` : ''}`);
 
     let payload: any;
-    if (base.type === 'individual') {
-      if (base.circuitId === 'corporate') {
+    if (type === 'individual') {
+      if (circuitId === 'corporate') {
         return res.status(400).json({ error: { code: 'VALIDATION', message: 'Corporate circuit does not support individual registration' } });
       }
       payload = { riderDetails: riderDetailsSchema.parse((base.payload as any).riderDetails ?? base.payload) };
-    } else if (base.type === 'team') {
-      if (base.circuitId === 'family') {
+    } else if (type === 'team') {
+      if (circuitId === 'family') {
         return res.status(400).json({ error: { code: 'VALIDATION', message: 'Family circuit does not support team registration' } });
       }
       payload = { teamDetails: teamDetailsSchema.parse((base.payload as any).teamDetails ?? base.payload) };
-      const formErrors = validateTeamRules(base.circuitId, payload.teamDetails);
+      const formErrors = validateTeamRules(circuitId, payload.teamDetails);
       if (formErrors.length) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Validation failed', details: { formErrors } } });
     } else {
       payload = { familyDetails: familyDetailsSchema.parse((base.payload as any).familyDetails ?? base.payload) };
     }
 
     // CHECK FOR DUPLICATES
-    const emailsToCheck = getEmailsFromPayload(base.type, payload);
+    const emailsToCheck = getEmailsFromPayload(type, payload);
     let excludeGroupId: string | undefined;
     if (existingId) {
       const existing = await getRegistration(existingId);
