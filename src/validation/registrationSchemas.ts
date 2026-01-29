@@ -116,13 +116,23 @@ export const familyDetailsSchema = z
       }
     });
 
-    // Validate Participating Moms (must be 18+)
+    // Validate Mandatory Child
+    const totalChildren = val.riders.cubs.length + val.riders.champs.length;
+    if (totalChildren === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'A family registration must include at least one child (Cub or Champ)',
+        path: ['riders'],
+      });
+    }
+
+    // Validate Participating Parents (must be 18+)
     if (val.guardian.participation === 'mom' && val.guardian.dob) {
       const age = getAge(val.guardian.dob);
       if (age < 18) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'Moms must be at least 18 years old',
+          message: 'Parents must be at least 18 years old',
           path: ['guardian', 'dob'],
         });
       }
@@ -131,7 +141,7 @@ export const familyDetailsSchema = z
 
 export const circuitIdSchema = z.union([
   z.literal('blitz'),
-  z.literal('intermediate'),
+  z.literal('recon'),
   z.literal('corporate'),
   z.literal('family'),
 ]);

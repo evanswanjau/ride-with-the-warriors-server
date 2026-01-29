@@ -34,30 +34,33 @@ export type RegistrationRecord = {
   classifications?: any;
 };
 
-const CATEGORY_RANGES: Record<string, { start: number, end: number, prefix?: string }> = {
-  'Blitz Team': { start: 7001, end: 8000 },
-  'Vanguard': { start: 5001, end: 6000 },
-  'Airborne': { start: 4001, end: 5000 },
-  'Commanders': { start: 3001, end: 4000 },
-  'Veterans': { start: 6001, end: 7000 },
-  'Recon Team': { start: 1, end: 1000 },
-  'Individual': { start: 2001, end: 3000 },
-  'Corporate Team': { start: 1001, end: 2000 },
-  'Cubs': { start: 8001, end: 9000 },
-  'Champs': { start: 9001, end: 10000 },
-  'Tigers': { start: 101, end: 200, prefix: 'T' }
-};
+export async function generateNextId(categoryName: string, usedIds: string[] = []): Promise<string> {
+  // Fetch category rule from DB
+  const cat = await prisma.pricingCategory.findFirst({
+    where: { categoryName }
+  });
 
-export async function generateNextId(category: string, usedIds: string[] = []): Promise<string> {
-  const range = CATEGORY_RANGES[category];
-  if (!range) return Math.random().toString(36).substring(2, 10).toUpperCase();
+  if (!cat) {
+    console.warn(`[ID Generator] No range found for category ${categoryName}, using fallback random ID`);
+    return Math.random().toString(36).substring(2, 10).toUpperCase();
+  }
 
-  const prefix = range.prefix || '';
-  const startStr = prefix ? `${prefix}${range.start}` : range.start.toString().padStart(4, '0');
-  const endStr = prefix ? `${prefix}${range.end}` : range.end.toString().padStart(4, '0');
+  // Parse regRange (e.g., "5001–6000" or "C200–C299")
+  const rangeStr = cat.regRange;
+  const parts = rangeStr.split(/[–-]/); // handle both en-dash and hyphen
+  if (parts.length !== 2) {
+    console.warn(`[ID Generator] Invalid range format ${rangeStr} for ${categoryName}`);
+    return Math.random().toString(36).substring(2, 10).toUpperCase();
+  }
+
+  const startStr = parts[0].trim();
+  const endStr = parts[1].trim();
+
+  const prefix = startStr.match(/^[A-Z]+/)?.[0] || '';
+  const startNum = parseInt(startStr.replace(/^[A-Z]+/, ''), 10);
+  const endNum = parseInt(endStr.replace(/^[A-Z]+/, ''), 10);
 
   // OPTIMIZATION: Use findFirst with orderBy: 'desc' to get ONLY the highest existing ID.
-  // This is significantly faster than findMany when there are many records.
   const lastRecord = await (prisma.registration as any).findFirst({
     where: {
       id: {
@@ -70,7 +73,7 @@ export async function generateNextId(category: string, usedIds: string[] = []): 
     select: { id: true }
   });
 
-  let maxIdFromDb = range.start - 1;
+  let maxIdFromDb = startNum - 1;
   if (lastRecord) {
     const val = prefix ? (lastRecord.id as string).substring(prefix.length) : lastRecord.id;
     const n = parseInt(val, 10);
@@ -81,20 +84,19 @@ export async function generateNextId(category: string, usedIds: string[] = []): 
   const numericUsedIds = usedIds
     .filter(id => id.startsWith(prefix))
     .map(id => parseInt(prefix ? id.substring(prefix.length) : id, 10))
-    .filter(n => !isNaN(n) && n >= range.start && n <= range.end);
+    .filter(n => !isNaN(n) && n >= startNum && n <= endNum);
 
   const maxIdValue = Math.max(maxIdFromDb, ...numericUsedIds);
   const nextVal = maxIdValue + 1;
 
   // Protect against range overflow
-  if (nextVal > range.end) {
-    console.error(`Range overflow for category ${category}. Max is ${range.end}, attempted ${nextVal}`);
-    // Fallback to a random ID to prevent complete failure, though this shouldn't happen with 1000 slots per category
+  if (nextVal > endNum) {
+    console.error(`Range overflow for category ${categoryName}. Max is ${endNum}, attempted ${nextVal}`);
     return (Math.random().toString(36).substring(2, 6) + Date.now().toString(36).substring(5)).toUpperCase();
   }
 
-  if (prefix) return `${prefix}${nextVal}`;
-  return nextVal.toString().padStart(4, '0');
+  const result = prefix ? `${prefix}${nextVal}` : nextVal.toString().padStart(4, '0');
+  return result;
 }
 
 export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 'createdAt' | 'updatedAt' | 'firstName' | 'lastName' | 'isCaptain' | 'totalAmount'>): Promise<RegistrationRecord> {

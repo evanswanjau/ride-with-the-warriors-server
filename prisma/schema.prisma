@@ -64,3 +64,22 @@ enum RegistrationStatus {
   CONFIRMED
   CANCELLED
 }
+
+model PricingCategory {
+  id             String   @id @default(uuid())
+  circuitId      String // e.g., 'blitz', 'recon', 'corporate', 'family'
+  type           String // 'individual', 'team', or 'family'
+  familyCategory String? // 'cubs', 'champs', 'tigers'
+  minAge         Int? // inclusive
+  maxAge         Int? // inclusive
+  categoryName   String
+  regRange       String
+  price          Float
+  colorCode      String
+  hexColor       String
+  remarks        String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([circuitId, type])
+}

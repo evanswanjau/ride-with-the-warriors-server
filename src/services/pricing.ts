@@ -1,4 +1,5 @@
 import type { QuoteRequest } from '../validation/registrationSchemas.js';
+import { prisma } from '../storage/prisma.js';
 
 export type Classification = {
   category: string;
@@ -39,70 +40,82 @@ export function calculateAge(dob: string): number | null {
   return age;
 }
 
-// Mirrors `client/src/utils.ts#getClassification`, but removes hardcoded bib numbers.
+// In-memory cache for pricing categories to avoid DB hits on every quote
+let categoryCache: any[] | null = null;
+let lastCacheUpdate: number = 0;
+const CACHE_TTL = 60 * 1000; // 1 minute
+
+export async function getPricingCategories() {
+  const now = Date.now();
+  if (categoryCache && now - lastCacheUpdate < CACHE_TTL) {
+    return categoryCache;
+  }
+
+  try {
+    categoryCache = await prisma.pricingCategory.findMany();
+    lastCacheUpdate = now;
+    return categoryCache;
+  } catch (err) {
+    console.error('[Pricing Service] Failed to fetch categories from DB:', err);
+    // Return empty or throw? For now let's hope it's not empty. 
+    // We could return a hardcoded fallback if needed.
+    return categoryCache || [];
+  }
+}
+
 export function getClassification(
+  categories: any[],
   circuitId: QuoteRequest['circuitId'],
   type: QuoteRequest['type'],
   age: number | null = null,
-  familyCategory: '' | 'cubs' | 'champs' | 'tigers' = '',
+  familyCategory: string = '',
 ): Classification {
-  // Family Circuit / 5 KM
-  if (circuitId === 'family' || type === 'family') {
-    if (familyCategory === 'tigers' || (type === 'individual' && circuitId === 'family')) {
-      return { category: 'Moms', regRange: 'T101–T200', price: 2000, colorCode: 'Pink', hexColor: '#ec4899', remarks: 'Moms only' };
+  // Find matching category from DB-fetched list
+  const match = categories.find(cat => {
+    // 1. Check circuitId and type
+    if (cat.circuitId !== circuitId || cat.type !== type) return false;
+
+    // 2. For family circuit, check familyCategory (cubs, champs, tigers)
+    if (circuitId === 'family' || type === 'family') {
+      if (cat.familyCategory && cat.familyCategory !== familyCategory) return false;
+      // If it's the parent riding in family circuit (individual type)
+      if (!cat.familyCategory && familyCategory) return false;
     }
-    if (familyCategory === 'cubs') {
-      return { category: 'Cubs', regRange: '8001–9000', price: 1000, colorCode: 'Red', hexColor: '#ef4444', remarks: 'Kids 4–8' };
+
+    // 3. For individual/blitz etc, check age ranges
+    if (age !== null && (cat.minAge !== null || cat.maxAge !== null)) {
+      const min = cat.minAge ?? 0;
+      const max = cat.maxAge ?? 999;
+      if (age < min || age > max) return false;
     }
-    if (familyCategory === 'champs') {
-      return { category: 'Champs', regRange: '9001–10000', price: 1000, colorCode: 'Brown', hexColor: '#78350f', remarks: 'Kids 9–13' };
-    }
+
+    return true;
+  });
+
+  if (match) {
+    return {
+      category: match.categoryName,
+      regRange: match.regRange,
+      price: match.price,
+      colorCode: match.colorCode,
+      hexColor: match.hexColor,
+      remarks: match.remarks || '',
+    };
   }
 
-  // Corporate Circuit (30 KM)
-  if (circuitId === 'corporate') {
-    return { category: 'Corporate Team', regRange: '1001–2000', price: 9000, colorCode: 'Orange', hexColor: '#f97316', remarks: 'Must have a lady, Open Classification' };
-  }
-
-  // Recon (Intermediate) Circuit (60 KM)
-  if (circuitId === 'intermediate') {
-    if (type === 'team') {
-      return { category: 'Recon Team', regRange: '0001–1000', price: 9000, colorCode: 'Grey', hexColor: '#6b7280', remarks: 'Must have a lady, Open Classification' };
-    }
-    return { category: 'Individual', regRange: '2001–3000', price: 2000, colorCode: 'Yellow', hexColor: '#eab308', remarks: 'Male & Female Classification' };
-  }
-
-  // Blitz Circuit (120 KM)
-  if (circuitId === 'blitz') {
-    if (type === 'team') {
-      return { category: 'Blitz Team', regRange: '7001–8000', price: 9000, colorCode: 'Sky Blue', hexColor: '#0ea5e9', remarks: 'Must have a lady, Open Classification' };
-    }
-
-    const a = age || 0;
-
-    if (a <= 23) {
-      return { category: 'Vanguard', regRange: '5001–6000', price: 2000, colorCode: 'Green', hexColor: '#22c55e', remarks: 'Under 23, Open Classification' };
-    }
-    if (a >= 24 && a <= 40) {
-      return { category: 'Airborne', regRange: '4001–5000', price: 2000, colorCode: 'Purple', hexColor: '#a855f7', remarks: '24–40, Male & Female Classification' };
-    }
-    if (a >= 41 && a <= 49) {
-      return { category: 'Commanders', regRange: '3001–4000', price: 2000, colorCode: 'White', hexColor: '#ffffff', remarks: '41–49, Male & Female Classification' };
-    }
-    return { category: 'Veterans', regRange: '6001–7000', price: 2000, colorCode: 'Navy Blue', hexColor: '#1e3a8a', remarks: 'Over 50 years, Open Classification' };
-  }
-
+  // Fallback
   return { category: 'Rider', regRange: 'TBD', price: 2000, colorCode: 'Black', hexColor: '#000000', remarks: '' };
 }
 
-export function buildQuote(input: {
+export async function buildQuote(input: {
   circuitId: QuoteRequest['circuitId'];
   type: QuoteRequest['type'];
   payload:
   | { riderDetails: { firstName: string; dob: string } }
   | { teamDetails: { teamName: string } }
   | { familyDetails: { riders: Record<'cubs' | 'champs' | 'tigers', Array<unknown>> } };
-}): QuoteResult {
+}): Promise<QuoteResult> {
+  const categories = await getPricingCategories();
   const lineItems: PricingLineItem[] = [];
   const classifications: Classification[] = [];
   let totalAmount = 0;
@@ -110,7 +123,7 @@ export function buildQuote(input: {
   if (input.type === 'individual') {
     const rider = (input.payload as { riderDetails: { firstName: string; dob: string } }).riderDetails;
     const age = calculateAge(rider.dob);
-    const classification = getClassification(input.circuitId, 'individual', age);
+    const classification = getClassification(categories, input.circuitId, 'individual', age);
     totalAmount = classification.price;
     classifications.push(classification);
     lineItems.push({
@@ -122,7 +135,7 @@ export function buildQuote(input: {
     });
   } else if (input.type === 'team') {
     const team = (input.payload as { teamDetails: { teamName: string } }).teamDetails;
-    const classification = getClassification(input.circuitId, 'team');
+    const classification = getClassification(categories, input.circuitId, 'team');
     totalAmount = classification.price;
     classifications.push(classification);
     lineItems.push({
@@ -139,7 +152,7 @@ export function buildQuote(input: {
     for (const catId of ['cubs', 'champs', 'tigers'] as const) {
       const riders = family.riders[catId] ?? [];
       if (riders.length === 0) continue;
-      const classification = getClassification('family', 'family', null, catId);
+      const classification = getClassification(categories, 'family', 'family', null, catId);
       const amount = riders.length * classification.price;
       totalAmount += amount;
       classifications.push(classification);

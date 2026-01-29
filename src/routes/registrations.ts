@@ -3,7 +3,7 @@ import { ZodError } from 'zod';
 
 import { quoteRequestSchema, riderDetailsSchema, teamDetailsSchema, familyDetailsSchema } from '../validation/registrationSchemas.js';
 import { zodToApiError } from '../validation/zodError.js';
-import { buildQuote } from '../services/pricing.js';
+import { buildQuote, getPricingCategories } from '../services/pricing.js';
 import { createRegistration, getRegistration, generateNextId, updateRegistration, findExistingRegistrationsByEmails } from '../storage/memoryRegistrations.js';
 
 export const registrationsRouter = Router();
@@ -24,17 +24,15 @@ function getEmailsFromPayload(type: string, payload: any): string[] {
   return emails;
 }
 
-function validateTeamRules(circuitId: 'blitz' | 'intermediate' | 'corporate' | 'family', team: { members: Array<{ gender: 'male' | 'female' }> }) {
+function validateTeamRules(circuitId: 'blitz' | 'recon' | 'corporate' | 'family', team: { members: Array<{ gender: 'male' | 'female' }> }) {
   // ... (keep existing implementation)
   const numMembers = team.members.length;
-  const numFemales = team.members.filter((m) => m.gender === 'female').length;
 
   const formErrors: string[] = [];
   if (circuitId === 'corporate') {
     if (numMembers < 3 || numMembers > 5) formErrors.push(`Corporate teams must have 3-5 members (Currently: ${numMembers})`);
-  } else if (circuitId === 'blitz' || circuitId === 'intermediate') {
-    if (numMembers < 5) formErrors.push(`Competitive teams (120/60KM) must have at least 5 members (Currently: ${numMembers})`);
-    else if (numFemales < 1) formErrors.push('Competitive teams must have at least one female rider');
+  } else if (circuitId === 'blitz' || circuitId === 'recon') {
+    if (numMembers !== 5) formErrors.push(`Competitive teams (120/60KM) must have exactly 5 members (Currently: ${numMembers})`);
   }
 
   return formErrors;
@@ -46,9 +44,6 @@ registrationsRouter.post('/quote', async (req, res, next) => {
 
     let payload: any;
     if (base.type === 'individual') {
-      if (base.circuitId === 'corporate') {
-        return res.status(400).json({ error: { code: 'VALIDATION', message: 'Corporate circuit does not support individual registration' } });
-      }
       payload = { riderDetails: riderDetailsSchema.parse((base.payload as any).riderDetails ?? base.payload) };
     } else if (base.type === 'team') {
       if (base.circuitId === 'family') {
@@ -94,7 +89,7 @@ registrationsRouter.post('/quote', async (req, res, next) => {
       });
     }
 
-    const quote = buildQuote({ circuitId: base.circuitId, type: base.type, payload });
+    const quote = await buildQuote({ circuitId: base.circuitId, type: base.type, payload });
 
     // Get projected ID based on this quote
     const mainCategory = quote.classifications[0]?.category || 'Individual';
@@ -117,9 +112,6 @@ registrationsRouter.post('/', async (req, res, next) => {
 
     let payload: any;
     if (type === 'individual') {
-      if (circuitId === 'corporate') {
-        return res.status(400).json({ error: { code: 'VALIDATION', message: 'Corporate circuit does not support individual registration' } });
-      }
       payload = { riderDetails: riderDetailsSchema.parse((base.payload as any).riderDetails ?? base.payload) };
     } else if (type === 'team') {
       if (circuitId === 'family') {
@@ -174,7 +166,7 @@ registrationsRouter.post('/', async (req, res, next) => {
       });
     }
 
-    const quote = buildQuote({ circuitId: base.circuitId, type: base.type, payload });
+    const quote = await buildQuote({ circuitId: base.circuitId, type: base.type, payload });
 
     let rec: any;
     if (existingId) {
@@ -213,5 +205,14 @@ registrationsRouter.get('/:id', async (req, res) => {
   const rec = await getRegistration(req.params.id);
   if (!rec) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Registration not found' } });
   res.json({ registration: rec });
+});
+
+registrationsRouter.get('/config/categories', async (_req, res, next) => {
+  try {
+    const categories = await getPricingCategories();
+    res.json({ categories });
+  } catch (err) {
+    next(err);
+  }
 });
 
