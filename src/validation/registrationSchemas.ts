@@ -31,6 +31,9 @@ export const riderDetailsSchema = z.object({
   idNumber: idNumberSchema,
   dob: dobSchema,
   gender: genderSchema,
+  tshirtSize: z.string().min(1, 'T-shirt size is required'),
+  emergencyContactName: z.string().min(1, 'Emergency contact name is required'),
+  emergencyPhone: phoneSchema,
 });
 
 export const teamMemberSchema = riderDetailsSchema.extend({
@@ -61,6 +64,9 @@ export const juniorRiderSchema = z.object({
   lastName: z.string().min(1, 'Required'),
   dob: dobSchema,
   gender: genderSchema,
+  tshirtSize: z.string().min(1, 'Required'),
+  emergencyContactName: z.string().optional(),
+  emergencyPhone: phoneSchema.optional().or(z.literal('')),
 });
 
 export const familyDetailsSchema = z
@@ -71,8 +77,10 @@ export const familyDetailsSchema = z
       fullName: z.string().min(1, 'Guardian name is required'),
       dob: z.string().optional(),
       emergencyPhone: phoneSchema,
+      emergencyContactName: z.string().min(1, 'Emergency contact name is required'),
       email: emailSchema,
       relationship: z.string().min(1, 'Relationship is required'),
+      tshirtSize: z.string().optional(),
       participation: z.enum(['none', 'mom', 'other']),
     }),
     riders: z.object({

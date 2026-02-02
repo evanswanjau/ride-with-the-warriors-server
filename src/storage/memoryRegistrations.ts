@@ -24,7 +24,9 @@ export type RegistrationRecord = {
 
   guardianName?: string | null;
   emergencyPhone?: string | null;
+  emergencyContactName?: string | null;
   relationship?: string | null;
+  tshirtSize?: string | null;
 
   category?: string | null;
   totalAmount: number;
@@ -123,6 +125,9 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
       idNumber: rider.idNumber,
       dob: rider.dob,
       gender: rider.gender,
+      tshirtSize: rider.tshirtSize,
+      emergencyContactName: rider.emergencyContactName,
+      emergencyPhone: rider.emergencyPhone,
       groupId,
       category,
       totalAmount: (input.pricing as any).totalAmount,
@@ -159,6 +164,9 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
         idNumber: m.idNumber,
         dob: m.dob,
         gender: m.gender,
+        tshirtSize: m.tshirtSize,
+        emergencyContactName: m.emergencyContactName,
+        emergencyPhone: m.emergencyPhone,
         groupId,
         teamName: payload.teamDetails.teamName,
         isCaptain: !!m.isCaptain,
@@ -207,9 +215,11 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
         lastName: rider.lastName,
         dob: rider.dob,
         gender: rider.gender,
+        tshirtSize: rider.tshirtSize,
         groupId,
         guardianName: payload.familyDetails.guardian.fullName,
-        emergencyPhone: payload.familyDetails.guardian.emergencyPhone,
+        emergencyContactName: rider.emergencyContactName || payload.familyDetails.guardian.emergencyContactName,
+        emergencyPhone: rider.emergencyPhone || payload.familyDetails.guardian.emergencyPhone,
         relationship: payload.familyDetails.guardian.relationship,
         email: i === 0 ? payload.familyDetails.guardian.email : null,
         category: participantCategory,
@@ -291,6 +301,9 @@ export async function updateRegistration(id: string, input: Partial<Omit<Registr
       updateData.idNumber = rider.idNumber;
       updateData.dob = rider.dob;
       updateData.gender = rider.gender;
+      updateData.tshirtSize = rider.tshirtSize;
+      updateData.emergencyContactName = rider.emergencyContactName;
+      updateData.emergencyPhone = rider.emergencyPhone;
       updateData.totalAmount = (input.pricing as any)?.totalAmount;
       updateData.category = (input.classifications as any[])?.[0]?.category || 'Individual';
     }
