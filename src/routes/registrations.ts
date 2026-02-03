@@ -59,12 +59,15 @@ registrationsRouter.post('/quote', async (req, res, next) => {
     // CHECK FOR DUPLICATES
     const emailsToCheck = getEmailsFromPayload(base.type, payload);
     const duplicates = await findExistingRegistrationsByEmails(emailsToCheck);
-    if (duplicates.length > 0) {
-      // Extract which emails were actually duplicates for frontend highlighting
+
+    // Only block if there are PAID or CONFIRMED duplicates
+    const blockingDuplicates = duplicates.filter(reg => reg.status === 'PAID' || reg.status === 'CONFIRMED');
+
+    if (blockingDuplicates.length > 0) {
       const duplicateEmails: string[] = [];
       const lowerToCheck = emailsToCheck.map(e => e.toLowerCase());
 
-      duplicates.forEach(reg => {
+      blockingDuplicates.forEach(reg => {
         const p = reg.payload as any;
         if (reg.type === 'individual') {
           if (p.riderDetails?.email && lowerToCheck.includes(p.riderDetails.email.toLowerCase())) duplicateEmails.push(p.riderDetails.email);
@@ -80,10 +83,10 @@ registrationsRouter.post('/quote', async (req, res, next) => {
       return res.status(400).json({
         error: {
           code: 'DUPLICATE',
-          message: 'One or more participants are already registered.',
+          message: 'One or more participants are already registered and paid.',
           details: {
             formErrors: ['One or more participants are already registered.'],
-            duplicates: [...new Set(duplicateEmails)] // unique list
+            duplicates: [...new Set(duplicateEmails)]
           }
         }
       });
@@ -173,12 +176,16 @@ registrationsRouter.post('/', async (req, res, next) => {
     }
 
     const duplicates = await findExistingRegistrationsByEmails(emailsToCheck, excludeGroupId, existingId);
-    if (duplicates.length > 0) {
-      // Extract which emails were actually duplicates for frontend highlighting
+
+    // Separate duplicates by status
+    const paidDuplicates = duplicates.filter(reg => reg.status === 'PAID' || reg.status === 'CONFIRMED');
+    const unpaidDuplicates = duplicates.filter(reg => reg.status === 'UNPAID');
+
+    if (paidDuplicates.length > 0) {
       const duplicateEmails: string[] = [];
       const lowerToCheck = emailsToCheck.map(e => e.toLowerCase());
 
-      duplicates.forEach(reg => {
+      paidDuplicates.forEach(reg => {
         const p = reg.payload as any;
         if (reg.type === 'individual') {
           if (p.riderDetails?.email && lowerToCheck.includes(p.riderDetails.email.toLowerCase())) duplicateEmails.push(p.riderDetails.email);
@@ -191,17 +198,37 @@ registrationsRouter.post('/', async (req, res, next) => {
         }
       });
 
-      console.log(`[Registration] Duplicate check failed for: ${duplicateEmails.join(', ')}`);
+      console.log(`[Registration] Duplicate check failed for PAID entries: ${duplicateEmails.join(', ')}`);
       return res.status(400).json({
         error: {
           code: 'DUPLICATE',
-          message: 'One or more participants are already registered.',
+          message: 'One or more participants are already registered and paid.',
           details: {
             formErrors: ['One or more participants are already registered.'],
             duplicates: [...new Set(duplicateEmails)]
           }
         }
       });
+    }
+
+    // AUTO-CLEANUP: If we have UNPAID duplicates and no PAID ones, we delete the old groups to allow fresh start
+    if (unpaidDuplicates.length > 0) {
+      const groupIds = [...new Set(unpaidDuplicates.map(reg => (reg as any).groupId).filter(Boolean))];
+      console.log(`[Registration] Cleaning up ${unpaidDuplicates.length} UNPAID records in groups: ${groupIds.join(', ')}`);
+
+      const prisma = (await import('../storage/prisma.js')).prisma;
+      if (groupIds.length > 0) {
+        await (prisma.registration as any).deleteMany({
+          where: { groupId: { in: groupIds } }
+        });
+      }
+      // Also catch any orphan records without groupIds
+      const orphanIds = unpaidDuplicates.filter(reg => !(reg as any).groupId).map(reg => reg.id);
+      if (orphanIds.length > 0) {
+        await (prisma.registration as any).deleteMany({
+          where: { id: { in: orphanIds } }
+        });
+      }
     }
 
     const quote = await buildQuote({ circuitId: base.circuitId, type: base.type, payload });
