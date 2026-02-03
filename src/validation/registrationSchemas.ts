@@ -165,6 +165,8 @@ export const quoteRequestSchema = z
     circuitId: circuitIdSchema,
     type: registrationTypeSchema,
     payload: z.unknown(),
+    registrationId: z.string().optional(),
+    mpesaCode: z.string().optional().or(z.literal('')),
   })
   .superRefine((val, ctx) => {
     if (val.circuitId !== 'family') {

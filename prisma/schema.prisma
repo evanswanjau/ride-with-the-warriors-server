@@ -31,6 +31,7 @@ model Registration {
   tshirtSize      String?
   category        String?
   totalAmount     Float              @default(0)
+  mpesaCode       String?
   payload         Json?
   pricing         Json?
   classifications Json?
@@ -84,4 +85,16 @@ model PricingCategory {
   updatedAt      DateTime @updatedAt
 
   @@index([circuitId, type])
+}
+
+model EmailLog {
+  id             String   @id @default(uuid())
+  registrationId String
+  type           String   // 'confirmation', 'payment_reminder_3d', 'payment_reminder_7d', 'reminder_7d', 'reminder_1d', 'reminder_day'
+  sentAt         DateTime @default(now())
+  status         String   // 'sent', 'failed'
+  error          String?
+
+  @@index([registrationId, type])
+  @@index([type, status])
 }

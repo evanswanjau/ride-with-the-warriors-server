@@ -6,6 +6,7 @@ import { circuitsRouter } from './routes/circuits.js';
 import { registrationsRouter } from './routes/registrations.js';
 import { adminRegistrationsRouter } from './routes/admin/registrations.js';
 import { authRouter } from './routes/admin/auth.js';
+import { emailRouter } from './routes/admin/email.js';
 import { profileRouter } from './routes/profile.js';
 import { prisma } from './storage/prisma.js';
 
@@ -30,6 +31,7 @@ app.use('/api/v1/profile', profileRouter);
 // Admin Routes
 app.use('/api/v1/admin/auth', authRouter);
 app.use('/api/v1/admin/registrations', adminRegistrationsRouter);
+app.use('/api/v1/admin/email', emailRouter);
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
@@ -50,8 +52,25 @@ const port = Number(process.env.PORT ?? 4000);
 // In Vercel, the app is exported and doesn't need to listen
 // We check for VERCEL environment variable or if we're running locally
 if (!process.env.VERCEL || process.env.NODE_ENV === 'development') {
-  app.listen(port, () => {
+  app.listen(port, async () => {
     console.log(`[server] listening on http://localhost:${port} in ${process.env.NODE_ENV || 'development'} mode`);
+
+    // Initialize email scheduler
+    try {
+      const { initializeScheduler } = await import('./services/reminderScheduler.js');
+      const { verifyEmailConnection } = await import('./services/emailService.js');
+
+      // Verify email connection
+      const emailOk = await verifyEmailConnection();
+      if (!emailOk) {
+        console.warn('[server] Email SMTP connection failed - check your .env settings');
+      }
+
+      // Start scheduler
+      initializeScheduler();
+    } catch (error) {
+      console.error('[server] Failed to initialize email services:', error);
+    }
   });
 }
 

@@ -1,4 +1,5 @@
 import { prisma } from './prisma.js';
+import { sendConfirmationEmail } from '../services/emailService.js';
 
 export type RegistrationStatus = 'UNPAID' | 'PAID' | 'CONFIRMED' | 'CANCELLED';
 
@@ -9,7 +10,7 @@ export type RegistrationRecord = {
   circuitId: string;
   type: string;
   status: RegistrationStatus;
-
+  mpesaCode?: string | null;
   firstName: string;
   lastName: string;
   email?: string | null;
@@ -131,6 +132,7 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
       groupId,
       category,
       totalAmount: (input.pricing as any).totalAmount,
+      mpesaCode: input.mpesaCode || null,
       payload: { ...payload, groupId },
       pricing: input.pricing,
       classifications: input.classifications,
@@ -287,6 +289,7 @@ export async function updateRegistration(id: string, input: Partial<Omit<Registr
     payload: input.payload as any,
     pricing: input.pricing as any,
     classifications: input.classifications as any,
+    mpesaCode: input.mpesaCode || undefined,
   };
 
   // Sync flat columns for individual registrations
@@ -313,6 +316,30 @@ export async function updateRegistration(id: string, input: Partial<Omit<Registr
     where: { id },
     data: updateData,
   });
+
+  // Trigger confirmation email if status changed to PAID or CONFIRMED
+  if (input.status === 'PAID' || input.status === 'CONFIRMED') {
+    const registrationsToSend = groupId
+      ? await prisma.registration.findMany({ where: { groupId } })
+      : [rec];
+
+    for (const reg of registrationsToSend) {
+      if (reg.email) {
+        sendConfirmationEmail({
+          id: reg.id,
+          firstName: reg.firstName,
+          lastName: reg.lastName,
+          email: reg.email,
+          circuitId: reg.circuitId,
+          totalAmount: reg.totalAmount,
+          status: reg.status,
+          category: reg.category || undefined,
+          payload: reg.payload,
+          teamName: (reg as any).teamName || undefined,
+        }).catch(err => console.error(`[Email] Failed to send confirmation to ${reg.id}:`, err));
+      }
+    }
+  }
 
   return rec as any;
 }
