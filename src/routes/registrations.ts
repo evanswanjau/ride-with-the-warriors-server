@@ -42,6 +42,10 @@ registrationsRouter.post('/quote', async (req, res, next) => {
   try {
     const base = quoteRequestSchema.parse(req.body);
 
+    if (!base.payload) {
+      return res.status(400).json({ error: { code: 'VALIDATION', message: 'Payload is required' } });
+    }
+
     let payload: any;
     if (base.type === 'individual') {
       payload = { riderDetails: riderDetailsSchema.parse((base.payload as any).riderDetails ?? base.payload) };
