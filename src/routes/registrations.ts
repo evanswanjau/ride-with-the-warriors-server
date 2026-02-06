@@ -27,12 +27,14 @@ function getEmailsFromPayload(type: string, payload: any): string[] {
 function validateTeamRules(circuitId: 'blitz' | 'recon' | 'corporate' | 'family', team: { members: Array<{ gender: 'male' | 'female' }> }) {
   // ... (keep existing implementation)
   const numMembers = team.members.length;
+  const hasFemale = team.members.some(m => m.gender === 'female');
 
   const formErrors: string[] = [];
   if (circuitId === 'corporate') {
     if (numMembers < 3 || numMembers > 5) formErrors.push(`Corporate teams must have 3-5 members (Currently: ${numMembers})`);
   } else if (circuitId === 'blitz' || circuitId === 'recon') {
     if (numMembers !== 5) formErrors.push(`Competitive teams (120/60KM) must have exactly 5 members (Currently: ${numMembers})`);
+    if (!hasFemale) formErrors.push(`Competitive teams (120/60KM) must have at least one female rider.`);
   }
 
   return formErrors;
@@ -100,7 +102,7 @@ registrationsRouter.post('/quote', async (req, res, next) => {
 
     // Get projected ID based on this quote
     const mainCategory = quote.classifications[0]?.category || 'Individual';
-    const projectedId = await generateNextId(mainCategory);
+    const projectedId = await generateNextId(mainCategory, base.circuitId, base.type);
 
     return res.json({ ...quote, projectedId });
   } catch (err) {

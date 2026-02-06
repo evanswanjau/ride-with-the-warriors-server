@@ -78,7 +78,7 @@ const validIndividualRider = {
 const validTeamDetails = {
     teamName: 'Speed Demons',
     members: [
-        { ...validIndividualRider, id: 'member-1', isCaptain: true, firstName: 'Alice', email: 'alice@example.com' },
+        { ...validIndividualRider, id: 'member-1', isCaptain: true, firstName: 'Alice', email: 'alice@example.com', gender: 'female' as const },
         { ...validIndividualRider, id: 'member-2', isCaptain: false, firstName: 'Bob', email: 'bob@example.com' },
         { ...validIndividualRider, id: 'member-3', isCaptain: false, firstName: 'Charlie', email: 'charlie@example.com' },
         { ...validIndividualRider, id: 'member-4', isCaptain: false, firstName: 'Dave', email: 'dave@example.com' },
@@ -170,6 +170,25 @@ describe('Registrations API', () => {
 
             expect(response.body).toHaveProperty('pricing');
             expect(response.body.pricing.lineItems).toHaveLength(1);
+        });
+
+        it('should return 400 for competitive team without female rider', async () => {
+            const allMaleTeam = {
+                ...validTeamDetails,
+                members: validTeamDetails.members.map(m => ({ ...m, gender: 'male' as const }))
+            };
+
+            const response = await request(app)
+                .post('/api/v1/registrations/quote')
+                .send({
+                    circuitId: 'blitz',
+                    type: 'team',
+                    payload: { teamDetails: allMaleTeam },
+                })
+                .expect(400);
+
+            expect(response.body.error.message).toBe('Validation failed');
+            expect(response.body.error.details.formErrors).toContain('Competitive teams (120/60KM) must have at least one female rider.');
         });
 
         it('should return quote for valid family registration', async () => {

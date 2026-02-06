@@ -71,35 +71,52 @@ export function getClassification(
   familyCategory: string = '',
 ): Classification {
   // Find matching category from DB-fetched list
-  const match = categories.find(cat => {
-    // 1. Check circuitId and type
-    if (cat.circuitId !== circuitId || cat.type !== type) return false;
+  const matches = categories.filter(cat => cat.circuitId === circuitId && cat.type === type);
 
-    // 2. For family circuit, check familyCategory (cubs, champs, tigers)
-    if (circuitId === 'family' || type === 'family') {
+  if (circuitId === 'family' || type === 'family') {
+    const familyMatch = matches.find(cat => {
       if (cat.familyCategory && cat.familyCategory !== familyCategory) return false;
-      // If it's the parent riding in family circuit (individual type)
       if (!cat.familyCategory && familyCategory) return false;
-    }
+      return true;
+    });
+    if (familyMatch) return {
+      category: familyMatch.categoryName,
+      regRange: familyMatch.regRange,
+      price: familyMatch.price,
+      colorCode: familyMatch.colorCode,
+      hexColor: familyMatch.hexColor,
+      remarks: familyMatch.remarks || '',
+    };
+  }
 
-    // 3. For individual/blitz etc, check age ranges
-    if (age !== null && (cat.minAge !== null || cat.maxAge !== null)) {
+  // For individual categories, prioritize exact age match
+  if (age !== null) {
+    const ageMatch = matches.find(cat => {
+      if (cat.minAge === null && cat.maxAge === null) return false;
       const min = cat.minAge ?? 0;
       const max = cat.maxAge ?? 999;
-      if (age < min || age > max) return false;
-    }
+      return age >= min && age <= max;
+    });
+    if (ageMatch) return {
+      category: ageMatch.categoryName,
+      regRange: ageMatch.regRange,
+      price: ageMatch.price,
+      colorCode: ageMatch.colorCode,
+      hexColor: ageMatch.hexColor,
+      remarks: ageMatch.remarks || '',
+    };
+  }
 
-    return true;
-  });
-
-  if (match) {
+  // Fallback to first non-age-ranged match in circuit
+  const firstMatch = matches.find(cat => cat.minAge === null && cat.maxAge === null) || matches[0];
+  if (firstMatch) {
     return {
-      category: match.categoryName,
-      regRange: match.regRange,
-      price: match.price,
-      colorCode: match.colorCode,
-      hexColor: match.hexColor,
-      remarks: match.remarks || '',
+      category: firstMatch.categoryName,
+      regRange: firstMatch.regRange,
+      price: firstMatch.price,
+      colorCode: firstMatch.colorCode,
+      hexColor: firstMatch.hexColor,
+      remarks: firstMatch.remarks || '',
     };
   }
 

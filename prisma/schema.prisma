@@ -84,6 +84,7 @@ model PricingCategory {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  @@unique([circuitId, type, categoryName, familyCategory])
   @@index([circuitId, type])
 }
 

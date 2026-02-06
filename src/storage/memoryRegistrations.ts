@@ -37,10 +37,14 @@ export type RegistrationRecord = {
   classifications?: any;
 };
 
-export async function generateNextId(categoryName: string, usedIds: string[] = []): Promise<string> {
+export async function generateNextId(categoryName: string, circuitId: string, type: string, usedIds: string[] = []): Promise<string> {
   // Fetch category rule from DB
   const cat = await prisma.pricingCategory.findFirst({
-    where: { categoryName }
+    where: {
+      categoryName,
+      circuitId,
+      type
+    }
   });
 
   if (!cat) {
@@ -63,8 +67,9 @@ export async function generateNextId(categoryName: string, usedIds: string[] = [
   const startNum = parseInt(startStr.replace(/^[A-Z]+/, ''), 10);
   const endNum = parseInt(endStr.replace(/^[A-Z]+/, ''), 10);
 
-  // OPTIMIZATION: Use findFirst with orderBy: 'desc' to get ONLY the highest existing ID.
-  const lastRecord = await (prisma.registration as any).findFirst({
+  // Fetch all records in range to find the TRUE numeric maximum.
+  // Note: findFirst with orderBy:'desc' uses string sorting, which fails (e.g., "999" > "1000")
+  const records = await (prisma.registration as any).findMany({
     where: {
       id: {
         gte: startStr,
@@ -72,15 +77,16 @@ export async function generateNextId(categoryName: string, usedIds: string[] = [
         startsWith: prefix || undefined
       }
     },
-    orderBy: { id: 'desc' },
     select: { id: true }
   });
 
+  const numericDbIds = (records as { id: string }[])
+    .map(r => parseInt(prefix ? r.id.substring(prefix.length) : r.id, 10))
+    .filter(n => !isNaN(n) && n >= startNum && n <= endNum);
+
   let maxIdFromDb = startNum - 1;
-  if (lastRecord) {
-    const val = prefix ? (lastRecord.id as string).substring(prefix.length) : lastRecord.id;
-    const n = parseInt(val, 10);
-    if (!isNaN(n)) maxIdFromDb = n;
+  if (numericDbIds.length > 0) {
+    maxIdFromDb = Math.max(...numericDbIds);
   }
 
   // Also check usedIds (for IDs generated in this batch but not yet saved to DB)
@@ -110,7 +116,7 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
 
   if (input.type === 'individual') {
     const category = (input.classifications as any[])?.[0]?.category || 'Individual';
-    const id = await generateNextId(category, usedIds);
+    const id = await generateNextId(category, input.circuitId, input.type, usedIds);
     usedIds.push(id);
     const rider = payload.riderDetails;
 
@@ -144,7 +150,7 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
     // First pass: Generate all IDs and add them to the member objects
     const memberIds: string[] = [];
     for (let i = 0; i < members.length; i++) {
-      const id = await generateNextId(teamClass, usedIds);
+      const id = await generateNextId(teamClass, input.circuitId, input.type, usedIds);
       usedIds.push(id);
       memberIds.push(id);
       members[i].regId = id; // Inject into payload
@@ -193,8 +199,8 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
     const riderIds: string[] = [];
     for (let i = 0; i < riders.length; i++) {
       const rider = riders[i];
-      const participantCategory = rider.category === 'cubs' ? 'Cubs' : rider.category === 'champs' ? 'Champs' : 'Tigers';
-      const id = await generateNextId(participantCategory, usedIds);
+      const participantCategory = rider.category === 'cubs' ? 'Cubs' : rider.category === 'champs' ? 'Champs' : 'Parent';
+      const id = await generateNextId(participantCategory, input.circuitId, input.type, usedIds);
       usedIds.push(id);
       riderIds.push(id);
 
@@ -206,7 +212,7 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
     for (let i = 0; i < riders.length; i++) {
       const rider = riders[i];
       const id = riderIds[i];
-      const participantCategory = rider.category === 'cubs' ? 'Cubs' : rider.category === 'champs' ? 'Champs' : 'Tigers';
+      const participantCategory = rider.category === 'cubs' ? 'Cubs' : rider.category === 'champs' ? 'Champs' : 'Parent';
 
       recordsToCreate.push({
         id,
@@ -221,9 +227,10 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
         groupId,
         guardianName: payload.familyDetails.guardian.fullName,
         emergencyContactName: rider.emergencyContactName || payload.familyDetails.guardian.emergencyContactName,
-        emergencyPhone: rider.emergencyPhone || payload.familyDetails.guardian.emergencyPhone,
+        emergencyPhone: rider.emergencyPhone || payload.familyDetails.guardian.phoneNumber || payload.familyDetails.guardian.emergencyPhone,
         relationship: payload.familyDetails.guardian.relationship,
         email: i === 0 ? payload.familyDetails.guardian.email : null,
+        phoneNumber: rider.category === 'tigers' ? (rider.phoneNumber || payload.familyDetails.guardian.phoneNumber) : null,
         category: participantCategory,
         totalAmount: i === 0 ? (input.pricing as any).totalAmount : 0,
         payload: { ...payload, groupId, isPrimary: i === 0, riderId: rider.id },
