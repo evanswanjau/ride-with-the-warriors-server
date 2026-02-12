@@ -83,8 +83,8 @@ async function main() {
             categoryName: 'Commanders',
             regRange: '3001–3999',
             price: 2000,
-            colorCode: 'White',
-            hexColor: '#ffffff',
+            colorCode: 'Indigo',
+            hexColor: '#6366f1',
             remarks: '40–49, Male & Female Classification'
         },
         {
@@ -127,8 +127,8 @@ async function main() {
             categoryName: 'Cubs',
             regRange: 'C201–C299',
             price: 1000,
-            colorCode: 'Red',
-            hexColor: '#ef4444',
+            colorCode: 'Navy Blue',
+            hexColor: '#1e3a8a',
             remarks: 'Kids 4–8'
         },
         {
@@ -139,8 +139,8 @@ async function main() {
             categoryName: 'Veterans',
             regRange: '6001–6999',
             price: 2000,
-            colorCode: 'Navy Blue',
-            hexColor: '#1e3a8a',
+            colorCode: 'Red',
+            hexColor: '#ef4444',
             remarks: '50 and over, Open Classification'
         },
         {

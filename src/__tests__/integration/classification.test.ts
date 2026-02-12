@@ -100,7 +100,7 @@ describe('Classification Integration Tests', () => {
             expect(classif.regRange).toBe('4001–4999');
         });
 
-        it('should classify Commanders (40-49, 3001-3999, White, 2000)', async () => {
+        it('should classify Commanders (40-49, 3001-3999, Indigo, 2000)', async () => {
             const res = await request.post('/api/v1/registrations/quote').send({
                 circuitId: 'blitz',
                 type: 'individual',
@@ -111,11 +111,11 @@ describe('Classification Integration Tests', () => {
             const classif = res.body.classifications[0];
             expect(classif.category).toBe('Commanders');
             expect(classif.price).toBe(2000);
-            expect(classif.colorCode).toBe('White');
+            expect(classif.colorCode).toBe('Indigo');
             expect(classif.regRange).toBe('3001–3999');
         });
 
-        it('should classify Veterans (Over 50, 6001-6999, Navy Blue, 2000)', async () => {
+        it('should classify Veterans (Over 50, 6001-6999, Red, 2000)', async () => {
             const res = await request.post('/api/v1/registrations/quote').send({
                 circuitId: 'blitz',
                 type: 'individual',
@@ -126,7 +126,7 @@ describe('Classification Integration Tests', () => {
             const classif = res.body.classifications[0];
             expect(classif.category).toBe('Veterans');
             expect(classif.price).toBe(2000);
-            expect(classif.colorCode).toBe('Navy Blue');
+            expect(classif.colorCode).toBe('Red');
             expect(classif.regRange).toBe('6001–6999');
         });
     });
@@ -225,7 +225,7 @@ describe('Classification Integration Tests', () => {
             participation: 'none'
         };
 
-        it('should classify Cubs (4-8 years, C201-C299, Red, 1000)', async () => {
+        it('should classify Cubs (4-8 years, C201-C299, Navy Blue, 1000)', async () => {
             const res = await request.post('/api/v1/registrations/quote').send({
                 circuitId: 'family',
                 type: 'family',
@@ -243,7 +243,7 @@ describe('Classification Integration Tests', () => {
             const classif = res.body.classifications.find((c: any) => c.category === 'Cubs');
             expect(classif).toBeDefined();
             expect(classif.price).toBe(1000);
-            expect(classif.colorCode).toBe('Red');
+            expect(classif.colorCode).toBe('Navy Blue');
             expect(classif.regRange).toBe('C201–C299');
         });
 
