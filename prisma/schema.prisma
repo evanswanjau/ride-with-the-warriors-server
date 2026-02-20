@@ -68,6 +68,24 @@ enum RegistrationStatus {
   CANCELLED
 }
 
+model Payment {
+  id                  String   @id @default(uuid())
+  registrationId      String
+  checkoutRequestId   String?  @unique
+  merchantRequestId   String?
+  phone               String?
+  amount              Float
+  status              String   @default("PENDING") // PENDING, PAID, FAILED
+  failureReason       String?
+  mpesaReceiptNumber  String?
+  transactionDate     String?  // as returned by M-Pesa e.g. "20231201120000"
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([registrationId])
+  @@index([checkoutRequestId])
+}
+
 model PricingCategory {
   id             String   @id @default(uuid())
   circuitId      String // e.g., 'blitz', 'recon', 'corporate', 'family'

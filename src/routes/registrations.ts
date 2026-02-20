@@ -4,7 +4,9 @@ import { ZodError } from 'zod';
 import { quoteRequestSchema, riderDetailsSchema, teamDetailsSchema, familyDetailsSchema } from '../validation/registrationSchemas.js';
 import { zodToApiError } from '../validation/zodError.js';
 import { buildQuote, getPricingCategories } from '../services/pricing.js';
-import { createRegistration, getRegistration, generateNextId, updateRegistration, findExistingRegistrationsByEmails } from '../storage/memoryRegistrations.js';
+import { createRegistration, getRegistration, getAllRegistrations, generateNextId, updateRegistration, findExistingRegistrationsByEmails, RegistrationRecord } from '../storage/memoryRegistrations.js';
+import { dtbService } from '../services/dtbService.js';
+import { prisma } from '../storage/prisma.js';
 
 export const registrationsRouter = Router();
 
@@ -109,6 +111,191 @@ registrationsRouter.post('/quote', async (req, res, next) => {
     if (err instanceof ZodError) return res.status(400).json(zodToApiError(err));
     next(err);
   }
+});
+
+// DTB PAYMENT HANDLERS
+registrationsRouter.post('/pay/dtb', async (req, res) => {
+  const { registrationId, amount, email, name } = req.body;
+
+  if (!registrationId || !amount || !email) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'Missing required payment details' } });
+  }
+
+  try {
+    const result = await dtbService.initiatePayment({
+      registrationId,
+      amount,
+      email,
+      name: name || 'Participant'
+    });
+
+    if (result.success) {
+      if (result.transactionReference) {
+        // If we get a reference immediately, maybe update the record with it?
+        // await updateRegistration(registrationId, { externalReference: result.transactionReference });
+      }
+      return res.json(result);
+    } else {
+      return res.status(500).json({ error: { code: 'PAYMENT_FAILED', message: result.message } });
+    }
+  } catch (err: any) {
+    console.error('[DTB Payment] Error:', err);
+    return res.status(500).json({ error: { code: 'INTERNAL', message: 'Payment initiation failed' } });
+  }
+});
+
+registrationsRouter.post('/pay/stk-push', async (req, res) => {
+  const { registrationId, amount, phoneNumber } = req.body;
+
+  if (!registrationId || !amount || !phoneNumber) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'Missing required payment details' } });
+  }
+
+  try {
+    const result = await dtbService.initiateStkPush({
+      registrationId,
+      amount,
+      phoneNumber
+    });
+
+    if (result.success && result.transactionReference) {
+      // Store checkoutRequestId in registration record for callback lookup
+      await updateRegistration(registrationId, {
+        payload: {
+          ...(await getRegistration(registrationId))?.payload,
+          checkoutRequestId: result.transactionReference
+        }
+      });
+      // Create a Payment audit record
+      try {
+        await prisma.payment.create({
+          data: {
+            registrationId,
+            checkoutRequestId: result.transactionReference,
+            phone: phoneNumber,
+            amount,
+            status: 'PENDING',
+          }
+        });
+      } catch (dbErr) {
+        console.error('[STK Push] Failed to create Payment record:', dbErr);
+      }
+      return res.json(result);
+    } else {
+      console.error('[STK Push] Payment Failed Response:', result);
+      // Record the failed attempt with no checkoutRequestId
+      try {
+        await prisma.payment.create({
+          data: { registrationId, phone: phoneNumber, amount, status: 'FAILED', failureReason: result.message || 'STK push rejected' }
+        });
+      } catch (dbErr) {
+        console.error('[STK Push] Failed to create failure Payment record:', dbErr);
+      }
+      return res.status(500).json({
+        error: {
+          code: 'PAYMENT_FAILED',
+          message: result.message || 'Failed to trigger M-Pesa prompt.'
+        }
+      });
+    }
+  } catch (err: any) {
+    console.error('[STK Push] Error:', err);
+    return res.status(500).json({ error: { code: 'INTERNAL', message: 'Payment initiation failed' } });
+  }
+});
+
+// DTB CALLBACK
+registrationsRouter.post('/callback/dtb', async (req, res) => {
+  console.log('[DTB Callback] Received payload:', JSON.stringify(req.body, null, 2));
+
+  // Normalize both M-Pesa PascalCase (Body.stkCallback.ResultCode) and Tuma snake_case (result_code)
+  const callbackData = req.body.Body?.stkCallback || req.body.stkCallback || req.body;
+
+  // Support both naming conventions
+  const resultCode = callbackData.ResultCode ?? callbackData.result_code ?? callbackData.ResultCode;
+  const resultDesc = callbackData.ResultDesc ?? callbackData.result_desc ?? callbackData.failure_reason ?? req.body.message;
+  const requestId = callbackData.CheckoutRequestID ?? callbackData.checkout_request_id;
+  const isSuccess = resultCode === 0 || resultCode === '0' || req.body.status === 'success' || req.body.success === true;
+
+  console.log(`[DTB Callback] RequestID: ${requestId}, ResultCode: ${resultCode}, Success: ${isSuccess}`);
+
+  if (isSuccess) {
+    try {
+      console.log(`[DTB Callback] Payment SUCCESS for RequestID: ${requestId}`);
+
+      // Extract M-Pesa receipt fields from CallbackMetadata.Item array (standard M-Pesa format)
+      const items: any[] = callbackData.CallbackMetadata?.Item || req.body.CallbackMetadata?.Item || [];
+      const getItem = (name: string) => items.find((i: any) => i.Name === name)?.Value;
+
+      const mpesaReceiptNumber =
+        getItem('MpesaReceiptNumber') ||
+        req.body.mpesa_receipt_number ||
+        req.body.transaction_id ||
+        null;
+
+      const transactionDate =
+        getItem('TransactionDate')?.toString() ||
+        req.body.transaction_date ||
+        null;
+
+      if (requestId) {
+        try {
+          await prisma.payment.update({
+            where: { checkoutRequestId: requestId },
+            data: {
+              status: 'PAID',
+              ...(mpesaReceiptNumber ? { mpesaReceiptNumber } : {}),
+              ...(transactionDate ? { transactionDate: transactionDate.toString() } : {}),
+            }
+          });
+        } catch (dbErr) {
+          console.error('[DTB Callback] Failed to update Payment record:', dbErr);
+        }
+      }
+
+      const allRegistrations = await getAllRegistrations();
+      const registration = allRegistrations.find((r: RegistrationRecord) => r.payload?.checkoutRequestId === requestId);
+
+      if (registration) {
+        // Clear any previous failure flag, mark as PAID
+        await updateRegistration(registration.id, {
+          status: 'PAID',
+          payload: { ...registration.payload, paymentFailed: false, paymentFailureReason: null }
+        });
+        console.log(`[DTB Callback] Registration ${registration.id} marked as PAID`);
+      } else {
+        console.warn(`[DTB Callback] No registration found for checkoutRequestId: ${requestId}`);
+      }
+    } catch (err) {
+      console.error('[DTB Callback] Error updating record:', err);
+    }
+  } else {
+    const reason = resultDesc || 'Payment failed or was cancelled';
+    console.warn(`[DTB Callback] Payment FAILED: ${reason}`);
+
+    if (requestId) {
+      try {
+        await prisma.payment.update({
+          where: { checkoutRequestId: requestId },
+          data: { status: 'FAILED', failureReason: reason }
+        });
+      } catch (dbErr) {
+        console.error('[DTB Callback] Failed to update Payment record as FAILED:', dbErr);
+      }
+
+      // Signal failure to frontend via registration payload so polling stops
+      const allRegistrations = await getAllRegistrations();
+      const registration = allRegistrations.find((r: RegistrationRecord) => r.payload?.checkoutRequestId === requestId);
+      if (registration) {
+        await updateRegistration(registration.id, {
+          payload: { ...registration.payload, paymentFailed: true, paymentFailureReason: reason }
+        });
+        console.log(`[DTB Callback] Registration ${registration.id} flagged as paymentFailed`);
+      }
+    }
+  }
+
+  return res.json({ received: true });
 });
 
 // SIMULATED M-PESA VERIFICATION

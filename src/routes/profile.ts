@@ -55,7 +55,13 @@ profileRouter.post('/search', async (req, res) => {
             });
         }
 
-        res.json({ registration: foundRegistration });
+        // Attach the latest payment record so the frontend can show real M-Pesa details
+        const latestPayment = await (prisma.payment as any).findFirst({
+            where: { registrationId: foundRegistration.id },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        res.json({ registration: { ...foundRegistration, latestPayment: latestPayment || null } });
     } catch (error) {
         console.error('Search error:', error);
         res.status(500).json({
