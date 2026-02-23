@@ -8,6 +8,7 @@ import { adminRegistrationsRouter } from './routes/admin/registrations.js';
 import { authRouter } from './routes/admin/auth.js';
 import { emailRouter } from './routes/admin/email.js';
 import { profileRouter } from './routes/profile.js';
+import { raffleRouter } from './routes/raffle.js';
 import { prisma } from './storage/prisma.js';
 
 const app = express();
@@ -27,6 +28,7 @@ app.get('/health', async (_req, res) => {
 app.use('/api/v1/circuits', circuitsRouter);
 app.use('/api/v1/registrations', registrationsRouter);
 app.use('/api/v1/profile', profileRouter);
+app.use('/api/v1/raffle', raffleRouter);
 
 // Admin Routes
 app.use('/api/v1/admin/auth', authRouter);

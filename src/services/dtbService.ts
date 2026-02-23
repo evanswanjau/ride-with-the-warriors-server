@@ -11,12 +11,14 @@ interface TumaPaymentInitiation {
     email: string;
     name: string;
     phoneNumber?: string;
+    callbackUrl?: string;
 }
 
 interface TumaStkPushInitiation {
     registrationId: string;
     amount: number;
     phoneNumber: string; // Required for STK Push
+    callbackUrl?: string;
 }
 
 interface TumaPaymentResponse {
@@ -95,13 +97,10 @@ export const dtbService = {
 
         const token = await this.getAuthToken();
         if (!token) {
-            console.warn('[Tuma Service] Auth failed/missing. Using Simulation.');
+            console.error('[Tuma Service] Authentication failed. Cannot initiate real payment.');
             return {
-                success: true,
-                transactionReference: `TUMA-SIM-${Date.now()}`,
-                // In simulation, we just succeed immediately or return a dummy URL if frontend expects redirection
-                // For now, let's behave as if success = true means payment initiated/completed in simulation
-                message: 'Simulation: Payment initiated (Auth missing).'
+                success: false,
+                message: 'Payment gateway authentication failed. Please try again later.'
             };
         }
 
@@ -125,7 +124,7 @@ export const dtbService = {
                         description: `Registration ID: ${details.registrationId}`
                     }
                 ],
-                callback_url: `${process.env.APP_URL}/api/v1/registrations/callback/dtb`,
+                callback_url: details.callbackUrl || `${process.env.APP_URL || process.env.BASE_URL}/api/v1/registrations/callback/dtb`,
                 external_reference: details.registrationId
             };
 
@@ -181,7 +180,7 @@ export const dtbService = {
                 amount: details.amount,
                 phone: details.phoneNumber,
                 // Ensure callback_url matches the live server URL
-                callback_url: `${process.env.BASE_URL}/api/v1/registrations/callback/dtb`,
+                callback_url: details.callbackUrl || `${process.env.BASE_URL || process.env.APP_URL}/api/v1/registrations/callback/dtb`,
                 description: `Reg ID: ${details.registrationId}`
             };
 

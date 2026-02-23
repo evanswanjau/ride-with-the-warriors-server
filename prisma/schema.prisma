@@ -117,3 +117,20 @@ model EmailLog {
   @@index([registrationId, type])
   @@index([type, status])
 }
+
+model RaffleTicket {
+  id                String   @id          // e.g. "AA001"
+  firstName         String
+  lastName          String
+  email             String
+  phoneNumber       String?
+  idNumber          String?
+  gender            String?
+  status            String   @default("UNPAID")  // UNPAID → PAID
+  checkoutRequestId String?  @unique
+  paymentFailed     Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([email])
+}

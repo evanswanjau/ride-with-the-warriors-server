@@ -16,24 +16,38 @@ profileRouter.post('/search', async (req, res) => {
         }
 
         let foundRegistration = null;
+        let foundRaffleTicket = null;
 
         if (searchType === 'id') {
+            // Check registrations
             foundRegistration = await getRegistration(searchValue.toUpperCase());
             if (!foundRegistration) {
-                // Try searching in idNumber column as a fallback
                 foundRegistration = await (prisma.registration as any).findFirst({
                     where: { idNumber: { equals: searchValue.trim() } },
                     orderBy: { createdAt: 'desc' }
                 });
             }
+            // Check raffle tickets
+            foundRaffleTicket = await (prisma.raffleTicket as any).findFirst({
+                where: { id: { equals: searchValue.toUpperCase().trim() } }
+            });
+
         } else if (searchType === 'email') {
             const searchLower = searchValue.toLowerCase().trim();
+            // Check registrations
             foundRegistration = await (prisma.registration as any).findFirst({
                 where: { email: { equals: searchLower } },
                 orderBy: { createdAt: 'desc' }
             });
+            // Check raffle tickets
+            foundRaffleTicket = await (prisma.raffleTicket as any).findFirst({
+                where: { email: { equals: searchLower } },
+                orderBy: { createdAt: 'desc' }
+            });
+
         } else if (searchType === 'phone') {
             const normalizedPhone = searchValue.replace(/\s+/g, '');
+            // Check registrations
             foundRegistration = await (prisma.registration as any).findFirst({
                 where: {
                     OR: [
@@ -43,25 +57,32 @@ profileRouter.post('/search', async (req, res) => {
                 },
                 orderBy: { createdAt: 'desc' }
             });
-        } else {
-            return res.status(400).json({
-                error: { code: 'VALIDATION', message: 'Invalid searchType. Must be "id", "email", or "phone"' }
+            // Check raffle tickets
+            foundRaffleTicket = await (prisma.raffleTicket as any).findFirst({
+                where: { phoneNumber: { contains: normalizedPhone } },
+                orderBy: { createdAt: 'desc' }
             });
         }
 
-        if (!foundRegistration) {
+        if (!foundRegistration && !foundRaffleTicket) {
             return res.status(404).json({
-                error: { code: 'NOT_FOUND', message: 'No registration found with the provided information' }
+                error: { code: 'NOT_FOUND', message: 'No entry found with the provided information' }
             });
         }
 
-        // Attach the latest payment record so the frontend can show real M-Pesa details
-        const latestPayment = await (prisma.payment as any).findFirst({
-            where: { registrationId: foundRegistration.id },
-            orderBy: { createdAt: 'desc' }
-        });
+        // Attach payment records
+        let latestRegPayment = null;
+        if (foundRegistration) {
+            latestRegPayment = await (prisma.payment as any).findFirst({
+                where: { registrationId: foundRegistration.id },
+                orderBy: { createdAt: 'desc' }
+            });
+        }
 
-        res.json({ registration: { ...foundRegistration, latestPayment: latestPayment || null } });
+        res.json({
+            registration: foundRegistration ? { ...foundRegistration, latestPayment: latestRegPayment || null } : null,
+            raffleTicket: foundRaffleTicket || null
+        });
     } catch (error) {
         console.error('Search error:', error);
         res.status(500).json({
