@@ -280,7 +280,7 @@ export async function updateRegistration(id: string, input: Partial<Omit<Registr
     });
   }
 
-  if (existing.status === 'UNPAID' && (input.type === 'team' || input.type === 'family') && input.payload) {
+  if (existing.status === 'UNPAID' && input.payload) {
     if (groupId) {
       await (prisma.registration as any).deleteMany({ where: { groupId } });
     } else {
@@ -343,6 +343,12 @@ export async function updateRegistration(id: string, input: Partial<Omit<Registr
           category: reg.category || undefined,
           payload: reg.payload,
           teamName: (reg as any).teamName || undefined,
+          gender: reg.gender,
+          dob: reg.dob,
+          idNumber: reg.idNumber,
+          tshirtSize: reg.tshirtSize,
+          emergencyContactName: reg.emergencyContactName,
+          emergencyPhone: reg.emergencyPhone,
         }).catch(err => console.error(`[Email] Failed to send confirmation to ${reg.id}:`, err));
       }
     }

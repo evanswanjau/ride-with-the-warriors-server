@@ -50,6 +50,12 @@ async function processPaymentReminders() {
                 category: reg.category || undefined,
                 payload: reg.payload,
                 teamName: reg.teamName || undefined,
+                gender: reg.gender,
+                dob: reg.dob,
+                idNumber: reg.idNumber,
+                tshirtSize: reg.tshirtSize,
+                emergencyContactName: reg.emergencyContactName,
+                emergencyPhone: reg.emergencyPhone,
             });
         }
 
@@ -66,6 +72,12 @@ async function processPaymentReminders() {
                 category: reg.category || undefined,
                 payload: reg.payload,
                 teamName: reg.teamName || undefined,
+                gender: reg.gender,
+                dob: reg.dob,
+                idNumber: reg.idNumber,
+                tshirtSize: reg.tshirtSize,
+                emergencyContactName: reg.emergencyContactName,
+                emergencyPhone: reg.emergencyPhone,
             });
         }
     }
@@ -124,6 +136,12 @@ async function processEventReminders() {
             category: reg.category || undefined,
             payload: reg.payload,
             teamName: reg.teamName || undefined,
+            gender: reg.gender,
+            dob: reg.dob,
+            idNumber: reg.idNumber,
+            tshirtSize: reg.tshirtSize,
+            emergencyContactName: reg.emergencyContactName,
+            emergencyPhone: reg.emergencyPhone,
         });
     }
 }

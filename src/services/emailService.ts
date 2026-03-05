@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { prisma } from '../storage/prisma.js';
+import { calculateAge } from './pricing.js';
 
 // --- CONFIGURATION & CONSTANTS ---
 
@@ -55,6 +56,12 @@ interface RegistrationData {
   category?: string;
   payload?: any;
   teamName?: string;
+  gender?: string | null;
+  dob?: string | null;
+  idNumber?: string | null;
+  tshirtSize?: string | null;
+  emergencyContactName?: string | null;
+  emergencyPhone?: string | null;
 }
 
 // --- SMTP SETUP ---
@@ -140,17 +147,20 @@ function renderDetailsTable(data: RegistrationData): string {
   const p = data.payload || {};
   const rider = p.riderDetails || {};
 
+  // Calculate age from DOB if available
+  const ageValue = data.dob ? calculateAge(data.dob) : (p.age || '—');
+
   const items = [
     { label: 'Name', value: `${data.firstName} ${data.lastName}` },
-    { label: 'Gender', value: p.gender || '—' },
+    { label: 'Gender', value: data.gender || p.gender || '—' },
     { label: 'Circuit', value: data.circuitId.toUpperCase() },
-    { label: 'Category', value: data.category || 'Airborne' },
-    { label: 'Age', value: p.age || '—' },
-    { label: 'ID Number', value: p.idNumber || '—' },
+    { label: 'Category', value: data.category || 'Individual' },
+    { label: 'Age', value: ageValue !== null ? ageValue.toString() : '—' },
+    { label: 'ID Number', value: data.idNumber || p.idNumber || '—' },
     { label: 'Team', value: data.teamName || 'Individual' },
-    { label: 'T-Shirt', value: rider.tshirtSize || p.tshirtSize || '—' },
-    { label: 'Emergency', value: rider.emergencyContactName || '—' },
-    { label: 'Tel', value: rider.emergencyContactPhone || p.emergencyContactPhone || '—' },
+    { label: 'T-Shirt', value: data.tshirtSize || rider.tshirtSize || p.tshirtSize || '—' },
+    { label: 'Emergency', value: data.emergencyContactName || rider.emergencyContactName || '—' },
+    { label: 'Tel', value: data.emergencyPhone || rider.emergencyContactPhone || p.emergencyContactPhone || '—' },
   ];
 
   let rows = '';

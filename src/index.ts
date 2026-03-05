@@ -5,6 +5,8 @@ import cors from 'cors';
 import { circuitsRouter } from './routes/circuits.js';
 import { registrationsRouter } from './routes/registrations.js';
 import { adminRegistrationsRouter } from './routes/admin/registrations.js';
+import { adminPaymentsRouter } from './routes/admin/payments.js';
+import { adminRaffleRouter } from './routes/admin/raffle.js';
 import { authRouter } from './routes/admin/auth.js';
 import { emailRouter } from './routes/admin/email.js';
 import { profileRouter } from './routes/profile.js';
@@ -33,6 +35,8 @@ app.use('/api/v1/raffle', raffleRouter);
 // Admin Routes
 app.use('/api/v1/admin/auth', authRouter);
 app.use('/api/v1/admin/registrations', adminRegistrationsRouter);
+app.use('/api/v1/admin/payments', adminPaymentsRouter);
+app.use('/api/v1/admin/raffle', adminRaffleRouter);
 app.use('/api/v1/admin/email', emailRouter);
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
