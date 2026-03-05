@@ -140,7 +140,7 @@ registrationsRouter.post('/pay/dtb', async (req, res) => {
     }
   } catch (err: any) {
     console.error('[DTB Payment] Error:', err);
-    return res.status(500).json({ error: { code: 'INTERNAL', message: 'Payment initiation failed' } });
+    return res.status(500).json({ error: { code: 'INTERNAL', message: err.message || 'Payment initiation failed' } });
   }
 });
 
@@ -200,7 +200,7 @@ registrationsRouter.post('/pay/stk-push', async (req, res) => {
     }
   } catch (err: any) {
     console.error('[STK Push] Error:', err);
-    return res.status(500).json({ error: { code: 'INTERNAL', message: 'Payment initiation failed' } });
+    return res.status(500).json({ error: { code: 'INTERNAL', message: err.message || 'Payment initiation failed' } });
   }
 });
 

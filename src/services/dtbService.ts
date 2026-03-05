@@ -51,11 +51,12 @@ export const dtbService = {
         }
 
         if (!TUMA_CONFIG.email || !TUMA_CONFIG.apiKey) {
-            console.warn('[Tuma Service] Missing API Credentials');
+            console.error('[Tuma Service] Missing API Credentials. TUMA_API_EMAIL or TUMA_API_KEY is not set.');
             return null;
         }
 
         try {
+            console.log(`[Tuma Service] Attempting authentication for: ${TUMA_CONFIG.email}`);
             const response = await fetch(`${TUMA_CONFIG.authUrl}/auth/token`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -66,8 +67,8 @@ export const dtbService = {
             });
 
             if (!response.ok) {
-                const error = await response.text();
-                console.error('[Tuma Service] Auth Failed:', error);
+                const errorText = await response.text();
+                console.error(`[Tuma Service] Auth Failed (Status: ${response.status}):`, errorText);
                 return null;
             }
 
@@ -78,6 +79,7 @@ export const dtbService = {
                 cachedToken = token;
                 // Assume 1 hour expiry if not provided. Reset expiry on fresh token.
                 tokenExpiry = Date.now() + (3600 * 1000);
+                console.log('[Tuma Service] Authentication successful');
                 return token;
             }
 
@@ -171,7 +173,10 @@ export const dtbService = {
 
         const token = await this.getAuthToken();
         if (!token) {
-            throw new Error('Authentication with Payment Gateway failed. Please contact support.');
+            return {
+                success: false,
+                message: 'Authentication with Payment Gateway failed. Please check server configuration.'
+            };
         }
 
         try {

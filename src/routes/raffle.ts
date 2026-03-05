@@ -151,7 +151,7 @@ raffleRouter.post('/pay/stk-push', async (req, res) => {
     }
   } catch (err: any) {
     console.error('[Raffle STK Push] Error:', err);
-    return res.status(500).json({ error: { code: 'INTERNAL', message: 'Payment initiation failed' } });
+    return res.status(500).json({ error: { code: 'INTERNAL', message: err.message || 'Payment initiation failed' } });
   }
 });
 

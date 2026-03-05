@@ -280,7 +280,9 @@ export async function updateRegistration(id: string, input: Partial<Omit<Registr
     });
   }
 
-  if (existing.status === 'UNPAID' && input.payload) {
+  // Only perform a full delete-and-recreate if we have a type and circuitId (e.g. from the quote/register flow)
+  // and the registration is still UNPAID. Partial updates (like adding a checkoutRequestId) should be handled normally.
+  if (existing.status === 'UNPAID' && input.payload && input.type && input.circuitId) {
     if (groupId) {
       await (prisma.registration as any).deleteMany({ where: { groupId } });
     } else {
