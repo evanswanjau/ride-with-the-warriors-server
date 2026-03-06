@@ -127,7 +127,7 @@ model RaffleTicket {
   idNumber          String?
   gender            String?
   status            String   @default("UNPAID")  // UNPAID → PAID
-  checkoutRequestId String?  @unique
+  checkoutRequestId String?
   paymentFailed     Boolean  @default(false)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt

@@ -9,6 +9,7 @@ import { adminPaymentsRouter } from './routes/admin/payments.js';
 import { adminRaffleRouter } from './routes/admin/raffle.js';
 import { authRouter } from './routes/admin/auth.js';
 import { emailRouter } from './routes/admin/email.js';
+import { adminDashboardRouter } from './routes/admin/dashboard.js';
 import { profileRouter } from './routes/profile.js';
 import { raffleRouter } from './routes/raffle.js';
 import { prisma } from './storage/prisma.js';
@@ -38,6 +39,7 @@ app.use('/api/v1/admin/registrations', adminRegistrationsRouter);
 app.use('/api/v1/admin/payments', adminPaymentsRouter);
 app.use('/api/v1/admin/raffle', adminRaffleRouter);
 app.use('/api/v1/admin/email', emailRouter);
+app.use('/api/v1/admin/dashboard', adminDashboardRouter);
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

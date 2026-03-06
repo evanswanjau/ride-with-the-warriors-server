@@ -176,7 +176,87 @@ async function main() {
     }
 
     console.log('✅ Pricing categories seeded.');
+
+    // 3. Seed Test Data (Optional, for Dashboard Review)
+    console.log('🧪 Seeding realistic test data for dashboard review...');
+    await seedTestData();
+
     console.log('✨ Seeding complete!');
+}
+
+async function seedTestData() {
+    const circuits = ['blitz', 'recon', 'corporate', 'family'];
+    const statuses: ('PAID' | 'UNPAID' | 'CONFIRMED' | 'CANCELLED')[] = ['PAID', 'PAID', 'PAID', 'UNPAID', 'CONFIRMED', 'UNPAID'];
+    const genders = ['MALE', 'FEMALE'];
+    const tshirtSizes = ['S', 'M', 'L', 'XL', 'XXL'];
+
+    // Clear existing test data
+    await prisma.payment.deleteMany();
+    await prisma.registration.deleteMany();
+    await prisma.raffleTicket.deleteMany();
+
+    const now = new Date();
+
+    // Generate 150 registrations over the last 14 days
+    for (let i = 0; i < 150; i++) {
+        const daysAgo = Math.floor(Math.random() * 14);
+        const createdAt = new Date(now.getTime() - (daysAgo * 24 * 60 * 60 * 1000) - (Math.random() * 24 * 60 * 60 * 1000));
+        const status = statuses[Math.floor(Math.random() * statuses.length)];
+        const amount = status === 'PAID' || status === 'CONFIRMED' ? 2000 + (Math.floor(Math.random() * 5) * 500) : 0;
+
+        const reg = await prisma.registration.create({
+            data: {
+                id: `REG-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+                firstName: `User${i}`,
+                lastName: `Test${i}`,
+                email: `user${i}@example.com`,
+                phoneNumber: `254712${Math.floor(100000 + Math.random() * 900000)}`,
+                circuitId: circuits[Math.floor(Math.random() * circuits.length)],
+                type: Math.random() > 0.3 ? 'individual' : 'team',
+                status: status as any,
+                gender: genders[Math.floor(Math.random() * genders.length)],
+                tshirtSize: tshirtSizes[Math.floor(Math.random() * tshirtSizes.length)],
+                totalAmount: amount,
+                createdAt,
+                updatedAt: createdAt
+            }
+        });
+
+        if (status === 'PAID' || status === 'CONFIRMED') {
+            await prisma.payment.create({
+                data: {
+                    registrationId: reg.id,
+                    amount: amount,
+                    status: 'PAID',
+                    mpesaReceiptNumber: `R${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+                    transactionDate: createdAt.toISOString().replace(/[-:T.]/g, '').substr(0, 14),
+                    createdAt,
+                    updatedAt: createdAt
+                }
+            });
+        }
+    }
+
+    // Generate 50 raffle tickets
+    for (let i = 0; i < 50; i++) {
+        const daysAgo = Math.floor(Math.random() * 10);
+        const createdAt = new Date(now.getTime() - (daysAgo * 24 * 60 * 60 * 1000));
+        const status = Math.random() > 0.2 ? 'PAID' : 'UNPAID';
+
+        await prisma.raffleTicket.create({
+            data: {
+                id: `RT-${Math.random().toString(36).substr(2, 4).toUpperCase()}${100 + i}`,
+                firstName: `Raffle${i}`,
+                lastName: `Ticket${i}`,
+                email: `raffle${i}@example.com`,
+                status,
+                createdAt,
+                updatedAt: createdAt
+            }
+        });
+    }
+
+    console.log('✅ 150 Registrations and 50 Raffle Tickets seeded.');
 }
 
 main()

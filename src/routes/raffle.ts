@@ -54,10 +54,10 @@ async function generateNextRaffleCode(): Promise<string> {
   return code;
 }
 
-// ─── POST / — Create raffle ticket (UNPAID) ──────────────────────────────────
+// ─── POST / — Create raffle ticket(s) (UNPAID) ──────────────────────────────────
 raffleRouter.post('/', async (req, res) => {
   try {
-    const { firstName, lastName, email, phoneNumber, idNumber, gender } = req.body;
+    const { firstName, lastName, email, phoneNumber, idNumber, gender, quantity = 1 } = req.body;
 
     if (!firstName || !lastName || !email || !idNumber) {
       return res.status(400).json({
@@ -65,78 +65,71 @@ raffleRouter.post('/', async (req, res) => {
       });
     }
 
-    // Check duplicate (only block if PAID)
-    const duplicate = await (prisma.raffleTicket as any).findFirst({
-      where: { email: email.trim().toLowerCase() },
-    });
-    if (duplicate && duplicate.status === 'PAID') {
-      return res.status(400).json({
-        error: {
-          code: 'DUPLICATE',
-          message: 'A paid raffle ticket for this email already exists.',
-          existingId: duplicate.id,
-        },
-      });
-    }
+    const numTickets = Math.max(1, parseInt(quantity as string, 10));
+    const ticketIds: string[] = [];
 
-    // If there's an unpaid duplicate, delete it and allow a fresh start
-    if (duplicate && duplicate.status === 'UNPAID') {
-      await (prisma.raffleTicket as any).delete({ where: { id: duplicate.id } });
-    }
+    for (let i = 0; i < numTickets; i++) {
+      try {
+        const id = await generateNextRaffleCode();
+        ticketIds.push(id);
 
-    let id: string;
-    try {
-      id = await generateNextRaffleCode();
-    } catch (e: any) {
-      if (e.message === 'RAFFLE_FULL') {
-        return res.status(503).json({
-          error: { code: 'RAFFLE_FULL', message: 'All raffle tickets have been claimed.' },
+        // Create the ticket immediately to "reserve" the ID
+        await (prisma.raffleTicket as any).create({
+          data: {
+            id,
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            email: email.trim().toLowerCase(),
+            phoneNumber: phoneNumber ? phoneNumber.trim() : null,
+            idNumber: idNumber.trim(),
+            gender: gender || null,
+            status: 'UNPAID',
+          },
         });
+      } catch (e: any) {
+        if (e.message === 'RAFFLE_FULL') {
+          return res.status(503).json({
+            error: { code: 'RAFFLE_FULL', message: 'All raffle tickets have been claimed.' },
+          });
+        }
+        throw e;
       }
-      throw e;
     }
 
-    const ticket = await (prisma.raffleTicket as any).create({
-      data: {
-        id,
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        email: email.trim().toLowerCase(),
-        phoneNumber: phoneNumber ? phoneNumber.trim() : null,
-        idNumber: idNumber.trim(),
-        gender: gender || null,
-        status: 'UNPAID',
-      },
+    console.log(`[Raffle] ${numTickets} Ticket(s) created UNPAID for ${email}: ${ticketIds.join(', ')}`);
+    return res.status(201).json({
+      ticketIds,
+      amount: RAFFLE_AMOUNT * numTickets,
+      quantity: numTickets
     });
-
-    console.log(`[Raffle] Ticket created UNPAID: ${id} for ${email}`);
-    return res.status(201).json({ ticketId: id, ticket, amount: RAFFLE_AMOUNT });
   } catch (err) {
     console.error('[Raffle] Create error:', err);
-    return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to create raffle ticket' } });
+    return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to create raffle ticket(s)' } });
   }
 });
 
 // ─── POST /pay/stk-push — Initiate M-Pesa payment ────────────────────────────
 raffleRouter.post('/pay/stk-push', async (req, res) => {
-  const { ticketId, phoneNumber } = req.body;
+  const { ticketIds, phoneNumber } = req.body;
 
-  if (!ticketId || !phoneNumber) {
-    return res.status(400).json({ error: { code: 'VALIDATION', message: 'ticketId and phoneNumber are required' } });
+  if (!ticketIds || !Array.isArray(ticketIds) || ticketIds.length === 0 || !phoneNumber) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: 'ticketIds (array) and phoneNumber are required' } });
   }
+
+  const totalAmount = RAFFLE_AMOUNT * ticketIds.length;
 
   try {
     const result = await dtbService.initiateStkPush({
-      registrationId: ticketId,
-      amount: RAFFLE_AMOUNT,
+      registrationId: ticketIds[0], // Use the first ticket ID as the reference for the callback
+      amount: totalAmount,
       phoneNumber,
       callbackUrl: `${process.env.APP_URL || process.env.BASE_URL}/api/v1/raffle/callback/dtb`,
     });
 
     if (result.success && result.transactionReference) {
-      // Store checkoutRequestId on the ticket
-      await (prisma.raffleTicket as any).update({
-        where: { id: ticketId },
+      // Store checkoutRequestId on ALL tickets
+      await (prisma.raffleTicket as any).updateMany({
+        where: { id: { in: ticketIds } },
         data: {
           checkoutRequestId: result.transactionReference,
           paymentFailed: false,
@@ -169,21 +162,21 @@ raffleRouter.post('/callback/dtb', async (req, res) => {
 
   if (isSuccess) {
     try {
-      const ticket = await (prisma.raffleTicket as any).findFirst({
+      const tickets = await (prisma.raffleTicket as any).findMany({
         where: { checkoutRequestId: requestId },
       });
 
-      if (ticket) {
-        await (prisma.raffleTicket as any).update({
-          where: { id: ticket.id },
+      if (tickets.length > 0) {
+        await (prisma.raffleTicket as any).updateMany({
+          where: { checkoutRequestId: requestId },
           data: { status: 'PAID', paymentFailed: false },
         });
-        console.log(`[Raffle Callback] Ticket ${ticket.id} marked as PAID`);
+        console.log(`[Raffle Callback] ${tickets.length} Ticket(s) marked as PAID for requestId: ${requestId}`);
       } else {
-        console.warn(`[Raffle Callback] No ticket found for checkoutRequestId: ${requestId}`);
+        console.warn(`[Raffle Callback] No tickets found for checkoutRequestId: ${requestId}`);
       }
     } catch (err) {
-      console.error('[Raffle Callback] Error updating ticket:', err);
+      console.error('[Raffle Callback] Error updating tickets:', err);
     }
   } else {
     const reason = resultDesc || 'Payment failed or was cancelled';
