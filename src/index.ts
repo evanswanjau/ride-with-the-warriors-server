@@ -12,6 +12,7 @@ import { emailRouter } from './routes/admin/email.js';
 import { adminDashboardRouter } from './routes/admin/dashboard.js';
 import { profileRouter } from './routes/profile.js';
 import { raffleRouter } from './routes/raffle.js';
+import { enquiryRouter } from './routes/enquiry.js';
 import { prisma } from './storage/prisma.js';
 
 const app = express();
@@ -32,6 +33,7 @@ app.use('/api/v1/circuits', circuitsRouter);
 app.use('/api/v1/registrations', registrationsRouter);
 app.use('/api/v1/profile', profileRouter);
 app.use('/api/v1/raffle', raffleRouter);
+app.use('/api/v1/enquiry', enquiryRouter);
 
 // Admin Routes
 app.use('/api/v1/admin/auth', authRouter);
