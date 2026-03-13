@@ -138,43 +138,64 @@ export async function buildQuote(input: {
   let totalAmount = 0;
 
   if (input.type === 'individual') {
-    const rider = (input.payload as { riderDetails: { firstName: string; dob: string } }).riderDetails;
+    const rider = (input.payload as { riderDetails: { firstName: string; dob: string; isMilitary?: boolean } }).riderDetails;
     const age = calculateAge(rider.dob);
     const classification = getClassification(categories, input.circuitId, 'individual', age);
-    totalAmount = classification.price;
+    
+    const individualPrice = rider.isMilitary ? 0 : classification.price;
+    totalAmount = individualPrice;
+    
     classifications.push(classification);
     lineItems.push({
-      label: `${rider.firstName} - ${classification.category}`,
-      amount: classification.price,
+      label: `${rider.firstName} - ${classification.category}${rider.isMilitary ? ' (Military)' : ''}`,
+      amount: individualPrice,
       category: classification.category,
       regRange: classification.regRange,
       color: classification.hexColor,
     });
   } else if (input.type === 'team') {
-    const team = (input.payload as { teamDetails: { teamName: string } }).teamDetails;
+    const team = (input.payload as { teamDetails: { teamName: string; isMilitary?: boolean } }).teamDetails;
     const classification = getClassification(categories, input.circuitId, 'team');
-    totalAmount = classification.price;
+    
+    const teamPrice = (input.payload as any).teamDetails?.isMilitary ? 0 : classification.price;
+    totalAmount = teamPrice;
+    
     classifications.push(classification);
     lineItems.push({
-      label: `Team: ${team.teamName}`,
-      amount: classification.price,
+      label: `Team: ${team.teamName}${(input.payload as any).teamDetails?.isMilitary ? ' (Military)' : ''}`,
+      amount: teamPrice,
       category: classification.category,
       regRange: classification.regRange,
       color: classification.hexColor,
     });
   } else {
     const family = (input.payload as {
-      familyDetails: { riders: Record<'cubs' | 'champs' | 'tigers', Array<unknown>> };
+      familyDetails: { 
+        guardian: { isMilitary?: boolean };
+        riders: Record<'cubs' | 'champs' | 'tigers', Array<unknown>> 
+      };
     }).familyDetails;
+
     for (const catId of ['cubs', 'champs', 'tigers'] as const) {
       const riders = family.riders[catId] ?? [];
       if (riders.length === 0) continue;
       const classification = getClassification(categories, 'family', 'family', null, catId);
-      const amount = riders.length * classification.price;
+      
+      let amount = riders.length * classification.price;
+      
+      // If it's a family registration and the guardian is military, 
+      // the 'tigers' (Parent) category should be free for the primary parent.
+      // In the current logic, 'tigers' contains the parent if they ride.
+      if (catId === 'tigers' && family.guardian.isMilitary) {
+        // Assume there's only one riding parent in tigers usually, 
+        // or just subtract one parent's price.
+        amount = Math.max(0, (riders.length - 1) * classification.price);
+      }
+
       totalAmount += amount;
       classifications.push(classification);
       lineItems.push({
-        label: `${classification.category} (x${riders.length})`,
+        label: `${classification.category} (x${riders.length})${catId === 'tigers' && family.guardian.isMilitary ? ' [Military Parent Free]' : ''}`,
         amount,
         count: riders.length,
         category: classification.category,

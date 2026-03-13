@@ -32,6 +32,11 @@ model Registration {
   category        String?
   totalAmount     Float              @default(0)
   mpesaCode       String?
+  isMilitary      Boolean            @default(false)
+  serviceNumber   String?
+  rank            String?
+  service         String?
+  unit            String?
   payload         Json?
   pricing         Json?
   classifications Json?

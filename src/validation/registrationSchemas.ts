@@ -34,6 +34,12 @@ export const riderDetailsSchema = z.object({
   tshirtSize: z.string().min(1, 'T-shirt size is required'),
   emergencyContactName: z.string().min(1, 'Emergency contact name is required'),
   emergencyPhone: phoneSchema,
+  // Military fields
+  isMilitary: z.boolean().optional(),
+  serviceNumber: z.string().optional(),
+  rank: z.string().optional(),
+  service: z.string().optional(),
+  unit: z.string().optional(),
 });
 
 export const teamMemberSchema = riderDetailsSchema.extend({
@@ -83,6 +89,12 @@ export const familyDetailsSchema = z
       relationship: z.string().min(1, 'Relationship is required'),
       tshirtSize: z.string().optional(),
       participation: z.enum(['none', 'mom', 'other']),
+      // Military fields
+      isMilitary: z.boolean().optional(),
+      serviceNumber: z.string().optional(),
+      rank: z.string().optional(),
+      service: z.string().optional(),
+      unit: z.string().optional(),
     }),
     riders: z.object({
       cubs: z.array(juniorRiderSchema),
