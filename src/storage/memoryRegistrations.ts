@@ -147,11 +147,13 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
     const teamClass = (input.classifications as any[])?.[0]?.category || 'Blitz Team';
     const members = payload.teamDetails.members;
 
-    // First pass: Generate all IDs and add them to the member objects
+    // Generate a single base ID for the entire team
+    const baseId = await generateNextId(teamClass, input.circuitId, input.type, usedIds);
+    usedIds.push(baseId); // This ensures the next registration will increment from this baseId
+
     const memberIds: string[] = [];
     for (let i = 0; i < members.length; i++) {
-      const id = await generateNextId(teamClass, input.circuitId, input.type, usedIds);
-      usedIds.push(id);
+      const id = `${baseId}-${i + 1}`;
       memberIds.push(id);
       members[i].regId = id; // Inject into payload
     }
