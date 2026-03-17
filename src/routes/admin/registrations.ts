@@ -12,13 +12,16 @@ adminRegistrationsRouter.get('/', requireAdmin, async (req, res) => {
         const limit = Number(req.query.limit) || 20;
         const skip = (page - 1) * limit;
 
-        const { search, circuitId, type, status, category } = req.query;
+        const { search, circuitId, type, status, category, isMilitary } = req.query;
 
         const where: any = {};
         if (circuitId) where.circuitId = circuitId;
         if (type) where.type = type;
         if (status) where.status = status;
         if (category) where.category = category;
+        if (isMilitary !== undefined && isMilitary !== '') {
+            where.isMilitary = isMilitary === 'true';
+        }
 
         // Efficient flat column search
         if (search) {
@@ -128,12 +131,17 @@ adminRegistrationsRouter.delete('/:id', requireAdmin, async (req, res) => {
 // Statistics
 adminRegistrationsRouter.get('/stats/summary', requireAdmin, async (_req, res) => {
     try {
-        const [total, paid, unpaid, cancelled] = await Promise.all([
+        const [totalCount, regsGrouped] = await Promise.all([
             prisma.registration.count(),
-            prisma.registration.count({ where: { status: 'PAID' } }),
-            prisma.registration.count({ where: { status: 'UNPAID' } }),
-            prisma.registration.count({ where: { status: 'CANCELLED' } })
+            prisma.registration.groupBy({ by: ['status'], _count: true })
         ]);
+
+        let paid = 0, unpaid = 0, cancelled = 0;
+        for (const g of regsGrouped) {
+            if (g.status === 'PAID') paid = g._count;
+            if (g.status === 'UNPAID') unpaid = g._count;
+            if (g.status === 'CANCELLED') cancelled = g._count;
+        }
 
         // Efficient revenue calculation using flat columns
         const revenueResult = await (prisma.registration as any).aggregate({
@@ -155,7 +163,7 @@ adminRegistrationsRouter.get('/stats/summary', requireAdmin, async (_req, res) =
 
         res.json({
             summary: {
-                total,
+                total: totalCount,
                 paid,
                 unpaid,
                 cancelled,

@@ -27,24 +27,21 @@ adminDashboardRouter.get('/', requireAdmin, async (_req, res) => {
         const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
         const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
 
-        // ── 1. Core summary stats ─────────────────────────────────────────
+        // ── 1. Core summary stats (optimised to prevent pool exhaustion) ──
         const [
-            totalRegs,
-            paidRegs,
-            unpaidRegs,
-            cancelledRegs,
-            confirmedRegs,
+            allRegsGrouped,
             totalRaffle,
             paidRaffle,
             totalRevenueResult,
             staleUnpaidCount,
             totalCheckouts,
+            militaryGrouped,
         ] = await Promise.all([
-            prisma.registration.count(),
-            prisma.registration.count({ where: { status: 'PAID' } }),
-            prisma.registration.count({ where: { status: 'UNPAID' } }),
-            prisma.registration.count({ where: { status: 'CANCELLED' } }),
-            prisma.registration.count({ where: { status: 'CONFIRMED' } }),
+            // Group by status instead of 4 separate full-table counts
+            prisma.registration.groupBy({
+                by: ['status'],
+                _count: true,
+            }),
             prisma.raffleTicket.count(),
             prisma.raffleTicket.count({ where: { status: 'PAID' } }),
             (prisma.registration as any).aggregate({
@@ -55,7 +52,32 @@ adminDashboardRouter.get('/', requireAdmin, async (_req, res) => {
                 where: { status: 'UNPAID', createdAt: { lt: fortyEightHoursAgo } },
             }),
             prisma.payment.count(),
+            // Get military breakdown
+            prisma.registration.groupBy({
+                by: ['isMilitary'],
+                where: { status: { in: ['PAID', 'CONFIRMED'] } },
+                _count: true,
+            })
         ]);
+
+        let totalRegs = 0;
+        let paidRegs = 0;
+        let unpaidRegs = 0;
+        let cancelledRegs = 0;
+        let confirmedRegs = 0;
+
+        for (const group of allRegsGrouped) {
+            totalRegs += group._count;
+            if (group.status === 'PAID') paidRegs = group._count;
+            if (group.status === 'UNPAID') unpaidRegs = group._count;
+            if (group.status === 'CANCELLED') cancelledRegs = group._count;
+            if (group.status === 'CONFIRMED') confirmedRegs = group._count;
+        }
+
+        const militaryStats = {
+            military: militaryGrouped.find(g => g.isMilitary === true)?._count || 0,
+            civilian: militaryGrouped.find(g => g.isMilitary === false || g.isMilitary === null)?._count || 0,
+        };
 
         const totalRevenue = totalRevenueResult._sum?.totalAmount || 0;
         const raffleRevenue = paidRaffle * RAFFLE_TICKET_PRICE;
@@ -297,6 +319,10 @@ adminDashboardRouter.get('/', requireAdmin, async (_req, res) => {
             demographics: {
                 tshirtBreakdown,
                 genderBreakdown,
+                militaryBreakdown: [
+                    { label: 'Military', count: militaryStats.military, pct: Math.round((militaryStats.military / Math.max(1, militaryStats.military + militaryStats.civilian)) * 100), color: '#4caf50' },
+                    { label: 'Civilian', count: militaryStats.civilian, pct: Math.round((militaryStats.civilian / Math.max(1, militaryStats.military + militaryStats.civilian)) * 100), color: '#38bdf8' }
+                ]
             },
             byCircuit,
             revenueByCircuit,
