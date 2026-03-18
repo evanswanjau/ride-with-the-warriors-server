@@ -444,7 +444,7 @@ registrationsRouter.post('/', async (req, res, next) => {
         payload,
         pricing: quote.pricing,
         classifications: quote.classifications,
-        status: 'UNPAID',
+        status: quote.pricing.totalAmount === 0 ? 'PAID' : 'UNPAID',
         mpesaCode: base.mpesaCode || null,
       });
     }
