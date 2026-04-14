@@ -21,7 +21,7 @@ const phoneSchema = z
 const idNumberSchema = z
   .string()
   .min(1, 'ID/Passport is required')
-  .refine((v) => /^\d{8,10}$/.test(v), 'ID must be 8-10 digits only');
+  .refine((v) => /^\d{6,10}$/.test(v), 'ID must be 6-10 digits only');
 
 export const riderDetailsSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),

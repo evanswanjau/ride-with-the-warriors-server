@@ -271,6 +271,33 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
   if (recordsToCreate.length === 0) {
     throw new Error('No records to create');
   }
+
+  // Send confirmation emails if the registration is created with PAID status (e.g. military/zero-cost)
+  if (input.status === 'PAID') {
+    for (const reg of recordsToCreate) {
+      if (reg.email) {
+        sendConfirmationEmail({
+          id: reg.id,
+          firstName: reg.firstName,
+          lastName: reg.lastName,
+          email: reg.email,
+          circuitId: reg.circuitId,
+          totalAmount: reg.totalAmount,
+          status: reg.status,
+          category: reg.category || undefined,
+          payload: reg.payload,
+          teamName: reg.teamName || undefined,
+          gender: reg.gender,
+          dob: reg.dob,
+          idNumber: reg.idNumber,
+          tshirtSize: reg.tshirtSize,
+          emergencyContactName: reg.emergencyContactName,
+          emergencyPhone: reg.emergencyPhone,
+        }).catch(err => console.error(`[Email] Failed to send confirmation to ${reg.id}:`, err));
+      }
+    }
+  }
+
   return recordsToCreate[0] as RegistrationRecord;
 }
 
