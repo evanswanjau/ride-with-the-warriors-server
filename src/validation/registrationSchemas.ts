@@ -34,6 +34,8 @@ export const riderDetailsSchema = z.object({
   tshirtSize: z.string().min(1, 'T-shirt size is required'),
   emergencyContactName: z.string().min(1, 'Emergency contact name is required'),
   emergencyPhone: phoneSchema,
+  // Civilian fields
+  country: z.string().optional(),
   // Military fields
   isMilitary: z.boolean().optional(),
   serviceNumber: z.string().optional(),
@@ -89,6 +91,8 @@ export const familyDetailsSchema = z
       relationship: z.string().min(1, 'Relationship is required'),
       tshirtSize: z.string().optional(),
       participation: z.enum(['none', 'mom', 'other']),
+      // Civilian fields
+      country: z.string().optional(),
       // Military fields
       isMilitary: z.boolean().optional(),
       serviceNumber: z.string().optional(),
