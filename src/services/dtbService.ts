@@ -14,7 +14,7 @@ if (process.env.DTB_INSECURE === 'true') {
 interface DTBStkPushInitiation {
     registrationId: string;
     amount: number;
-    phoneNumber: string; 
+    phoneNumber: string;
     callbackUrl?: string;
 }
 
@@ -57,8 +57,6 @@ export const dtbService = {
         }
 
         try {
-            console.log(`[DTB Service][AUTH] URL: ${DTB_CONFIG.authUrl}`);
-            
             const params = new URLSearchParams();
             params.append('grant_type', 'password');
             params.append('client_id', DTB_CONFIG.clientId || '');
@@ -66,25 +64,14 @@ export const dtbService = {
             params.append('username', process.env.DTB_USERNAME || '');
             params.append('password', process.env.DTB_PASSWORD || '');
 
-            console.log('[DTB Service][AUTH] Parameters:', {
-                grant_type: 'password',
-                client_id: DTB_CONFIG.clientId,
-                client_secret: DTB_CONFIG.clientSecret,
-                username: process.env.DTB_USERNAME,
-                password: process.env.DTB_PASSWORD
-            });
-
-
             const response = await fetch(DTB_CONFIG.authUrl, {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
                     'Accept': 'application/json'
                 },
                 body: params.toString(),
             });
-
-            console.log(`[DTB Service][AUTH] Status: ${response.status} ${response.statusText}`);
 
             if (!response.ok) {
                 const errorText = await response.text();
@@ -92,12 +79,8 @@ export const dtbService = {
                 return null;
             }
 
-
             const data = await response.json() as any;
-            console.log('[DTB Service] Auth Response Body:', JSON.stringify(data, null, 2));
-
             const token = data.access_token || data.token;
-
 
             if (token) {
                 cachedToken = token;
@@ -145,7 +128,6 @@ export const dtbService = {
                 UserCallback: details.callbackUrl || `${process.env.APP_URL || process.env.BASE_URL}/api/v1/registrations/callback/dtb`,
             };
 
-
             const response = await fetch(DTB_CONFIG.stkPushUrl, {
                 method: 'POST',
                 headers: {
@@ -156,9 +138,6 @@ export const dtbService = {
             });
 
             const data = await response.json() as any;
-            console.log('[DTB Service][TEST] STK Push Response Body:', JSON.stringify(data, null, 2));
-
-
 
             if (!response.ok) {
                 console.error('[DTB Service] STK Push Failed:', JSON.stringify(data));
