@@ -83,7 +83,10 @@ export const dtbService = {
             }
 
             const data = await response.json() as any;
+            console.log('[DTB Service] Auth Response Body:', JSON.stringify(data, null, 2));
+
             const token = data.access_token || data.token;
+
 
             if (token) {
                 cachedToken = token;
@@ -124,8 +127,9 @@ export const dtbService = {
                 PhoneNumber: details.phoneNumber,
                 AccountNumber: DTB_CONFIG.accountNumber,
                 BusinessShortCode: DTB_CONFIG.shortCode,
-                TransactionDesc: `Ride With Warriors - ${details.registrationId}`,
-                PromptDisplayAccount: process.env.DTB_PROMPT_ACCOUNT || 'RideWithWarriors',
+                TransactionDesc: `TEST - Ride With Warriors - ${details.registrationId}`,
+                PromptDisplayAccount: process.env.DTB_PROMPT_ACCOUNT || 'TEST-RideWithWarriors',
+
                 UserCallback: details.callbackUrl || `${process.env.APP_URL || process.env.BASE_URL}/api/v1/registrations/callback/dtb`,
             };
 
@@ -140,6 +144,9 @@ export const dtbService = {
             });
 
             const data = await response.json() as any;
+            console.log('[DTB Service][TEST] STK Push Response Body:', JSON.stringify(data, null, 2));
+
+
 
             if (!response.ok) {
                 console.error('[DTB Service] STK Push Failed:', JSON.stringify(data));

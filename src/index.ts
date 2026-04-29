@@ -14,7 +14,9 @@ import { profileRouter } from './routes/profile.js';
 import { raffleRouter } from './routes/raffle.js';
 import { enquiryRouter } from './routes/enquiry.js';
 import { donationsRouter } from './routes/donations.js';
+import { dtbCallbacksRouter } from './routes/dtbCallbacks.js';
 import { prisma } from './storage/prisma.js';
+
 
 const app = express();
 
@@ -36,6 +38,8 @@ app.use('/api/v1/profile', profileRouter);
 app.use('/api/v1/raffle', raffleRouter);
 app.use('/api/v1/enquiry', enquiryRouter);
 app.use('/api/v1/donations', donationsRouter);
+app.use('/api/dtb', dtbCallbacksRouter);
+
 
 // Admin Routes
 app.use('/api/v1/admin/auth', authRouter);

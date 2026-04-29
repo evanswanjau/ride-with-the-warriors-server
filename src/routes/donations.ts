@@ -54,8 +54,9 @@ donationsRouter.post('/pay/stk-push', async (req, res) => {
             registrationId: donationId, 
             amount: donation.amount,
             phoneNumber,
-            callbackUrl: `${process.env.APP_URL || process.env.BASE_URL}/api/v1/donations/callback/dtb`,
+            callbackUrl: `${process.env.APP_URL || process.env.BASE_URL}/api/dtb/stkpush`,
         });
+
 
 
         if (result.success && result.transactionReference) {
@@ -78,62 +79,9 @@ donationsRouter.post('/pay/stk-push', async (req, res) => {
     }
 });
 
-// DTB callback for donations
-donationsRouter.post('/callback/dtb', async (req, res) => {
-    console.log('[Donation Callback] Received payload:', JSON.stringify(req.body, null, 2));
-
-
-    const callbackData = req.body.Body?.stkCallback || req.body.stkCallback || req.body;
-    const resultCode = callbackData.ResultCode ?? callbackData.result_code;
-    const resultDesc = callbackData.ResultDesc ?? callbackData.result_desc ?? callbackData.failure_reason ?? req.body.message;
-    const requestId = callbackData.CheckoutRequestID ?? callbackData.checkout_request_id;
-    const isSuccess = resultCode === 0 || resultCode === '0' || req.body.status === 'success' || req.body.success === true;
-
-    console.log(`[Donation Callback] RequestID: ${requestId}, ResultCode: ${resultCode}, Success: ${isSuccess}`);
-
-    if (isSuccess) {
-        try {
-            const donation = await prisma.donation.findUnique({
-                where: { checkoutRequestId: requestId },
-            });
-
-            if (donation) {
-                await prisma.donation.update({
-                    where: { id: donation.id },
-                    data: { status: 'PAID' },
-                });
-                console.log(`[Donation Callback] Donation ${donation.id} marked as PAID`);
-            } else {
-                console.warn(`[Donation Callback] No donation found for checkoutRequestId: ${requestId}`);
-            }
-        } catch (err) {
-            console.error('[Donation Callback] Error updating donation:', err);
-        }
-    } else {
-        const reason = resultDesc || 'Payment failed or was cancelled';
-        console.warn(`[Donation Callback] Donation FAILED: ${reason}`);
-
-        // Update failure status in database - synchronized with schema
-        if (requestId) {
-
-            try {
-                await prisma.donation.update({
-                    where: { checkoutRequestId: requestId },
-                    data: { 
-                        status: 'FAILED',
-                        failureReason: reason
-                    },
-                });
-            } catch (dbErr) {
-                console.error('[Donation Callback] Failed to update failure status:', dbErr);
-            }
-        }
-    }
-
-    return res.json({ received: true });
-});
 
 // Fetch donation status (for polling)
+
 donationsRouter.get('/:id', async (req, res) => {
     try {
         const donation = await prisma.donation.findUnique({ where: { id: req.params.id } });

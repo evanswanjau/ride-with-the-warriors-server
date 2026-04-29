@@ -121,11 +121,12 @@ raffleRouter.post('/pay/stk-push', async (req, res) => {
 
   try {
     const result = await dtbService.initiateStkPush({
-      registrationId: ticketIds[0], // Use the first ticket ID as the reference for the callback
+      registrationId: ticketIds[0],
       amount: totalAmount,
       phoneNumber,
-      callbackUrl: `${process.env.APP_URL || process.env.BASE_URL}/api/v1/raffle/callback/dtb`,
+      callbackUrl: `${process.env.APP_URL || process.env.BASE_URL}/api/dtb/stkpush`,
     });
+
 
 
     if (result.success && result.transactionReference) {
@@ -150,60 +151,9 @@ raffleRouter.post('/pay/stk-push', async (req, res) => {
   }
 });
 
-// DTB CALLBACK
-raffleRouter.post('/callback/dtb', async (req, res) => {
-  console.log('[Raffle Callback] Received payload:', JSON.stringify(req.body, null, 2));
-
-
-  const callbackData = req.body.Body?.stkCallback || req.body.stkCallback || req.body;
-  const resultCode = callbackData.ResultCode ?? callbackData.result_code;
-  const resultDesc = callbackData.ResultDesc ?? callbackData.result_desc ?? callbackData.failure_reason ?? req.body.message;
-  const requestId = callbackData.CheckoutRequestID ?? callbackData.checkout_request_id;
-  const isSuccess = resultCode === 0 || resultCode === '0' || req.body.status === 'success' || req.body.success === true;
-
-  console.log(`[Raffle Callback] RequestID: ${requestId}, ResultCode: ${resultCode}, Success: ${isSuccess}`);
-
-  if (isSuccess) {
-    try {
-      const tickets = await (prisma.raffleTicket as any).findMany({
-        where: { checkoutRequestId: requestId },
-      });
-
-      if (tickets.length > 0) {
-        await (prisma.raffleTicket as any).updateMany({
-          where: { checkoutRequestId: requestId },
-          data: { status: 'PAID', paymentFailed: false },
-        });
-        console.log(`[Raffle Callback] ${tickets.length} Ticket(s) marked as PAID for requestId: ${requestId}`);
-      } else {
-        console.warn(`[Raffle Callback] No tickets found for checkoutRequestId: ${requestId}`);
-      }
-    } catch (err) {
-      console.error('[Raffle Callback] Error updating tickets:', err);
-    }
-  } else {
-    const reason = resultDesc || 'Payment failed or was cancelled';
-    console.warn(`[Raffle Callback] Payment FAILED: ${reason}`);
-
-    if (requestId) {
-      try {
-        await (prisma.raffleTicket as any).updateMany({
-          where: { checkoutRequestId: requestId },
-          data: { 
-            paymentFailed: true,
-            failureReason: reason
-          },
-        });
-      } catch (dbErr) {
-        console.error('[Raffle Callback] Failed to update failure:', dbErr);
-      }
-    }
-  }
-
-  return res.json({ received: true });
-});
 
 // ─── GET /:id — Fetch a ticket by code (also used for polling) ───────────────
+
 raffleRouter.get('/:id', async (req, res) => {
   try {
     const id = req.params.id.toUpperCase();
