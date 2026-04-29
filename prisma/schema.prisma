@@ -8,38 +8,38 @@ datasource db {
 }
 
 model Registration {
-  id              String             @id
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
-  circuitId       String
-  type            String
-  status          RegistrationStatus @default(UNPAID)
-  firstName       String
-  lastName        String
-  email           String?
-  phoneNumber     String?
-  idNumber        String?
-  dob             String?
-  gender          String?
-  groupId         String?
-  teamName        String?
-  isCaptain       Boolean            @default(false)
-  guardianName    String?
-  emergencyPhone  String?
+  id                   String             @id
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  circuitId            String
+  type                 String
+  status               RegistrationStatus @default(UNPAID)
+  firstName            String
+  lastName             String
+  email                String?
+  phoneNumber          String?
+  idNumber             String?
+  dob                  String?
+  gender               String?
+  groupId              String?
+  teamName             String?
+  isCaptain            Boolean            @default(false)
+  guardianName         String?
+  emergencyPhone       String?
+  relationship         String?
+  category             String?
+  totalAmount          Float              @default(0)
+  payload              Json?
+  pricing              Json?
+  classifications      Json?
   emergencyContactName String?
-  relationship    String?
-  tshirtSize      String?
-  category        String?
-  totalAmount     Float              @default(0)
-  mpesaCode       String?
-  isMilitary      Boolean            @default(false)
-  serviceNumber   String?
-  rank            String?
-  service         String?
-  unit            String?
-  payload         Json?
-  pricing         Json?
-  classifications Json?
+  tshirtSize           String?
+  mpesaCode            String?
+  isMilitary           Boolean            @default(false)
+  rank                 String?
+  service              String?
+  serviceNumber        String?
+  unit                 String?
 
   @@index([groupId])
   @@index([email])
@@ -66,26 +66,19 @@ model AdminSession {
   admin     Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
 }
 
-enum RegistrationStatus {
-  UNPAID
-  PAID
-  CONFIRMED
-  CANCELLED
-}
-
 model Payment {
-  id                  String   @id @default(uuid())
-  registrationId      String
-  checkoutRequestId   String?  @unique
-  merchantRequestId   String?
-  phone               String?
-  amount              Float
-  status              String   @default("PENDING") // PENDING, PAID, FAILED
-  failureReason       String?
-  mpesaReceiptNumber  String?
-  transactionDate     String?  // as returned by M-Pesa e.g. "20231201120000"
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                 String   @id @default(uuid())
+  registrationId     String
+  checkoutRequestId  String?  @unique
+  merchantRequestId  String?
+  phone              String?
+  amount             Float
+  status             String   @default("PENDING")
+  failureReason      String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  mpesaReceiptNumber String?
+  transactionDate    String?
 
   @@index([registrationId])
   @@index([checkoutRequestId])
@@ -93,11 +86,11 @@ model Payment {
 
 model PricingCategory {
   id             String   @id @default(uuid())
-  circuitId      String // e.g., 'blitz', 'recon', 'corporate', 'family'
-  type           String // 'individual', 'team', or 'family'
-  familyCategory String? // 'cubs', 'champs', 'tigers'
-  minAge         Int? // inclusive
-  maxAge         Int? // inclusive
+  circuitId      String
+  type           String
+  familyCategory String?
+  minAge         Int?
+  maxAge         Int?
   categoryName   String
   regRange       String
   price          Float
@@ -114,9 +107,9 @@ model PricingCategory {
 model EmailLog {
   id             String   @id @default(uuid())
   registrationId String
-  type           String   // 'confirmation', 'payment_reminder_3d', 'payment_reminder_7d', 'reminder_7d', 'reminder_1d', 'reminder_day'
+  type           String
   sentAt         DateTime @default(now())
-  status         String   // 'sent', 'failed'
+  status         String
   error          String?
 
   @@index([registrationId, type])
@@ -124,19 +117,19 @@ model EmailLog {
 }
 
 model RaffleTicket {
-  id                String   @id          // e.g. "AA001"
+  id                String   @id
   firstName         String
   lastName          String
   email             String
   phoneNumber       String?
-  idNumber          String?
-  gender            String?
-  status            String   @default("UNPAID")  // UNPAID → PAID
-  failureReason     String?
-  checkoutRequestId String?
-  paymentFailed     Boolean  @default(false)
+  status            String   @default("UNPAID")
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+  checkoutRequestId String?
+  paymentFailed     Boolean  @default(false)
+  gender            String?
+  idNumber          String?
+  failureReason     String?
 
   @@index([email])
 }
@@ -147,12 +140,19 @@ model Donation {
   name              String?
   email             String?
   phone             String?
-  status            String   @default("PENDING") // PENDING, PAID, FAILED
-  failureReason     String?
+  status            String   @default("PENDING")
   checkoutRequestId String?  @unique
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+  failureReason     String?
 
   @@index([email])
   @@index([checkoutRequestId])
+}
+
+enum RegistrationStatus {
+  UNPAID
+  PAID
+  CONFIRMED
+  CANCELLED
 }

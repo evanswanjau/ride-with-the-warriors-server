@@ -110,7 +110,9 @@ donationsRouter.post('/callback/tuma', async (req, res) => {
         const reason = resultDesc || 'Payment failed or was cancelled';
         console.warn(`[Donation Callback] Donation FAILED: ${reason}`);
 
+        // Update failure status in database - synchronized with schema
         if (requestId) {
+
             try {
                 await prisma.donation.update({
                     where: { checkoutRequestId: requestId },
