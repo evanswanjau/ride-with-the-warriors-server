@@ -57,7 +57,7 @@ export const dtbService = {
         }
 
         try {
-            console.log(`[DTB Service] Attempting authentication via: ${DTB_CONFIG.authUrl}`);
+            console.log(`[DTB Service][AUTH] URL: ${DTB_CONFIG.authUrl}`);
             
             const params = new URLSearchParams();
             params.append('grant_type', 'password');
@@ -66,8 +66,15 @@ export const dtbService = {
             params.append('username', process.env.DTB_USERNAME || '');
             params.append('password', process.env.DTB_PASSWORD || '');
 
-            const response = await fetch(DTB_CONFIG.authUrl, {
+            console.log('[DTB Service][AUTH] Parameters:', {
+                grant_type: 'password',
+                client_id: DTB_CONFIG.clientId ? '***' + DTB_CONFIG.clientId.slice(-4) : 'MISSING',
+                client_secret: DTB_CONFIG.clientSecret ? '******' : 'MISSING',
+                username: process.env.DTB_USERNAME,
+                password: process.env.DTB_PASSWORD ? '******' : 'MISSING'
+            });
 
+            const response = await fetch(DTB_CONFIG.authUrl, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -76,11 +83,14 @@ export const dtbService = {
                 body: params.toString(),
             });
 
+            console.log(`[DTB Service][AUTH] Status: ${response.status} ${response.statusText}`);
+
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error(`[DTB Service] Auth Failed (Status: ${response.status}):`, errorText);
+                console.error(`[DTB Service][AUTH] Failed Response Body:`, errorText);
                 return null;
             }
+
 
             const data = await response.json() as any;
             console.log('[DTB Service] Auth Response Body:', JSON.stringify(data, null, 2));
