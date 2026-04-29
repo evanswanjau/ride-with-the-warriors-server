@@ -137,7 +137,19 @@ export const dtbService = {
                 body: JSON.stringify(payload),
             });
 
-            const data = await response.json() as any;
+            let data: any;
+            const responseText = await response.text();
+            
+            try {
+                data = JSON.parse(responseText);
+            } catch (e) {
+                console.error('[DTB Service] STK Push Response was not valid JSON:', responseText);
+                return {
+                    success: false,
+                    message: `Invalid response from bank: ${responseText.slice(0, 100)}`
+                };
+            }
+
 
             if (!response.ok) {
                 console.error('[DTB Service] STK Push Failed:', JSON.stringify(data));
