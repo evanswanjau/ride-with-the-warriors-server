@@ -68,11 +68,12 @@ export const dtbService = {
 
             console.log('[DTB Service][AUTH] Parameters:', {
                 grant_type: 'password',
-                client_id: DTB_CONFIG.clientId ? '***' + DTB_CONFIG.clientId.slice(-4) : 'MISSING',
-                client_secret: DTB_CONFIG.clientSecret ? '******' : 'MISSING',
+                client_id: DTB_CONFIG.clientId,
+                client_secret: DTB_CONFIG.clientSecret,
                 username: process.env.DTB_USERNAME,
-                password: process.env.DTB_PASSWORD ? '******' : 'MISSING'
+                password: process.env.DTB_PASSWORD
             });
+
 
             const response = await fetch(DTB_CONFIG.authUrl, {
                 method: 'POST',
@@ -137,8 +138,9 @@ export const dtbService = {
                 PhoneNumber: details.phoneNumber,
                 AccountNumber: DTB_CONFIG.accountNumber,
                 BusinessShortCode: DTB_CONFIG.shortCode,
-                TransactionDesc: `TEST - Ride With Warriors - ${details.registrationId}`,
-                PromptDisplayAccount: process.env.DTB_PROMPT_ACCOUNT || 'TEST-RideWithWarriors',
+                TransactionDesc: `Ride With Warriors - ${details.registrationId}`,
+                PromptDisplayAccount: process.env.DTB_PROMPT_ACCOUNT || 'RideWithWarriors',
+
 
                 UserCallback: details.callbackUrl || `${process.env.APP_URL || process.env.BASE_URL}/api/v1/registrations/callback/dtb`,
             };
