@@ -5,6 +5,12 @@
  * This service handles interactions with the DTB API via the Fiorano platform.
  */
 
+// Handle SSL verification for UAT environments (Equivalent to curl -k)
+if (process.env.DTB_INSECURE === 'true') {
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
+
+
 interface DTBStkPushInitiation {
     registrationId: string;
     amount: number;
