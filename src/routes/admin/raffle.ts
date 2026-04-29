@@ -50,3 +50,34 @@ adminRaffleRouter.get('/', requireAdmin, async (req, res) => {
         res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to fetch raffle tickets' } });
     }
 });
+
+// Update raffle ticket status
+adminRaffleRouter.patch('/:id', requireAdmin, async (req, res) => {
+    const { status } = req.body;
+    const { id } = req.params;
+
+    if (!['UNPAID', 'PAID'].includes(String(status).toUpperCase())) {
+        return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid status' } });
+    }
+
+    try {
+        const ticket = await (prisma.raffleTicket as any).update({
+            where: { id },
+            data: { status: String(status).toUpperCase() },
+        });
+        res.json({ ticket });
+    } catch (error) {
+        res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Raffle ticket not found' } });
+    }
+});
+
+// Delete raffle ticket
+adminRaffleRouter.delete('/:id', requireAdmin, async (req, res) => {
+    const { id } = req.params;
+    try {
+        await (prisma.raffleTicket as any).delete({ where: { id } });
+        res.json({ ok: true });
+    } catch (error) {
+        res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Raffle ticket not found' } });
+    }
+});
