@@ -31,6 +31,7 @@ const C = {
 
 export type EmailType =
   | 'confirmation'
+  | 'payment_reminder_1d'
   | 'payment_reminder_3d'
   | 'payment_reminder_7d'
   | 'reminder_7d'
@@ -649,6 +650,9 @@ export async function sendEmail(
     case 'confirmation':
       emailContent = getConfirmationEmail(data);
       break;
+    case 'payment_reminder_1d':
+      emailContent = getPaymentReminderEmail(data, "Just a quick reminder about your registration yesterday.");
+      break;
     case 'payment_reminder_3d':
       emailContent = getPaymentReminderEmail(data, "It's been 3 days since you registered.");
       break;
@@ -727,6 +731,7 @@ export function getTemplatePreview(type: EmailType): string {
 
   switch (type) {
     case 'confirmation': return getConfirmationEmail(sampleData).html;
+    case 'payment_reminder_1d': return getPaymentReminderEmail(sampleData, "Just a quick reminder about your registration yesterday.").html;
     case 'payment_reminder_3d': return getPaymentReminderEmail(sampleData, "It's been 3 days since you registered.").html;
     case 'payment_reminder_7d': return getPaymentReminderEmail(sampleData, "It's been a week since you registered.").html;
     case 'reminder_7d': return getEventReminderEmail(sampleData, 7).html;

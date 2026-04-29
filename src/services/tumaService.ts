@@ -1,6 +1,6 @@
 
 /**
- * Tuma Online (DTB) API Service
+ * Tuma Online Payment Service
  * 
  * This service handles interactions with the Tuma Online Payment Gateway.
  */
@@ -32,16 +32,15 @@ interface TumaPaymentResponse {
 const TUMA_CONFIG = {
     email: process.env.TUMA_API_EMAIL,
     apiKey: process.env.TUMA_API_KEY,
-    // Using the beta URL for sales as per Postman collection, but falling back to Env if provided
-    baseUrl: process.env.TUMA_BASE_URL || 'https://beta.tuma.co.ke',
-    authUrl: 'https://api.tuma.co.ke', // Auth seems to always be on api.tuma.co.ke
+    baseUrl: process.env.TUMA_BASE_URL || 'https://api.tuma.co.ke',
+    authUrl: 'https://api.tuma.co.ke',
 };
 
 // Cache token in memory
 let cachedToken: string | null = null;
 let tokenExpiry: number = 0;
 
-export const dtbService = {
+export const tumaService = {
     /**
      * Authenticates with Tuma Online and returns a Bearer token.
      */
@@ -107,26 +106,20 @@ export const dtbService = {
         }
 
         try {
-            // Create Sale Payload
-            // Note: Tuma API seems to require "items" array.
             const payload = {
                 customer_name: details.name,
                 customer_email: details.email,
                 customer_phone: details.phoneNumber || '254700000000',
-                payment_method: "mpesa", // Defaulting to mpesa as per Postman example
+                payment_method: "mpesa",
                 items: [
                     {
-                        // Using generic item structure based on 'Create Invoice' example if 'Create Sale' fails with this
-                        // Postman 'Create Sale' had: product_id: "...", quantity: 1
-                        // We might need to create a product first or use an ad-hoc item.
-                        // Let's try sending ad-hoc item details which is common in such APIs.
                         name: "Registration Fee",
                         quantity: 1,
                         price: details.amount,
                         description: `Registration ID: ${details.registrationId}`
                     }
                 ],
-                callback_url: details.callbackUrl || `${process.env.APP_URL || process.env.BASE_URL}/api/v1/registrations/callback/dtb`,
+                callback_url: details.callbackUrl || `${process.env.APP_URL || process.env.BASE_URL}/api/v1/registrations/callback/tuma`,
                 external_reference: details.registrationId
             };
 
@@ -180,12 +173,10 @@ export const dtbService = {
         }
 
         try {
-            // STK Push Payload matches Postman
             const payload = {
                 amount: details.amount,
                 phone: details.phoneNumber,
-                // Ensure callback_url matches the live server URL
-                callback_url: details.callbackUrl || `${process.env.BASE_URL || process.env.APP_URL}/api/v1/registrations/callback/dtb`,
+                callback_url: details.callbackUrl || `${process.env.BASE_URL || process.env.APP_URL}/api/v1/registrations/callback/tuma`,
                 description: `Reg ID: ${details.registrationId}`
             };
 
@@ -208,7 +199,6 @@ export const dtbService = {
                 };
             }
 
-            // Tuma callback payload usually nests under .data and uses snake_case
             const resultData = data.data || data;
 
             return {

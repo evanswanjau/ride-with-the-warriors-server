@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../storage/prisma.js';
-import { dtbService } from '../services/dtbService.js';
+import { tumaService } from '../services/tumaService.js';
 
 export const raffleRouter = Router();
 
@@ -119,11 +119,11 @@ raffleRouter.post('/pay/stk-push', async (req, res) => {
   const totalAmount = RAFFLE_AMOUNT * ticketIds.length;
 
   try {
-    const result = await dtbService.initiateStkPush({
+    const result = await tumaService.initiateStkPush({
       registrationId: ticketIds[0], // Use the first ticket ID as the reference for the callback
       amount: totalAmount,
       phoneNumber,
-      callbackUrl: `${process.env.APP_URL || process.env.BASE_URL}/api/v1/raffle/callback/dtb`,
+      callbackUrl: `${process.env.APP_URL || process.env.BASE_URL}/api/v1/raffle/callback/tuma`,
     });
 
     if (result.success && result.transactionReference) {
@@ -148,8 +148,8 @@ raffleRouter.post('/pay/stk-push', async (req, res) => {
   }
 });
 
-// ─── POST /callback/dtb — M-Pesa callback ────────────────────────────────────
-raffleRouter.post('/callback/dtb', async (req, res) => {
+// ─── POST /callback/tuma — Tuma callback ────────────────────────────────────
+raffleRouter.post('/callback/tuma', async (req, res) => {
   console.log('[Raffle Callback] Received payload:', JSON.stringify(req.body, null, 2));
 
   const callbackData = req.body.Body?.stkCallback || req.body.stkCallback || req.body;

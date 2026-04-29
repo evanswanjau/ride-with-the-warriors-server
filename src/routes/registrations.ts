@@ -5,7 +5,7 @@ import { quoteRequestSchema, riderDetailsSchema, teamDetailsSchema, familyDetail
 import { zodToApiError } from '../validation/zodError.js';
 import { buildQuote, getPricingCategories } from '../services/pricing.js';
 import { createRegistration, getRegistration, getAllRegistrations, generateNextId, updateRegistration, findExistingRegistrationsByEmails, RegistrationRecord } from '../storage/memoryRegistrations.js';
-import { dtbService } from '../services/dtbService.js';
+import { tumaService } from '../services/tumaService.js';
 import { prisma } from '../storage/prisma.js';
 
 export const registrationsRouter = Router();
@@ -122,11 +122,12 @@ registrationsRouter.post('/pay/dtb', async (req, res) => {
   }
 
   try {
-    const result = await dtbService.initiatePayment({
+    const result = await tumaService.initiatePayment({
       registrationId,
       amount,
       email,
-      name: name || 'Participant'
+      name: name || 'Participant',
+      callbackUrl: `${process.env.APP_URL || process.env.BASE_URL}/api/v1/registrations/callback/tuma`,
     });
 
     if (result.success) {
@@ -152,10 +153,11 @@ registrationsRouter.post('/pay/stk-push', async (req, res) => {
   }
 
   try {
-    const result = await dtbService.initiateStkPush({
+    const result = await tumaService.initiateStkPush({
       registrationId,
       amount,
-      phoneNumber
+      phoneNumber,
+      callbackUrl: `${process.env.APP_URL || process.env.BASE_URL}/api/v1/registrations/callback/tuma`,
     });
 
     if (result.success && result.transactionReference) {
@@ -204,9 +206,9 @@ registrationsRouter.post('/pay/stk-push', async (req, res) => {
   }
 });
 
-// DTB CALLBACK
-registrationsRouter.post('/callback/dtb', async (req, res) => {
-  console.log('[DTB Callback] Received payload:', JSON.stringify(req.body, null, 2));
+// TUMA CALLBACK
+registrationsRouter.post('/callback/tuma', async (req, res) => {
+  console.log('[Tuma Callback] Received payload:', JSON.stringify(req.body, null, 2));
 
   // Normalize both M-Pesa PascalCase (Body.stkCallback.ResultCode) and Tuma snake_case (result_code)
   const callbackData = req.body.Body?.stkCallback || req.body.stkCallback || req.body;

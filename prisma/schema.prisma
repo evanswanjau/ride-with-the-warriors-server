@@ -139,3 +139,18 @@ model RaffleTicket {
 
   @@index([email])
 }
+
+model Donation {
+  id                String   @id @default(uuid())
+  amount            Float
+  name              String?
+  email             String?
+  phone             String?
+  status            String   @default("PENDING") // PENDING, PAID, FAILED
+  checkoutRequestId String?  @unique
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([email])
+  @@index([checkoutRequestId])
+}

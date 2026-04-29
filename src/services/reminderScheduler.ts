@@ -37,6 +37,28 @@ async function processPaymentReminders() {
         createdAt.setHours(0, 0, 0, 0);
         const daysSinceRegistration = daysBetween(createdAt, today);
 
+        // 1-day reminder
+        if (daysSinceRegistration === 1) {
+            await sendEmail(reg.id, 'payment_reminder_1d', {
+                id: reg.id,
+                firstName: reg.firstName,
+                lastName: reg.lastName,
+                email: reg.email,
+                circuitId: reg.circuitId,
+                totalAmount: reg.totalAmount,
+                status: reg.status,
+                category: reg.category || undefined,
+                payload: reg.payload,
+                teamName: reg.teamName || undefined,
+                gender: reg.gender,
+                dob: reg.dob,
+                idNumber: reg.idNumber,
+                tshirtSize: reg.tshirtSize,
+                emergencyContactName: reg.emergencyContactName,
+                emergencyPhone: reg.emergencyPhone,
+            });
+        }
+
         // 3-day reminder
         if (daysSinceRegistration >= 3 && daysSinceRegistration < 7) {
             await sendEmail(reg.id, 'payment_reminder_3d', {
