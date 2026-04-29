@@ -114,7 +114,10 @@ donationsRouter.post('/callback/tuma', async (req, res) => {
             try {
                 await prisma.donation.update({
                     where: { checkoutRequestId: requestId },
-                    data: { status: 'FAILED' },
+                    data: { 
+                        status: 'FAILED',
+                        failureReason: reason
+                    },
                 });
             } catch (dbErr) {
                 console.error('[Donation Callback] Failed to update failure status:', dbErr);

@@ -186,7 +186,10 @@ raffleRouter.post('/callback/tuma', async (req, res) => {
       try {
         await (prisma.raffleTicket as any).updateMany({
           where: { checkoutRequestId: requestId },
-          data: { paymentFailed: true },
+          data: { 
+            paymentFailed: true,
+            failureReason: reason
+          },
         });
       } catch (dbErr) {
         console.error('[Raffle Callback] Failed to update failure:', dbErr);

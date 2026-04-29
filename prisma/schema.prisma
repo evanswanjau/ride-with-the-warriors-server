@@ -132,6 +132,7 @@ model RaffleTicket {
   idNumber          String?
   gender            String?
   status            String   @default("UNPAID")  // UNPAID → PAID
+  failureReason     String?
   checkoutRequestId String?
   paymentFailed     Boolean  @default(false)
   createdAt         DateTime @default(now())
@@ -147,6 +148,7 @@ model Donation {
   email             String?
   phone             String?
   status            String   @default("PENDING") // PENDING, PAID, FAILED
+  failureReason     String?
   checkoutRequestId String?  @unique
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
