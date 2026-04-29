@@ -5,7 +5,8 @@ import { quoteRequestSchema, riderDetailsSchema, teamDetailsSchema, familyDetail
 import { zodToApiError } from '../validation/zodError.js';
 import { buildQuote, getPricingCategories } from '../services/pricing.js';
 import { createRegistration, getRegistration, getAllRegistrations, generateNextId, updateRegistration, findExistingRegistrationsByEmails, RegistrationRecord } from '../storage/memoryRegistrations.js';
-import { tumaService } from '../services/tumaService.js';
+import { dtbService } from '../services/dtbService.js';
+
 import { prisma } from '../storage/prisma.js';
 
 export const registrationsRouter = Router();
@@ -122,19 +123,17 @@ registrationsRouter.post('/pay/dtb', async (req, res) => {
   }
 
   try {
-    const result = await tumaService.initiatePayment({
+    // DTB typically uses STK Push as the primary M-Pesa method via Fiorano
+    // For now, we point this to a generic 'payment initiation' if supported, 
+    // or just trigger STK Push if that's the preferred path.
+    const result = await dtbService.initiateStkPush({
       registrationId,
       amount,
-      email,
-      name: name || 'Participant',
-      callbackUrl: `${process.env.APP_URL || process.env.BASE_URL}/api/v1/registrations/callback/tuma`,
+      phoneNumber: req.body.phoneNumber || '', // DTB STK Push needs a phone
+      callbackUrl: `${process.env.APP_URL || process.env.BASE_URL}/api/v1/registrations/callback/dtb`,
     });
 
     if (result.success) {
-      if (result.transactionReference) {
-        // If we get a reference immediately, maybe update the record with it?
-        // await updateRegistration(registrationId, { externalReference: result.transactionReference });
-      }
       return res.json(result);
     } else {
       return res.status(500).json({ error: { code: 'PAYMENT_FAILED', message: result.message } });
@@ -145,6 +144,7 @@ registrationsRouter.post('/pay/dtb', async (req, res) => {
   }
 });
 
+
 registrationsRouter.post('/pay/stk-push', async (req, res) => {
   const { registrationId, amount, phoneNumber } = req.body;
 
@@ -153,12 +153,13 @@ registrationsRouter.post('/pay/stk-push', async (req, res) => {
   }
 
   try {
-    const result = await tumaService.initiateStkPush({
+    const result = await dtbService.initiateStkPush({
       registrationId,
       amount,
       phoneNumber,
-      callbackUrl: `${process.env.APP_URL || process.env.BASE_URL}/api/v1/registrations/callback/tuma`,
+      callbackUrl: `${process.env.APP_URL || process.env.BASE_URL}/api/v1/registrations/callback/dtb`,
     });
+
 
     if (result.success && result.transactionReference) {
       // Store checkoutRequestId in registration record for callback lookup
@@ -206,9 +207,10 @@ registrationsRouter.post('/pay/stk-push', async (req, res) => {
   }
 });
 
-// TUMA CALLBACK
-registrationsRouter.post('/callback/tuma', async (req, res) => {
-  console.log('[Tuma Callback] Received payload:', JSON.stringify(req.body, null, 2));
+// DTB CALLBACK
+registrationsRouter.post('/callback/dtb', async (req, res) => {
+  console.log('[DTB Callback] Received payload:', JSON.stringify(req.body, null, 2));
+
 
   // Normalize both M-Pesa PascalCase (Body.stkCallback.ResultCode) and Tuma snake_case (result_code)
   const callbackData = req.body.Body?.stkCallback || req.body.stkCallback || req.body;

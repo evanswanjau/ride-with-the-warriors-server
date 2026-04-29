@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../storage/prisma.js';
-import { tumaService } from '../services/tumaService.js';
+import { dtbService } from '../services/dtbService.js';
+
 
 export const donationsRouter = Router();
 
@@ -49,12 +50,13 @@ donationsRouter.post('/pay/stk-push', async (req, res) => {
             return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Donation record not found' } });
         }
 
-        const result = await tumaService.initiateStkPush({
-            registrationId: donationId, // Tuma uses this as external reference
+        const result = await dtbService.initiateStkPush({
+            registrationId: donationId, 
             amount: donation.amount,
             phoneNumber,
-            callbackUrl: `${process.env.APP_URL || process.env.BASE_URL}/api/v1/donations/callback/tuma`,
+            callbackUrl: `${process.env.APP_URL || process.env.BASE_URL}/api/v1/donations/callback/dtb`,
         });
+
 
         if (result.success && result.transactionReference) {
             await prisma.donation.update({
@@ -76,9 +78,10 @@ donationsRouter.post('/pay/stk-push', async (req, res) => {
     }
 });
 
-// Tuma callback for donations
-donationsRouter.post('/callback/tuma', async (req, res) => {
+// DTB callback for donations
+donationsRouter.post('/callback/dtb', async (req, res) => {
     console.log('[Donation Callback] Received payload:', JSON.stringify(req.body, null, 2));
+
 
     const callbackData = req.body.Body?.stkCallback || req.body.stkCallback || req.body;
     const resultCode = callbackData.ResultCode ?? callbackData.result_code;
