@@ -7,96 +7,164 @@ export const dtbCallbacksRouter = Router();
 /**
  * Unified DTB STK Push Callback Handler
  * POST /api/dtb/stkpush
+ *
+ * DTB Fiorano callback payload shape:
+ * {
+ *   "status": "SUCCESS" | "FAILURE",
+ *   "responseCode": "200" | "400",
+ *   "responseDescription": "...",
+ *   "externalReference": "<the UUID we sent as TransactionRef>",
+ *   "mnoReference": "...",
+ *   "cbsReference": "...",
+ *   "transactionId": "..."
+ * }
  */
 dtbCallbacksRouter.post('/stkpush', async (req, res) => {
     console.log('[DTB Unified Callback] Received payload:', JSON.stringify(req.body, null, 2));
 
+    // DTB wraps in Body.stkCallback only for Safaricom direct; for Fiorano the body IS the payload.
     const callbackData = req.body.Body?.stkCallback || req.body.stkCallback || req.body;
-    
-    // Normalize naming conventions (PascalCase vs snake_case)
-    const resultCode = callbackData.ResultCode ?? callbackData.result_code ?? callbackData.status;
-    const resultDesc = callbackData.ResultDesc ?? callbackData.result_desc ?? callbackData.failure_reason ?? req.body.message;
-    const requestId = callbackData.CheckoutRequestID ?? callbackData.checkout_request_id;
-    
-    const isSuccess = resultCode === 0 || resultCode === '0' || req.body.status === 'success' || req.body.success === true;
 
-    console.log(`[DTB Callback] RequestID: ${requestId}, ResultCode: ${resultCode}, Success: ${isSuccess}`);
+    // DTB Fiorano uses "externalReference" as the key linking back to our TransactionRef
+    const externalReference =
+        callbackData.externalReference ||
+        callbackData.ExternalReference ||
+        callbackData.CheckoutRequestID ||
+        callbackData.checkout_request_id;
 
-    if (!requestId) {
-        console.warn('[DTB Callback] Missing requestId in payload');
-        return res.json({ received: true, error: 'Missing requestId' });
+    // Determine success: DTB uses status="SUCCESS" and responseCode="200"
+    const rawStatus = callbackData.status || callbackData.ResultCode || callbackData.result_code;
+    const rawCode = callbackData.responseCode || callbackData.ResponseCode;
+    const isSuccess =
+        rawStatus === 'SUCCESS' ||
+        rawStatus === 0 ||
+        rawStatus === '0' ||
+        rawCode === '200' ||
+        rawCode === 200;
+
+    const resultDesc =
+        callbackData.responseDescription ||
+        callbackData.ResultDesc ||
+        callbackData.result_desc ||
+        callbackData.failure_reason ||
+        req.body.message;
+
+    const mnoRef = callbackData.mnoReference || callbackData.MnoReference || '';
+    const cbsRef = callbackData.cbsReference || callbackData.CbsReference || '';
+
+    console.log(
+        `[DTB Callback] ExternalRef: ${externalReference}, Status: ${rawStatus}, Code: ${rawCode}, Success: ${isSuccess}`
+    );
+
+    if (!externalReference) {
+        console.warn('[DTB Callback] Missing externalReference in payload');
+        return res.json({ received: true, error: 'Missing externalReference' });
     }
 
     try {
-        // 1. Try updating Donation
-        const donation = await prisma.donation.findUnique({
-            where: { checkoutRequestId: requestId }
+        // ── 1. Try Donation ──────────────────────────────────────────────────
+        // Donations store externalReference in the `checkoutRequestId` column
+        // (set after a successful STK push initiation)
+        const donation = await prisma.donation.findFirst({
+            where: {
+                OR: [
+                    { checkoutRequestId: externalReference },
+                    { id: externalReference },           // externalReference IS the donationId we sent
+                ],
+            },
         });
 
         if (donation) {
             await prisma.donation.update({
                 where: { id: donation.id },
-                data: { 
+                data: {
                     status: isSuccess ? 'PAID' : 'FAILED',
-                    failureReason: isSuccess ? null : resultDesc
+                    checkoutRequestId: externalReference, // ensure it's stored
+                    failureReason: isSuccess ? null : resultDesc,
                 },
             });
-            console.log(`[DTB Callback] Updated Donation ${donation.id} status to ${isSuccess ? 'PAID' : 'FAILED'}`);
+            console.log(
+                `[DTB Callback] Updated Donation ${donation.id} → ${isSuccess ? 'PAID' : 'FAILED'}`
+            );
             return res.json({ received: true });
         }
 
-        // 2. Try updating RaffleTicket
-        // Use 'as any' to accommodate dynamic prisma types if needed
+        // ── 2. Try Raffle Ticket ─────────────────────────────────────────────
         const tickets = await (prisma.raffleTicket as any).findMany({
-            where: { checkoutRequestId: requestId }
+            where: {
+                OR: [
+                    { checkoutRequestId: externalReference },
+                    { id: externalReference },
+                ],
+            },
         });
 
         if (tickets.length > 0) {
             await (prisma.raffleTicket as any).updateMany({
-                where: { checkoutRequestId: requestId },
-                data: { 
+                where: {
+                    OR: [
+                        { checkoutRequestId: externalReference },
+                        { id: externalReference },
+                    ],
+                },
+                data: {
                     status: isSuccess ? 'PAID' : 'UNPAID',
                     paymentFailed: !isSuccess,
-                    failureReason: isSuccess ? null : resultDesc
+                    checkoutRequestId: externalReference,
+                    failureReason: isSuccess ? null : resultDesc,
                 },
             });
-            console.log(`[DTB Callback] Updated ${tickets.length} Raffle Ticket(s) to ${isSuccess ? 'PAID' : 'FAILED'}`);
+            console.log(
+                `[DTB Callback] Updated ${tickets.length} Raffle Ticket(s) → ${isSuccess ? 'PAID' : 'FAILED'}`
+            );
             return res.json({ received: true });
         }
 
-        // 3. Try updating Registration (via Payment audit table)
-        const paymentAudit = await prisma.payment.findUnique({
-            where: { checkoutRequestId: requestId }
+        // ── 3. Try Registration (via Payment audit table) ────────────────────
+        const paymentAudit = await prisma.payment.findFirst({
+            where: {
+                OR: [
+                    { checkoutRequestId: externalReference },
+                    { registrationId: externalReference },
+                ],
+            },
         });
 
         if (paymentAudit) {
             await prisma.payment.update({
-                where: { checkoutRequestId: requestId },
-                data: { 
+                where: { id: paymentAudit.id },
+                data: {
                     status: isSuccess ? 'PAID' : 'FAILED',
-                    failureReason: isSuccess ? null : resultDesc
-                }
+                    checkoutRequestId: externalReference,
+                    failureReason: isSuccess ? null : resultDesc,
+                },
             });
 
             const registrationId = paymentAudit.registrationId;
             const existing = await getRegistration(registrationId);
-            
+
             if (existing) {
                 await updateRegistration(registrationId, {
                     status: isSuccess ? 'PAID' : 'UNPAID',
-                    payload: { 
-                        ...existing.payload, 
+                    payload: {
+                        ...existing.payload,
                         paymentFailed: !isSuccess,
-                        paymentFailureReason: isSuccess ? null : resultDesc
-                    }
+                        paymentFailureReason: isSuccess ? null : resultDesc,
+                        mnoReference: mnoRef,
+                        cbsReference: cbsRef,
+                    },
                 });
-                console.log(`[DTB Callback] Updated Registration ${registrationId} to ${isSuccess ? 'PAID' : 'FAILED'}`);
+                console.log(
+                    `[DTB Callback] Updated Registration ${registrationId} → ${isSuccess ? 'PAID' : 'FAILED'}`
+                );
             }
             return res.json({ received: true });
         }
 
-        console.warn(`[DTB Callback] No matching record found for CheckoutRequestID: ${requestId}`);
-        return res.json({ received: true, message: 'No record associated with this requestId' });
+        console.warn(
+            `[DTB Callback] No matching record found for externalReference: ${externalReference}`
+        );
+        return res.json({ received: true, message: 'No record associated with this externalReference' });
 
     } catch (err) {
         console.error('[DTB Callback] Processing Error:', err);

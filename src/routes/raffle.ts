@@ -129,16 +129,23 @@ raffleRouter.post('/pay/stk-push', async (req, res) => {
 
 
 
-    if (result.success && result.transactionReference) {
+
+    if (result.success) {
+      // externalReference from DTB IS the first ticketId we sent as TransactionRef
+      const ref = result.transactionReference || ticketIds[0];
       // Store checkoutRequestId on ALL tickets
       await (prisma.raffleTicket as any).updateMany({
         where: { id: { in: ticketIds } },
         data: {
-          checkoutRequestId: result.transactionReference,
+          checkoutRequestId: ref,
           paymentFailed: false,
         },
       });
-      return res.json(result);
+      return res.json({
+        success: true,
+        transactionReference: ref,
+        message: result.message || 'M-Pesa prompt sent to your phone.',
+      });
     } else {
       console.error('[Raffle STK Push] Failed:', result);
       return res.status(500).json({

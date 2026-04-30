@@ -163,12 +163,14 @@ registrationsRouter.post('/pay/stk-push', async (req, res) => {
     });
 
 
-    if (result.success && result.transactionReference) {
+    if (result.success) {
+      // externalReference from DTB IS the registrationId we sent as TransactionRef
+      const ref = result.transactionReference || registrationId;
       // Store checkoutRequestId in registration record for callback lookup
       await updateRegistration(registrationId, {
         payload: {
           ...(await getRegistration(registrationId))?.payload,
-          checkoutRequestId: result.transactionReference
+          checkoutRequestId: ref
         }
       });
       // Create a Payment audit record
@@ -176,7 +178,7 @@ registrationsRouter.post('/pay/stk-push', async (req, res) => {
         await prisma.payment.create({
           data: {
             registrationId,
-            checkoutRequestId: result.transactionReference,
+            checkoutRequestId: ref,
             phone: phoneNumber,
             amount,
             status: 'PENDING',
@@ -185,7 +187,11 @@ registrationsRouter.post('/pay/stk-push', async (req, res) => {
       } catch (dbErr) {
         console.error('[STK Push] Failed to create Payment record:', dbErr);
       }
-      return res.json(result);
+      return res.json({
+        success: true,
+        transactionReference: ref,
+        message: result.message || 'M-Pesa prompt sent to your phone.',
+      });
     } else {
       console.error('[STK Push] Payment Failed Response:', result);
       // Record the failed attempt with no checkoutRequestId

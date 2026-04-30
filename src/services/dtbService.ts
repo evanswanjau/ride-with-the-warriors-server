@@ -123,8 +123,6 @@ export const dtbService = {
                 BusinessShortCode: DTB_CONFIG.shortCode,
                 TransactionDesc: `Ride With Warriors - ${details.registrationId}`,
                 PromptDisplayAccount: process.env.DTB_PROMPT_ACCOUNT || 'RideWithWarriors',
-
-
                 UserCallback: details.callbackUrl || `${process.env.APP_URL || process.env.BASE_URL}/api/v1/registrations/callback/dtb`,
             };
 
@@ -139,7 +137,7 @@ export const dtbService = {
 
             let data: any;
             const responseText = await response.text();
-            
+
             try {
                 data = JSON.parse(responseText);
             } catch (e) {
@@ -159,10 +157,15 @@ export const dtbService = {
                 };
             }
 
+            // DTB Fiorano returns externalReference (which is the TransactionRef we sent),
+            // along with status/responseCode in the body.
+            const isAccepted = data.status === 'SUCCESS' || data.responseCode === '200';
+            const ref = data.externalReference || data.CheckoutRequestID || data.MerchantRequestID || data.id;
+
             return {
-                success: true,
-                transactionReference: data.CheckoutRequestID || data.MerchantRequestID || data.id,
-                message: data.CustomerMessage || 'M-Pesa prompt sent to your phone.',
+                success: isAccepted,
+                transactionReference: ref,
+                message: data.responseDescription || data.CustomerMessage || 'M-Pesa prompt sent to your phone.',
                 rawResponse: data
             };
 

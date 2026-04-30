@@ -59,14 +59,19 @@ donationsRouter.post('/pay/stk-push', async (req, res) => {
 
 
 
-        if (result.success && result.transactionReference) {
+        if (result.success) {
+            // externalReference from DTB IS the donationId we sent as TransactionRef
+            // Store it in checkoutRequestId for callback matching
+            const ref = result.transactionReference || donationId;
             await prisma.donation.update({
                 where: { id: donationId },
-                data: {
-                    checkoutRequestId: result.transactionReference,
-                },
+                data: { checkoutRequestId: ref },
             });
-            return res.json(result);
+            return res.json({
+                success: true,
+                transactionReference: ref,
+                message: result.message || 'M-Pesa prompt sent to your phone.',
+            });
         } else {
             console.error('[Donation STK Push] Failed:', result);
             return res.status(500).json({
