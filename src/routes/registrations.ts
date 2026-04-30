@@ -350,6 +350,7 @@ registrationsRouter.post('/', async (req, res, next) => {
       rec = await updateRegistration(existingId, {
         circuitId: base.circuitId,
         type: base.type,
+        status: quote.pricing.totalAmount === 0 ? 'PAID' : 'UNPAID',
         payload,
         pricing: quote.pricing,
         classifications: quote.classifications,

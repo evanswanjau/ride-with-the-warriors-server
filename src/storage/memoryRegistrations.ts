@@ -274,27 +274,33 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
 
   // Send confirmation emails if the registration is created with PAID status (e.g. military/zero-cost)
   if (input.status === 'PAID') {
+    const emailPromises = [];
     for (const reg of recordsToCreate) {
       if (reg.email) {
-        sendConfirmationEmail({
-          id: reg.id,
-          firstName: reg.firstName,
-          lastName: reg.lastName,
-          email: reg.email,
-          circuitId: reg.circuitId,
-          totalAmount: reg.totalAmount,
-          status: reg.status,
-          category: reg.category || undefined,
-          payload: reg.payload,
-          teamName: reg.teamName || undefined,
-          gender: reg.gender,
-          dob: reg.dob,
-          idNumber: reg.idNumber,
-          tshirtSize: reg.tshirtSize,
-          emergencyContactName: reg.emergencyContactName,
-          emergencyPhone: reg.emergencyPhone,
-        }).catch(err => console.error(`[Email] Failed to send confirmation to ${reg.id}:`, err));
+        emailPromises.push(
+          sendConfirmationEmail({
+            id: reg.id,
+            firstName: reg.firstName,
+            lastName: reg.lastName,
+            email: reg.email,
+            circuitId: reg.circuitId,
+            totalAmount: reg.totalAmount,
+            status: reg.status,
+            category: reg.category || undefined,
+            payload: reg.payload,
+            teamName: reg.teamName || undefined,
+            gender: reg.gender,
+            dob: reg.dob,
+            idNumber: reg.idNumber,
+            tshirtSize: reg.tshirtSize,
+            emergencyContactName: reg.emergencyContactName,
+            emergencyPhone: reg.emergencyPhone,
+          }).catch(err => console.error(`[Email] Failed to send confirmation to ${reg.id}:`, err))
+        );
       }
+    }
+    if (emailPromises.length > 0) {
+      await Promise.allSettled(emailPromises);
     }
   }
 
@@ -381,27 +387,33 @@ export async function updateRegistration(id: string, input: Partial<Omit<Registr
       ? await prisma.registration.findMany({ where: { groupId } })
       : [rec];
 
+    const emailPromises = [];
     for (const reg of registrationsToSend) {
       if (reg.email) {
-        sendConfirmationEmail({
-          id: reg.id,
-          firstName: reg.firstName,
-          lastName: reg.lastName,
-          email: reg.email,
-          circuitId: reg.circuitId,
-          totalAmount: reg.totalAmount,
-          status: reg.status,
-          category: reg.category || undefined,
-          payload: reg.payload,
-          teamName: (reg as any).teamName || undefined,
-          gender: reg.gender,
-          dob: reg.dob,
-          idNumber: reg.idNumber,
-          tshirtSize: reg.tshirtSize,
-          emergencyContactName: reg.emergencyContactName,
-          emergencyPhone: reg.emergencyPhone,
-        }).catch(err => console.error(`[Email] Failed to send confirmation to ${reg.id}:`, err));
+        emailPromises.push(
+          sendConfirmationEmail({
+            id: reg.id,
+            firstName: reg.firstName,
+            lastName: reg.lastName,
+            email: reg.email,
+            circuitId: reg.circuitId,
+            totalAmount: reg.totalAmount,
+            status: reg.status,
+            category: reg.category || undefined,
+            payload: reg.payload,
+            teamName: (reg as any).teamName || undefined,
+            gender: reg.gender,
+            dob: reg.dob,
+            idNumber: reg.idNumber,
+            tshirtSize: reg.tshirtSize,
+            emergencyContactName: reg.emergencyContactName,
+            emergencyPhone: reg.emergencyPhone,
+          }).catch(err => console.error(`[Email] Failed to send confirmation to ${reg.id}:`, err))
+        );
       }
+    }
+    if (emailPromises.length > 0) {
+      await Promise.allSettled(emailPromises);
     }
   }
 
