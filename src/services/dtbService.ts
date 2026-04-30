@@ -1,4 +1,6 @@
 
+import { randomUUID } from 'crypto';
+
 /**
  * DTB (Diamond Trust Bank) Payment Service
  * 
@@ -114,8 +116,11 @@ export const dtbService = {
         }
 
         try {
+            // Generate a unique reference per attempt so DTB never rejects with "duplicate externalReference"
+            const txRef = randomUUID();
+
             const payload = {
-                TransactionRef: details.registrationId,
+                TransactionRef: txRef,
                 TransactionType: 'CustomerPayBillOnline',
                 Amount: Math.round(details.amount),
                 PhoneNumber: details.phoneNumber,
@@ -123,7 +128,7 @@ export const dtbService = {
                 BusinessShortCode: DTB_CONFIG.shortCode,
                 TransactionDesc: `Ride With Warriors - ${details.registrationId}`,
                 PromptDisplayAccount: process.env.DTB_PROMPT_ACCOUNT || 'RideWithWarriors',
-                UserCallback: details.callbackUrl || `${process.env.APP_URL || process.env.BASE_URL}/api/v1/registrations/callback/dtb`,
+                UserCallback: details.callbackUrl || `${process.env.APP_URL || process.env.BASE_URL}/api/dtb/stkpush`,
             };
 
             const response = await fetch(DTB_CONFIG.stkPushUrl, {
@@ -157,10 +162,10 @@ export const dtbService = {
                 };
             }
 
-            // DTB Fiorano returns externalReference (which is the TransactionRef we sent),
-            // along with status/responseCode in the body.
+            // DTB Fiorano returns externalReference (= the txRef UUID we sent as TransactionRef)
             const isAccepted = data.status === 'SUCCESS' || data.responseCode === '200';
-            const ref = data.externalReference || data.CheckoutRequestID || data.MerchantRequestID || data.id;
+            // Prefer what DTB echoes back; fall back to what we generated
+            const ref = data.externalReference || txRef || data.CheckoutRequestID || data.MerchantRequestID || data.id;
 
             return {
                 success: isAccepted,
