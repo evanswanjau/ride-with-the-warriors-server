@@ -435,3 +435,18 @@ export async function findExistingRegistrationsByEmails(emails: string[], exclud
 
   return matches as any[];
 }
+
+export async function findExistingRegistrationsByIdNumbers(idNumbers: string[], excludeGroupId?: string, excludeId?: string): Promise<RegistrationRecord[]> {
+  const matches = await (prisma.registration as any).findMany({
+    where: {
+      idNumber: { in: idNumbers },
+      status: { not: 'CANCELLED' },
+      AND: [
+        excludeGroupId ? { groupId: { not: excludeGroupId } } : {},
+        excludeId ? { id: { not: excludeId } } : {}
+      ]
+    }
+  });
+
+  return matches as any[];
+}

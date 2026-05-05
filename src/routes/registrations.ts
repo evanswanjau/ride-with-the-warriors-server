@@ -4,7 +4,7 @@ import { ZodError } from 'zod';
 import { quoteRequestSchema, riderDetailsSchema, teamDetailsSchema, familyDetailsSchema } from '../validation/registrationSchemas.js';
 import { zodToApiError } from '../validation/zodError.js';
 import { buildQuote, getPricingCategories } from '../services/pricing.js';
-import { createRegistration, getRegistration, getAllRegistrations, generateNextId, updateRegistration, findExistingRegistrationsByEmails, RegistrationRecord } from '../storage/memoryRegistrations.js';
+import { createRegistration, getRegistration, getAllRegistrations, generateNextId, updateRegistration, findExistingRegistrationsByEmails, findExistingRegistrationsByIdNumbers, RegistrationRecord } from '../storage/memoryRegistrations.js';
 import { dtbService } from '../services/dtbService.js';
 
 import { prisma } from '../storage/prisma.js';
@@ -25,6 +25,22 @@ function getEmailsFromPayload(type: string, payload: any): string[] {
     }
   }
   return emails;
+}
+
+function getIdNumbersFromPayload(type: string, payload: any): string[] {
+  const idNumbers: string[] = [];
+  if (type === 'individual') {
+    if (payload.riderDetails?.idNumber) idNumbers.push(payload.riderDetails.idNumber);
+  } else if (type === 'team') {
+    payload.teamDetails?.members?.forEach((m: any) => {
+      if (m.idNumber) idNumbers.push(m.idNumber);
+    });
+  } else if (type === 'family') {
+    if (payload.familyDetails?.guardian?.idNumber) {
+      idNumbers.push(payload.familyDetails.guardian.idNumber);
+    }
+  }
+  return idNumbers;
 }
 
 function validateTeamRules(circuitId: 'blitz' | 'recon' | 'corporate' | 'family', team: { members: Array<{ gender: 'male' | 'female' }> }) {
@@ -67,25 +83,36 @@ registrationsRouter.post('/quote', async (req, res, next) => {
 
     // CHECK FOR DUPLICATES
     const emailsToCheck = getEmailsFromPayload(base.type, payload);
-    const duplicates = await findExistingRegistrationsByEmails(emailsToCheck);
+    const idNumbersToCheck = getIdNumbersFromPayload(base.type, payload);
+    
+    const duplicateByEmail = emailsToCheck.length > 0 ? await findExistingRegistrationsByEmails(emailsToCheck) : [];
+    const duplicateById = idNumbersToCheck.length > 0 ? await findExistingRegistrationsByIdNumbers(idNumbersToCheck) : [];
+    
+    const allDuplicates = [...duplicateByEmail, ...duplicateById];
+    const uniqueDuplicatesMap = new Map();
+    allDuplicates.forEach(d => uniqueDuplicatesMap.set(d.id, d));
+    const duplicates = Array.from(uniqueDuplicatesMap.values());
 
     // Only block if there are PAID or CONFIRMED duplicates
     const blockingDuplicates = duplicates.filter(reg => reg.status === 'PAID' || reg.status === 'CONFIRMED');
 
     if (blockingDuplicates.length > 0) {
-      const duplicateEmails: string[] = [];
+      const duplicateInfo: string[] = [];
       const lowerToCheck = emailsToCheck.map(e => e.toLowerCase());
 
       blockingDuplicates.forEach(reg => {
         const p = reg.payload as any;
         if (reg.type === 'individual') {
-          if (p.riderDetails?.email && lowerToCheck.includes(p.riderDetails.email.toLowerCase())) duplicateEmails.push(p.riderDetails.email);
+          if (p.riderDetails?.email && lowerToCheck.includes(p.riderDetails.email.toLowerCase())) duplicateInfo.push(p.riderDetails.email);
+          if (p.riderDetails?.idNumber && idNumbersToCheck.includes(p.riderDetails.idNumber)) duplicateInfo.push(p.riderDetails.idNumber);
         } else if (reg.type === 'team') {
           p.teamDetails?.members?.forEach((m: any) => {
-            if (m.email && lowerToCheck.includes(m.email.toLowerCase())) duplicateEmails.push(m.email);
+            if (m.email && lowerToCheck.includes(m.email.toLowerCase())) duplicateInfo.push(m.email);
+            if (m.idNumber && idNumbersToCheck.includes(m.idNumber)) duplicateInfo.push(m.idNumber);
           });
         } else if (reg.type === 'family') {
-          if (p.familyDetails?.guardian?.email && lowerToCheck.includes(p.familyDetails.guardian.email.toLowerCase())) duplicateEmails.push(p.familyDetails.guardian.email);
+          if (p.familyDetails?.guardian?.email && lowerToCheck.includes(p.familyDetails.guardian.email.toLowerCase())) duplicateInfo.push(p.familyDetails.guardian.email);
+          if (p.familyDetails?.guardian?.idNumber && idNumbersToCheck.includes(p.familyDetails.guardian.idNumber)) duplicateInfo.push(p.familyDetails.guardian.idNumber);
         }
       });
 
@@ -95,7 +122,7 @@ registrationsRouter.post('/quote', async (req, res, next) => {
           message: 'One or more participants are already registered and paid.',
           details: {
             formErrors: ['One or more participants are already registered.'],
-            duplicates: [...new Set(duplicateEmails)]
+            duplicates: [...new Set(duplicateInfo)]
           }
         }
       });
@@ -278,6 +305,8 @@ registrationsRouter.post('/', async (req, res, next) => {
 
     // CHECK FOR DUPLICATES
     const emailsToCheck = getEmailsFromPayload(type, payload);
+    const idNumbersToCheck = getIdNumbersFromPayload(type, payload);
+    
     let excludeGroupId: string | undefined;
     if (existingId) {
       const existing = await getRegistration(existingId);
@@ -286,37 +315,46 @@ registrationsRouter.post('/', async (req, res, next) => {
       }
     }
 
-    const duplicates = await findExistingRegistrationsByEmails(emailsToCheck, excludeGroupId, existingId);
+    const duplicateByEmail = emailsToCheck.length > 0 ? await findExistingRegistrationsByEmails(emailsToCheck, excludeGroupId, existingId) : [];
+    const duplicateById = idNumbersToCheck.length > 0 ? await findExistingRegistrationsByIdNumbers(idNumbersToCheck, excludeGroupId, existingId) : [];
+    
+    const allDuplicates = [...duplicateByEmail, ...duplicateById];
+    const uniqueDuplicatesMap = new Map();
+    allDuplicates.forEach(d => uniqueDuplicatesMap.set(d.id, d));
+    const duplicates = Array.from(uniqueDuplicatesMap.values());
 
     // Separate duplicates by status
     const paidDuplicates = duplicates.filter(reg => reg.status === 'PAID' || reg.status === 'CONFIRMED');
     const unpaidDuplicates = duplicates.filter(reg => reg.status === 'UNPAID');
 
     if (paidDuplicates.length > 0) {
-      const duplicateEmails: string[] = [];
+      const duplicateInfo: string[] = [];
       const lowerToCheck = emailsToCheck.map(e => e.toLowerCase());
 
       paidDuplicates.forEach(reg => {
         const p = reg.payload as any;
         if (reg.type === 'individual') {
-          if (p.riderDetails?.email && lowerToCheck.includes(p.riderDetails.email.toLowerCase())) duplicateEmails.push(p.riderDetails.email);
+          if (p.riderDetails?.email && lowerToCheck.includes(p.riderDetails.email.toLowerCase())) duplicateInfo.push(p.riderDetails.email);
+          if (p.riderDetails?.idNumber && idNumbersToCheck.includes(p.riderDetails.idNumber)) duplicateInfo.push(p.riderDetails.idNumber);
         } else if (reg.type === 'team') {
           p.teamDetails?.members?.forEach((m: any) => {
-            if (m.email && lowerToCheck.includes(m.email.toLowerCase())) duplicateEmails.push(m.email);
+            if (m.email && lowerToCheck.includes(m.email.toLowerCase())) duplicateInfo.push(m.email);
+            if (m.idNumber && idNumbersToCheck.includes(m.idNumber)) duplicateInfo.push(m.idNumber);
           });
         } else if (reg.type === 'family') {
-          if (p.familyDetails?.guardian?.email && lowerToCheck.includes(p.familyDetails.guardian.email.toLowerCase())) duplicateEmails.push(p.familyDetails.guardian.email);
+          if (p.familyDetails?.guardian?.email && lowerToCheck.includes(p.familyDetails.guardian.email.toLowerCase())) duplicateInfo.push(p.familyDetails.guardian.email);
+          if (p.familyDetails?.guardian?.idNumber && idNumbersToCheck.includes(p.familyDetails.guardian.idNumber)) duplicateInfo.push(p.familyDetails.guardian.idNumber);
         }
       });
 
-      console.log(`[Registration] Duplicate check failed for PAID entries: ${duplicateEmails.join(', ')}`);
+      console.log(`[Registration] Duplicate check failed for PAID entries: ${duplicateInfo.join(', ')}`);
       return res.status(400).json({
         error: {
           code: 'DUPLICATE',
           message: 'One or more participants are already registered and paid.',
           details: {
             formErrors: ['One or more participants are already registered.'],
-            duplicates: [...new Set(duplicateEmails)]
+            duplicates: [...new Set(duplicateInfo)]
           }
         }
       });
