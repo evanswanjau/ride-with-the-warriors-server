@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../storage/prisma.js';
 import { updateRegistration, getRegistration } from '../storage/memoryRegistrations.js';
+import { sendConfirmationEmail } from '../services/emailService.js';
 
 export const dtbCallbacksRouter = Router();
 
@@ -157,6 +158,32 @@ dtbCallbacksRouter.post('/stkpush', async (req, res) => {
                 console.log(
                     `[DTB Callback] Updated Registration ${registrationId} → ${isSuccess ? 'PAID' : 'FAILED'}`
                 );
+
+                // Send confirmation email on successful payment
+                if (isSuccess) {
+                    const reg = await prisma.registration.findUnique({ where: { id: registrationId } });
+                    if (reg?.email) {
+                        sendConfirmationEmail({
+                            id: reg.id,
+                            firstName: reg.firstName,
+                            lastName: reg.lastName,
+                            email: reg.email,
+                            circuitId: reg.circuitId,
+                            totalAmount: reg.totalAmount,
+                            status: 'PAID',
+                            category: reg.category || undefined,
+                            gender: reg.gender,
+                            dob: reg.dob,
+                            idNumber: reg.idNumber,
+                            tshirtSize: reg.tshirtSize,
+                            emergencyContactName: reg.emergencyContactName,
+                            emergencyPhone: reg.emergencyPhone,
+                            teamName: reg.teamName || undefined,
+                        }).catch(emailErr => {
+                            console.error(`[DTB Callback] Failed to send confirmation email for ${registrationId}:`, emailErr);
+                        });
+                    }
+                }
             }
             return res.json({ received: true });
         }
