@@ -10,7 +10,7 @@ const EVENT_TIME = process.env.EVENT_TIME || '06:00 AM';
 const EVENT_LOCATION = process.env.EVENT_LOCATION || 'Nairobi, Kenya';
 const EMAIL_FROM = process.env.EMAIL_FROM || 'Ride With The Warriors <noreply@ride.airbornefraternity.org>';
 const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL || 'ridesupport@airbornefraternity.org';
-const WEBSITE_URL = process.env.WEBSITE_URL || 'https://airbornefraternity.com';
+const WEBSITE_URL = process.env.WEBSITE_URL || 'https://airbornefraternity.com/ride-with-the-warriors';
 
 const C = {
   bg: '#f5f2eb',
@@ -89,6 +89,29 @@ function getNumericId(id: string): string {
 function getFormattedEventDate(): string {
   const date = new Date(EVENT_DATE);
   return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+}
+
+function getEventTime(data: RegistrationData): string {
+  const circuit = data.circuitId?.toLowerCase() || '';
+  const isTeam = !!(data.teamName || data.category?.toLowerCase().includes('team'));
+
+  if (circuit === 'blitz') {
+    return isTeam ? '06:30 AM' : '06:00 AM';
+  }
+  if (circuit === 'recon') {
+    return isTeam ? '07:30 AM' : '07:00 AM';
+  }
+  if (circuit === 'corporate' || circuit === 'corporate_team') {
+    return '08:30 AM';
+  }
+  if (circuit === 'family') {
+    const cat = data.category?.toLowerCase() || '';
+    if (cat.includes('cub')) return '09:00 AM';
+    if (cat.includes('champ')) return '09:30 AM';
+    if (cat.includes('tiger')) return '10:00 AM';
+    return '09:00 AM';
+  }
+  return EVENT_TIME;
 }
 
 // --- SHARED COMPONENTS ---
@@ -179,7 +202,8 @@ function renderDetailsTable(data: RegistrationData): string {
     </table>`;
 }
 
-function renderEventMeta(): string {
+function renderEventMeta(data: RegistrationData): string {
+  const startTime = getEventTime(data);
   return `
     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
       style="margin: 20px 0; border: 1px solid ${C.border};">
@@ -187,7 +211,7 @@ function renderEventMeta(): string {
         <td width="50%" style="padding: 16px 18px; border-right: 1px solid ${C.border};">
           <p style="margin: 0 0 4px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
             font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: ${C.textMuted};">Start Time</p>
-          <p style="margin: 0; font-size: 17px; font-weight: 700; color: ${C.textMain};">${EVENT_TIME}</p>
+          <p style="margin: 0; font-size: 17px; font-weight: 700; color: ${C.textMain};">${startTime}</p>
         </td>
         <td width="50%" style="padding: 16px 18px;">
           <p style="margin: 0 0 4px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
@@ -357,7 +381,7 @@ function getConfirmationEmail(data: RegistrationData): { subject: string; html: 
 
     ${renderIdBlock('Registration ID', getNumericId(data.id), 'Present this at event check-in')}
     ${renderDetailsTable(data)}
-    ${renderEventMeta()}
+    ${renderEventMeta(data)}
 
     <p style="margin: 20px 0 8px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
       font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: ${C.textMuted};">
@@ -468,7 +492,7 @@ function getEventReminderEmail(data: RegistrationData, daysUntil: number): { sub
     </p>
 
     ${renderIdBlock('Your BIB Number', getNumericId(data.id), 'Present this at check-in')}
-    ${renderEventMeta()}
+    ${renderEventMeta(data)}
     ${renderDetailsTable(data)}
 
     <p style="margin: 20px 0 8px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
