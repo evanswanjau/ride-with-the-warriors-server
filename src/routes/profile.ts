@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { getAllRegistrations, getRegistration } from '../storage/memoryRegistrations.js';
 import { prisma } from '../storage/prisma.js';
+import { maskRegistration, maskRaffleTicket } from '../utils/masking.js';
 
 export const profileRouter = Router();
 
@@ -77,6 +78,11 @@ profileRouter.post('/search', async (req, res) => {
                 where: { registrationId: foundRegistration.id },
                 orderBy: { createdAt: 'desc' }
             });
+        }
+
+        if (searchType === 'id') {
+            if (foundRegistration) foundRegistration = maskRegistration(foundRegistration);
+            if (foundRaffleTicket) foundRaffleTicket = maskRaffleTicket(foundRaffleTicket);
         }
 
         res.json({

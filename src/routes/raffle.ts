@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../storage/prisma.js';
 import { dtbService } from '../services/dtbService.js';
-
+import { maskRaffleTicket } from '../utils/masking.js';
 
 export const raffleRouter = Router();
 
@@ -168,7 +168,7 @@ raffleRouter.get('/:id', async (req, res) => {
     if (!ticket) {
       return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Raffle ticket not found' } });
     }
-    return res.json({ ticket });
+    return res.json({ ticket: maskRaffleTicket(ticket) });
   } catch (err) {
     console.error('[Raffle] Fetch error:', err);
     return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to fetch raffle ticket' } });
@@ -192,6 +192,7 @@ raffleRouter.post('/search', async (req, res) => {
       ticket = await (prisma.raffleTicket as any).findUnique({
         where: { id: searchValue.toUpperCase() },
       });
+      if (ticket) ticket = maskRaffleTicket(ticket);
     } else if (searchType === 'email') {
       ticket = await (prisma.raffleTicket as any).findFirst({
         where: { email: searchValue.trim().toLowerCase() },
