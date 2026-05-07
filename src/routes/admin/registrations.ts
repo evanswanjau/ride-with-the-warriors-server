@@ -27,13 +27,13 @@ adminRegistrationsRouter.get('/', requireAdmin, async (req, res) => {
         if (search) {
             const s = String(search);
             where.OR = [
-                { id: { contains: s } },
-                { firstName: { contains: s } },
-                { lastName: { contains: s } },
-                { email: { contains: s } },
-                { phoneNumber: { contains: s } },
-                { teamName: { contains: s } },
-                { guardianName: { contains: s } }
+                { id: { contains: s, mode: 'insensitive' } },
+                { firstName: { contains: s, mode: 'insensitive' } },
+                { lastName: { contains: s, mode: 'insensitive' } },
+                { email: { contains: s, mode: 'insensitive' } },
+                { phoneNumber: { contains: s, mode: 'insensitive' } },
+                { teamName: { contains: s, mode: 'insensitive' } },
+                { guardianName: { contains: s, mode: 'insensitive' } }
             ];
         }
 

@@ -19,7 +19,7 @@ adminPaymentsRouter.get('/', requireAdmin, async (req, res) => {
         if (search) {
             const s = String(search).trim();
             where.OR = [
-                { mpesaReceiptNumber: { contains: s } },
+                { mpesaReceiptNumber: { contains: s, mode: 'insensitive' } },
                 { phone: { contains: s } },
             ];
         }

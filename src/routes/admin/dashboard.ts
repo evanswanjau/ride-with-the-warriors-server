@@ -18,7 +18,7 @@ const GENDER_COLORS: Record<string, string> = {
     OTHER: '#6b7280',
 };
 
-const RAFFLE_TICKET_PRICE = 500;
+const RAFFLE_TICKET_PRICE = 1000;
 
 adminDashboardRouter.get('/', requireAdmin, async (_req, res) => {
     try {

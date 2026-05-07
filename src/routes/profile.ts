@@ -24,25 +24,25 @@ profileRouter.post('/search', async (req, res) => {
             foundRegistration = await getRegistration(searchValue.toUpperCase());
             if (!foundRegistration) {
                 foundRegistration = await (prisma.registration as any).findFirst({
-                    where: { idNumber: { equals: searchValue.trim() } },
+                    where: { idNumber: { equals: searchValue.trim(), mode: 'insensitive' } },
                     orderBy: { createdAt: 'desc' }
                 });
             }
             // Check raffle tickets
             foundRaffleTicket = await (prisma.raffleTicket as any).findFirst({
-                where: { id: { equals: searchValue.toUpperCase().trim() } }
+                where: { id: { equals: searchValue.toUpperCase().trim(), mode: 'insensitive' } }
             });
 
         } else if (searchType === 'email') {
             const searchLower = searchValue.toLowerCase().trim();
             // Check registrations
             foundRegistration = await (prisma.registration as any).findFirst({
-                where: { email: { equals: searchLower } },
+                where: { email: { equals: searchLower, mode: 'insensitive' } },
                 orderBy: { createdAt: 'desc' }
             });
             // Check raffle tickets
             foundRaffleTicket = await (prisma.raffleTicket as any).findFirst({
-                where: { email: { equals: searchLower } },
+                where: { email: { equals: searchLower, mode: 'insensitive' } },
                 orderBy: { createdAt: 'desc' }
             });
 
@@ -52,15 +52,15 @@ profileRouter.post('/search', async (req, res) => {
             foundRegistration = await (prisma.registration as any).findFirst({
                 where: {
                     OR: [
-                        { phoneNumber: { contains: normalizedPhone } },
-                        { emergencyPhone: { contains: normalizedPhone } }
+                        { phoneNumber: { contains: normalizedPhone, mode: 'insensitive' } },
+                        { emergencyPhone: { contains: normalizedPhone, mode: 'insensitive' } }
                     ]
                 },
                 orderBy: { createdAt: 'desc' }
             });
             // Check raffle tickets
             foundRaffleTicket = await (prisma.raffleTicket as any).findFirst({
-                where: { phoneNumber: { contains: normalizedPhone } },
+                where: { phoneNumber: { contains: normalizedPhone, mode: 'insensitive' } },
                 orderBy: { createdAt: 'desc' }
             });
         }
