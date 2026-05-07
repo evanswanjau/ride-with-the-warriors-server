@@ -17,7 +17,10 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test-raffle-email": "tsx src/scripts/testRaffleEmail.ts",
+    "resend-raffle-email": "tsx src/scripts/resendRaffleEmail.ts",
+    "send-all-raffle-tickets": "tsx src/scripts/sendAllRaffleTickets.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.2.1",
@@ -27,6 +30,7 @@
     "express": "^4.21.2",
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.13",
+    "pdfkit": "^0.18.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {
@@ -36,6 +40,7 @@
     "@types/node": "^22.10.2",
     "@types/node-cron": "^3.0.11",
     "@types/nodemailer": "^7.0.9",
+    "@types/pdfkit": "^0.17.6",
     "@types/supertest": "^6.0.3",
     "@vitest/coverage-v8": "^4.0.18",
     "eslint": "^9.18.0",

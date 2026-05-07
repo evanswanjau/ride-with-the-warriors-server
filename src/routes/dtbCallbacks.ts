@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../storage/prisma.js';
 import { updateRegistration, getRegistration } from '../storage/memoryRegistrations.js';
-import { sendConfirmationEmail } from '../services/emailService.js';
+import { sendConfirmationEmail, sendRaffleConfirmationEmail } from '../services/emailService.js';
 
 export const dtbCallbacksRouter = Router();
 
@@ -118,6 +118,26 @@ dtbCallbacksRouter.post('/stkpush', async (req, res) => {
             console.log(
                 `[DTB Callback] Updated ${tickets.length} Raffle Ticket(s) → ${isSuccess ? 'PAID' : 'FAILED'}`
             );
+
+            // Send confirmation email on successful raffle payment
+            if (isSuccess) {
+                const first = tickets[0];
+                if (first?.email) {
+                    sendRaffleConfirmationEmail({
+                        id: first.id,
+                        ids: (tickets as any[]).map((t) => t.id),
+                        firstName: first.firstName,
+                        lastName: first.lastName,
+                        email: first.email,
+                        phoneNumber: first.phoneNumber,
+                        quantity: tickets.length,
+                        totalAmount: 1000 * tickets.length,
+                    }).catch((err: any) => {
+                        console.error(`[DTB Callback] Failed to send raffle confirmation email for ${first.id}:`, err);
+                    });
+                }
+            }
+
             return res.json({ received: true });
         }
 

@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import { prisma } from '../storage/prisma.js';
 import { calculateAge } from './pricing.js';
+import { generateRaffleTicketPdf } from './pdfService.js';
 
 // --- CONFIGURATION & CONSTANTS ---
 
@@ -55,6 +56,17 @@ interface RegistrationData {
   tshirtSize?: string | null;
   emergencyContactName?: string | null;
   emergencyPhone?: string | null;
+}
+
+export interface RaffleTicketData {
+  id: string;           // first (or only) ticket code, e.g. "AA001"
+  ids: string[];        // all ticket codes in this purchase
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber?: string | null;
+  quantity: number;     // number of tickets purchased in this batch
+  totalAmount: number;  // KES total paid
 }
 
 export interface EnquiryData {
@@ -510,6 +522,111 @@ function getEventReminderEmail(data: RegistrationData, daysUntil: number): { sub
     subject: `${cfg.eyebrow} — ${EVENT_NAME}`,
     html: getEmailTemplate(content, cfg.eyebrow, cfg.preheader),
   };
+}
+
+// --- RAFFLE EMAILS ---
+
+function getRaffleConfirmationEmail(data: RaffleTicketData): { subject: string; html: string } {
+  const ticketLabel = data.quantity === 1 ? 'Raffle Ticket' : `${data.quantity} Raffle Tickets`;
+
+  // Build ticket code rows — one per ID
+  const ticketRows = data.ids.map((code, i) => `
+    <tr>
+      <td style="padding: 10px 16px; border-bottom: 1px solid ${C.borderLight};">
+        <p style="margin: 0 0 2px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
+          font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: ${C.textMuted};">Ticket ${i + 1}</p>
+        <p style="margin: 0; font-family: 'Courier New', monospace; font-size: 22px; font-weight: 700;
+          letter-spacing: 0.06em; color: ${C.primary};">${code}</p>
+      </td>
+    </tr>`).join('');
+
+  const content = `
+    <p style="margin: 0 0 5px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; color: ${C.primaryLight};">
+      Raffle Entry Confirmed
+    </p>
+    <h2 style="margin: 0 0 14px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
+      font-size: 28px; font-weight: 900; letter-spacing: 0.04em; text-transform: uppercase; color: ${C.textMain}; line-height: 1.05;">
+      You're in the draw, ${data.firstName}!
+    </h2>
+    <p style="margin: 0 0 4px; font-size: 15px; line-height: 1.65; color: ${C.textMuted};">
+      Your payment of <strong>KES ${data.totalAmount.toLocaleString()}</strong> was received.
+      Your ${ticketLabel} ${data.quantity === 1 ? 'is' : 'are'} now entered in the raffle &mdash; good luck!
+    </p>
+
+    <p style="margin: 24px 0 8px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: ${C.textMuted};">
+      Your Ticket ${data.quantity === 1 ? 'Code' : 'Codes'}
+    </p>
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+      style="border: 1px solid ${C.border}; border-left: 4px solid ${C.primary};">
+      ${ticketRows}
+    </table>
+
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+      style="margin: 24px 0; border: 1px solid ${C.border};">
+      <tr>
+        <td width="50%" style="padding: 14px 16px; border-right: 1px solid ${C.borderLight};">
+          <p style="margin: 0 0 4px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
+            font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: ${C.textMuted};">Tickets Purchased</p>
+          <p style="margin: 0; font-size: 18px; font-weight: 700; color: ${C.textMain};">${data.quantity}</p>
+        </td>
+        <td width="50%" style="padding: 14px 16px;">
+          <p style="margin: 0 0 4px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
+            font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: ${C.textMuted};">Amount Paid</p>
+          <p style="margin: 0; font-size: 18px; font-weight: 700; color: ${C.textMain};">KES ${data.totalAmount.toLocaleString()}</p>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin: 22px 0 0; font-size: 13px; color: ${C.textMuted}; line-height: 1.6;">
+      The raffle draw will be announced at the event. Questions?
+      <a href="mailto:${SUPPORT_EMAIL}" style="color: ${C.primary}; font-weight: 600;">${SUPPORT_EMAIL}</a>
+    </p>`;
+
+  return {
+    subject: `Raffle Entry Confirmed — ${EVENT_NAME}`,
+    html: getEmailTemplate(content, 'Raffle Entry Confirmed', `Your ticket ${data.quantity === 1 ? 'code is' : 'codes:'} ${data.ids.join(', ')}`),
+  };
+}
+
+export async function sendRaffleConfirmationEmail(
+  ticket: RaffleTicketData
+): Promise<boolean> {
+  if (!ticket.email) {
+    console.log(`[Email] Raffle ${ticket.id} - no email address, skipping`);
+    return false;
+  }
+  try {
+    const { subject, html } = getRaffleConfirmationEmail(ticket);
+
+    // Generate PDF for all tickets in this purchase
+    const ticketsForPdf = ticket.ids.map(id => ({
+      id,
+      firstName: ticket.firstName,
+      lastName: ticket.lastName
+    }));
+    const pdfBuffer = await generateRaffleTicketPdf(ticketsForPdf);
+
+    await transporter.sendMail({
+      from: EMAIL_FROM,
+      to: ticket.email,
+      subject,
+      html,
+      attachments: [
+        {
+          filename: `RWTW_Raffle_Tickets_${ticket.id}.pdf`,
+          content: pdfBuffer
+        }
+      ]
+    });
+    console.log(`[Email] Raffle confirmation sent to ${ticket.email} (${ticket.id}) with PDF attachment`);
+    return true;
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`[Email] Failed to send raffle confirmation to ${ticket.email}:`, msg);
+    return false;
+  }
 }
 
 // --- ENQUIRY EMAILS ---
