@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../../storage/prisma.js';
-import { sendConfirmationEmail, verifyEmailConnection, getTemplatePreview, sendEmail } from '../../services/emailService.js';
+import { sendConfirmationEmail, verifyEmailConnection, getTemplatePreview, sendEmail, sendRaffleEmail } from '../../services/emailService.js';
 import { triggerReminderCheck } from '../../services/reminderScheduler.js';
 
 export const emailRouter = Router();
@@ -8,7 +8,7 @@ export const emailRouter = Router();
 // Preview email templates (returns HTML)
 emailRouter.get('/preview/:type', (req, res) => {
     const { type } = req.params;
-    const validTypes = ['confirmation', 'payment_reminder_3d', 'payment_reminder_7d', 'reminder_7d', 'reminder_1d', 'reminder_day'];
+    const validTypes = ['confirmation', 'payment_reminder_3d', 'payment_reminder_7d', 'reminder_7d', 'reminder_1d', 'reminder_day', 'raffle_payment_reminder'];
 
     if (!validTypes.includes(type)) {
         return res.status(400).json({ error: `Invalid type. Valid types: ${validTypes.join(', ')}` });
@@ -283,6 +283,131 @@ emailRouter.post('/resend-military', async (req, res) => {
             processed: results.length,
             successCount,
             failureCount: results.length - successCount,
+            results,
+        });
+    } catch (error) {
+        res.status(500).json({
+            ok: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+});
+
+// ── Send payment reminders to unpaid raffle tickets ──
+// Body / query params:
+//   limit   - max to process (default: 5)
+//   dryRun  - "true" to preview without sending
+//   minDays - only remind if older than X days (default: 1)
+emailRouter.post('/raffle-reminders', async (req, res) => {
+    try {
+        const limit = parseInt(String(req.query.limit || req.body.limit || '5'));
+        const dryRun = String(req.query.dryRun || req.body.dryRun) === 'true';
+        const minDays = parseInt(String(req.query.minDays || req.body.minDays || '1'));
+
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - minDays);
+
+        // Find unpaid raffle tickets with email
+        const unpaidRaffles = await prisma.raffleTicket.findMany({
+            where: {
+                status: 'UNPAID',
+                email: { not: '' },
+                createdAt: { lte: cutoffDate }
+            },
+            orderBy: { createdAt: 'asc' }
+        });
+
+        // Find which ones already have a raffle_payment_reminder email log
+        const raffleIds = unpaidRaffles.map(r => r.id);
+        let alreadySentIds = new Set<string>();
+        
+        if (raffleIds.length > 0) {
+            const sentLogs = await prisma.emailLog.findMany({
+                where: {
+                    registrationId: { in: raffleIds }, // We use registrationId field for raffleId
+                    type: 'raffle_payment_reminder',
+                    status: 'sent',
+                },
+                select: { registrationId: true },
+            });
+            alreadySentIds = new Set(sentLogs.map(l => l.registrationId));
+        }
+
+        // Filter out those who already received this specific reminder
+        const pending = unpaidRaffles.filter(r => !alreadySentIds.has(r.id));
+        const toProcess = pending.slice(0, limit);
+
+        // Group by email
+        const groups: Record<string, { firstName: string; email: string; tickets: typeof toProcess }> = {};
+        for (const raffle of toProcess) {
+            if (!groups[raffle.email]) {
+                groups[raffle.email] = { firstName: raffle.firstName, email: raffle.email, tickets: [] };
+            }
+            groups[raffle.email].tickets.push(raffle);
+        }
+
+        const results: Array<{ email: string; name: string; ticketCount: number; sent: boolean; error?: string }> = [];
+
+        for (const email of Object.keys(groups)) {
+            const group = groups[email];
+            try {
+                // Clear any existing failed log for all tickets in group
+                const ticketIds = group.tickets.map(r => r.id);
+                await prisma.emailLog.deleteMany({
+                    where: { registrationId: { in: ticketIds }, type: 'raffle_payment_reminder', status: 'failed' },
+                });
+
+                const totalAmount = group.tickets.length * 1000; // Assuming 1000 per ticket
+
+                const baseUrl = process.env.WEBSITE_URL || process.env.APP_URL || 'https://airbornefraternity.com/ride-with-the-warriors';
+                const profileUrl = `${baseUrl}/raffle/profile/email/${encodeURIComponent(group.email)}`;
+
+                const sent = await sendRaffleEmail(ticketIds[0], 'raffle_payment_reminder', {
+                    firstName: group.firstName,
+                    email: group.email,
+                    ticketCount: group.tickets.length,
+                    totalAmount,
+                    profileUrl,
+                } as any);
+
+                // If sent, log for the REST of the tickets in the group (sendRaffleEmail logs for the first one)
+                if (sent && ticketIds.length > 1) {
+                    const extraLogs = ticketIds.slice(1).map(id => ({
+                        registrationId: id,
+                        type: 'raffle_payment_reminder' as const,
+                        status: 'sent' as const,
+                    }));
+                    await prisma.emailLog.createMany({ data: extraLogs });
+                }
+
+                results.push({
+                    email: group.email,
+                    name: group.firstName,
+                    ticketCount: group.tickets.length,
+                    sent,
+                });
+            } catch (err) {
+                results.push({
+                    email: group.email,
+                    name: group.firstName,
+                    ticketCount: group.tickets.length,
+                    sent: false,
+                    error: err instanceof Error ? err.message : 'Unknown error',
+                });
+            }
+        }
+
+        const successCount = results.filter(r => r.sent).length;
+
+        res.json({
+            ok: true,
+            totalUnpaid: unpaidRaffles.length,
+            alreadyReminded: alreadySentIds.size,
+            pendingCount: pending.length,
+            groupsProcessed: results.length,
+            totalTicketsProcessed: toProcess.length,
+            successGroups: successCount,
+            failureGroups: results.length - successCount,
             results,
         });
     } catch (error) {

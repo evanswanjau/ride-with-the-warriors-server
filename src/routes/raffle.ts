@@ -159,6 +159,30 @@ raffleRouter.post('/pay/stk-push', async (req, res) => {
 });
 
 
+// ─── GET /by-email/:email — Fetch ALL tickets for an email address ──────────
+// Used by the email-linked profile page so users can see all their tickets.
+raffleRouter.get('/by-email/:email', async (req, res) => {
+  try {
+    const email = decodeURIComponent(req.params.email).toLowerCase().trim();
+    if (!email) {
+      return res.status(400).json({ error: { code: 'VALIDATION', message: 'email is required' } });
+    }
+    const tickets = await (prisma.raffleTicket as any).findMany({
+      where: { email: { equals: email, mode: 'insensitive' } },
+      orderBy: { createdAt: 'asc' },
+    });
+    if (!tickets || tickets.length === 0) {
+      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'No raffle tickets found for this email' } });
+    }
+    // Return tickets with status unmasked so the profile UI can differentiate paid/unpaid.
+    // Personal fields (idNumber) remain as-is since this is a private profile view.
+    return res.json({ tickets, email });
+  } catch (err) {
+    console.error('[Raffle] By-email fetch error:', err);
+    return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to fetch raffle tickets' } });
+  }
+});
+
 // ─── GET /:id — Fetch a ticket by code (also used for polling) ───────────────
 
 raffleRouter.get('/:id', async (req, res) => {

@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import { prisma } from '../storage/prisma.js';
-import { sendEmail, EmailType } from './emailService.js';
+import { sendEmail, EmailType, sendRaffleEmail } from './emailService.js';
 
 const EVENT_DATE = process.env.EVENT_DATE || '2026-07-05';
 
@@ -105,6 +105,58 @@ async function processPaymentReminders() {
     }
 }
 
+// Process payment reminders for unpaid raffle tickets
+async function processRafflePaymentReminders() {
+    console.log('[Scheduler] Processing raffle payment reminders...');
+
+    const today = getToday();
+    const cutoffDate = new Date(today);
+    cutoffDate.setDate(cutoffDate.getDate() - 1); // Only remind if at least 1 day old
+
+    const unpaidRaffles = await prisma.raffleTicket.findMany({
+        where: {
+            status: 'UNPAID',
+            email: { not: '' },
+            createdAt: { lte: cutoffDate }
+        },
+    });
+
+    const groups: Record<string, { firstName: string; email: string; tickets: typeof unpaidRaffles }> = {};
+    for (const raffle of unpaidRaffles) {
+        if (!groups[raffle.email]) {
+            groups[raffle.email] = { firstName: raffle.firstName, email: raffle.email, tickets: [] };
+        }
+        groups[raffle.email].tickets.push(raffle);
+    }
+
+    for (const email of Object.keys(groups)) {
+        const group = groups[email];
+        const ticketIds = group.tickets.map(r => r.id);
+        const totalAmount = group.tickets.length * 1000;
+
+        // The sendRaffleEmail function logs for the first ticketId passed.
+        // We manually log the rest if the email was sent successfully.
+        const baseUrl = process.env.WEBSITE_URL || process.env.APP_URL || 'https://airbornefraternity.com/ride-with-the-warriors';
+        const profileUrl = `${baseUrl}/raffle/profile/email/${encodeURIComponent(group.email)}`;
+        const sent = await sendRaffleEmail(ticketIds[0], 'raffle_payment_reminder', {
+            firstName: group.firstName,
+            email: group.email,
+            ticketCount: group.tickets.length,
+            totalAmount,
+            profileUrl,
+        } as any);
+
+        if (sent && ticketIds.length > 1) {
+            const extraLogs = ticketIds.slice(1).map(id => ({
+                registrationId: id,
+                type: 'raffle_payment_reminder' as const,
+                status: 'sent' as const,
+            }));
+            await prisma.emailLog.createMany({ data: extraLogs });
+        }
+    }
+}
+
 // Process event reminders for paid registrations
 async function processEventReminders() {
     console.log('[Scheduler] Processing event reminders...');
@@ -174,6 +226,7 @@ export async function runScheduledTasks() {
 
     try {
         await processPaymentReminders();
+        await processRafflePaymentReminders();
         await processEventReminders();
         console.log('[Scheduler] Scheduled tasks completed');
     } catch (error) {

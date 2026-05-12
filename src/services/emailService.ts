@@ -37,7 +37,8 @@ export type EmailType =
   | 'payment_reminder_7d'
   | 'reminder_7d'
   | 'reminder_1d'
-  | 'reminder_day';
+  | 'reminder_day'
+  | 'raffle_payment_reminder';
 
 interface RegistrationData {
   id: string;
@@ -589,7 +590,81 @@ function getRaffleConfirmationEmail(data: RaffleTicketData): { subject: string; 
     html: getEmailTemplate(content, 'Raffle Entry Confirmed', `Your ticket ${data.quantity === 1 ? 'code is' : 'codes:'} ${data.ids.join(', ')}`),
   };
 }
+function getRafflePaymentReminderEmail(data: { firstName: string; email: string; ticketCount: number; totalAmount: number; profileUrl: string }): { subject: string; html: string } {
+  const profileUrl = data.profileUrl;
+  const ticketText = data.ticketCount > 1 ? `${data.ticketCount} raffle tickets` : 'your raffle ticket';
 
+  const content = `
+    <p style="margin: 0 0 5px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; color: ${C.errorBorder};">
+      Action Required
+    </p>
+    <h2 style="margin: 0 0 14px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
+      font-size: 28px; font-weight: 900; letter-spacing: 0.04em; text-transform: uppercase; color: ${C.textMain}; line-height: 1.05;">
+      Complete your raffle entry, ${data.firstName}.
+    </h2>
+    <p style="margin: 0 0 4px; font-size: 15px; line-height: 1.65; color: ${C.textMuted};">
+      We noticed you have <strong>${ticketText}</strong> currently unpaid. Complete your payment to enter the draw for a chance to win amazing prizes!
+    </p>
+
+    ${renderIdBlock('Total Amount Due', `KES ${data.totalAmount.toLocaleString()}`, 'Complete payment for all items to secure your entries', true)}
+    ${renderButton(profileUrl, 'View Profile & Pay Now', true)}
+
+    <p style="margin: 24px 0 0; font-size: 13px; color: ${C.textMuted}; font-style: italic; text-align: center;">
+        If you've already made this payment, please disregard this email. It can take a few minutes for the status to update.
+    </p>`;
+
+  return {
+    subject: `Complete your ${data.ticketCount > 1 ? 'raffle entries' : 'raffle entry'} - ${EVENT_NAME}`,
+    html: getEmailTemplate(content, 'Complete Your Raffle Entry', "Secure your raffle tickets — payment required."),
+  };
+}
+ 
+export async function sendRaffleEmail(
+  ticketId: string,
+  type: EmailType,
+  data: RaffleTicketData
+): Promise<boolean> {
+  if (await wasEmailSent(ticketId, type)) {
+    console.log(`[Email] Skipping ${type} for Raffle ${ticketId} - already sent`);
+    return true;
+  }
+ 
+  if (!data.email) {
+    console.log(`[Email] Skipping ${type} for Raffle ${ticketId} - no email address`);
+    return false;
+  }
+ 
+  let emailContent: { subject: string; html: string };
+ 
+  switch (type) {
+    case 'raffle_payment_reminder':
+      emailContent = getRafflePaymentReminderEmail(data as any);
+      break;
+    default:
+      console.error(`[Email] Unknown raffle email type: ${type}`);
+      return false;
+  }
+ 
+  try {
+    await transporter.sendMail({
+      from: EMAIL_FROM,
+      to: data.email,
+      subject: emailContent.subject,
+      html: emailContent.html,
+    });
+ 
+    await logEmail(ticketId, type, 'sent');
+    console.log(`[Email] Sent ${type} to Raffle ${data.email}`);
+    return true;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    await logEmail(ticketId, type, 'failed', errorMessage);
+    console.error(`[Email] Failed to send ${type} to Raffle ${data.email}:`, errorMessage);
+    return false;
+  }
+}
+ 
 export async function sendRaffleConfirmationEmail(
   ticket: RaffleTicketData
 ): Promise<boolean> {
@@ -878,6 +953,15 @@ export function getTemplatePreview(type: EmailType): string {
     case 'reminder_7d': return getEventReminderEmail(sampleData, 7).html;
     case 'reminder_1d': return getEventReminderEmail(sampleData, 1).html;
     case 'reminder_day': return getEventReminderEmail(sampleData, 0).html;
+    case 'raffle_payment_reminder': {
+      return getRafflePaymentReminderEmail({
+        firstName: 'Jane',
+        email: 'jane@example.com',
+        ticketCount: 3,
+        totalAmount: 3000,
+        profileUrl: `${WEBSITE_URL}/raffle/profile/email/jane%40example.com`
+      }).html;
+    }
     default: return getConfirmationEmail(sampleData).html;
   }
 }

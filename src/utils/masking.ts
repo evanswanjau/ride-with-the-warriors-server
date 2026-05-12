@@ -18,7 +18,7 @@ export function maskIdNumber(idStr: string) {
 export function maskPayload(payloadStr: string) {
     if (!payloadStr) return payloadStr;
     try {
-        const p = JSON.parse(payloadStr);
+        const p = typeof payloadStr === 'string' ? JSON.parse(payloadStr) : payloadStr;
 
         if (p.riderDetails) {
             if (p.riderDetails.email) p.riderDetails.email = maskEmail(p.riderDetails.email);
