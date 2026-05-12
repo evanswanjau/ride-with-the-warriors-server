@@ -64,13 +64,11 @@ dtbCallbacksRouter.post('/stkpush', async (req, res) => {
 
     try {
         // ── 1. Try Donation ──────────────────────────────────────────────────
-        // Donations store externalReference in the `checkoutRequestId` column
-        // (set after a successful STK push initiation)
         const donation = await prisma.donation.findFirst({
             where: {
                 OR: [
                     { checkoutRequestId: externalReference },
-                    { id: externalReference },           // externalReference IS the donationId we sent
+                    { id: externalReference },
                 ],
             },
         });
@@ -80,13 +78,39 @@ dtbCallbacksRouter.post('/stkpush', async (req, res) => {
                 where: { id: donation.id },
                 data: {
                     status: isSuccess ? 'PAID' : 'FAILED',
-                    checkoutRequestId: externalReference, // ensure it's stored
+                    checkoutRequestId: externalReference,
                     failureReason: isSuccess ? null : resultDesc,
+                    mpesaCode: mnoRef || null,
+                    paymentDetails: callbackData as any,
                 },
             });
-            console.log(
-                `[DTB Callback] Updated Donation ${donation.id} → ${isSuccess ? 'PAID' : 'FAILED'}`
-            );
+
+            // Create/Update Payment audit record
+            await (prisma.payment as any).upsert({
+                where: { checkoutRequestId: externalReference },
+                create: {
+                    donationId: donation.id,
+                    checkoutRequestId: externalReference,
+                    phone: donation.phone,
+                    amount: donation.amount,
+                    status: isSuccess ? 'PAID' : 'FAILED',
+                    failureReason: isSuccess ? null : resultDesc,
+                    mpesaReceiptNumber: mnoRef || null,
+                    mnoReference: mnoRef || null,
+                    cbsReference: cbsRef || null,
+                    paymentDetails: callbackData as any,
+                },
+                update: {
+                    status: isSuccess ? 'PAID' : 'FAILED',
+                    failureReason: isSuccess ? null : resultDesc,
+                    mpesaReceiptNumber: mnoRef || null,
+                    mnoReference: mnoRef || null,
+                    cbsReference: cbsRef || null,
+                    paymentDetails: callbackData as any,
+                }
+            });
+
+            console.log(`[DTB Callback] Updated Donation ${donation.id} → ${isSuccess ? 'PAID' : 'FAILED'}`);
             return res.json({ received: true });
         }
 
@@ -113,13 +137,38 @@ dtbCallbacksRouter.post('/stkpush', async (req, res) => {
                     paymentFailed: !isSuccess,
                     checkoutRequestId: externalReference,
                     failureReason: isSuccess ? null : resultDesc,
+                    mpesaCode: mnoRef || null,
+                    paymentDetails: callbackData as any,
                 },
             });
-            console.log(
-                `[DTB Callback] Updated ${tickets.length} Raffle Ticket(s) → ${isSuccess ? 'PAID' : 'FAILED'}`
-            );
 
-            // Send confirmation email on successful raffle payment
+            // Create/Update Payment audit record for Raffle
+            await (prisma.payment as any).upsert({
+                where: { checkoutRequestId: externalReference },
+                create: {
+                    raffleTicketIds: tickets.map((t: any) => t.id),
+                    checkoutRequestId: externalReference,
+                    phone: tickets[0].phoneNumber,
+                    amount: 1000 * tickets.length,
+                    status: isSuccess ? 'PAID' : 'FAILED',
+                    failureReason: isSuccess ? null : resultDesc,
+                    mpesaReceiptNumber: mnoRef || null,
+                    mnoReference: mnoRef || null,
+                    cbsReference: cbsRef || null,
+                    paymentDetails: callbackData as any,
+                },
+                update: {
+                    status: isSuccess ? 'PAID' : 'FAILED',
+                    failureReason: isSuccess ? null : resultDesc,
+                    mpesaReceiptNumber: mnoRef || null,
+                    mnoReference: mnoRef || null,
+                    cbsReference: cbsRef || null,
+                    paymentDetails: callbackData as any,
+                }
+            });
+
+            console.log(`[DTB Callback] Updated ${tickets.length} Raffle Ticket(s) → ${isSuccess ? 'PAID' : 'FAILED'}`);
+
             if (isSuccess) {
                 const first = tickets[0];
                 if (first?.email) {
@@ -158,63 +207,65 @@ dtbCallbacksRouter.post('/stkpush', async (req, res) => {
                     status: isSuccess ? 'PAID' : 'FAILED',
                     checkoutRequestId: externalReference,
                     failureReason: isSuccess ? null : resultDesc,
+                    mpesaReceiptNumber: mnoRef || null,
+                    mnoReference: mnoRef || null,
+                    cbsReference: cbsRef || null,
+                    paymentDetails: callbackData as any,
                 },
             });
 
             const registrationId = paymentAudit.registrationId;
-            const existing = await getRegistration(registrationId);
+            if (registrationId) {
+                const existing = await getRegistration(registrationId);
 
-            if (existing) {
-                await updateRegistration(registrationId, {
-                    status: isSuccess ? 'PAID' : 'UNPAID',
-                    payload: {
-                        ...existing.payload,
-                        paymentFailed: !isSuccess,
-                        paymentFailureReason: isSuccess ? null : resultDesc,
-                        mnoReference: mnoRef,
-                        cbsReference: cbsRef,
-                    },
-                });
-                console.log(
-                    `[DTB Callback] Updated Registration ${registrationId} → ${isSuccess ? 'PAID' : 'FAILED'}`
-                );
+                if (existing) {
+                    await updateRegistration(registrationId, {
+                        status: isSuccess ? 'PAID' : 'UNPAID',
+                        payload: {
+                            ...existing.payload,
+                            paymentFailed: !isSuccess,
+                            paymentFailureReason: isSuccess ? null : resultDesc,
+                            mnoReference: mnoRef,
+                            cbsReference: cbsRef,
+                        },
+                    });
+                    console.log(`[DTB Callback] Updated Registration ${registrationId} → ${isSuccess ? 'PAID' : 'FAILED'}`);
 
-                // Send confirmation email on successful payment
-                if (isSuccess) {
-                    const reg = await prisma.registration.findUnique({ where: { id: registrationId } });
-                    if (reg?.email) {
-                        sendConfirmationEmail({
-                            id: reg.id,
-                            firstName: reg.firstName,
-                            lastName: reg.lastName,
-                            email: reg.email,
-                            circuitId: reg.circuitId,
-                            totalAmount: reg.totalAmount,
-                            status: 'PAID',
-                            category: reg.category || undefined,
-                            gender: reg.gender,
-                            dob: reg.dob,
-                            idNumber: reg.idNumber,
-                            tshirtSize: reg.tshirtSize,
-                            emergencyContactName: reg.emergencyContactName,
-                            emergencyPhone: reg.emergencyPhone,
-                            teamName: reg.teamName || undefined,
-                        }).catch(emailErr => {
-                            console.error(`[DTB Callback] Failed to send confirmation email for ${registrationId}:`, emailErr);
-                        });
+                    if (isSuccess) {
+                        const reg = await prisma.registration.findUnique({ where: { id: registrationId } });
+                        if (reg?.email) {
+                            sendConfirmationEmail({
+                                id: reg.id,
+                                firstName: reg.firstName,
+                                lastName: reg.lastName,
+                                email: reg.email,
+                                circuitId: reg.circuitId,
+                                totalAmount: reg.totalAmount,
+                                status: 'PAID',
+                                category: reg.category || undefined,
+                                gender: reg.gender,
+                                dob: reg.dob,
+                                idNumber: reg.idNumber,
+                                tshirtSize: reg.tshirtSize,
+                                emergencyContactName: reg.emergencyContactName,
+                                emergencyPhone: reg.emergencyPhone,
+                                teamName: reg.teamName || undefined,
+                            }).catch(emailErr => {
+                                console.error(`[DTB Callback] Failed to send confirmation email for ${registrationId}:`, emailErr);
+                            });
+                        }
                     }
                 }
             }
             return res.json({ received: true });
         }
 
-        console.warn(
-            `[DTB Callback] No matching record found for externalReference: ${externalReference}`
-        );
+        console.warn(`[DTB Callback] No matching record found for externalReference: ${externalReference}`);
         return res.json({ received: true, message: 'No record associated with this externalReference' });
 
     } catch (err) {
         console.error('[DTB Callback] Processing Error:', err);
         return res.status(500).json({ error: 'Internal server error processing callback' });
     }
+
 });

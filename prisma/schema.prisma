@@ -68,7 +68,9 @@ model AdminSession {
 
 model Payment {
   id                 String   @id @default(uuid())
-  registrationId     String
+  registrationId     String?
+  raffleTicketIds    String[] // New: store array of ticket IDs for bulk payments
+  donationId         String?  // New: link to donation
   checkoutRequestId  String?  @unique
   merchantRequestId  String?
   phone              String?
@@ -79,9 +81,13 @@ model Payment {
   updatedAt          DateTime @updatedAt
   mpesaReceiptNumber String?
   transactionDate    String?
+  mnoReference       String?  // New: generic bank reference
+  cbsReference       String?  // New: core banking system reference
+  paymentDetails     Json?    // New: store full callback payload
 
   @@index([registrationId])
   @@index([checkoutRequestId])
+  @@index([donationId])
 }
 
 model PricingCategory {
@@ -117,19 +123,21 @@ model EmailLog {
 }
 
 model RaffleTicket {
-  id                String   @id
-  firstName         String
-  lastName          String
-  email             String
-  phoneNumber       String?
-  status            String   @default("UNPAID")
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  checkoutRequestId String?
-  paymentFailed     Boolean  @default(false)
-  gender            String?
-  idNumber          String?
-  failureReason     String?
+  id                 String   @id
+  firstName          String
+  lastName           String
+  email              String
+  phoneNumber        String?
+  status             String   @default("UNPAID")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  checkoutRequestId  String?
+  paymentFailed      Boolean  @default(false)
+  gender             String?
+  idNumber           String?
+  failureReason      String?
+  mpesaCode          String?  // New: store Receipt Number directly
+  paymentDetails     Json?    // New: store full callback payload
 
   @@index([email])
 }
@@ -145,6 +153,8 @@ model Donation {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   failureReason     String?
+  mpesaCode         String?  // New
+  paymentDetails    Json?    // New
 
   @@index([email])
   @@index([checkoutRequestId])
