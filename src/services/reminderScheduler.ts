@@ -121,12 +121,16 @@ async function processRafflePaymentReminders() {
         },
     });
 
-    const groups: Record<string, { firstName: string; email: string; tickets: typeof unpaidRaffles }> = {};
+    const groups: Record<string, { firstName: string; email: string; tickets: typeof unpaidRaffles, oldestDate: Date }> = {};
     for (const raffle of unpaidRaffles) {
         if (!groups[raffle.email]) {
-            groups[raffle.email] = { firstName: raffle.firstName, email: raffle.email, tickets: [] };
+            groups[raffle.email] = { firstName: raffle.firstName, email: raffle.email, tickets: [], oldestDate: new Date(raffle.createdAt) };
         }
         groups[raffle.email].tickets.push(raffle);
+        const raffleDate = new Date(raffle.createdAt);
+        if (raffleDate < groups[raffle.email].oldestDate) {
+            groups[raffle.email].oldestDate = raffleDate;
+        }
     }
 
     for (const email of Object.keys(groups)) {
@@ -134,11 +138,26 @@ async function processRafflePaymentReminders() {
         const ticketIds = group.tickets.map(r => r.id);
         const totalAmount = group.tickets.length * 1000;
 
+        const createdAt = new Date(group.oldestDate);
+        createdAt.setHours(0, 0, 0, 0);
+        const daysSinceRegistration = daysBetween(createdAt, today);
+
+        let emailType: EmailType | null = null;
+        if (daysSinceRegistration === 1) {
+            emailType = 'raffle_payment_reminder_1d';
+        } else if (daysSinceRegistration >= 3 && daysSinceRegistration < 7) {
+            emailType = 'raffle_payment_reminder_3d';
+        } else if (daysSinceRegistration >= 7) {
+            emailType = 'raffle_payment_reminder_7d';
+        }
+
+        if (!emailType) continue;
+
         // The sendRaffleEmail function logs for the first ticketId passed.
         // We manually log the rest if the email was sent successfully.
         const baseUrl = process.env.WEBSITE_URL || process.env.APP_URL || 'https://airbornefraternity.com/ride-with-the-warriors';
         const profileUrl = `${baseUrl}/raffle/profile/email/${encodeURIComponent(group.email)}`;
-        const sent = await sendRaffleEmail(ticketIds[0], 'raffle_payment_reminder', {
+        const sent = await sendRaffleEmail(ticketIds[0], emailType, {
             firstName: group.firstName,
             email: group.email,
             ticketCount: group.tickets.length,
@@ -149,7 +168,7 @@ async function processRafflePaymentReminders() {
         if (sent && ticketIds.length > 1) {
             const extraLogs = ticketIds.slice(1).map(id => ({
                 registrationId: id,
-                type: 'raffle_payment_reminder' as const,
+                type: emailType as any,
                 status: 'sent' as const,
             }));
             await prisma.emailLog.createMany({ data: extraLogs });

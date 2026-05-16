@@ -8,7 +8,7 @@ export const emailRouter = Router();
 // Preview email templates (returns HTML)
 emailRouter.get('/preview/:type', (req, res) => {
     const { type } = req.params;
-    const validTypes = ['confirmation', 'payment_reminder_3d', 'payment_reminder_7d', 'reminder_7d', 'reminder_1d', 'reminder_day', 'raffle_payment_reminder'];
+    const validTypes = ['confirmation', 'payment_reminder_3d', 'payment_reminder_7d', 'reminder_7d', 'reminder_1d', 'reminder_day', 'raffle_payment_reminder', 'raffle_payment_reminder_1d', 'raffle_payment_reminder_3d', 'raffle_payment_reminder_7d'];
 
     if (!validTypes.includes(type)) {
         return res.status(400).json({ error: `Invalid type. Valid types: ${validTypes.join(', ')}` });
@@ -303,17 +303,25 @@ emailRouter.post('/raffle-reminders', async (req, res) => {
         const limit = parseInt(String(req.query.limit || req.body.limit || '5'));
         const dryRun = String(req.query.dryRun || req.body.dryRun) === 'true';
         const minDays = parseInt(String(req.query.minDays || req.body.minDays || '1'));
+        const targetEmail = req.query.email || req.body.email;
 
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - minDays);
 
+        const whereClause: any = {
+            status: 'UNPAID',
+            createdAt: { lte: cutoffDate }
+        };
+        
+        if (targetEmail) {
+            whereClause.email = String(targetEmail);
+        } else {
+            whereClause.email = { not: '' };
+        }
+
         // Find unpaid raffle tickets with email
         const unpaidRaffles = await prisma.raffleTicket.findMany({
-            where: {
-                status: 'UNPAID',
-                email: { not: '' },
-                createdAt: { lte: cutoffDate }
-            },
+            where: whereClause,
             orderBy: { createdAt: 'asc' }
         });
 
@@ -344,6 +352,22 @@ emailRouter.post('/raffle-reminders', async (req, res) => {
                 groups[raffle.email] = { firstName: raffle.firstName, email: raffle.email, tickets: [] };
             }
             groups[raffle.email].tickets.push(raffle);
+        }
+
+        if (dryRun) {
+            return res.json({
+                dryRun: true,
+                totalUnpaid: unpaidRaffles.length,
+                alreadyReminded: alreadySentIds.size,
+                pendingCount: pending.length,
+                willProcessGroups: Object.keys(groups).length,
+                willProcessTickets: toProcess.length,
+                groups: Object.values(groups).map(g => ({
+                    email: g.email,
+                    name: g.firstName,
+                    ticketCount: g.tickets.length
+                }))
+            });
         }
 
         const results: Array<{ email: string; name: string; ticketCount: number; sent: boolean; error?: string }> = [];

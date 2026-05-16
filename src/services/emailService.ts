@@ -38,7 +38,10 @@ export type EmailType =
   | 'reminder_7d'
   | 'reminder_1d'
   | 'reminder_day'
-  | 'raffle_payment_reminder';
+  | 'raffle_payment_reminder'
+  | 'raffle_payment_reminder_1d'
+  | 'raffle_payment_reminder_3d'
+  | 'raffle_payment_reminder_7d';
 
 interface RegistrationData {
   id: string;
@@ -639,6 +642,9 @@ export async function sendRaffleEmail(
  
   switch (type) {
     case 'raffle_payment_reminder':
+    case 'raffle_payment_reminder_1d':
+    case 'raffle_payment_reminder_3d':
+    case 'raffle_payment_reminder_7d':
       emailContent = getRafflePaymentReminderEmail(data as any);
       break;
     default:
