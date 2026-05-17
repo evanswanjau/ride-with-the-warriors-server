@@ -562,9 +562,9 @@ emailRouter.post('/bulk-send', async (req, res) => {
                     .replace(/{bibNumber}/g, r.bibNumber || '')
                     .replace(/{idNumber}/g, r.idNumber || '');
 
-                const sent = await smsService.sendSMS([r.phone!], compiledMessage);
-                if (sent) smsSuccess++;
-                else smsFail++;
+                const result = await smsService.sendSMS([r.phone!], compiledMessage);
+                smsSuccess += result.successCount;
+                smsFail += result.failedCount;
             }
         }
 

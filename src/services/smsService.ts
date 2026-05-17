@@ -48,13 +48,13 @@ export const smsService = {
     /**
      * Send an SMS to one or more recipients.
      */
-    async sendSMS(recipients: string[], message: string): Promise<boolean> {
+    async sendSMS(recipients: string[], message: string): Promise<{ success: boolean; successCount: number; failedCount: number }> {
         if (!sms) {
             console.error("[SMS Service] SDK not initialized.");
-            return false;
+            return { success: false, successCount: 0, failedCount: recipients.length };
         }
 
-        if (recipients.length === 0) return false;
+        if (recipients.length === 0) return { success: true, successCount: 0, failedCount: 0 };
 
         try {
             // Filter out empty and format
@@ -62,43 +62,44 @@ export const smsService = {
                 .filter(r => r && r.trim().length > 5)
                 .map(formatPhoneNumber);
 
-            if (formattedRecipients.length === 0) return false;
+            if (formattedRecipients.length === 0) return { success: false, successCount: 0, failedCount: recipients.length };
 
             // Join recipients with a comma formatting based on AT rules
             const to = formattedRecipients.join(',');
 
-            // console.log(`[SMS Service] Sending SMS to ${to}: "${message}"`);
-
             const result = await sms.send({
                 to: to,
                 message: message,
-                // Uncomment when Alphanumeric ID is registered
-                // from: process.env.AFRICAS_TALKING_SENDER_ID || 'AFRICATST' 
             });
 
-            // Log output to console
             console.log(`[SMS Service] Response:`, JSON.stringify(result, null, 2));
 
-            // Iterate over AT's response and log each to the database
-            if (result && result.SMSMessageData && result.SMSMessageData.Recipients) {
-                const logsData = result.SMSMessageData.Recipients.map((recipient: any) => ({
-                    phoneNumber: recipient.number,
-                    message: message,
-                    status: recipient.status || 'Unknown',
-                    messageId: recipient.messageId !== 'None' ? recipient.messageId : null,
-                    cost: recipient.cost || null,
-                }));
+            let successCount = 0;
+            let failedCount = 0;
 
-                // Batch insert into db
+            if (result && result.SMSMessageData && result.SMSMessageData.Recipients) {
+                const logsData = result.SMSMessageData.Recipients.map((recipient: any) => {
+                    const isSuccess = recipient.status === 'Success';
+                    if (isSuccess) successCount++;
+                    else failedCount++;
+
+                    return {
+                        phoneNumber: recipient.number,
+                        message: message,
+                        status: recipient.status || 'Unknown',
+                        messageId: recipient.messageId !== 'None' ? recipient.messageId : null,
+                        cost: recipient.cost || null,
+                    };
+                });
+
                 if (logsData.length > 0) {
                     await prisma.smsLog.createMany({ data: logsData });
                 }
             }
 
-            return true;
+            return { success: true, successCount, failedCount };
         } catch (error) {
             console.error(`[SMS Service] Error sending SMS:`, (error as Error).message);
-            // Log a generic failure for all intended recipients
             try {
                 const failedLogs = recipients.map(r => ({
                     phoneNumber: r,
@@ -110,7 +111,7 @@ export const smsService = {
                 console.error(`[SMS Service] Error writing failure logs to DB:`, (dbErr as Error).message);
             }
 
-            return false;
+            return { success: false, successCount: 0, failedCount: recipients.length };
         }
     },
 
