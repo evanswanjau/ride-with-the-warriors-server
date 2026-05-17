@@ -49,6 +49,26 @@ emailRouter.post('/trigger-reminders', async (_req, res) => {
     }
 });
 
+// Get SMS balance from Africa's Talking
+emailRouter.get('/sms-balance', async (_req, res) => {
+    try {
+        const balanceData = await smsService.checkBalance();
+        if (!balanceData) {
+            return res.status(500).json({ ok: false, error: 'Could not fetch balance' });
+        }
+        res.json({
+            ok: true,
+            ...balanceData,
+            username: (process.env.AFRICAS_TALKING_USERNAME || 'evansw').trim()
+        });
+    } catch (error) {
+        res.status(500).json({
+            ok: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+        });
+    }
+});
+
 // Send test confirmation email to a specific registration
 emailRouter.post('/send-confirmation/:registrationId', async (req, res) => {
     try {
@@ -313,7 +333,7 @@ emailRouter.post('/raffle-reminders', async (req, res) => {
             status: 'UNPAID',
             createdAt: { lte: cutoffDate }
         };
-        
+
         if (targetEmail) {
             whereClause.email = String(targetEmail);
         } else {
@@ -329,7 +349,7 @@ emailRouter.post('/raffle-reminders', async (req, res) => {
         // Find which ones already have a raffle_payment_reminder email log
         const raffleIds = unpaidRaffles.map(r => r.id);
         let alreadySentIds = new Set<string>();
-        
+
         if (raffleIds.length > 0) {
             const sentLogs = await prisma.emailLog.findMany({
                 where: {
@@ -455,7 +475,7 @@ emailRouter.post('/bulk-send', async (req, res) => {
         if (targetEntity === 'custom') {
             const phonesList = (customPhones || '').split(',').map((p: string) => p.trim()).filter(Boolean);
             const emailsList = (customEmails || '').split(',').map((e: string) => e.trim()).filter(Boolean);
-            
+
             const maxLen = Math.max(phonesList.length, emailsList.length);
             for (let i = 0; i < maxLen; i++) {
                 finalRecipients.push({
@@ -541,7 +561,7 @@ emailRouter.post('/bulk-send', async (req, res) => {
                     .replace(/{lastName}/g, r.name.split(' ').slice(1).join(' ') || '')
                     .replace(/{bibNumber}/g, r.bibNumber || '')
                     .replace(/{idNumber}/g, r.idNumber || '');
-                
+
                 const sent = await smsService.sendSMS([r.phone!], compiledMessage);
                 if (sent) smsSuccess++;
                 else smsFail++;
@@ -561,9 +581,9 @@ emailRouter.post('/bulk-send', async (req, res) => {
             emailFail = eResult.failedCount;
         }
 
-        res.json({ 
-            ok: true, 
-            message: 'Communication broadcast complete', 
+        res.json({
+            ok: true,
+            message: 'Communication broadcast complete',
             recipientsCount: validRecipients.length,
             smsStats: { success: smsSuccess, failed: smsFail },
             emailStats: { success: emailSuccess, failed: emailFail }
