@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../../storage/prisma.js';
-import { sendConfirmationEmail, verifyEmailConnection, getTemplatePreview, sendEmail, sendRaffleEmail } from '../../services/emailService.js';
+import { sendConfirmationEmail, verifyEmailConnection, getTemplatePreview, sendEmail, sendRaffleEmail, sendBulkCustomEmail } from '../../services/emailService.js';
 import { triggerReminderCheck } from '../../services/reminderScheduler.js';
 import { smsService } from '../../services/smsService.js';
 
@@ -443,49 +443,131 @@ emailRouter.post('/raffle-reminders', async (req, res) => {
     }
 });
 
-// ── Admin: Send Bulk Custom SMS ──
-emailRouter.post('/bulk-sms', async (req, res) => {
+// ── Admin: Send Unified Bulk Communications ──
+emailRouter.post('/bulk-send', async (req, res) => {
     try {
-        const { message, testMode } = req.body;
+        const { mode, targetEntity, targetStatus, message, subject, customPhones, customEmails, testMode } = req.body;
         if (!message) return res.status(400).json({ ok: false, error: 'Message is required' });
+        if ((mode === 'email' || mode === 'both') && !subject) return res.status(400).json({ ok: false, error: 'Subject is required for email' });
 
-        const registrations = await prisma.registration.findMany({
-            where: { phoneNumber: { not: null } },
-            select: { phoneNumber: true }
-        });
+        let finalRecipients: Array<{ name: string; phone?: string; email?: string; bibNumber?: string; idNumber?: string; entityId: string }> = [];
 
-        const phones = registrations.map(r => r.phoneNumber as string).filter(Boolean);
+        if (targetEntity === 'custom') {
+            const phonesList = (customPhones || '').split(',').map((p: string) => p.trim()).filter(Boolean);
+            const emailsList = (customEmails || '').split(',').map((e: string) => e.trim()).filter(Boolean);
+            
+            const maxLen = Math.max(phonesList.length, emailsList.length);
+            for (let i = 0; i < maxLen; i++) {
+                finalRecipients.push({
+                    name: 'Custom User',
+                    phone: phonesList[i] || undefined,
+                    email: emailsList[i] || undefined,
+                    bibNumber: '',
+                    idNumber: '',
+                    entityId: `custom-${i}`
+                });
+            }
+        } else {
+            let whereClause: any = {};
+            if (targetStatus === 'paid') whereClause.status = 'PAID';
+            else if (targetStatus === 'unpaid') whereClause.status = 'UNPAID';
 
-        if (testMode) {
-            return res.json({ ok: true, previewCount: phones.length, sample: phones.slice(0, 5) });
+            if (targetEntity === 'cyclist') {
+                const regs = await prisma.registration.findMany({ where: whereClause, select: { id: true, firstName: true, lastName: true, idNumber: true, phoneNumber: true, email: true } });
+                finalRecipients = regs.map(r => ({
+                    name: `${r.firstName} ${r.lastName}`.trim(),
+                    phone: r.phoneNumber || undefined,
+                    email: r.email || undefined,
+                    bibNumber: r.id,
+                    idNumber: r.idNumber || '',
+                    entityId: r.id
+                }));
+            } else if (targetEntity === 'raffle') {
+                const raffles = await prisma.raffleTicket.findMany({ where: whereClause, select: { id: true, firstName: true, lastName: true, idNumber: true, phoneNumber: true, email: true } });
+                finalRecipients = raffles.map(r => ({
+                    name: `${r.firstName} ${r.lastName}`.trim(),
+                    phone: r.phoneNumber || undefined,
+                    email: r.email || undefined,
+                    bibNumber: r.id,
+                    idNumber: r.idNumber || '',
+                    entityId: r.id
+                }));
+            } else if (targetEntity === 'donor') {
+                // Donors have name, email, phone. 
+                const donors = await prisma.donation.findMany({ where: whereClause, select: { id: true, name: true, email: true, phone: true } });
+                finalRecipients = donors.map(d => ({
+                    name: d.name || 'Donor',
+                    phone: d.phone || undefined,
+                    email: d.email || undefined,
+                    bibNumber: '',
+                    idNumber: '',
+                    entityId: d.id
+                }));
+            }
         }
 
-        const sent = await smsService.sendSMS(phones, message);
-        res.json({ ok: sent, recipientsCount: phones.length });
-    } catch (error) {
-        res.status(500).json({ ok: false, error: error instanceof Error ? error.message : 'Unknown error' });
-    }
-});
-
-// ── Admin: Send Bulk Custom Email ──
-emailRouter.post('/bulk-email', async (req, res) => {
-    try {
-        const { subject, message, testMode } = req.body;
-        if (!subject || !message) return res.status(400).json({ ok: false, error: 'Subject and message are required' });
-
-        const registrations = await prisma.registration.findMany({
-            where: { email: { not: null } },
-            select: { email: true }
+        let validRecipients = finalRecipients.filter(r => {
+            if (mode === 'sms') return Boolean(r.phone);
+            if (mode === 'email') return Boolean(r.email);
+            if (mode === 'both') return Boolean(r.phone) || Boolean(r.email);
+            return false;
         });
 
-        const emails = registrations.map(r => r.email as string).filter(Boolean);
-
         if (testMode) {
-            return res.json({ ok: true, previewCount: emails.length, sample: emails.slice(0, 5) });
+            const sample = validRecipients.slice(0, 5).map(r => {
+                const compiledMessage = message
+                    .replace(/{firstName}/g, r.name.split(' ')[0] || '')
+                    .replace(/{lastName}/g, r.name.split(' ').slice(1).join(' ') || '')
+                    .replace(/{bibNumber}/g, r.bibNumber || '')
+                    .replace(/{idNumber}/g, r.idNumber || '');
+                return {
+                    name: r.name,
+                    contact: mode === 'sms' ? r.phone : mode === 'email' ? r.email : `${r.phone || 'N/A'} / ${r.email || 'N/A'}`,
+                    compiledMessage
+                };
+            });
+            return res.json({ ok: true, recipientsCount: validRecipients.length, sampleRecipients: sample });
         }
 
-        // Ideally this hooks into a template or directly into nodemailer
-        res.json({ ok: true, message: 'Bulk email feature deployed', recipientsCount: emails.length });
+        let smsSuccess = 0;
+        let smsFail = 0;
+        let emailSuccess = 0;
+        let emailFail = 0;
+
+        if (mode === 'sms' || mode === 'both') {
+            for (const r of validRecipients.filter(r => Boolean(r.phone))) {
+                const compiledMessage = message
+                    .replace(/{firstName}/g, r.name.split(' ')[0] || '')
+                    .replace(/{lastName}/g, r.name.split(' ').slice(1).join(' ') || '')
+                    .replace(/{bibNumber}/g, r.bibNumber || '')
+                    .replace(/{idNumber}/g, r.idNumber || '');
+                
+                const sent = await smsService.sendSMS([r.phone!], compiledMessage);
+                if (sent) smsSuccess++;
+                else smsFail++;
+            }
+        }
+
+        if (mode === 'email' || mode === 'both') {
+            const emailTargets = validRecipients.filter(r => Boolean(r.email)).map(r => ({
+                email: r.email!,
+                firstName: r.name.split(' ')[0] || '',
+                lastName: r.name.split(' ').slice(1).join(' ') || '',
+                bibNumber: r.bibNumber,
+                idNumber: r.idNumber
+            }));
+            const eResult = await sendBulkCustomEmail(emailTargets, subject, message);
+            emailSuccess = eResult.successCount;
+            emailFail = eResult.failedCount;
+        }
+
+        res.json({ 
+            ok: true, 
+            message: 'Communication broadcast complete', 
+            recipientsCount: validRecipients.length,
+            smsStats: { success: smsSuccess, failed: smsFail },
+            emailStats: { success: emailSuccess, failed: emailFail }
+        });
     } catch (error) {
         res.status(500).json({ ok: false, error: error instanceof Error ? error.message : 'Unknown error' });
     }

@@ -971,3 +971,47 @@ export function getTemplatePreview(type: EmailType): string {
     default: return getConfirmationEmail(sampleData).html;
   }
 }
+
+export async function sendBulkCustomEmail(
+  recipients: Array<{ email: string, firstName: string, lastName: string, bibNumber?: string, idNumber?: string }>,
+  subject: string,
+  messageTemplate: string
+): Promise<{ successCount: number; failedCount: number; errors: any[] }> {
+  let successCount = 0;
+  let failedCount = 0;
+  const errors: any[] = [];
+
+  for (const recipient of recipients) {
+    if (!recipient.email) continue;
+    
+    let compiledMessage = messageTemplate
+      .replace(/{firstName}/g, recipient.firstName || '')
+      .replace(/{lastName}/g, recipient.lastName || '')
+      .replace(/{bibNumber}/g, recipient.bibNumber || '')
+      .replace(/{idNumber}/g, recipient.idNumber || '');
+
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+        <p>${compiledMessage.replace(/\n/g, '<br>')}</p>
+        <p style="margin-top: 30px; font-size: 12px; color: #666;">
+          Ride With The Warriors
+        </p>
+      </div>
+    `;
+
+    try {
+      await transporter.sendMail({
+        from: EMAIL_FROM,
+        to: recipient.email,
+        subject: subject,
+        html: htmlContent,
+      });
+      successCount++;
+    } catch (error: any) {
+      failedCount++;
+      errors.push({ email: recipient.email, error: error.message });
+    }
+  }
+
+  return { successCount, failedCount, errors };
+}
