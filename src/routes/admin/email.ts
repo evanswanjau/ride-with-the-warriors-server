@@ -3,6 +3,7 @@ import { prisma } from '../../storage/prisma.js';
 import { sendConfirmationEmail, verifyEmailConnection, getTemplatePreview, sendEmail, sendRaffleEmail, sendBulkCustomEmail } from '../../services/emailService.js';
 import { triggerReminderCheck } from '../../services/reminderScheduler.js';
 import { smsService } from '../../services/smsService.js';
+import { createShortLink, getLinkForEntity, formatShortLink } from '../../utils/shortLinkService.js';
 
 export const emailRouter = Router();
 
@@ -535,11 +536,17 @@ emailRouter.post('/bulk-send', async (req, res) => {
 
         if (testMode) {
             const sample = validRecipients.slice(0, 5).map(r => {
+                const url = getLinkForEntity(targetEntity as any, r.entityId);
+                const shortId = 'test123'; // Static for preview
+                const shortLink = formatShortLink(shortId);
+
                 const compiledMessage = message
                     .replace(/{firstName}/g, r.name.split(' ')[0] || '')
                     .replace(/{lastName}/g, r.name.split(' ').slice(1).join(' ') || '')
                     .replace(/{bibNumber}/g, r.bibNumber || '')
-                    .replace(/{idNumber}/g, r.idNumber || '');
+                    .replace(/{idNumber}/g, r.idNumber || '')
+                    .replace(/{link}/g, shortLink);
+
                 return {
                     name: r.name,
                     contact: mode === 'sms' ? r.phone : mode === 'email' ? r.email : `${r.phone || 'N/A'} / ${r.email || 'N/A'}`,
@@ -556,11 +563,18 @@ emailRouter.post('/bulk-send', async (req, res) => {
 
         if (mode === 'sms' || mode === 'both') {
             for (const r of validRecipients.filter(r => Boolean(r.phone))) {
-                const compiledMessage = message
+                let compiledMessage = message
                     .replace(/{firstName}/g, r.name.split(' ')[0] || '')
                     .replace(/{lastName}/g, r.name.split(' ').slice(1).join(' ') || '')
                     .replace(/{bibNumber}/g, r.bibNumber || '')
                     .replace(/{idNumber}/g, r.idNumber || '');
+
+                if (compiledMessage.includes('{link}')) {
+                    const targetUrl = getLinkForEntity(targetEntity as any, r.entityId);
+                    const shortId = await createShortLink(targetUrl);
+                    const shortLink = formatShortLink(shortId);
+                    compiledMessage = compiledMessage.replace(/{link}/g, shortLink);
+                }
 
                 const result = await smsService.sendSMS([r.phone!], compiledMessage);
                 smsSuccess += result.successCount;

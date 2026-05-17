@@ -17,6 +17,7 @@ import { enquiryRouter } from './routes/enquiry.js';
 import { donationsRouter } from './routes/donations.js';
 import { dtbCallbacksRouter } from './routes/dtbCallbacks.js';
 import smsCallbacksRouter from './routes/smsCallbacks.js';
+import shortenerRouter from './routes/s.js';
 import { prisma } from './storage/prisma.js';
 
 
@@ -42,6 +43,7 @@ app.use('/api/v1/enquiry', enquiryRouter);
 app.use('/api/v1/donations', donationsRouter);
 app.use('/api/dtb', dtbCallbacksRouter);
 app.use('/api/sms', smsCallbacksRouter);
+app.use('/s', shortenerRouter);
 
 
 // Admin Routes

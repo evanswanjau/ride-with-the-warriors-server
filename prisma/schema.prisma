@@ -179,3 +179,12 @@ model SmsLog {
   @@index([phoneNumber])
   @@index([status])
 }
+
+model ShortLink {
+  id        String   @id // The short ID
+  url       String   // original URL
+  createdAt DateTime @default(now())
+  clicks    Int      @default(0)
+
+  @@index([id])
+}
