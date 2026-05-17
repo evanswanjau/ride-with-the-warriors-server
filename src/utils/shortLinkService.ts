@@ -12,9 +12,32 @@ const SHORT_LINK_BASE = (process.env.BASE_URL || 'http://localhost:4000/api/v1')
 
 /**
  * Generates a short link for a given target URL.
- * Returns the short ID.
+ * Attempts to use is.gd for external (extra-short) links first.
+ * Returns the full short URL.
  */
 export async function createShortLink(targetUrl: string): Promise<string> {
+    // 1. Try external shortener (is.gd) first for maximum character saving
+    try {
+        const response = await fetch(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(targetUrl)}`);
+        if (response.ok) {
+            const externalUrl = await response.text();
+            if (externalUrl && externalUrl.includes('is.gd')) {
+                // Save to our DB for tracking purposes even if external
+                await prisma.shortLink.create({
+                    data: {
+                        id: `ext_${externalUrl.split('/').pop()}`,
+                        url: targetUrl
+                    }
+                }).catch(() => {}); // ignore duplicate errors
+                
+                return externalUrl;
+            }
+        }
+    } catch (error) {
+        console.warn('External shortener failed, falling back to internal:', error);
+    }
+
+    // 2. Fallback to Internal short ID
     // Use shorturly to generate a random 6-char ID
     const shortId = shurly.generateShortUrl();
 
@@ -25,7 +48,7 @@ export async function createShortLink(targetUrl: string): Promise<string> {
                 url: targetUrl
             }
         });
-        return shortId;
+        return formatShortLink(shortId);
     } catch (error) {
         // Handle collision (rare but possible)
         console.warn(`ShortLink collision for ${shortId}, retrying...`);

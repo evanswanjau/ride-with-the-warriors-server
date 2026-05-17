@@ -973,9 +973,9 @@ export function getTemplatePreview(type: EmailType): string {
 }
 
 export async function sendBulkCustomEmail(
-  recipients: Array<{ email: string, firstName: string, lastName: string, bibNumber?: string, idNumber?: string }>,
+  recipients: Array<{ email: string, firstName: string, lastName: string, bibNumber?: string, idNumber?: string, message?: string }>,
   subject: string,
-  messageTemplate: string
+  messageTemplate?: string
 ): Promise<{ successCount: number; failedCount: number; errors: any[] }> {
   let successCount = 0;
   let failedCount = 0;
@@ -984,11 +984,18 @@ export async function sendBulkCustomEmail(
   for (const recipient of recipients) {
     if (!recipient.email) continue;
     
-    let compiledMessage = messageTemplate
-      .replace(/{firstName}/g, recipient.firstName || '')
-      .replace(/{lastName}/g, recipient.lastName || '')
-      .replace(/{bibNumber}/g, recipient.bibNumber || '')
-      .replace(/{idNumber}/g, recipient.idNumber || '');
+    // Use pre-compiled message if provided, otherwise compile from template
+    let compiledMessage = recipient.message;
+    
+    if (!compiledMessage && messageTemplate) {
+      compiledMessage = messageTemplate
+        .replace(/{firstName}/g, recipient.firstName || '')
+        .replace(/{lastName}/g, recipient.lastName || '')
+        .replace(/{bibNumber}/g, recipient.bibNumber || '')
+        .replace(/{idNumber}/g, recipient.idNumber || '');
+    }
+
+    if (!compiledMessage) continue;
 
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">

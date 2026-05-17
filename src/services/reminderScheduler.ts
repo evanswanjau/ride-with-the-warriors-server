@@ -2,6 +2,7 @@ import cron from 'node-cron';
 import { prisma } from '../storage/prisma.js';
 import { sendEmail, EmailType, sendRaffleEmail } from './emailService.js';
 import { smsService } from './smsService.js';
+import { createShortLink, getLinkForEntity } from '../utils/shortLinkService.js';
 
 const EVENT_DATE = process.env.EVENT_DATE || '2026-07-05';
 
@@ -64,7 +65,10 @@ async function processPaymentReminders() {
         // 1-day reminder
         if (daysSinceRegistration === 1) {
             const ref = reg.idNumber ? ` (ID: ${reg.idNumber})` : '';
-            if (reg.phoneNumber) smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, please complete your cycling registration payment${ref} for Ride With The Warriors to secure your spot.`);
+            if (reg.phoneNumber) {
+                const link = await createShortLink(getLinkForEntity('cyclist', reg.id));
+                smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, please complete your cycling registration payment${ref} for RWTW. Pay here: ${link}`);
+            }
             await sendEmail(reg.id, 'payment_reminder_1d', {
                 id: reg.id,
                 firstName: reg.firstName,
@@ -88,7 +92,10 @@ async function processPaymentReminders() {
         // 3-day reminder
         if (daysSinceRegistration >= 3 && daysSinceRegistration < 7) {
             const ref = reg.idNumber ? ` (ID: ${reg.idNumber})` : '';
-            if (reg.phoneNumber) smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, your cycling registration${ref} for Ride With The Warriors is still pending payment.`);
+            if (reg.phoneNumber) {
+                const link = await createShortLink(getLinkForEntity('cyclist', reg.id));
+                smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, your cycling registration${ref} for RWTW is pending payment. Pay here: ${link}`);
+            }
             await sendEmail(reg.id, 'payment_reminder_3d', {
                 id: reg.id,
                 firstName: reg.firstName,
@@ -112,7 +119,10 @@ async function processPaymentReminders() {
         // 7-day reminder
         if (daysSinceRegistration >= 7) {
             const ref = reg.idNumber ? ` (ID: ${reg.idNumber})` : '';
-            if (reg.phoneNumber) smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, final reminder to complete your cycling registration payment${ref} for Ride With The Warriors.`);
+            if (reg.phoneNumber) {
+                const link = await createShortLink(getLinkForEntity('cyclist', reg.id));
+                smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, final reminder for your cycling registration payment${ref} for RWTW. Pay: ${link}`);
+            }
             await sendEmail(reg.id, 'payment_reminder_7d', {
                 id: reg.id,
                 firstName: reg.firstName,
@@ -191,7 +201,10 @@ async function processRafflePaymentReminders() {
         const phone = group.tickets.find(t => t.phoneNumber)?.phoneNumber;
         if (phone) {
             const tids = group.tickets.map(t => String(t.id).toUpperCase()).join(', ');
-            smsService.sendSMS([phone], `Hi ${group.firstName}, you have unpaid raffle tickets for Ride With The Warriors (Nos: ${tids}). Please check your email for more details.`);
+            const WEBSITE_URL = process.env.WEBSITE_URL || 'https://airbornefraternity.org/ride-with-the-warriors';
+            const profileUrl = `${WEBSITE_URL}/raffle/profile/${group.tickets[0].id}`;
+            const link = await createShortLink(profileUrl);
+            smsService.sendSMS([phone], `Hi ${group.firstName}, you have unpaid raffle tickets for RWTW (Nos: ${tids}). Pay here: ${link}`);
         }
 
         const sent = await sendRaffleEmail(ticketIds[0], emailType, {

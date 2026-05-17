@@ -535,24 +535,28 @@ emailRouter.post('/bulk-send', async (req, res) => {
         });
 
         if (testMode) {
-            const sample = validRecipients.slice(0, 5).map(r => {
-                const url = getLinkForEntity(targetEntity as any, r.entityId);
-                const shortId = 'test123'; // Static for preview
-                const shortLink = formatShortLink(shortId);
+            const sample = await Promise.all(validRecipients.slice(0, 5).map(async r => {
+                const targetUrl = getLinkForEntity(targetEntity as any, r.entityId);
+                
+                // For preview: shorten only if mode involves SMS
+                let linkToUse = targetUrl;
+                if (mode === 'sms' || mode === 'both') {
+                    linkToUse = await createShortLink(targetUrl);
+                }
 
                 const compiledMessage = message
                     .replace(/{firstName}/g, r.name.split(' ')[0] || '')
                     .replace(/{lastName}/g, r.name.split(' ').slice(1).join(' ') || '')
                     .replace(/{bibNumber}/g, r.bibNumber || '')
                     .replace(/{idNumber}/g, r.idNumber || '')
-                    .replace(/{link}/g, shortLink);
+                    .replace(/{link}/g, linkToUse);
 
                 return {
                     name: r.name,
                     contact: mode === 'sms' ? r.phone : mode === 'email' ? r.email : `${r.phone || 'N/A'} / ${r.email || 'N/A'}`,
                     compiledMessage
                 };
-            });
+            }));
             return res.json({ ok: true, recipientsCount: validRecipients.length, sampleRecipients: sample });
         }
 
@@ -571,8 +575,7 @@ emailRouter.post('/bulk-send', async (req, res) => {
 
                 if (compiledMessage.includes('{link}')) {
                     const targetUrl = getLinkForEntity(targetEntity as any, r.entityId);
-                    const shortId = await createShortLink(targetUrl);
-                    const shortLink = formatShortLink(shortId);
+                    const shortLink = await createShortLink(targetUrl);
                     compiledMessage = compiledMessage.replace(/{link}/g, shortLink);
                 }
 
@@ -583,14 +586,26 @@ emailRouter.post('/bulk-send', async (req, res) => {
         }
 
         if (mode === 'email' || mode === 'both') {
-            const emailTargets = validRecipients.filter(r => Boolean(r.email)).map(r => ({
-                email: r.email!,
-                firstName: r.name.split(' ')[0] || '',
-                lastName: r.name.split(' ').slice(1).join(' ') || '',
-                bibNumber: r.bibNumber,
-                idNumber: r.idNumber
-            }));
-            const eResult = await sendBulkCustomEmail(emailTargets, subject, message);
+            const emailTargets = validRecipients.filter(r => Boolean(r.email)).map(r => {
+                const targetUrl = getLinkForEntity(targetEntity as any, r.entityId);
+                const emailMessage = message
+                    .replace(/{firstName}/g, r.name.split(' ')[0] || '')
+                    .replace(/{lastName}/g, r.name.split(' ').slice(1).join(' ') || '')
+                    .replace(/{bibNumber}/g, r.bibNumber || '')
+                    .replace(/{idNumber}/g, r.idNumber || '')
+                    .replace(/{link}/g, targetUrl); // Use long URL for emails
+
+                return {
+                    email: r.email!,
+                    firstName: r.name.split(' ')[0] || '',
+                    lastName: r.name.split(' ').slice(1).join(' ') || '',
+                    bibNumber: r.bibNumber,
+                    idNumber: r.idNumber,
+                    message: emailMessage
+                };
+            });
+            // We need a way to pass the custom message to sendBulkCustomEmail
+            const eResult = await sendBulkCustomEmail(emailTargets, subject);
             emailSuccess = eResult.successCount;
             emailFail = eResult.failedCount;
         }
