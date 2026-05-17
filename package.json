@@ -18,7 +18,6 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
-    "test-raffle-email": "tsx src/scripts/testRaffleEmail.ts",
     "resend-raffle-email": "tsx src/scripts/resendRaffleEmail.ts",
     "send-all-raffle-tickets": "tsx src/scripts/sendAllRaffleTickets.ts"
   },

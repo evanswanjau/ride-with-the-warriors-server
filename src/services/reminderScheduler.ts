@@ -195,14 +195,12 @@ async function processRafflePaymentReminders() {
 
         // The sendRaffleEmail function logs for the first ticketId passed.
         // We manually log the rest if the email was sent successfully.
-        const baseUrl = process.env.WEBSITE_URL || process.env.APP_URL || 'https://airbornefraternity.org/ride-with-the-warriors';
-        const profileUrl = `${baseUrl}/profile`;
+        const profileUrl = getLinkForEntity('raffle_profile', email);
         // Send SMS for raffle tickets
         const phone = group.tickets.find(t => t.phoneNumber)?.phoneNumber;
         if (phone) {
             const tids = group.tickets.map(t => String(t.id).toUpperCase()).join(', ');
-            const WEBSITE_URL = process.env.WEBSITE_URL || 'https://airbornefraternity.org/ride-with-the-warriors';
-            const profileUrl = `${WEBSITE_URL}/raffle/profile/${group.tickets[0].id}`;
+            const profileUrl = getLinkForEntity('raffle_profile', email);
             const link = await createShortLink(profileUrl);
             smsService.sendSMS([phone], `Hi ${group.firstName}, you have unpaid raffle tickets for RWTW (Nos: ${tids}). Pay here: ${link}`);
         }
