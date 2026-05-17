@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../storage/prisma.js';
 import { updateRegistration, getRegistration } from '../storage/memoryRegistrations.js';
 import { sendConfirmationEmail, sendRaffleConfirmationEmail } from '../services/emailService.js';
+import { smsService } from '../services/smsService.js';
 
 export const dtbCallbacksRouter = Router();
 
@@ -111,6 +112,10 @@ dtbCallbacksRouter.post('/stkpush', async (req, res) => {
             });
 
             console.log(`[DTB Callback] Updated Donation ${donation.id} → ${isSuccess ? 'PAID' : 'FAILED'}`);
+            if (isSuccess && donation.phone) {
+                const nameStr = donation.name ? `Hi ${donation.name.split(' ')[0]}, t` : `T`;
+                smsService.sendSMS([donation.phone], `${nameStr}hank you for your donation of KES ${donation.amount} to Ride With The Warriors. Your support is deeply appreciated!`);
+            }
             return res.json({ received: true });
         }
 
@@ -171,6 +176,10 @@ dtbCallbacksRouter.post('/stkpush', async (req, res) => {
 
             if (isSuccess) {
                 const first = tickets[0];
+                if (first?.phoneNumber) {
+                    const tids = tickets.map((t: any) => String(t.id).toUpperCase()).join(', ');
+                    smsService.sendSMS([first.phoneNumber], `Hi ${first.firstName}, payment received for your ${tickets.length} raffle ticket(s) (Nos: ${tids}). Thank you for supporting Ride With The Warriors!`);
+                }
                 if (first?.email) {
                     sendRaffleConfirmationEmail({
                         id: first.id,
@@ -233,6 +242,10 @@ dtbCallbacksRouter.post('/stkpush', async (req, res) => {
 
                     if (isSuccess) {
                         const reg = await prisma.registration.findUnique({ where: { id: registrationId } });
+                        if (reg?.phoneNumber) {
+                            const ref = reg.idNumber ? ` (ID: ${reg.idNumber})` : '';
+                            smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, your payment of KES ${reg.totalAmount} for Ride With The Warriors cycling registration${ref} is confirmed. Thank you!`);
+                        }
                         if (reg?.email) {
                             sendConfirmationEmail({
                                 id: reg.id,

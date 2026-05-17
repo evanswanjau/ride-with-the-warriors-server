@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import { prisma } from '../storage/prisma.js';
 import { sendEmail, EmailType, sendRaffleEmail } from './emailService.js';
+import { smsService } from './smsService.js';
 
 const EVENT_DATE = process.env.EVENT_DATE || '2026-07-05';
 
@@ -15,6 +16,29 @@ function getToday(): Date {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return today;
+}
+
+// Compute dynamic arrival time depending on circuit/category
+function getEventTime(circuitId: string, category: string | null, teamName: string | null): string {
+    const circuit = circuitId?.toLowerCase() || '';
+    const isTeam = !!(teamName || category?.toLowerCase().includes('team'));
+
+    if (circuit === 'blitz') return isTeam ? '06:30 AM' : '06:00 AM';
+    if (circuit === 'recon') return isTeam ? '07:30 AM' : '07:00 AM';
+    if (circuit === 'corporate' || circuit === 'corporate_team') return '08:30 AM';
+    if (circuit === 'family') {
+        const cat = category?.toLowerCase() || '';
+        if (cat.includes('cub')) return '09:00 AM';
+        if (cat.includes('champ')) return '09:30 AM';
+        if (cat.includes('tiger')) return '10:00 AM';
+        return '09:00 AM';
+    }
+    return '06:00 AM';
+}
+
+function getNumericId(id: string): string {
+    const parts = id.split('-');
+    return parts.length > 1 ? parts[1] : id;
 }
 
 // Process payment reminders for unpaid registrations
@@ -39,6 +63,8 @@ async function processPaymentReminders() {
 
         // 1-day reminder
         if (daysSinceRegistration === 1) {
+            const ref = reg.idNumber ? ` (ID: ${reg.idNumber})` : '';
+            if (reg.phoneNumber) smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, please complete your cycling registration payment${ref} for Ride With The Warriors to secure your spot.`);
             await sendEmail(reg.id, 'payment_reminder_1d', {
                 id: reg.id,
                 firstName: reg.firstName,
@@ -61,6 +87,8 @@ async function processPaymentReminders() {
 
         // 3-day reminder
         if (daysSinceRegistration >= 3 && daysSinceRegistration < 7) {
+            const ref = reg.idNumber ? ` (ID: ${reg.idNumber})` : '';
+            if (reg.phoneNumber) smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, your cycling registration${ref} for Ride With The Warriors is still pending payment.`);
             await sendEmail(reg.id, 'payment_reminder_3d', {
                 id: reg.id,
                 firstName: reg.firstName,
@@ -83,6 +111,8 @@ async function processPaymentReminders() {
 
         // 7-day reminder
         if (daysSinceRegistration >= 7) {
+            const ref = reg.idNumber ? ` (ID: ${reg.idNumber})` : '';
+            if (reg.phoneNumber) smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, final reminder to complete your cycling registration payment${ref} for Ride With The Warriors.`);
             await sendEmail(reg.id, 'payment_reminder_7d', {
                 id: reg.id,
                 firstName: reg.firstName,
@@ -155,8 +185,15 @@ async function processRafflePaymentReminders() {
 
         // The sendRaffleEmail function logs for the first ticketId passed.
         // We manually log the rest if the email was sent successfully.
-        const baseUrl = process.env.WEBSITE_URL || process.env.APP_URL || 'https://airbornefraternity.com/ride-with-the-warriors';
-        const profileUrl = `${baseUrl}/raffle/profile/email/${encodeURIComponent(group.email)}`;
+        const baseUrl = process.env.WEBSITE_URL || process.env.APP_URL || 'https://airbornefraternity.org/ride-with-the-warriors';
+        const profileUrl = `${baseUrl}/profile`;
+        // Send SMS for raffle tickets
+        const phone = group.tickets.find(t => t.phoneNumber)?.phoneNumber;
+        if (phone) {
+            const tids = group.tickets.map(t => String(t.id).toUpperCase()).join(', ');
+            smsService.sendSMS([phone], `Hi ${group.firstName}, you have unpaid raffle tickets for Ride With The Warriors (Nos: ${tids}). Please check your email for more details.`);
+        }
+
         const sent = await sendRaffleEmail(ticketIds[0], emailType, {
             firstName: group.firstName,
             email: group.email,
@@ -218,6 +255,14 @@ async function processEventReminders() {
     for (const reg of paidRegistrations) {
         if (!reg.email) continue;
 
+        if (reg.phoneNumber) {
+            const time = getEventTime(reg.circuitId, reg.category || null, reg.teamName || null);
+            const bib = getNumericId(reg.id);
+            if (emailType === 'reminder_7d') smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, Ride With The Warriors is just 7 days away! Your BIB is ${bib}. Arrive by ${time}. See you there!`);
+            if (emailType === 'reminder_1d') smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, Ride With The Warriors is tomorrow! Your BIB is ${bib}. Arrive by ${time}. Get your gear ready!`);
+            if (emailType === 'reminder_day') smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, Ride With The Warriors is today! Your BIB is ${bib}. Arrive by ${time}. Have an amazing ride!`);
+        }
+
         await sendEmail(reg.id, emailType, {
             id: reg.id,
             firstName: reg.firstName,
@@ -242,6 +287,8 @@ async function processEventReminders() {
 // Main scheduler function
 export async function runScheduledTasks() {
     console.log('[Scheduler] Running scheduled tasks...');
+
+    await smsService.checkBalance(); // Added tracking balance
 
     try {
         await processPaymentReminders();

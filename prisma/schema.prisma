@@ -166,3 +166,16 @@ enum RegistrationStatus {
   CONFIRMED
   CANCELLED
 }
+
+model SmsLog {
+  id             String   @id @default(uuid())
+  phoneNumber    String
+  message        String
+  status         String
+  messageId      String?
+  cost           String?
+  sentAt         DateTime @default(now())
+
+  @@index([phoneNumber])
+  @@index([status])
+}
