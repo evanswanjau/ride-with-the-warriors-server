@@ -138,8 +138,24 @@ model RaffleTicket {
   failureReason      String?
   mpesaCode          String?  // New: store Receipt Number directly
   paymentDetails     Json?    // New: store full callback payload
+  referralCode       String?  // Referral code used at purchase
 
   @@index([email])
+  @@index([referralCode])
+}
+
+model Referral {
+  id              String   @id @default(uuid())
+  code            String   @unique
+  influencerName  String
+  influencerEmail String?
+  influencerPhone String?
+  isActive        Boolean  @default(true)
+  clicks          Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([code])
 }
 
 model Donation {

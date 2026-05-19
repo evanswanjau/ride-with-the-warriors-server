@@ -11,10 +11,11 @@ adminRaffleRouter.get('/', requireAdmin, async (req, res) => {
         const limit = Number(req.query.limit) || 50;
         const skip = (page - 1) * limit;
 
-        const { status, search } = req.query;
+        const { status, search, referralCode } = req.query;
 
         const where: any = {};
         if (status) where.status = String(status).toUpperCase();
+        if (referralCode) where.referralCode = String(referralCode).toUpperCase();
         if (search) {
             const s = String(search).trim();
             where.OR = [

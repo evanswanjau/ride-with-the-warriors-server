@@ -58,12 +58,22 @@ async function generateNextRaffleCode(): Promise<string> {
 // ─── POST / — Create raffle ticket(s) (UNPAID) ──────────────────────────────────
 raffleRouter.post('/', async (req, res) => {
   try {
-    const { firstName, lastName, email, phoneNumber, idNumber, gender, quantity = 1 } = req.body;
+    const { firstName, lastName, email, phoneNumber, idNumber, gender, quantity = 1, referralCode } = req.body;
 
     if (!firstName || !lastName || !email || !idNumber) {
       return res.status(400).json({
         error: { code: 'VALIDATION', message: 'firstName, lastName, email, and idNumber are required' },
       });
+    }
+
+    // Validate referral code if provided
+    const validatedRefCode = referralCode ? referralCode.toUpperCase().trim() : null;
+    if (validatedRefCode) {
+      const referral = await (prisma.referral as any).findUnique({ where: { code: validatedRefCode } });
+      if (!referral || !referral.isActive) {
+        console.log(`[Raffle] Invalid referral code: ${validatedRefCode}`);
+        // Don't block — just ignore the invalid code
+      }
     }
 
     const numTickets = Math.max(1, parseInt(quantity as string, 10));
@@ -85,6 +95,7 @@ raffleRouter.post('/', async (req, res) => {
             idNumber: idNumber.trim(),
             gender: gender || null,
             status: 'UNPAID',
+            referralCode: validatedRefCode,
           },
         });
       } catch (e: any) {

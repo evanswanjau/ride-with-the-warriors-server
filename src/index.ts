@@ -18,6 +18,8 @@ import { donationsRouter } from './routes/donations.js';
 import { dtbCallbacksRouter } from './routes/dtbCallbacks.js';
 import smsCallbacksRouter from './routes/smsCallbacks.js';
 import shortenerRouter from './routes/s.js';
+import { referralsRouter } from './routes/referrals.js';
+import { adminReferralsRouter } from './routes/admin/referrals.js';
 import { prisma } from './storage/prisma.js';
 
 
@@ -44,6 +46,7 @@ app.use('/api/v1/donations', donationsRouter);
 app.use('/api/dtb', dtbCallbacksRouter);
 app.use('/api/sms', smsCallbacksRouter);
 app.use('/s', shortenerRouter);
+app.use('/api/v1/referrals', referralsRouter);
 
 
 // Admin Routes
@@ -54,6 +57,7 @@ app.use('/api/v1/admin/raffle', adminRaffleRouter);
 app.use('/api/v1/admin/donations', adminDonationsRouter);
 app.use('/api/v1/admin/email', emailRouter);
 app.use('/api/v1/admin/dashboard', adminDashboardRouter);
+app.use('/api/v1/admin/referrals', adminReferralsRouter);
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
