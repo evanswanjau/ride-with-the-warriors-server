@@ -13,31 +13,31 @@ const distDir = path.resolve(projectRoot, 'dist/assets');
 console.log(`[Build] Project root identified as: ${projectRoot}`);
 
 try {
+    // Copy general assets
     if (fs.existsSync(srcDir)) {
         console.log(`[Build] Copying assets from ${srcDir} to ${distDir}...`);
-        
-        // Ensure dist exists (tsc usually does this, but let's be safe)
         const projectDist = path.resolve(projectRoot, 'dist');
         if (!fs.existsSync(projectDist)) {
-            console.log(`[Build] Creating missing dist directory at ${projectDist}`);
             fs.mkdirSync(projectDist, { recursive: true });
         }
-
-        // Use recursive copy
         fs.cpSync(srcDir, distDir, { recursive: true, force: true });
-        
-        // Verify output
-        if (fs.existsSync(distDir)) {
-            const files = fs.readdirSync(distDir);
-            console.log(`[Build] Assets copied successfully! Files in dist/assets: ${files.join(', ')}`);
-        } else {
-            throw new Error(`Destination directory ${distDir} was not created after copying.`);
-        }
     } else {
-        console.error(`[Build] Error: Source assets directory NOT found at ${srcDir}`);
-        process.exit(1);
+        console.warn(`[Build] Warning: Source assets directory NOT found at ${srcDir}`);
     }
+
+    // Copy generated Prisma client
+    const genSrc = path.resolve(projectRoot, 'src/generated');
+    const genDist = path.resolve(projectRoot, 'dist/generated');
+    if (fs.existsSync(genSrc)) {
+        console.log(`[Build] Copying generated client from ${genSrc} to ${genDist}...`);
+        fs.cpSync(genSrc, genDist, { recursive: true, force: true });
+    } else {
+        console.log('[Build] Note: Generated Prisma client directory not found, skipping copy.');
+    }
+
+    console.log('[Build] Asset copy process completed.');
 } catch (err) {
     console.error('[Build] FATAL error during asset copy:', err);
     process.exit(1);
 }
+
