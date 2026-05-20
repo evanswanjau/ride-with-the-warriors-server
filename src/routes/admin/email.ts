@@ -59,8 +59,7 @@ emailRouter.get('/sms-balance', async (_req, res) => {
         }
         res.json({
             ok: true,
-            ...balanceData,
-            username: (process.env.AFRICAS_TALKING_USERNAME || 'evansw').trim()
+            ...balanceData
         });
     } catch (error) {
         res.status(500).json({

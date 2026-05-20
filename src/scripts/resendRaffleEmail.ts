@@ -1,14 +1,8 @@
 import { sendRaffleConfirmationEmail } from '../services/emailService.js';
 import { prisma } from '../storage/prisma.js';
-import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-// Load env vars
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.join(__dirname, '../../.env') });
 
 async function main() {
+
     const identifier = process.argv[2]; // Ticket ID or Email
     if (!identifier) {
         console.error('Usage: npm run resend-raffle-email <ticket-id-or-email>');
