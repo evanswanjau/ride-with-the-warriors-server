@@ -54,6 +54,14 @@ async function processPaymentReminders() {
     });
 
     const today = getToday();
+    const eventDate = new Date(EVENT_DATE);
+    eventDate.setHours(0, 0, 0, 0);
+
+    // Stop reminders once event day is reached
+    if (today >= eventDate) {
+        console.log('[Scheduler] Event day reached or passed. Skipping payment reminders.');
+        return;
+    }
 
     for (const reg of unpaidRegistrations) {
         if (!reg.email) continue;
@@ -62,68 +70,14 @@ async function processPaymentReminders() {
         createdAt.setHours(0, 0, 0, 0);
         const daysSinceRegistration = daysBetween(createdAt, today);
 
-        // 1-day reminder
-        if (daysSinceRegistration === 1) {
-            const ref = reg.idNumber ? ` (ID: ${reg.idNumber})` : '';
-            if (reg.phoneNumber) {
-                const link = await createShortLink(getLinkForEntity('cyclist', reg.id));
-                smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, please complete your cycling registration payment${ref} for RWTW. Pay here: ${link}`);
-            }
-            await sendEmail(reg.id, 'payment_reminder_1d', {
-                id: reg.id,
-                firstName: reg.firstName,
-                lastName: reg.lastName,
-                email: reg.email,
-                circuitId: reg.circuitId,
-                totalAmount: reg.totalAmount,
-                status: reg.status,
-                category: reg.category || undefined,
-                payload: reg.payload,
-                teamName: reg.teamName || undefined,
-                gender: reg.gender,
-                dob: reg.dob,
-                idNumber: reg.idNumber,
-                tshirtSize: reg.tshirtSize,
-                emergencyContactName: reg.emergencyContactName,
-                emergencyPhone: reg.emergencyPhone,
-            });
-        }
-
-        // 3-day reminder
-        if (daysSinceRegistration >= 3 && daysSinceRegistration < 7) {
+        // Every 3 days (Day 3, 6, 9...)
+        if (daysSinceRegistration > 0 && daysSinceRegistration % 3 === 0) {
             const ref = reg.idNumber ? ` (ID: ${reg.idNumber})` : '';
             if (reg.phoneNumber) {
                 const link = await createShortLink(getLinkForEntity('cyclist', reg.id));
                 smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, your cycling registration${ref} for RWTW is pending payment. Pay here: ${link}`);
             }
-            await sendEmail(reg.id, 'payment_reminder_3d', {
-                id: reg.id,
-                firstName: reg.firstName,
-                lastName: reg.lastName,
-                email: reg.email,
-                circuitId: reg.circuitId,
-                totalAmount: reg.totalAmount,
-                status: reg.status,
-                category: reg.category || undefined,
-                payload: reg.payload,
-                teamName: reg.teamName || undefined,
-                gender: reg.gender,
-                dob: reg.dob,
-                idNumber: reg.idNumber,
-                tshirtSize: reg.tshirtSize,
-                emergencyContactName: reg.emergencyContactName,
-                emergencyPhone: reg.emergencyPhone,
-            });
-        }
-
-        // 7-day reminder
-        if (daysSinceRegistration >= 7) {
-            const ref = reg.idNumber ? ` (ID: ${reg.idNumber})` : '';
-            if (reg.phoneNumber) {
-                const link = await createShortLink(getLinkForEntity('cyclist', reg.id));
-                smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, final reminder for your cycling registration payment${ref} for RWTW. Pay: ${link}`);
-            }
-            await sendEmail(reg.id, 'payment_reminder_7d', {
+            await sendEmail(reg.id, 'payment_reminder_periodic', {
                 id: reg.id,
                 firstName: reg.firstName,
                 lastName: reg.lastName,
@@ -150,6 +104,15 @@ async function processRafflePaymentReminders() {
     console.log('[Scheduler] Processing raffle payment reminders...');
 
     const today = getToday();
+    const eventDate = new Date(EVENT_DATE);
+    eventDate.setHours(0, 0, 0, 0);
+
+    // Stop reminders once event day is reached
+    if (today >= eventDate) {
+        console.log('[Scheduler] Event day reached or passed. Skipping raffle reminders.');
+        return;
+    }
+
     const cutoffDate = new Date(today);
     cutoffDate.setDate(cutoffDate.getDate() - 1); // Only remind if at least 1 day old
 
@@ -182,44 +145,32 @@ async function processRafflePaymentReminders() {
         createdAt.setHours(0, 0, 0, 0);
         const daysSinceRegistration = daysBetween(createdAt, today);
 
-        let emailType: EmailType | null = null;
-        if (daysSinceRegistration === 1) {
-            emailType = 'raffle_payment_reminder_1d';
-        } else if (daysSinceRegistration >= 3 && daysSinceRegistration < 7) {
-            emailType = 'raffle_payment_reminder_3d';
-        } else if (daysSinceRegistration >= 7) {
-            emailType = 'raffle_payment_reminder_7d';
-        }
-
-        if (!emailType) continue;
-
-        // The sendRaffleEmail function logs for the first ticketId passed.
-        // We manually log the rest if the email was sent successfully.
-        const profileUrl = getLinkForEntity('raffle_profile', email);
-        // Send SMS for raffle tickets
-        const phone = group.tickets.find(t => t.phoneNumber)?.phoneNumber;
-        if (phone) {
-            const tids = group.tickets.map(t => String(t.id).toUpperCase()).join(', ');
+        // Every 3 days (Day 3, 6, 9...)
+        if (daysSinceRegistration > 0 && daysSinceRegistration % 3 === 0) {
             const profileUrl = getLinkForEntity('raffle_profile', email);
-            const link = await createShortLink(profileUrl);
-            smsService.sendSMS([phone], `Hi ${group.firstName}, you have unpaid raffle tickets for RWTW (Nos: ${tids}). Pay here: ${link}`);
-        }
+            const phone = group.tickets.find(t => t.phoneNumber)?.phoneNumber;
+            if (phone) {
+                const tids = group.tickets.map(t => String(t.id).toUpperCase()).join(', ');
+                const link = await createShortLink(profileUrl);
+                smsService.sendSMS([phone], `Hi ${group.firstName}, you have unpaid raffle tickets for RWTW (Nos: ${tids}). Pay here: ${link}`);
+            }
 
-        const sent = await sendRaffleEmail(ticketIds[0], emailType, {
-            firstName: group.firstName,
-            email: group.email,
-            ticketCount: group.tickets.length,
-            totalAmount,
-            profileUrl,
-        } as any);
+            const sent = await sendRaffleEmail(ticketIds[0], 'raffle_payment_reminder_periodic', {
+                firstName: group.firstName,
+                email: group.email,
+                ticketCount: group.tickets.length,
+                totalAmount,
+                profileUrl,
+            } as any);
 
-        if (sent && ticketIds.length > 1) {
-            const extraLogs = ticketIds.slice(1).map(id => ({
-                registrationId: id,
-                type: emailType as any,
-                status: 'sent' as const,
-            }));
-            await prisma.emailLog.createMany({ data: extraLogs });
+            if (sent && ticketIds.length > 1) {
+                const extraLogs = ticketIds.slice(1).map(id => ({
+                    registrationId: id,
+                    type: 'raffle_payment_reminder_periodic' as any,
+                    status: 'sent' as const,
+                }));
+                await prisma.emailLog.createMany({ data: extraLogs });
+            }
         }
     }
 }

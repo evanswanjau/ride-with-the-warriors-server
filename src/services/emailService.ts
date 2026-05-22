@@ -32,16 +32,11 @@ const C = {
 
 export type EmailType =
   | 'confirmation'
-  | 'payment_reminder_1d'
-  | 'payment_reminder_3d'
-  | 'payment_reminder_7d'
+  | 'raffle_payment_reminder_periodic'
+  | 'payment_reminder_periodic'
   | 'reminder_7d'
   | 'reminder_1d'
-  | 'reminder_day'
-  | 'raffle_payment_reminder'
-  | 'raffle_payment_reminder_1d'
-  | 'raffle_payment_reminder_3d'
-  | 'raffle_payment_reminder_7d';
+  | 'reminder_day';
 
 interface RegistrationData {
   id: string;
@@ -641,10 +636,7 @@ export async function sendRaffleEmail(
   let emailContent: { subject: string; html: string };
  
   switch (type) {
-    case 'raffle_payment_reminder':
-    case 'raffle_payment_reminder_1d':
-    case 'raffle_payment_reminder_3d':
-    case 'raffle_payment_reminder_7d':
+    case 'raffle_payment_reminder_periodic':
       emailContent = getRafflePaymentReminderEmail(data as any);
       break;
     default:
@@ -839,8 +831,17 @@ export async function sendEnquiryEmails(data: EnquiryData): Promise<{ success: b
 }
 
 async function wasEmailSent(registrationId: string, type: EmailType): Promise<boolean> {
+  const where: any = { registrationId, type, status: 'sent' };
+  
+  // For periodic reminders, we only care if they were sent today
+  if (type.includes('periodic')) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    where.sentAt = { gte: today };
+  }
+
   const existing = await prisma.emailLog.findFirst({
-    where: { registrationId, type, status: 'sent' },
+    where,
   });
   return !!existing;
 }
@@ -872,14 +873,8 @@ export async function sendEmail(
     case 'confirmation':
       emailContent = getConfirmationEmail(data);
       break;
-    case 'payment_reminder_1d':
-      emailContent = getPaymentReminderEmail(data, "Just a quick reminder about your registration yesterday.");
-      break;
-    case 'payment_reminder_3d':
-      emailContent = getPaymentReminderEmail(data, "It's been 3 days since you registered.");
-      break;
-    case 'payment_reminder_7d':
-      emailContent = getPaymentReminderEmail(data, "It's been a week since you registered.");
+    case 'payment_reminder_periodic':
+      emailContent = getPaymentReminderEmail(data, "Your registration is still pending payment. Complete it to secure your spot.");
       break;
     case 'reminder_7d':
       emailContent = getEventReminderEmail(data, 7);
@@ -889,6 +884,9 @@ export async function sendEmail(
       break;
     case 'reminder_day':
       emailContent = getEventReminderEmail(data, 0);
+      break;
+    case 'payment_reminder_periodic':
+      emailContent = getPaymentReminderEmail(data, "Your registration is still pending payment. Complete it to secure your spot.");
       break;
     default:
       console.error(`[Email] Unknown email type: ${type}`);
@@ -953,13 +951,11 @@ export function getTemplatePreview(type: EmailType): string {
 
   switch (type) {
     case 'confirmation': return getConfirmationEmail(sampleData).html;
-    case 'payment_reminder_1d': return getPaymentReminderEmail(sampleData, "Just a quick reminder about your registration yesterday.").html;
-    case 'payment_reminder_3d': return getPaymentReminderEmail(sampleData, "It's been 3 days since you registered.").html;
-    case 'payment_reminder_7d': return getPaymentReminderEmail(sampleData, "It's been a week since you registered.").html;
+    case 'payment_reminder_periodic': return getPaymentReminderEmail(sampleData, "Your registration is still pending payment. Complete it to secure your spot.").html;
     case 'reminder_7d': return getEventReminderEmail(sampleData, 7).html;
     case 'reminder_1d': return getEventReminderEmail(sampleData, 1).html;
     case 'reminder_day': return getEventReminderEmail(sampleData, 0).html;
-    case 'raffle_payment_reminder': {
+    case 'raffle_payment_reminder_periodic': {
       return getRafflePaymentReminderEmail({
         firstName: 'Jane',
         email: 'jane@example.com',

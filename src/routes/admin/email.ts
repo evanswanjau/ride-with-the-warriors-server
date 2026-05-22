@@ -10,7 +10,7 @@ export const emailRouter = Router();
 // Preview email templates (returns HTML)
 emailRouter.get('/preview/:type', (req, res) => {
     const { type } = req.params;
-    const validTypes = ['confirmation', 'payment_reminder_3d', 'payment_reminder_7d', 'reminder_7d', 'reminder_1d', 'reminder_day', 'raffle_payment_reminder', 'raffle_payment_reminder_1d', 'raffle_payment_reminder_3d', 'raffle_payment_reminder_7d'];
+    const validTypes = ['confirmation', 'payment_reminder_periodic', 'reminder_7d', 'reminder_1d', 'reminder_day', 'raffle_payment_reminder_periodic'];
 
     if (!validTypes.includes(type)) {
         return res.status(400).json({ error: `Invalid type. Valid types: ${validTypes.join(', ')}` });
