@@ -399,7 +399,7 @@ emailRouter.post('/raffle-reminders', async (req, res) => {
                 // Clear any existing failed log for all tickets in group
                 const ticketIds = group.tickets.map(r => r.id);
                 await prisma.emailLog.deleteMany({
-                    where: { registrationId: { in: ticketIds }, type: 'raffle_payment_reminder', status: 'failed' },
+                    where: { registrationId: { in: ticketIds }, type: 'raffle_payment_reminder_periodic', status: 'failed' },
                 });
 
                 const totalAmount = group.tickets.length * 1000; // Assuming 1000 per ticket
@@ -407,7 +407,7 @@ emailRouter.post('/raffle-reminders', async (req, res) => {
                 const baseUrl = process.env.WEBSITE_URL || process.env.APP_URL || 'https://airbornefraternity.com/ride-with-the-warriors';
                 const profileUrl = `${baseUrl}/raffle/profile/email/${encodeURIComponent(group.email)}`;
 
-                const sent = await sendRaffleEmail(ticketIds[0], 'raffle_payment_reminder', {
+                const sent = await sendRaffleEmail(ticketIds[0], 'raffle_payment_reminder_periodic', {
                     firstName: group.firstName,
                     email: group.email,
                     ticketCount: group.tickets.length,
@@ -419,7 +419,7 @@ emailRouter.post('/raffle-reminders', async (req, res) => {
                 if (sent && ticketIds.length > 1) {
                     const extraLogs = ticketIds.slice(1).map(id => ({
                         registrationId: id,
-                        type: 'raffle_payment_reminder' as const,
+                        type: 'raffle_payment_reminder_periodic' as const,
                         status: 'sent' as const,
                     }));
                     await prisma.emailLog.createMany({ data: extraLogs });
