@@ -72,10 +72,10 @@ async function processPaymentReminders() {
 
         // Every 3 days (Day 3, 6, 9...)
         if (daysSinceRegistration > 0 && daysSinceRegistration % 3 === 0) {
-            const ref = reg.idNumber ? ` (ID: ${reg.idNumber})` : '';
+            const bib = getNumericId(reg.id);
             if (reg.phoneNumber) {
                 const link = await createShortLink(getLinkForEntity('cyclist', reg.id));
-                smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, your cycling registration${ref} for RWTW is pending payment. Pay here: ${link}`);
+                smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, your cycling registration (BIB: ${bib}) for RWTW is pending payment. Pay here: ${link}`);
             }
             await sendEmail(reg.id, 'payment_reminder_periodic', {
                 id: reg.id,

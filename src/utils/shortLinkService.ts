@@ -47,7 +47,21 @@ export async function createShortLink(targetUrl: string): Promise<string> {
         console.warn('[ShortLink] is.gd failed:', (error as Error).message);
     }
 
-    // Fallback 1: cleanuri.com (No preview page, more reliable than is.gd for some domains)
+    // Fallback 1: tinyurl.com (More reliable external)
+    try {
+        const response = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(targetUrl)}`);
+        if (response.ok) {
+            const externalUrl = await response.text();
+            if (externalUrl && externalUrl.includes('tinyurl.com')) {
+                await saveExternalShortLink(externalUrl, targetUrl);
+                return externalUrl;
+            }
+        }
+    } catch (error) {
+        console.warn('[ShortLink] tinyurl.com failed:', (error as Error).message);
+    }
+
+    // Fallback 2: cleanuri.com (No preview page, backup for tinyurl/is.gd)
     try {
         const response = await fetch('https://cleanuri.com/api/v1/shorten', {
             method: 'POST',
@@ -63,20 +77,6 @@ export async function createShortLink(targetUrl: string): Promise<string> {
         }
     } catch (error) {
         console.warn('[ShortLink] cleanuri.com failed:', (error as Error).message);
-    }
-
-    // Fallback 2: tinyurl.com (Last resort external)
-    try {
-        const response = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(targetUrl)}`);
-        if (response.ok) {
-            const externalUrl = await response.text();
-            if (externalUrl && externalUrl.includes('tinyurl.com')) {
-                await saveExternalShortLink(externalUrl, targetUrl);
-                return externalUrl;
-            }
-        }
-    } catch (error) {
-        console.warn('[ShortLink] tinyurl.com failed:', (error as Error).message);
     }
 
     // 2. Final Fallback to Internal short ID
