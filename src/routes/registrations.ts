@@ -180,6 +180,21 @@ registrationsRouter.post('/pay/stk-push', async (req, res) => {
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'Missing required payment details' } });
   }
 
+  // ── SIMULATION MODE ──────────────────────────────────────────────────────────
+  if (process.env.PAYMENT_MODE === 'simulate') {
+    console.log(`[STK Push SIM] Simulating payment for registration ${registrationId} — KES ${amount}`);
+    await new Promise(r => setTimeout(r, 800));
+    const simRef = `SIM-${Date.now()}`;
+    try {
+      await updateRegistration(registrationId, { status: 'PAID', mpesaCode: simRef });
+      await prisma.payment.create({
+        data: { registrationId, checkoutRequestId: simRef, phone: phoneNumber, amount, status: 'PAID', mpesaReceiptNumber: simRef },
+      });
+    } catch (dbErr) { console.error('[STK Push SIM] DB error:', dbErr); }
+    return res.json({ success: true, transactionReference: simRef, message: 'Payment simulated successfully.' });
+  }
+  // ─────────────────────────────────────────────────────────────────────────────
+
   try {
     const result = await dtbService.initiateStkPush({
       registrationId,

@@ -50,6 +50,19 @@ donationsRouter.post('/pay/stk-push', async (req, res) => {
             return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Donation record not found' } });
         }
 
+        // ── SIMULATION MODE ──────────────────────────────────────────────────────────
+        if (process.env.PAYMENT_MODE === 'simulate') {
+            console.log(`[Donation STK SIM] Simulating donation ${donationId} — KES ${donation.amount}`);
+            await new Promise(r => setTimeout(r, 800));
+            const simRef = `SIM-${Date.now()}`;
+            await prisma.donation.update({
+                where: { id: donationId },
+                data: { status: 'PAID', checkoutRequestId: simRef, mpesaCode: simRef },
+            });
+            return res.json({ success: true, transactionReference: simRef, message: 'Payment simulated successfully.' });
+        }
+        // ─────────────────────────────────────────────────────────────────────────────
+
         const result = await dtbService.initiateStkPush({
             registrationId: donationId, 
             amount: donation.amount,

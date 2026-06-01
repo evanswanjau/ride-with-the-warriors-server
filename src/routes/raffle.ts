@@ -130,6 +130,19 @@ raffleRouter.post('/pay/stk-push', async (req, res) => {
 
   const totalAmount = RAFFLE_AMOUNT * ticketIds.length;
 
+  // ── SIMULATION MODE ──────────────────────────────────────────────────────────
+  if (process.env.PAYMENT_MODE === 'simulate') {
+    console.log(`[Raffle STK SIM] Simulating payment for ${ticketIds.length} ticket(s) — KES ${totalAmount}`);
+    await new Promise(r => setTimeout(r, 800));
+    const simRef = `SIM-${Date.now()}`;
+    await (prisma.raffleTicket as any).updateMany({
+      where: { id: { in: ticketIds } },
+      data: { status: 'PAID', checkoutRequestId: simRef, paymentFailed: false, mpesaCode: simRef },
+    });
+    return res.json({ success: true, transactionReference: simRef, message: 'Payment simulated successfully.' });
+  }
+  // ─────────────────────────────────────────────────────────────────────────────
+
   try {
     const result = await dtbService.initiateStkPush({
       registrationId: ticketIds[0],
