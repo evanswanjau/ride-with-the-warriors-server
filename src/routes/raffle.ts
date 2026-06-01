@@ -42,14 +42,19 @@ function ordinalToCode(ordinal: number): string | null {
 async function generateNextRaffleCode(): Promise<string> {
   const existing = await (prisma.raffleTicket as any).findMany({
     select: { id: true },
-    orderBy: { createdAt: 'desc' },
   });
-  let maxOrdinal = 0;
+  
+  const usedOrdinals = new Set<number>();
   for (const r of existing as { id: string }[]) {
     const ord = codeToOrdinal(r.id);
-    if (ord > maxOrdinal) maxOrdinal = ord;
+    if (ord > 0) usedOrdinals.add(ord);
   }
-  const nextOrdinal = maxOrdinal + 1;
+
+  let nextOrdinal = 1;
+  while (usedOrdinals.has(nextOrdinal)) {
+    nextOrdinal++;
+  }
+
   const code = ordinalToCode(nextOrdinal);
   if (!code) throw new Error('RAFFLE_FULL');
   return code;

@@ -84,19 +84,19 @@ export async function generateNextId(categoryName: string, circuitId: string, ty
     .map(r => parseInt(prefix ? r.id.substring(prefix.length) : r.id, 10))
     .filter(n => !isNaN(n) && n >= startNum && n <= endNum);
 
-  let maxIdFromDb = startNum - 1;
-  if (numericDbIds.length > 0) {
-    maxIdFromDb = Math.max(...numericDbIds);
+  // Combine DB IDs and IDs used in the current batch
+  const allUsedNums = new Set([
+    ...numericDbIds,
+    ...usedIds
+      .filter(id => id.startsWith(prefix))
+      .map(id => parseInt(prefix ? id.substring(prefix.length) : id, 10))
+      .filter(n => !isNaN(n) && n >= startNum && n <= endNum)
+  ]);
+
+  let nextVal = startNum;
+  while (allUsedNums.has(nextVal) && nextVal <= endNum) {
+    nextVal++;
   }
-
-  // Also check usedIds (for IDs generated in this batch but not yet saved to DB)
-  const numericUsedIds = usedIds
-    .filter(id => id.startsWith(prefix))
-    .map(id => parseInt(prefix ? id.substring(prefix.length) : id, 10))
-    .filter(n => !isNaN(n) && n >= startNum && n <= endNum);
-
-  const maxIdValue = Math.max(maxIdFromDb, ...numericUsedIds);
-  const nextVal = maxIdValue + 1;
 
   // Protect against range overflow
   if (nextVal > endNum) {
