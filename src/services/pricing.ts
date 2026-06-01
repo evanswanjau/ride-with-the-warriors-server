@@ -205,6 +205,20 @@ export async function buildQuote(input: {
     }
   }
 
+  const payload = input.payload as any;
+  const shouldHire = payload?.riderDetails?.hireBike || 
+                     payload?.teamDetails?.hireBike || 
+                     payload?.familyDetails?.guardian?.hireBike;
+
+  if (shouldHire) {
+    const bikeHireFee = 1500;
+    totalAmount += bikeHireFee;
+    lineItems.push({
+      label: 'Bike Hire',
+      amount: bikeHireFee,
+    });
+  }
+
   return {
     pricing: { currency: 'KES', totalAmount, lineItems },
     classifications,

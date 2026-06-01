@@ -7,6 +7,70 @@ import fs from 'fs';
 export const profileRouter = Router();
 
 // Search for registration by ID, email, or phone
+profileRouter.post('/hire-bike', async (req, res) => {
+    try {
+        const { registrationId } = req.body;
+        if (!registrationId) {
+            return res.status(400).json({
+                error: { code: 'VALIDATION', message: 'registrationId is required' }
+            });
+        }
+
+        const registration = await prisma.registration.findUnique({
+            where: { id: registrationId },
+            include: { bikeHire: true }
+        });
+
+        if (!registration) {
+            return res.status(404).json({
+                error: { code: 'NOT_FOUND', message: 'Registration not found' }
+            });
+        }
+
+        if (registration.bikeHire) {
+            return res.status(400).json({
+                error: { code: 'ALREADY_EXISTS', message: 'Bike hire already exists for this registration' }
+            });
+        }
+
+        const bikeHire = await prisma.bikeHire.create({
+            data: {
+                registrationId: registrationId,
+                amount: 1000,
+                status: 'PENDING'
+            }
+        });
+
+        // Update registration payload to include hireBike: true for consistency
+        const payload = typeof registration.payload === 'string' 
+            ? JSON.parse(registration.payload) 
+            : registration.payload || {};
+        
+        if (registration.type === 'individual' && payload.riderDetails) {
+            payload.riderDetails.hireBike = true;
+        } else if (registration.type === 'team' && payload.teamDetails) {
+            payload.teamDetails.hireBike = true;
+        } else if (registration.type === 'family' && payload.familyDetails?.guardian) {
+            payload.familyDetails.guardian.hireBike = true;
+        }
+
+        await prisma.registration.update({
+            where: { id: registrationId },
+            data: { 
+                payload: payload as any,
+                totalAmount: registration.totalAmount + 1000
+            }
+        });
+
+        res.json({ success: true, bikeHire });
+    } catch (error) {
+        console.error('Hire bike error:', error);
+        res.status(500).json({
+            error: { code: 'INTERNAL', message: 'Failed to create bike hire' }
+        });
+    }
+});
+
 profileRouter.post('/search', async (req, res) => {
     try {
         const { searchType, searchValue } = req.body;
@@ -28,10 +92,14 @@ profileRouter.post('/search', async (req, res) => {
             foundRaffleTicket = ticketsById[0] || null;
 
             // 2. Check if the ID belongs to a registration (or ID Number)
-            foundRegistration = await getRegistration(searchValue.toUpperCase());
+            foundRegistration = await (prisma.registration as any).findUnique({
+                where: { id: searchValue.toUpperCase() },
+                include: { bikeHire: true }
+            });
             if (!foundRegistration) {
                 foundRegistration = await (prisma.registration as any).findFirst({
                     where: { idNumber: { equals: searchValue.trim() } },
+                    include: { bikeHire: true },
                     orderBy: { createdAt: 'desc' }
                 });
             }
@@ -59,6 +127,7 @@ profileRouter.post('/search', async (req, res) => {
             // Check registrations
             foundRegistration = await (prisma.registration as any).findFirst({
                 where: { email: { equals: searchLower } },
+                include: { bikeHire: true },
                 orderBy: { createdAt: 'desc' }
             });
             // Check raffle tickets
@@ -78,6 +147,7 @@ profileRouter.post('/search', async (req, res) => {
                         { emergencyPhone: { contains: normalizedPhone } }
                     ]
                 },
+                include: { bikeHire: true },
                 orderBy: { createdAt: 'desc' }
             });
             // Check raffle tickets

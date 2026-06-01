@@ -304,6 +304,31 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
     }
   }
 
+  // After DB creation, create BikeHire records if needed
+  try {
+    for (const record of recordsToCreate) {
+      const p = record.payload as any;
+      const shouldHire = p?.riderDetails?.hireBike || 
+                         (p?.isPrimary && (p?.teamDetails?.hireBike || p?.familyDetails?.guardian?.hireBike));
+      
+      if (shouldHire) {
+        // Check if it already exists to avoid duplicates
+        const existing = await prisma.bikeHire.findUnique({ where: { registrationId: record.id } });
+        if (!existing) {
+          await prisma.bikeHire.create({
+            data: {
+              registrationId: record.id,
+              amount: 1500,
+              status: record.status === 'PAID' ? 'PAID' : 'PENDING',
+            }
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[Storage] Failed to create BikeHire records:', err);
+  }
+
   return recordsToCreate[0] as RegistrationRecord;
 }
 
@@ -414,6 +439,17 @@ export async function updateRegistration(id: string, input: Partial<Omit<Registr
     }
     if (emailPromises.length > 0) {
       await Promise.allSettled(emailPromises);
+    }
+
+    // Sync BikeHire status if it exists
+    try {
+      const regIds = registrationsToSend.map(r => r.id);
+      await prisma.bikeHire.updateMany({
+        where: { registrationId: { in: regIds } },
+        data: { status: 'PAID' }
+      });
+    } catch (err) {
+      console.error('[Storage] Failed to sync BikeHire status:', err);
     }
   }
 

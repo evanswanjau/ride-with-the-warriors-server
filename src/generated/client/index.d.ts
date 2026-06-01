@@ -68,6 +68,11 @@ export type SmsLog = $Result.DefaultSelection<Prisma.$SmsLogPayload>
  * 
  */
 export type ShortLink = $Result.DefaultSelection<Prisma.$ShortLinkPayload>
+/**
+ * Model BikeHire
+ * 
+ */
+export type BikeHire = $Result.DefaultSelection<Prisma.$BikeHirePayload>
 
 /**
  * Enums
@@ -318,6 +323,16 @@ export class PrismaClient<
     * ```
     */
   get shortLink(): Prisma.ShortLinkDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.bikeHire`: Exposes CRUD operations for the **BikeHire** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more BikeHires
+    * const bikeHires = await prisma.bikeHire.findMany()
+    * ```
+    */
+  get bikeHire(): Prisma.BikeHireDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -762,7 +777,8 @@ export namespace Prisma {
     Referral: 'Referral',
     Donation: 'Donation',
     SmsLog: 'SmsLog',
-    ShortLink: 'ShortLink'
+    ShortLink: 'ShortLink',
+    BikeHire: 'BikeHire'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -778,7 +794,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "registration" | "admin" | "adminSession" | "payment" | "pricingCategory" | "emailLog" | "raffleTicket" | "referral" | "donation" | "smsLog" | "shortLink"
+      modelProps: "registration" | "admin" | "adminSession" | "payment" | "pricingCategory" | "emailLog" | "raffleTicket" | "referral" | "donation" | "smsLog" | "shortLink" | "bikeHire"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1596,6 +1612,80 @@ export namespace Prisma {
           }
         }
       }
+      BikeHire: {
+        payload: Prisma.$BikeHirePayload<ExtArgs>
+        fields: Prisma.BikeHireFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BikeHireFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BikeHirePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BikeHireFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BikeHirePayload>
+          }
+          findFirst: {
+            args: Prisma.BikeHireFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BikeHirePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BikeHireFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BikeHirePayload>
+          }
+          findMany: {
+            args: Prisma.BikeHireFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BikeHirePayload>[]
+          }
+          create: {
+            args: Prisma.BikeHireCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BikeHirePayload>
+          }
+          createMany: {
+            args: Prisma.BikeHireCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.BikeHireCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BikeHirePayload>[]
+          }
+          delete: {
+            args: Prisma.BikeHireDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BikeHirePayload>
+          }
+          update: {
+            args: Prisma.BikeHireUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BikeHirePayload>
+          }
+          deleteMany: {
+            args: Prisma.BikeHireDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BikeHireUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.BikeHireUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BikeHirePayload>[]
+          }
+          upsert: {
+            args: Prisma.BikeHireUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BikeHirePayload>
+          }
+          aggregate: {
+            args: Prisma.BikeHireAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBikeHire>
+          }
+          groupBy: {
+            args: Prisma.BikeHireGroupByArgs<ExtArgs>
+            result: $Utils.Optional<BikeHireGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BikeHireCountArgs<ExtArgs>
+            result: $Utils.Optional<BikeHireCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1715,6 +1805,7 @@ export namespace Prisma {
     donation?: DonationOmit
     smsLog?: SmsLogOmit
     shortLink?: ShortLinkOmit
+    bikeHire?: BikeHireOmit
   }
 
   /* Types for Logging */
@@ -2227,6 +2318,7 @@ export namespace Prisma {
     service?: boolean
     serviceNumber?: boolean
     unit?: boolean
+    bikeHire?: boolean | Registration$bikeHireArgs<ExtArgs>
   }, ExtArgs["result"]["registration"]>
 
   export type RegistrationSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -2335,10 +2427,17 @@ export namespace Prisma {
   }
 
   export type RegistrationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "createdAt" | "updatedAt" | "circuitId" | "type" | "status" | "firstName" | "lastName" | "email" | "phoneNumber" | "idNumber" | "dob" | "gender" | "groupId" | "teamName" | "isCaptain" | "guardianName" | "emergencyPhone" | "relationship" | "category" | "totalAmount" | "payload" | "pricing" | "classifications" | "emergencyContactName" | "tshirtSize" | "mpesaCode" | "isMilitary" | "rank" | "service" | "serviceNumber" | "unit", ExtArgs["result"]["registration"]>
+  export type RegistrationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    bikeHire?: boolean | Registration$bikeHireArgs<ExtArgs>
+  }
+  export type RegistrationIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type RegistrationIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
 
   export type $RegistrationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Registration"
-    objects: {}
+    objects: {
+      bikeHire: Prisma.$BikeHirePayload<ExtArgs> | null
+    }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       createdAt: Date
@@ -2766,6 +2865,7 @@ export namespace Prisma {
    */
   export interface Prisma__RegistrationClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    bikeHire<T extends Registration$bikeHireArgs<ExtArgs> = {}>(args?: Subset<T, Registration$bikeHireArgs<ExtArgs>>): Prisma__BikeHireClient<$Result.GetResult<Prisma.$BikeHirePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2844,6 +2944,10 @@ export namespace Prisma {
      */
     omit?: RegistrationOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationInclude<ExtArgs> | null
+    /**
      * Filter, which Registration to fetch.
      */
     where: RegistrationWhereUniqueInput
@@ -2862,6 +2966,10 @@ export namespace Prisma {
      */
     omit?: RegistrationOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationInclude<ExtArgs> | null
+    /**
      * Filter, which Registration to fetch.
      */
     where: RegistrationWhereUniqueInput
@@ -2879,6 +2987,10 @@ export namespace Prisma {
      * Omit specific fields from the Registration
      */
     omit?: RegistrationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationInclude<ExtArgs> | null
     /**
      * Filter, which Registration to fetch.
      */
@@ -2928,6 +3040,10 @@ export namespace Prisma {
      */
     omit?: RegistrationOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationInclude<ExtArgs> | null
+    /**
      * Filter, which Registration to fetch.
      */
     where?: RegistrationWhereInput
@@ -2975,6 +3091,10 @@ export namespace Prisma {
      * Omit specific fields from the Registration
      */
     omit?: RegistrationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationInclude<ExtArgs> | null
     /**
      * Filter, which Registrations to fetch.
      */
@@ -3024,6 +3144,10 @@ export namespace Prisma {
      */
     omit?: RegistrationOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationInclude<ExtArgs> | null
+    /**
      * The data needed to create a Registration.
      */
     data: XOR<RegistrationCreateInput, RegistrationUncheckedCreateInput>
@@ -3071,6 +3195,10 @@ export namespace Prisma {
      * Omit specific fields from the Registration
      */
     omit?: RegistrationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationInclude<ExtArgs> | null
     /**
      * The data needed to update a Registration.
      */
@@ -3138,6 +3266,10 @@ export namespace Prisma {
      */
     omit?: RegistrationOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationInclude<ExtArgs> | null
+    /**
      * The filter to search for the Registration to update in case it exists.
      */
     where: RegistrationWhereUniqueInput
@@ -3164,6 +3296,10 @@ export namespace Prisma {
      */
     omit?: RegistrationOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationInclude<ExtArgs> | null
+    /**
      * Filter which Registration to delete.
      */
     where: RegistrationWhereUniqueInput
@@ -3184,6 +3320,25 @@ export namespace Prisma {
   }
 
   /**
+   * Registration.bikeHire
+   */
+  export type Registration$bikeHireArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BikeHire
+     */
+    select?: BikeHireSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BikeHire
+     */
+    omit?: BikeHireOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BikeHireInclude<ExtArgs> | null
+    where?: BikeHireWhereInput
+  }
+
+  /**
    * Registration without action
    */
   export type RegistrationDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3195,6 +3350,10 @@ export namespace Prisma {
      * Omit specific fields from the Registration
      */
     omit?: RegistrationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationInclude<ExtArgs> | null
   }
 
 
@@ -14110,6 +14269,1129 @@ export namespace Prisma {
 
 
   /**
+   * Model BikeHire
+   */
+
+  export type AggregateBikeHire = {
+    _count: BikeHireCountAggregateOutputType | null
+    _avg: BikeHireAvgAggregateOutputType | null
+    _sum: BikeHireSumAggregateOutputType | null
+    _min: BikeHireMinAggregateOutputType | null
+    _max: BikeHireMaxAggregateOutputType | null
+  }
+
+  export type BikeHireAvgAggregateOutputType = {
+    amount: number | null
+  }
+
+  export type BikeHireSumAggregateOutputType = {
+    amount: number | null
+  }
+
+  export type BikeHireMinAggregateOutputType = {
+    id: string | null
+    registrationId: string | null
+    bikeType: string | null
+    status: string | null
+    amount: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type BikeHireMaxAggregateOutputType = {
+    id: string | null
+    registrationId: string | null
+    bikeType: string | null
+    status: string | null
+    amount: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type BikeHireCountAggregateOutputType = {
+    id: number
+    registrationId: number
+    bikeType: number
+    status: number
+    amount: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type BikeHireAvgAggregateInputType = {
+    amount?: true
+  }
+
+  export type BikeHireSumAggregateInputType = {
+    amount?: true
+  }
+
+  export type BikeHireMinAggregateInputType = {
+    id?: true
+    registrationId?: true
+    bikeType?: true
+    status?: true
+    amount?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type BikeHireMaxAggregateInputType = {
+    id?: true
+    registrationId?: true
+    bikeType?: true
+    status?: true
+    amount?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type BikeHireCountAggregateInputType = {
+    id?: true
+    registrationId?: true
+    bikeType?: true
+    status?: true
+    amount?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type BikeHireAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BikeHire to aggregate.
+     */
+    where?: BikeHireWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BikeHires to fetch.
+     */
+    orderBy?: BikeHireOrderByWithRelationInput | BikeHireOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BikeHireWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BikeHires from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BikeHires.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned BikeHires
+    **/
+    _count?: true | BikeHireCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: BikeHireAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: BikeHireSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BikeHireMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BikeHireMaxAggregateInputType
+  }
+
+  export type GetBikeHireAggregateType<T extends BikeHireAggregateArgs> = {
+        [P in keyof T & keyof AggregateBikeHire]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBikeHire[P]>
+      : GetScalarType<T[P], AggregateBikeHire[P]>
+  }
+
+
+
+
+  export type BikeHireGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BikeHireWhereInput
+    orderBy?: BikeHireOrderByWithAggregationInput | BikeHireOrderByWithAggregationInput[]
+    by: BikeHireScalarFieldEnum[] | BikeHireScalarFieldEnum
+    having?: BikeHireScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BikeHireCountAggregateInputType | true
+    _avg?: BikeHireAvgAggregateInputType
+    _sum?: BikeHireSumAggregateInputType
+    _min?: BikeHireMinAggregateInputType
+    _max?: BikeHireMaxAggregateInputType
+  }
+
+  export type BikeHireGroupByOutputType = {
+    id: string
+    registrationId: string
+    bikeType: string
+    status: string
+    amount: number
+    createdAt: Date
+    updatedAt: Date
+    _count: BikeHireCountAggregateOutputType | null
+    _avg: BikeHireAvgAggregateOutputType | null
+    _sum: BikeHireSumAggregateOutputType | null
+    _min: BikeHireMinAggregateOutputType | null
+    _max: BikeHireMaxAggregateOutputType | null
+  }
+
+  type GetBikeHireGroupByPayload<T extends BikeHireGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BikeHireGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BikeHireGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BikeHireGroupByOutputType[P]>
+            : GetScalarType<T[P], BikeHireGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BikeHireSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    registrationId?: boolean
+    bikeType?: boolean
+    status?: boolean
+    amount?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    registration?: boolean | RegistrationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["bikeHire"]>
+
+  export type BikeHireSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    registrationId?: boolean
+    bikeType?: boolean
+    status?: boolean
+    amount?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    registration?: boolean | RegistrationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["bikeHire"]>
+
+  export type BikeHireSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    registrationId?: boolean
+    bikeType?: boolean
+    status?: boolean
+    amount?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    registration?: boolean | RegistrationDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["bikeHire"]>
+
+  export type BikeHireSelectScalar = {
+    id?: boolean
+    registrationId?: boolean
+    bikeType?: boolean
+    status?: boolean
+    amount?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type BikeHireOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "registrationId" | "bikeType" | "status" | "amount" | "createdAt" | "updatedAt", ExtArgs["result"]["bikeHire"]>
+  export type BikeHireInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    registration?: boolean | RegistrationDefaultArgs<ExtArgs>
+  }
+  export type BikeHireIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    registration?: boolean | RegistrationDefaultArgs<ExtArgs>
+  }
+  export type BikeHireIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    registration?: boolean | RegistrationDefaultArgs<ExtArgs>
+  }
+
+  export type $BikeHirePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "BikeHire"
+    objects: {
+      registration: Prisma.$RegistrationPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      registrationId: string
+      bikeType: string
+      status: string
+      amount: number
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["bikeHire"]>
+    composites: {}
+  }
+
+  type BikeHireGetPayload<S extends boolean | null | undefined | BikeHireDefaultArgs> = $Result.GetResult<Prisma.$BikeHirePayload, S>
+
+  type BikeHireCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<BikeHireFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: BikeHireCountAggregateInputType | true
+    }
+
+  export interface BikeHireDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BikeHire'], meta: { name: 'BikeHire' } }
+    /**
+     * Find zero or one BikeHire that matches the filter.
+     * @param {BikeHireFindUniqueArgs} args - Arguments to find a BikeHire
+     * @example
+     * // Get one BikeHire
+     * const bikeHire = await prisma.bikeHire.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BikeHireFindUniqueArgs>(args: SelectSubset<T, BikeHireFindUniqueArgs<ExtArgs>>): Prisma__BikeHireClient<$Result.GetResult<Prisma.$BikeHirePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one BikeHire that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {BikeHireFindUniqueOrThrowArgs} args - Arguments to find a BikeHire
+     * @example
+     * // Get one BikeHire
+     * const bikeHire = await prisma.bikeHire.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BikeHireFindUniqueOrThrowArgs>(args: SelectSubset<T, BikeHireFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BikeHireClient<$Result.GetResult<Prisma.$BikeHirePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BikeHire that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BikeHireFindFirstArgs} args - Arguments to find a BikeHire
+     * @example
+     * // Get one BikeHire
+     * const bikeHire = await prisma.bikeHire.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BikeHireFindFirstArgs>(args?: SelectSubset<T, BikeHireFindFirstArgs<ExtArgs>>): Prisma__BikeHireClient<$Result.GetResult<Prisma.$BikeHirePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BikeHire that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BikeHireFindFirstOrThrowArgs} args - Arguments to find a BikeHire
+     * @example
+     * // Get one BikeHire
+     * const bikeHire = await prisma.bikeHire.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BikeHireFindFirstOrThrowArgs>(args?: SelectSubset<T, BikeHireFindFirstOrThrowArgs<ExtArgs>>): Prisma__BikeHireClient<$Result.GetResult<Prisma.$BikeHirePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more BikeHires that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BikeHireFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all BikeHires
+     * const bikeHires = await prisma.bikeHire.findMany()
+     * 
+     * // Get first 10 BikeHires
+     * const bikeHires = await prisma.bikeHire.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const bikeHireWithIdOnly = await prisma.bikeHire.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends BikeHireFindManyArgs>(args?: SelectSubset<T, BikeHireFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BikeHirePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a BikeHire.
+     * @param {BikeHireCreateArgs} args - Arguments to create a BikeHire.
+     * @example
+     * // Create one BikeHire
+     * const BikeHire = await prisma.bikeHire.create({
+     *   data: {
+     *     // ... data to create a BikeHire
+     *   }
+     * })
+     * 
+     */
+    create<T extends BikeHireCreateArgs>(args: SelectSubset<T, BikeHireCreateArgs<ExtArgs>>): Prisma__BikeHireClient<$Result.GetResult<Prisma.$BikeHirePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many BikeHires.
+     * @param {BikeHireCreateManyArgs} args - Arguments to create many BikeHires.
+     * @example
+     * // Create many BikeHires
+     * const bikeHire = await prisma.bikeHire.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BikeHireCreateManyArgs>(args?: SelectSubset<T, BikeHireCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many BikeHires and returns the data saved in the database.
+     * @param {BikeHireCreateManyAndReturnArgs} args - Arguments to create many BikeHires.
+     * @example
+     * // Create many BikeHires
+     * const bikeHire = await prisma.bikeHire.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many BikeHires and only return the `id`
+     * const bikeHireWithIdOnly = await prisma.bikeHire.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends BikeHireCreateManyAndReturnArgs>(args?: SelectSubset<T, BikeHireCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BikeHirePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a BikeHire.
+     * @param {BikeHireDeleteArgs} args - Arguments to delete one BikeHire.
+     * @example
+     * // Delete one BikeHire
+     * const BikeHire = await prisma.bikeHire.delete({
+     *   where: {
+     *     // ... filter to delete one BikeHire
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BikeHireDeleteArgs>(args: SelectSubset<T, BikeHireDeleteArgs<ExtArgs>>): Prisma__BikeHireClient<$Result.GetResult<Prisma.$BikeHirePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one BikeHire.
+     * @param {BikeHireUpdateArgs} args - Arguments to update one BikeHire.
+     * @example
+     * // Update one BikeHire
+     * const bikeHire = await prisma.bikeHire.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BikeHireUpdateArgs>(args: SelectSubset<T, BikeHireUpdateArgs<ExtArgs>>): Prisma__BikeHireClient<$Result.GetResult<Prisma.$BikeHirePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more BikeHires.
+     * @param {BikeHireDeleteManyArgs} args - Arguments to filter BikeHires to delete.
+     * @example
+     * // Delete a few BikeHires
+     * const { count } = await prisma.bikeHire.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BikeHireDeleteManyArgs>(args?: SelectSubset<T, BikeHireDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BikeHires.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BikeHireUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many BikeHires
+     * const bikeHire = await prisma.bikeHire.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BikeHireUpdateManyArgs>(args: SelectSubset<T, BikeHireUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BikeHires and returns the data updated in the database.
+     * @param {BikeHireUpdateManyAndReturnArgs} args - Arguments to update many BikeHires.
+     * @example
+     * // Update many BikeHires
+     * const bikeHire = await prisma.bikeHire.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more BikeHires and only return the `id`
+     * const bikeHireWithIdOnly = await prisma.bikeHire.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends BikeHireUpdateManyAndReturnArgs>(args: SelectSubset<T, BikeHireUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BikeHirePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one BikeHire.
+     * @param {BikeHireUpsertArgs} args - Arguments to update or create a BikeHire.
+     * @example
+     * // Update or create a BikeHire
+     * const bikeHire = await prisma.bikeHire.upsert({
+     *   create: {
+     *     // ... data to create a BikeHire
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the BikeHire we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BikeHireUpsertArgs>(args: SelectSubset<T, BikeHireUpsertArgs<ExtArgs>>): Prisma__BikeHireClient<$Result.GetResult<Prisma.$BikeHirePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of BikeHires.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BikeHireCountArgs} args - Arguments to filter BikeHires to count.
+     * @example
+     * // Count the number of BikeHires
+     * const count = await prisma.bikeHire.count({
+     *   where: {
+     *     // ... the filter for the BikeHires we want to count
+     *   }
+     * })
+    **/
+    count<T extends BikeHireCountArgs>(
+      args?: Subset<T, BikeHireCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BikeHireCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a BikeHire.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BikeHireAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BikeHireAggregateArgs>(args: Subset<T, BikeHireAggregateArgs>): Prisma.PrismaPromise<GetBikeHireAggregateType<T>>
+
+    /**
+     * Group by BikeHire.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BikeHireGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BikeHireGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BikeHireGroupByArgs['orderBy'] }
+        : { orderBy?: BikeHireGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BikeHireGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBikeHireGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the BikeHire model
+   */
+  readonly fields: BikeHireFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for BikeHire.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BikeHireClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    registration<T extends RegistrationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, RegistrationDefaultArgs<ExtArgs>>): Prisma__RegistrationClient<$Result.GetResult<Prisma.$RegistrationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the BikeHire model
+   */
+  interface BikeHireFieldRefs {
+    readonly id: FieldRef<"BikeHire", 'String'>
+    readonly registrationId: FieldRef<"BikeHire", 'String'>
+    readonly bikeType: FieldRef<"BikeHire", 'String'>
+    readonly status: FieldRef<"BikeHire", 'String'>
+    readonly amount: FieldRef<"BikeHire", 'Float'>
+    readonly createdAt: FieldRef<"BikeHire", 'DateTime'>
+    readonly updatedAt: FieldRef<"BikeHire", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * BikeHire findUnique
+   */
+  export type BikeHireFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BikeHire
+     */
+    select?: BikeHireSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BikeHire
+     */
+    omit?: BikeHireOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BikeHireInclude<ExtArgs> | null
+    /**
+     * Filter, which BikeHire to fetch.
+     */
+    where: BikeHireWhereUniqueInput
+  }
+
+  /**
+   * BikeHire findUniqueOrThrow
+   */
+  export type BikeHireFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BikeHire
+     */
+    select?: BikeHireSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BikeHire
+     */
+    omit?: BikeHireOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BikeHireInclude<ExtArgs> | null
+    /**
+     * Filter, which BikeHire to fetch.
+     */
+    where: BikeHireWhereUniqueInput
+  }
+
+  /**
+   * BikeHire findFirst
+   */
+  export type BikeHireFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BikeHire
+     */
+    select?: BikeHireSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BikeHire
+     */
+    omit?: BikeHireOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BikeHireInclude<ExtArgs> | null
+    /**
+     * Filter, which BikeHire to fetch.
+     */
+    where?: BikeHireWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BikeHires to fetch.
+     */
+    orderBy?: BikeHireOrderByWithRelationInput | BikeHireOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BikeHires.
+     */
+    cursor?: BikeHireWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BikeHires from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BikeHires.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BikeHires.
+     */
+    distinct?: BikeHireScalarFieldEnum | BikeHireScalarFieldEnum[]
+  }
+
+  /**
+   * BikeHire findFirstOrThrow
+   */
+  export type BikeHireFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BikeHire
+     */
+    select?: BikeHireSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BikeHire
+     */
+    omit?: BikeHireOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BikeHireInclude<ExtArgs> | null
+    /**
+     * Filter, which BikeHire to fetch.
+     */
+    where?: BikeHireWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BikeHires to fetch.
+     */
+    orderBy?: BikeHireOrderByWithRelationInput | BikeHireOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BikeHires.
+     */
+    cursor?: BikeHireWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BikeHires from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BikeHires.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BikeHires.
+     */
+    distinct?: BikeHireScalarFieldEnum | BikeHireScalarFieldEnum[]
+  }
+
+  /**
+   * BikeHire findMany
+   */
+  export type BikeHireFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BikeHire
+     */
+    select?: BikeHireSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BikeHire
+     */
+    omit?: BikeHireOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BikeHireInclude<ExtArgs> | null
+    /**
+     * Filter, which BikeHires to fetch.
+     */
+    where?: BikeHireWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BikeHires to fetch.
+     */
+    orderBy?: BikeHireOrderByWithRelationInput | BikeHireOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing BikeHires.
+     */
+    cursor?: BikeHireWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BikeHires from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BikeHires.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BikeHires.
+     */
+    distinct?: BikeHireScalarFieldEnum | BikeHireScalarFieldEnum[]
+  }
+
+  /**
+   * BikeHire create
+   */
+  export type BikeHireCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BikeHire
+     */
+    select?: BikeHireSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BikeHire
+     */
+    omit?: BikeHireOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BikeHireInclude<ExtArgs> | null
+    /**
+     * The data needed to create a BikeHire.
+     */
+    data: XOR<BikeHireCreateInput, BikeHireUncheckedCreateInput>
+  }
+
+  /**
+   * BikeHire createMany
+   */
+  export type BikeHireCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many BikeHires.
+     */
+    data: BikeHireCreateManyInput | BikeHireCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BikeHire createManyAndReturn
+   */
+  export type BikeHireCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BikeHire
+     */
+    select?: BikeHireSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BikeHire
+     */
+    omit?: BikeHireOmit<ExtArgs> | null
+    /**
+     * The data used to create many BikeHires.
+     */
+    data: BikeHireCreateManyInput | BikeHireCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BikeHireIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * BikeHire update
+   */
+  export type BikeHireUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BikeHire
+     */
+    select?: BikeHireSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BikeHire
+     */
+    omit?: BikeHireOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BikeHireInclude<ExtArgs> | null
+    /**
+     * The data needed to update a BikeHire.
+     */
+    data: XOR<BikeHireUpdateInput, BikeHireUncheckedUpdateInput>
+    /**
+     * Choose, which BikeHire to update.
+     */
+    where: BikeHireWhereUniqueInput
+  }
+
+  /**
+   * BikeHire updateMany
+   */
+  export type BikeHireUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update BikeHires.
+     */
+    data: XOR<BikeHireUpdateManyMutationInput, BikeHireUncheckedUpdateManyInput>
+    /**
+     * Filter which BikeHires to update
+     */
+    where?: BikeHireWhereInput
+    /**
+     * Limit how many BikeHires to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BikeHire updateManyAndReturn
+   */
+  export type BikeHireUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BikeHire
+     */
+    select?: BikeHireSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BikeHire
+     */
+    omit?: BikeHireOmit<ExtArgs> | null
+    /**
+     * The data used to update BikeHires.
+     */
+    data: XOR<BikeHireUpdateManyMutationInput, BikeHireUncheckedUpdateManyInput>
+    /**
+     * Filter which BikeHires to update
+     */
+    where?: BikeHireWhereInput
+    /**
+     * Limit how many BikeHires to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BikeHireIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * BikeHire upsert
+   */
+  export type BikeHireUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BikeHire
+     */
+    select?: BikeHireSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BikeHire
+     */
+    omit?: BikeHireOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BikeHireInclude<ExtArgs> | null
+    /**
+     * The filter to search for the BikeHire to update in case it exists.
+     */
+    where: BikeHireWhereUniqueInput
+    /**
+     * In case the BikeHire found by the `where` argument doesn't exist, create a new BikeHire with this data.
+     */
+    create: XOR<BikeHireCreateInput, BikeHireUncheckedCreateInput>
+    /**
+     * In case the BikeHire was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BikeHireUpdateInput, BikeHireUncheckedUpdateInput>
+  }
+
+  /**
+   * BikeHire delete
+   */
+  export type BikeHireDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BikeHire
+     */
+    select?: BikeHireSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BikeHire
+     */
+    omit?: BikeHireOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BikeHireInclude<ExtArgs> | null
+    /**
+     * Filter which BikeHire to delete.
+     */
+    where: BikeHireWhereUniqueInput
+  }
+
+  /**
+   * BikeHire deleteMany
+   */
+  export type BikeHireDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BikeHires to delete
+     */
+    where?: BikeHireWhereInput
+    /**
+     * Limit how many BikeHires to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * BikeHire without action
+   */
+  export type BikeHireDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BikeHire
+     */
+    select?: BikeHireSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BikeHire
+     */
+    omit?: BikeHireOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BikeHireInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -14318,6 +15600,19 @@ export namespace Prisma {
   export type ShortLinkScalarFieldEnum = (typeof ShortLinkScalarFieldEnum)[keyof typeof ShortLinkScalarFieldEnum]
 
 
+  export const BikeHireScalarFieldEnum: {
+    id: 'id',
+    registrationId: 'registrationId',
+    bikeType: 'bikeType',
+    status: 'status',
+    amount: 'amount',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type BikeHireScalarFieldEnum = (typeof BikeHireScalarFieldEnum)[keyof typeof BikeHireScalarFieldEnum]
+
+
   export const SortOrder: {
     asc: 'asc',
     desc: 'desc'
@@ -14494,6 +15789,7 @@ export namespace Prisma {
     service?: StringNullableFilter<"Registration"> | string | null
     serviceNumber?: StringNullableFilter<"Registration"> | string | null
     unit?: StringNullableFilter<"Registration"> | string | null
+    bikeHire?: XOR<BikeHireNullableScalarRelationFilter, BikeHireWhereInput> | null
   }
 
   export type RegistrationOrderByWithRelationInput = {
@@ -14529,6 +15825,7 @@ export namespace Prisma {
     service?: SortOrderInput | SortOrder
     serviceNumber?: SortOrderInput | SortOrder
     unit?: SortOrderInput | SortOrder
+    bikeHire?: BikeHireOrderByWithRelationInput
   }
 
   export type RegistrationWhereUniqueInput = Prisma.AtLeast<{
@@ -14567,6 +15864,7 @@ export namespace Prisma {
     service?: StringNullableFilter<"Registration"> | string | null
     serviceNumber?: StringNullableFilter<"Registration"> | string | null
     unit?: StringNullableFilter<"Registration"> | string | null
+    bikeHire?: XOR<BikeHireNullableScalarRelationFilter, BikeHireWhereInput> | null
   }, "id">
 
   export type RegistrationOrderByWithAggregationInput = {
@@ -15419,6 +16717,73 @@ export namespace Prisma {
     clicks?: IntWithAggregatesFilter<"ShortLink"> | number
   }
 
+  export type BikeHireWhereInput = {
+    AND?: BikeHireWhereInput | BikeHireWhereInput[]
+    OR?: BikeHireWhereInput[]
+    NOT?: BikeHireWhereInput | BikeHireWhereInput[]
+    id?: StringFilter<"BikeHire"> | string
+    registrationId?: StringFilter<"BikeHire"> | string
+    bikeType?: StringFilter<"BikeHire"> | string
+    status?: StringFilter<"BikeHire"> | string
+    amount?: FloatFilter<"BikeHire"> | number
+    createdAt?: DateTimeFilter<"BikeHire"> | Date | string
+    updatedAt?: DateTimeFilter<"BikeHire"> | Date | string
+    registration?: XOR<RegistrationScalarRelationFilter, RegistrationWhereInput>
+  }
+
+  export type BikeHireOrderByWithRelationInput = {
+    id?: SortOrder
+    registrationId?: SortOrder
+    bikeType?: SortOrder
+    status?: SortOrder
+    amount?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    registration?: RegistrationOrderByWithRelationInput
+  }
+
+  export type BikeHireWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    registrationId?: string
+    AND?: BikeHireWhereInput | BikeHireWhereInput[]
+    OR?: BikeHireWhereInput[]
+    NOT?: BikeHireWhereInput | BikeHireWhereInput[]
+    bikeType?: StringFilter<"BikeHire"> | string
+    status?: StringFilter<"BikeHire"> | string
+    amount?: FloatFilter<"BikeHire"> | number
+    createdAt?: DateTimeFilter<"BikeHire"> | Date | string
+    updatedAt?: DateTimeFilter<"BikeHire"> | Date | string
+    registration?: XOR<RegistrationScalarRelationFilter, RegistrationWhereInput>
+  }, "id" | "registrationId">
+
+  export type BikeHireOrderByWithAggregationInput = {
+    id?: SortOrder
+    registrationId?: SortOrder
+    bikeType?: SortOrder
+    status?: SortOrder
+    amount?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: BikeHireCountOrderByAggregateInput
+    _avg?: BikeHireAvgOrderByAggregateInput
+    _max?: BikeHireMaxOrderByAggregateInput
+    _min?: BikeHireMinOrderByAggregateInput
+    _sum?: BikeHireSumOrderByAggregateInput
+  }
+
+  export type BikeHireScalarWhereWithAggregatesInput = {
+    AND?: BikeHireScalarWhereWithAggregatesInput | BikeHireScalarWhereWithAggregatesInput[]
+    OR?: BikeHireScalarWhereWithAggregatesInput[]
+    NOT?: BikeHireScalarWhereWithAggregatesInput | BikeHireScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"BikeHire"> | string
+    registrationId?: StringWithAggregatesFilter<"BikeHire"> | string
+    bikeType?: StringWithAggregatesFilter<"BikeHire"> | string
+    status?: StringWithAggregatesFilter<"BikeHire"> | string
+    amount?: FloatWithAggregatesFilter<"BikeHire"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"BikeHire"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"BikeHire"> | Date | string
+  }
+
   export type RegistrationCreateInput = {
     id: string
     createdAt?: Date | string
@@ -15452,6 +16817,7 @@ export namespace Prisma {
     service?: string | null
     serviceNumber?: string | null
     unit?: string | null
+    bikeHire?: BikeHireCreateNestedOneWithoutRegistrationInput
   }
 
   export type RegistrationUncheckedCreateInput = {
@@ -15487,6 +16853,7 @@ export namespace Prisma {
     service?: string | null
     serviceNumber?: string | null
     unit?: string | null
+    bikeHire?: BikeHireUncheckedCreateNestedOneWithoutRegistrationInput
   }
 
   export type RegistrationUpdateInput = {
@@ -15522,6 +16889,7 @@ export namespace Prisma {
     service?: NullableStringFieldUpdateOperationsInput | string | null
     serviceNumber?: NullableStringFieldUpdateOperationsInput | string | null
     unit?: NullableStringFieldUpdateOperationsInput | string | null
+    bikeHire?: BikeHireUpdateOneWithoutRegistrationNestedInput
   }
 
   export type RegistrationUncheckedUpdateInput = {
@@ -15557,6 +16925,7 @@ export namespace Prisma {
     service?: NullableStringFieldUpdateOperationsInput | string | null
     serviceNumber?: NullableStringFieldUpdateOperationsInput | string | null
     unit?: NullableStringFieldUpdateOperationsInput | string | null
+    bikeHire?: BikeHireUncheckedUpdateOneWithoutRegistrationNestedInput
   }
 
   export type RegistrationCreateManyInput = {
@@ -16556,6 +17925,75 @@ export namespace Prisma {
     clicks?: IntFieldUpdateOperationsInput | number
   }
 
+  export type BikeHireCreateInput = {
+    id?: string
+    bikeType?: string
+    status?: string
+    amount?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    registration: RegistrationCreateNestedOneWithoutBikeHireInput
+  }
+
+  export type BikeHireUncheckedCreateInput = {
+    id?: string
+    registrationId: string
+    bikeType?: string
+    status?: string
+    amount?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BikeHireUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    bikeType?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    amount?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    registration?: RegistrationUpdateOneRequiredWithoutBikeHireNestedInput
+  }
+
+  export type BikeHireUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    registrationId?: StringFieldUpdateOperationsInput | string
+    bikeType?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    amount?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BikeHireCreateManyInput = {
+    id?: string
+    registrationId: string
+    bikeType?: string
+    status?: string
+    amount?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BikeHireUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    bikeType?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    amount?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BikeHireUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    registrationId?: StringFieldUpdateOperationsInput | string
+    bikeType?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    amount?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -16641,6 +18079,11 @@ export namespace Prisma {
     gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type BikeHireNullableScalarRelationFilter = {
+    is?: BikeHireWhereInput | null
+    isNot?: BikeHireWhereInput | null
   }
 
   export type SortOrderInput = {
@@ -17391,6 +18834,61 @@ export namespace Prisma {
     clicks?: SortOrder
   }
 
+  export type RegistrationScalarRelationFilter = {
+    is?: RegistrationWhereInput
+    isNot?: RegistrationWhereInput
+  }
+
+  export type BikeHireCountOrderByAggregateInput = {
+    id?: SortOrder
+    registrationId?: SortOrder
+    bikeType?: SortOrder
+    status?: SortOrder
+    amount?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type BikeHireAvgOrderByAggregateInput = {
+    amount?: SortOrder
+  }
+
+  export type BikeHireMaxOrderByAggregateInput = {
+    id?: SortOrder
+    registrationId?: SortOrder
+    bikeType?: SortOrder
+    status?: SortOrder
+    amount?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type BikeHireMinOrderByAggregateInput = {
+    id?: SortOrder
+    registrationId?: SortOrder
+    bikeType?: SortOrder
+    status?: SortOrder
+    amount?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type BikeHireSumOrderByAggregateInput = {
+    amount?: SortOrder
+  }
+
+  export type BikeHireCreateNestedOneWithoutRegistrationInput = {
+    create?: XOR<BikeHireCreateWithoutRegistrationInput, BikeHireUncheckedCreateWithoutRegistrationInput>
+    connectOrCreate?: BikeHireCreateOrConnectWithoutRegistrationInput
+    connect?: BikeHireWhereUniqueInput
+  }
+
+  export type BikeHireUncheckedCreateNestedOneWithoutRegistrationInput = {
+    create?: XOR<BikeHireCreateWithoutRegistrationInput, BikeHireUncheckedCreateWithoutRegistrationInput>
+    connectOrCreate?: BikeHireCreateOrConnectWithoutRegistrationInput
+    connect?: BikeHireWhereUniqueInput
+  }
+
   export type StringFieldUpdateOperationsInput = {
     set?: string
   }
@@ -17417,6 +18915,26 @@ export namespace Prisma {
     decrement?: number
     multiply?: number
     divide?: number
+  }
+
+  export type BikeHireUpdateOneWithoutRegistrationNestedInput = {
+    create?: XOR<BikeHireCreateWithoutRegistrationInput, BikeHireUncheckedCreateWithoutRegistrationInput>
+    connectOrCreate?: BikeHireCreateOrConnectWithoutRegistrationInput
+    upsert?: BikeHireUpsertWithoutRegistrationInput
+    disconnect?: BikeHireWhereInput | boolean
+    delete?: BikeHireWhereInput | boolean
+    connect?: BikeHireWhereUniqueInput
+    update?: XOR<XOR<BikeHireUpdateToOneWithWhereWithoutRegistrationInput, BikeHireUpdateWithoutRegistrationInput>, BikeHireUncheckedUpdateWithoutRegistrationInput>
+  }
+
+  export type BikeHireUncheckedUpdateOneWithoutRegistrationNestedInput = {
+    create?: XOR<BikeHireCreateWithoutRegistrationInput, BikeHireUncheckedCreateWithoutRegistrationInput>
+    connectOrCreate?: BikeHireCreateOrConnectWithoutRegistrationInput
+    upsert?: BikeHireUpsertWithoutRegistrationInput
+    disconnect?: BikeHireWhereInput | boolean
+    delete?: BikeHireWhereInput | boolean
+    connect?: BikeHireWhereUniqueInput
+    update?: XOR<XOR<BikeHireUpdateToOneWithWhereWithoutRegistrationInput, BikeHireUpdateWithoutRegistrationInput>, BikeHireUncheckedUpdateWithoutRegistrationInput>
   }
 
   export type AdminSessionCreateNestedManyWithoutAdminInput = {
@@ -17502,6 +19020,20 @@ export namespace Prisma {
     decrement?: number
     multiply?: number
     divide?: number
+  }
+
+  export type RegistrationCreateNestedOneWithoutBikeHireInput = {
+    create?: XOR<RegistrationCreateWithoutBikeHireInput, RegistrationUncheckedCreateWithoutBikeHireInput>
+    connectOrCreate?: RegistrationCreateOrConnectWithoutBikeHireInput
+    connect?: RegistrationWhereUniqueInput
+  }
+
+  export type RegistrationUpdateOneRequiredWithoutBikeHireNestedInput = {
+    create?: XOR<RegistrationCreateWithoutBikeHireInput, RegistrationUncheckedCreateWithoutBikeHireInput>
+    connectOrCreate?: RegistrationCreateOrConnectWithoutBikeHireInput
+    upsert?: RegistrationUpsertWithoutBikeHireInput
+    connect?: RegistrationWhereUniqueInput
+    update?: XOR<XOR<RegistrationUpdateToOneWithWhereWithoutBikeHireInput, RegistrationUpdateWithoutBikeHireInput>, RegistrationUncheckedUpdateWithoutBikeHireInput>
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -17761,6 +19293,58 @@ export namespace Prisma {
     _max?: NestedIntFilter<$PrismaModel>
   }
 
+  export type BikeHireCreateWithoutRegistrationInput = {
+    id?: string
+    bikeType?: string
+    status?: string
+    amount?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BikeHireUncheckedCreateWithoutRegistrationInput = {
+    id?: string
+    bikeType?: string
+    status?: string
+    amount?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BikeHireCreateOrConnectWithoutRegistrationInput = {
+    where: BikeHireWhereUniqueInput
+    create: XOR<BikeHireCreateWithoutRegistrationInput, BikeHireUncheckedCreateWithoutRegistrationInput>
+  }
+
+  export type BikeHireUpsertWithoutRegistrationInput = {
+    update: XOR<BikeHireUpdateWithoutRegistrationInput, BikeHireUncheckedUpdateWithoutRegistrationInput>
+    create: XOR<BikeHireCreateWithoutRegistrationInput, BikeHireUncheckedCreateWithoutRegistrationInput>
+    where?: BikeHireWhereInput
+  }
+
+  export type BikeHireUpdateToOneWithWhereWithoutRegistrationInput = {
+    where?: BikeHireWhereInput
+    data: XOR<BikeHireUpdateWithoutRegistrationInput, BikeHireUncheckedUpdateWithoutRegistrationInput>
+  }
+
+  export type BikeHireUpdateWithoutRegistrationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    bikeType?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    amount?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BikeHireUncheckedUpdateWithoutRegistrationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    bikeType?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    amount?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type AdminSessionCreateWithoutAdminInput = {
     id?: string
     token: string
@@ -17866,6 +19450,162 @@ export namespace Prisma {
     role?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lastLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type RegistrationCreateWithoutBikeHireInput = {
+    id: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    circuitId: string
+    type: string
+    status?: $Enums.RegistrationStatus
+    firstName: string
+    lastName: string
+    email?: string | null
+    phoneNumber?: string | null
+    idNumber?: string | null
+    dob?: string | null
+    gender?: string | null
+    groupId?: string | null
+    teamName?: string | null
+    isCaptain?: boolean
+    guardianName?: string | null
+    emergencyPhone?: string | null
+    relationship?: string | null
+    category?: string | null
+    totalAmount?: number
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    pricing?: NullableJsonNullValueInput | InputJsonValue
+    classifications?: NullableJsonNullValueInput | InputJsonValue
+    emergencyContactName?: string | null
+    tshirtSize?: string | null
+    mpesaCode?: string | null
+    isMilitary?: boolean
+    rank?: string | null
+    service?: string | null
+    serviceNumber?: string | null
+    unit?: string | null
+  }
+
+  export type RegistrationUncheckedCreateWithoutBikeHireInput = {
+    id: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    circuitId: string
+    type: string
+    status?: $Enums.RegistrationStatus
+    firstName: string
+    lastName: string
+    email?: string | null
+    phoneNumber?: string | null
+    idNumber?: string | null
+    dob?: string | null
+    gender?: string | null
+    groupId?: string | null
+    teamName?: string | null
+    isCaptain?: boolean
+    guardianName?: string | null
+    emergencyPhone?: string | null
+    relationship?: string | null
+    category?: string | null
+    totalAmount?: number
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    pricing?: NullableJsonNullValueInput | InputJsonValue
+    classifications?: NullableJsonNullValueInput | InputJsonValue
+    emergencyContactName?: string | null
+    tshirtSize?: string | null
+    mpesaCode?: string | null
+    isMilitary?: boolean
+    rank?: string | null
+    service?: string | null
+    serviceNumber?: string | null
+    unit?: string | null
+  }
+
+  export type RegistrationCreateOrConnectWithoutBikeHireInput = {
+    where: RegistrationWhereUniqueInput
+    create: XOR<RegistrationCreateWithoutBikeHireInput, RegistrationUncheckedCreateWithoutBikeHireInput>
+  }
+
+  export type RegistrationUpsertWithoutBikeHireInput = {
+    update: XOR<RegistrationUpdateWithoutBikeHireInput, RegistrationUncheckedUpdateWithoutBikeHireInput>
+    create: XOR<RegistrationCreateWithoutBikeHireInput, RegistrationUncheckedCreateWithoutBikeHireInput>
+    where?: RegistrationWhereInput
+  }
+
+  export type RegistrationUpdateToOneWithWhereWithoutBikeHireInput = {
+    where?: RegistrationWhereInput
+    data: XOR<RegistrationUpdateWithoutBikeHireInput, RegistrationUncheckedUpdateWithoutBikeHireInput>
+  }
+
+  export type RegistrationUpdateWithoutBikeHireInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    circuitId?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    status?: EnumRegistrationStatusFieldUpdateOperationsInput | $Enums.RegistrationStatus
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    idNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    dob?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    groupId?: NullableStringFieldUpdateOperationsInput | string | null
+    teamName?: NullableStringFieldUpdateOperationsInput | string | null
+    isCaptain?: BoolFieldUpdateOperationsInput | boolean
+    guardianName?: NullableStringFieldUpdateOperationsInput | string | null
+    emergencyPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    relationship?: NullableStringFieldUpdateOperationsInput | string | null
+    category?: NullableStringFieldUpdateOperationsInput | string | null
+    totalAmount?: FloatFieldUpdateOperationsInput | number
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    pricing?: NullableJsonNullValueInput | InputJsonValue
+    classifications?: NullableJsonNullValueInput | InputJsonValue
+    emergencyContactName?: NullableStringFieldUpdateOperationsInput | string | null
+    tshirtSize?: NullableStringFieldUpdateOperationsInput | string | null
+    mpesaCode?: NullableStringFieldUpdateOperationsInput | string | null
+    isMilitary?: BoolFieldUpdateOperationsInput | boolean
+    rank?: NullableStringFieldUpdateOperationsInput | string | null
+    service?: NullableStringFieldUpdateOperationsInput | string | null
+    serviceNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    unit?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type RegistrationUncheckedUpdateWithoutBikeHireInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    circuitId?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    status?: EnumRegistrationStatusFieldUpdateOperationsInput | $Enums.RegistrationStatus
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    idNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    dob?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    groupId?: NullableStringFieldUpdateOperationsInput | string | null
+    teamName?: NullableStringFieldUpdateOperationsInput | string | null
+    isCaptain?: BoolFieldUpdateOperationsInput | boolean
+    guardianName?: NullableStringFieldUpdateOperationsInput | string | null
+    emergencyPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    relationship?: NullableStringFieldUpdateOperationsInput | string | null
+    category?: NullableStringFieldUpdateOperationsInput | string | null
+    totalAmount?: FloatFieldUpdateOperationsInput | number
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    pricing?: NullableJsonNullValueInput | InputJsonValue
+    classifications?: NullableJsonNullValueInput | InputJsonValue
+    emergencyContactName?: NullableStringFieldUpdateOperationsInput | string | null
+    tshirtSize?: NullableStringFieldUpdateOperationsInput | string | null
+    mpesaCode?: NullableStringFieldUpdateOperationsInput | string | null
+    isMilitary?: BoolFieldUpdateOperationsInput | boolean
+    rank?: NullableStringFieldUpdateOperationsInput | string | null
+    service?: NullableStringFieldUpdateOperationsInput | string | null
+    serviceNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    unit?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type AdminSessionCreateManyAdminInput = {

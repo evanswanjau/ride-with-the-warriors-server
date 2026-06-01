@@ -282,6 +282,16 @@ exports.Prisma.ShortLinkScalarFieldEnum = {
   clicks: 'clicks'
 };
 
+exports.Prisma.BikeHireScalarFieldEnum = {
+  id: 'id',
+  registrationId: 'registrationId',
+  bikeType: 'bikeType',
+  status: 'status',
+  amount: 'amount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -325,7 +335,8 @@ exports.Prisma.ModelName = {
   Referral: 'Referral',
   Donation: 'Donation',
   SmsLog: 'SmsLog',
-  ShortLink: 'ShortLink'
+  ShortLink: 'ShortLink',
+  BikeHire: 'BikeHire'
 };
 
 /**

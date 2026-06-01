@@ -42,6 +42,7 @@ export const riderDetailsSchema = z.object({
   rank: z.string().optional(),
   service: z.string().optional(),
   unit: z.string().optional(),
+  hireBike: z.boolean().optional(),
 });
 
 export const teamMemberSchema = riderDetailsSchema.extend({
@@ -99,6 +100,7 @@ export const familyDetailsSchema = z
       rank: z.string().optional(),
       service: z.string().optional(),
       unit: z.string().optional(),
+      hireBike: z.boolean().optional(),
     }),
     riders: z.object({
       cubs: z.array(juniorRiderSchema),

@@ -5,6 +5,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Registration {
@@ -40,6 +41,7 @@ model Registration {
   service              String?
   serviceNumber        String?
   unit                 String?
+  bikeHire             BikeHire?
 
   @@index([groupId])
   @@index([email])
@@ -203,4 +205,17 @@ model ShortLink {
   clicks    Int      @default(0)
 
   @@index([id])
+}
+
+model BikeHire {
+  id              String       @id @default(uuid())
+  registrationId  String       @unique
+  registration    Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  bikeType        String       @default("Standard")
+  status          String       @default("PENDING") // PENDING, PAID, COLLECTED, RETURNED
+  amount          Float        @default(1500)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([registrationId])
 }
