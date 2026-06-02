@@ -4,6 +4,7 @@ import pg from 'pg';
 
 export default defineConfig({
   datasource: {
+    url: process.env.DATABASE_URL,
     adapter: async () => {
       const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
       return new PrismaPg(pool);
