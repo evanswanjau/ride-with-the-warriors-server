@@ -3,7 +3,7 @@ import { prisma } from '../../storage/prisma.js';
 
 export const bikeHiresRouter = Router();
 
-bikeHiresRouter.get('/', async (req, res) => {
+bikeHiresRouter.get('/', async (req, res, next) => {
     try {
         const bikeHires = await prisma.bikeHire.findMany({
             include: {
@@ -24,12 +24,11 @@ bikeHiresRouter.get('/', async (req, res) => {
 
         res.json(bikeHires);
     } catch (error) {
-        console.error('Fetch bike hires error:', error);
-        res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to fetch bike hires' } });
+        next(error);
     }
 });
 
-bikeHiresRouter.post('/:id/status', async (req, res) => {
+bikeHiresRouter.post('/:id/status', async (req, res, next) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
@@ -45,7 +44,6 @@ bikeHiresRouter.post('/:id/status', async (req, res) => {
 
         res.json(bikeHire);
     } catch (error) {
-        console.error('Update bike hire status error:', error);
-        res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to update status' } });
+        next(error);
     }
 });
