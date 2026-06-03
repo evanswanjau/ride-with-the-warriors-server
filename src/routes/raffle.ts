@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../storage/prisma.js';
 import { dtbService } from '../services/dtbService.js';
 import { maskRaffleTicket } from '../utils/masking.js';
+import { raffleRateLimiter } from '../middleware/rateLimit.js';
 
 export const raffleRouter = Router();
 
@@ -61,13 +62,22 @@ async function generateNextRaffleCode(): Promise<string> {
 }
 
 // ─── POST / — Create raffle ticket(s) (UNPAID) ──────────────────────────────────
-raffleRouter.post('/', async (req, res) => {
+raffleRouter.post('/', raffleRateLimiter, async (req, res) => {
   try {
     const { firstName, lastName, email, phoneNumber, idNumber, gender, quantity = 1, referralCode } = req.body;
 
     if (!firstName || !lastName || !email || !idNumber) {
       return res.status(400).json({
         error: { code: 'VALIDATION', message: 'firstName, lastName, email, and idNumber are required' },
+      });
+    }
+
+    // Hardcoded block for specific user as requested
+    const BLOCKED_EMAILS = ['stanclausmweu@gmail.com'];
+    if (BLOCKED_EMAILS.includes(email.trim().toLowerCase())) {
+      console.warn(`[Raffle] Blocked purchase attempt from ${email}`);
+      return res.status(403).json({
+        error: { code: 'ACCESS_DENIED', message: 'Your account has been restricted from purchasing raffle tickets.' },
       });
     }
 
@@ -82,6 +92,23 @@ raffleRouter.post('/', async (req, res) => {
     }
 
     const numTickets = Math.max(1, parseInt(quantity as string, 10));
+
+    // Check existing tickets for this email
+    const existingCount = await (prisma.raffleTicket as any).count({
+      where: {
+        email: { equals: email.trim().toLowerCase(), mode: 'insensitive' }
+      }
+    });
+
+    if (existingCount + numTickets > 100) {
+      return res.status(400).json({
+        error: {
+          code: 'LIMIT_EXCEEDED',
+          message: `You can only purchase a maximum of 100 tickets. You already have ${existingCount} tickets.`
+        },
+      });
+    }
+
     const ticketIds: string[] = [];
 
     for (let i = 0; i < numTickets; i++) {
