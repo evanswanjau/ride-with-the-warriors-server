@@ -54,6 +54,8 @@ export const teamDetailsSchema = z
   .object({
     teamName: z.string().min(1, 'Team name is required'),
     members: z.array(teamMemberSchema).min(1, 'At least one member is required'),
+    isMilitary: z.boolean().optional(),
+    hireBike: z.boolean().optional(),
   })
   .superRefine((val, ctx) => {
     // Must have exactly one captain.
