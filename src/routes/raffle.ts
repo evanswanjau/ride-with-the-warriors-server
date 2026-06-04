@@ -72,15 +72,6 @@ raffleRouter.post('/', raffleRateLimiter, async (req, res) => {
       });
     }
 
-    // Hardcoded block for specific user as requested
-    const BLOCKED_EMAILS = ['stanclausmweu@gmail.com'];
-    if (BLOCKED_EMAILS.includes(email.trim().toLowerCase())) {
-      console.warn(`[Raffle] Blocked purchase attempt from ${email}`);
-      return res.status(403).json({
-        error: { code: 'ACCESS_DENIED', message: 'Your account has been restricted from purchasing raffle tickets.' },
-      });
-    }
-
     // Validate referral code if provided
     const validatedRefCode = referralCode ? referralCode.toUpperCase().trim() : null;
     if (validatedRefCode) {
@@ -93,18 +84,20 @@ raffleRouter.post('/', raffleRateLimiter, async (req, res) => {
 
     const numTickets = Math.max(1, parseInt(quantity as string, 10));
 
-    // Check existing tickets for this email
-    const existingCount = await (prisma.raffleTicket as any).count({
+    // Block purchase if user has unpaid tickets
+    const unpaidCount = await (prisma.raffleTicket as any).count({
       where: {
-        email: { equals: email.trim().toLowerCase(), mode: 'insensitive' }
+        email: { equals: email.trim().toLowerCase(), mode: 'insensitive' },
+        status: 'UNPAID',
       }
     });
 
-    if (existingCount + numTickets > 100) {
+    if (unpaidCount > 0) {
       return res.status(400).json({
         error: {
-          code: 'LIMIT_EXCEEDED',
-          message: `You can only purchase a maximum of 100 tickets. You already have ${existingCount} tickets.`
+          code: 'UNPAID_TICKETS',
+          message: `You have ${unpaidCount} unpaid ticket(s). Please pay for your existing tickets before purchasing new ones.`,
+          email: email.trim().toLowerCase(),
         },
       });
     }
