@@ -180,7 +180,7 @@ function renderDetailsTable(data: RegistrationData): string {
     { label: 'Age', value: ageValue !== null ? ageValue.toString() : '—' },
     { label: 'ID Number', value: data.idNumber || p.idNumber || '—' },
     { label: 'Team', value: data.teamName || 'Individual' },
-    { label: 'T-Shirt', value: data.tshirtSize || rider.tshirtSize || p.tshirtSize || '—' },
+    { label: 'Kit Size', value: data.tshirtSize || rider.tshirtSize || p.tshirtSize || '—' },
     { label: 'Emergency', value: data.emergencyContactName || rider.emergencyContactName || '—' },
     { label: 'Tel', value: data.emergencyPhone || rider.emergencyContactPhone || p.emergencyContactPhone || '—' },
   ];
