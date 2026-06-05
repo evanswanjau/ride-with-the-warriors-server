@@ -138,16 +138,17 @@ export async function buildQuote(input: {
   let totalAmount = 0;
 
   if (input.type === 'individual') {
-    const rider = (input.payload as { riderDetails: { firstName: string; dob: string; isMilitary?: boolean } }).riderDetails;
+    const rider = (input.payload as { riderDetails: { firstName: string; dob: string; isMilitary?: boolean; service?: string; rank?: string; serviceNumber?: string } }).riderDetails;
     const age = calculateAge(rider.dob);
     const classification = getClassification(categories, input.circuitId, 'individual', age);
-    
-    const individualPrice = rider.isMilitary ? 0 : classification.price;
+
+    const isMilitary = rider.isMilitary || !!rider.service || !!rider.rank || !!rider.serviceNumber;
+    const individualPrice = isMilitary ? 0 : classification.price;
     totalAmount = individualPrice;
-    
+
     classifications.push(classification);
     lineItems.push({
-      label: `${rider.firstName} - ${classification.category}${rider.isMilitary ? ' (Military)' : ''}`,
+      label: `${rider.firstName} - ${classification.category}${isMilitary ? ' (Military)' : ''}`,
       amount: individualPrice,
       category: classification.category,
       regRange: classification.regRange,

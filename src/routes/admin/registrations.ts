@@ -78,7 +78,7 @@ adminRegistrationsRouter.get('/', requireAdmin, async (req, res) => {
                 }
             }
 
-            if (!inflated.totalAmount && reg.pricing?.totalAmount) {
+            if (inflated.totalAmount == null && reg.pricing?.totalAmount) {
                 inflated.totalAmount = reg.pricing.totalAmount;
             }
 
