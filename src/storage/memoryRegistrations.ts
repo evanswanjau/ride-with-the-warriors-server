@@ -221,10 +221,22 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
       if (originalRider) originalRider.regId = id;
     }
 
+    // Build a per-category price map from the pricing line items
+    const categoryPriceMap: Record<string, number> = {};
+    if ((input.pricing as any)?.lineItems) {
+      for (const item of (input.pricing as any).lineItems) {
+        const cat = item.category?.toLowerCase();
+        if (cat === 'cubs') categoryPriceMap['cubs'] = item.count > 0 ? item.amount / item.count : 0;
+        else if (cat === 'champs') categoryPriceMap['champs'] = item.count > 0 ? item.amount / item.count : 0;
+        else if (cat === 'parent') categoryPriceMap['tigers'] = item.count > 0 ? item.amount / item.count : 0;
+      }
+    }
+
     for (let i = 0; i < riders.length; i++) {
       const rider = riders[i];
       const id = riderIds[i];
       const participantCategory = rider.category === 'cubs' ? 'Cubs' : rider.category === 'champs' ? 'Champs' : 'Parent';
+      const riderAmount = categoryPriceMap[rider.category] ?? 0;
 
       recordsToCreate.push({
         id,
@@ -244,7 +256,7 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
         email: i === 0 ? payload.familyDetails.guardian.email : null,
         phoneNumber: rider.category === 'tigers' ? (rider.phoneNumber || payload.familyDetails.guardian.phoneNumber) : null,
         category: participantCategory,
-        totalAmount: i === 0 ? (input.pricing as any).totalAmount : 0,
+        totalAmount: riderAmount,
         isMilitary: !!payload.familyDetails.guardian.isMilitary,
         serviceNumber: i === 0 ? (payload.familyDetails.guardian.serviceNumber || (payload.familyDetails.guardian.isMilitary ? payload.familyDetails.guardian.idNumber : null)) : null,
         rank: i === 0 ? payload.familyDetails.guardian.rank : null,
