@@ -21,7 +21,8 @@
     "test:coverage": "vitest run --coverage",
     "resend-raffle-email": "tsx --env-file=.env src/scripts/resendRaffleEmail.ts",
     "send-all-raffle-tickets": "tsx --env-file=.env src/scripts/sendAllRaffleTickets.ts",
-    "test-sms": "tsx --env-file=.env src/scripts/testSMS.ts"
+    "test-sms": "tsx --env-file=.env src/scripts/testSMS.ts",
+    "tunnel-alert": "tsx --env-file=.env src/scripts/tunnelAlert.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",

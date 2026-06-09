@@ -916,6 +916,36 @@ export async function sendConfirmationEmail(registration: RegistrationData): Pro
   return sendEmail(registration.id, 'confirmation', registration);
 }
 
+/**
+ * Sends a plain operational/alert email (infra notifications, not customer-facing).
+ * Used by the DTB tunnel watchdog and other internal monitors.
+ */
+export async function sendAlertEmail(
+  to: string,
+  subject: string,
+  message: string
+): Promise<boolean> {
+  if (!to) {
+    console.error('[Email] sendAlertEmail: no recipient provided');
+    return false;
+  }
+  try {
+    await transporter.sendMail({
+      from: EMAIL_FROM,
+      to,
+      subject,
+      text: message,
+      html: `<pre style="font-family: ui-monospace, monospace; font-size: 14px; line-height: 1.5; white-space: pre-wrap;">${message}</pre>`,
+    });
+    console.log(`[Email] Alert sent to ${to}: ${subject}`);
+    return true;
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`[Email] Failed to send alert to ${to}:`, msg);
+    return false;
+  }
+}
+
 export async function verifyEmailConnection(): Promise<boolean> {
   try {
     await transporter.verify();
