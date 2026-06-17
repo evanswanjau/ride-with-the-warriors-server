@@ -181,6 +181,7 @@ enum RegistrationStatus {
   UNPAID
   PAID
   CONFIRMED
+  COMPLEMENTARY
   CANCELLED
 }
 

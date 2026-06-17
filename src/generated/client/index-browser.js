@@ -321,6 +321,7 @@ exports.RegistrationStatus = exports.$Enums.RegistrationStatus = {
   UNPAID: 'UNPAID',
   PAID: 'PAID',
   CONFIRMED: 'CONFIRMED',
+  COMPLEMENTARY: 'COMPLEMENTARY',
   CANCELLED: 'CANCELLED'
 };
 

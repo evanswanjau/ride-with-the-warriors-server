@@ -105,7 +105,7 @@ adminRegistrationsRouter.patch('/:id', requireAdmin, async (req, res) => {
     const { status } = req.body;
     const { id } = req.params;
 
-    if (!['UNPAID', 'PAID', 'CONFIRMED', 'CANCELLED'].includes(status)) {
+    if (!['UNPAID', 'PAID', 'CONFIRMED', 'COMPLEMENTARY', 'CANCELLED'].includes(status)) {
         return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid status' } });
     }
 

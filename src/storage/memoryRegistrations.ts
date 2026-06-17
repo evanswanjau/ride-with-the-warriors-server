@@ -1,7 +1,7 @@
 import { prisma } from './prisma.js';
 import { sendConfirmationEmail } from '../services/emailService.js';
 
-export type RegistrationStatus = 'UNPAID' | 'PAID' | 'CONFIRMED' | 'CANCELLED';
+export type RegistrationStatus = 'UNPAID' | 'PAID' | 'CONFIRMED' | 'COMPLEMENTARY' | 'CANCELLED';
 
 export type RegistrationRecord = {
   id: string;
@@ -418,8 +418,8 @@ export async function updateRegistration(id: string, input: Partial<Omit<Registr
     data: updateData,
   });
 
-  // Trigger confirmation email if status changed to PAID or CONFIRMED
-  if (input.status === 'PAID' || input.status === 'CONFIRMED') {
+  // Trigger confirmation email if status changed to PAID, CONFIRMED, or COMPLEMENTARY
+  if (input.status === 'PAID' || input.status === 'CONFIRMED' || input.status === 'COMPLEMENTARY') {
     const registrationsToSend = groupId
       ? await prisma.registration.findMany({ where: { groupId } })
       : [rec];
