@@ -19,22 +19,15 @@ function getToday(): Date {
     return today;
 }
 
-// Compute dynamic arrival time depending on circuit/category
-function getEventTime(circuitId: string, category: string | null, teamName: string | null): string {
+// Compute Call to Riders and Flag Off times per circuit
+function getEventTime(circuitId: string): { callToRiders: string; flagOff: string } {
     const circuit = circuitId?.toLowerCase() || '';
-    const isTeam = !!(teamName || category?.toLowerCase().includes('team'));
 
-    if (circuit === 'blitz') return isTeam ? '06:30 AM' : '06:00 AM';
-    if (circuit === 'recon') return isTeam ? '07:30 AM' : '07:00 AM';
-    if (circuit === 'corporate' || circuit === 'corporate_team') return '08:30 AM';
-    if (circuit === 'family') {
-        const cat = category?.toLowerCase() || '';
-        if (cat.includes('cub')) return '09:00 AM';
-        if (cat.includes('champ')) return '09:30 AM';
-        if (cat.includes('tiger')) return '10:00 AM';
-        return '09:00 AM';
-    }
-    return '06:00 AM';
+    if (circuit === 'blitz') return { callToRiders: '06:30 AM', flagOff: '07:00 AM' };
+    if (circuit === 'recon') return { callToRiders: '07:00 AM', flagOff: '07:30 AM' };
+    if (circuit === 'corporate' || circuit === 'corporate_team') return { callToRiders: '08:00 AM', flagOff: '08:30 AM' };
+    if (circuit === 'family') return { callToRiders: '', flagOff: '10:00 AM' };
+    return { callToRiders: '', flagOff: '07:00 AM' };
 }
 
 function getNumericId(id: string): string {
@@ -218,11 +211,15 @@ async function processEventReminders() {
         if (!reg.email) continue;
 
         if (reg.phoneNumber) {
-            const time = getEventTime(reg.circuitId, reg.category || null, reg.teamName || null);
+            const times = getEventTime(reg.circuitId);
             const bib = getNumericId(reg.id);
-            if (emailType === 'reminder_7d') smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, Ride With The Warriors is just 7 days away! Your BIB is ${bib}. Arrive by ${time}. See you there!`);
-            if (emailType === 'reminder_1d') smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, Ride With The Warriors is tomorrow! Your BIB is ${bib}. Arrive by ${time}. Get your gear ready!`);
-            if (emailType === 'reminder_day') smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, Ride With The Warriors is today! Your BIB is ${bib}. Arrive by ${time}. Have an amazing ride!`);
+            const isFamily = (reg.circuitId?.toLowerCase() || '') === 'family';
+            const timeInfo = isFamily
+                ? `starts from ${times.flagOff}`
+                : `call to riders ${times.callToRiders}, flag off ${times.flagOff}`;
+            if (emailType === 'reminder_7d') smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, Ride With The Warriors is just 7 days away! Your BIB is ${bib}. ${timeInfo.charAt(0).toUpperCase() + timeInfo.slice(1)}. See you there!`);
+            if (emailType === 'reminder_1d') smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, Ride With The Warriors is tomorrow! Your BIB is ${bib}. ${timeInfo.charAt(0).toUpperCase() + timeInfo.slice(1)}. Get your gear ready!`);
+            if (emailType === 'reminder_day') smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, Ride With The Warriors is today! Your BIB is ${bib}. ${timeInfo.charAt(0).toUpperCase() + timeInfo.slice(1)}. Have an amazing ride!`);
         }
 
         await sendEmail(reg.id, emailType, {
@@ -262,17 +259,28 @@ export async function runScheduledTasks() {
     }
 }
 
-// Initialize cron job - runs every day at 8 AM
+// Initialize cron jobs
 export function initializeScheduler() {
-    console.log('[Scheduler] Initializing cron job...');
+    console.log('[Scheduler] Initializing cron jobs...');
 
-    // Run at 8:00 AM every day
+    // Main job: payment reminders + 7d/1d event reminders at 8:00 AM daily
     cron.schedule('0 8 * * *', async () => {
-        console.log('[Scheduler] Cron job triggered at', new Date().toISOString());
+        console.log('[Scheduler] Main cron triggered at', new Date().toISOString());
         await runScheduledTasks();
     });
 
-    console.log('[Scheduler] Cron job scheduled for 8:00 AM daily');
+    // Early job: race-day reminder at 05:30 AM so it lands before Blitz flag off (07:00)
+    // On non-race days this is a no-op (processEventReminders finds no matching type or emails already sent)
+    cron.schedule('30 5 * * *', async () => {
+        console.log('[Scheduler] Early race-day cron triggered at', new Date().toISOString());
+        try {
+            await processEventReminders();
+        } catch (error) {
+            console.error('[Scheduler] Error in early race-day cron:', error);
+        }
+    });
+
+    console.log('[Scheduler] Cron jobs scheduled: 05:30 AM (race-day reminder), 08:00 AM (main tasks)');
 }
 
 // Manual trigger for testing

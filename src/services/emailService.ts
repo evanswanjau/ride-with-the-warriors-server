@@ -102,27 +102,14 @@ function getFormattedEventDate(): string {
   return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 }
 
-function getEventTime(data: RegistrationData): string {
+function getEventTime(data: RegistrationData): { callToRiders: string; flagOff: string } {
   const circuit = data.circuitId?.toLowerCase() || '';
-  const isTeam = !!(data.teamName || data.category?.toLowerCase().includes('team'));
 
-  if (circuit === 'blitz') {
-    return isTeam ? '06:30 AM' : '06:00 AM';
-  }
-  if (circuit === 'recon') {
-    return isTeam ? '07:30 AM' : '07:00 AM';
-  }
-  if (circuit === 'corporate' || circuit === 'corporate_team') {
-    return '08:30 AM';
-  }
-  if (circuit === 'family') {
-    const cat = data.category?.toLowerCase() || '';
-    if (cat.includes('cub')) return '09:00 AM';
-    if (cat.includes('champ')) return '09:30 AM';
-    if (cat.includes('tiger')) return '10:00 AM';
-    return '09:00 AM';
-  }
-  return EVENT_TIME;
+  if (circuit === 'blitz') return { callToRiders: '06:30 AM', flagOff: '07:00 AM' };
+  if (circuit === 'recon') return { callToRiders: '07:00 AM', flagOff: '07:30 AM' };
+  if (circuit === 'corporate' || circuit === 'corporate_team') return { callToRiders: '08:00 AM', flagOff: '08:30 AM' };
+  if (circuit === 'family') return { callToRiders: '—', flagOff: '10:00 AM' };
+  return { callToRiders: '—', flagOff: EVENT_TIME };
 }
 
 // --- SHARED COMPONENTS ---
@@ -214,17 +201,43 @@ function renderDetailsTable(data: RegistrationData): string {
 }
 
 function renderEventMeta(data: RegistrationData): string {
-  const startTime = getEventTime(data);
-  return `
+  const times = getEventTime(data);
+  const isFamily = (data.circuitId?.toLowerCase() || '') === 'family';
+
+  if (isFamily) {
+    return `
     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
       style="margin: 20px 0; border: 1px solid ${C.border};">
       <tr>
         <td width="50%" style="padding: 16px 18px; border-right: 1px solid ${C.border};">
           <p style="margin: 0 0 4px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
-            font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: ${C.textMuted};">Start Time</p>
-          <p style="margin: 0; font-size: 17px; font-weight: 700; color: ${C.textMain};">${startTime}</p>
+            font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: ${C.textMuted};">Start From</p>
+          <p style="margin: 0; font-size: 17px; font-weight: 700; color: ${C.textMain};">${times.flagOff}</p>
         </td>
         <td width="50%" style="padding: 16px 18px;">
+          <p style="margin: 0 0 4px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
+            font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: ${C.textMuted};">Location</p>
+          <p style="margin: 0; font-size: 17px; font-weight: 700; color: ${C.textMain};">${EVENT_LOCATION}</p>
+        </td>
+      </tr>
+    </table>`;
+  }
+
+  return `
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
+      style="margin: 20px 0; border: 1px solid ${C.border};">
+      <tr>
+        <td width="33%" style="padding: 16px 18px; border-right: 1px solid ${C.border};">
+          <p style="margin: 0 0 4px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
+            font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: ${C.textMuted};">Call to Riders</p>
+          <p style="margin: 0; font-size: 17px; font-weight: 700; color: ${C.textMain};">${times.callToRiders}</p>
+        </td>
+        <td width="34%" style="padding: 16px 18px; border-right: 1px solid ${C.border};">
+          <p style="margin: 0 0 4px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
+            font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: ${C.textMuted};">Flag Off</p>
+          <p style="margin: 0; font-size: 17px; font-weight: 700; color: ${C.textMain};">${times.flagOff}</p>
+        </td>
+        <td width="33%" style="padding: 16px 18px;">
           <p style="margin: 0 0 4px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
             font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: ${C.textMuted};">Location</p>
           <p style="margin: 0; font-size: 17px; font-weight: 700; color: ${C.textMain};">${EVENT_LOCATION}</p>
@@ -400,7 +413,7 @@ function getConfirmationEmail(data: RegistrationData): { subject: string; html: 
     </p>
     ${renderChecklist([
     '<strong>Gear:</strong> Check your bike and cycling equipment',
-    '<strong>Arrive Early:</strong> Be at the venue 45 minutes before your start time',
+    '<strong>Arrive Early:</strong> Be at the venue before your Call to Riders time',
     '<strong>Bring ID:</strong> Required for check-in verification',
   ])}
 
@@ -479,7 +492,7 @@ function getEventReminderEmail(data: RegistrationData, daysUntil: number): { sub
       sub: "Today's the day. See you at the starting line.",
       preheader: "Good luck out there, warrior.",
       checklist: [
-        '<strong>Arrive Early:</strong> 45 minutes before your start time',
+        '<strong>Arrive Early:</strong> Be at the venue before your Call to Riders time',
         '<strong>Warm Up:</strong> Stretch and prepare your body',
         '<strong>Stay Safe:</strong> Follow all route marshals and guidelines',
         '<strong>Enjoy:</strong> You earned this — ride hard',

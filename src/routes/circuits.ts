@@ -12,7 +12,7 @@ const CIRCUITS = [
     imageUrl: '',
     price: 2000,
     date: '5th July 2026',
-    time: '06:00 AM',
+    time: '07:00 AM',
     location: 'Ulinzi Sports Complex, Langata',
   },
   {
@@ -38,7 +38,7 @@ const CIRCUITS = [
     imageUrl: '',
     price: 9000,
     date: '5th July 2026',
-    time: '07:00 AM',
+    time: '08:30 AM',
     location: 'Ulinzi Sports Complex, Langata',
   },
   {
@@ -51,7 +51,7 @@ const CIRCUITS = [
     imageUrl: '',
     price: 1000,
     date: '5th July 2026',
-    time: '09:00 AM',
+    time: '10:00 AM',
     location: 'Ulinzi Sports Complex, Langata',
   },
 ] as const;
