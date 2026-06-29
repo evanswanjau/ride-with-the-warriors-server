@@ -91,7 +91,7 @@ export const familyDetailsSchema = z
       emergencyContactName: z.string().optional().or(z.literal('')),
       email: emailSchema,
       phoneNumber: phoneSchema,
-      relationship: z.string().min(1, 'Relationship is required'),
+      relationship: z.string().optional(),
       tshirtSize: z.string().optional(),
       participation: z.enum(['none', 'mom', 'other']),
       // Civilian fields
@@ -145,13 +145,13 @@ export const familyDetailsSchema = z
       }
     });
 
-    // Validate Mandatory Child
+    // Validate Relationship required only when children are present
     const totalChildren = val.riders.cubs.length + val.riders.champs.length;
-    if (totalChildren === 0) {
+    if (totalChildren > 0 && !val.guardian.relationship) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'A family registration must include at least one child (Cub or Champ)',
-        path: ['riders'],
+        message: 'Relationship is required when registering children',
+        path: ['guardian', 'relationship'],
       });
     }
 
