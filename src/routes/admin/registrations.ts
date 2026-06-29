@@ -12,7 +12,7 @@ adminRegistrationsRouter.get('/', requireAdmin, async (req, res) => {
         const limit = Number(req.query.limit) || 20;
         const skip = (page - 1) * limit;
 
-        const { search, circuitId, type, status, category, isMilitary } = req.query;
+        const { search, circuitId, type, status, category, isMilitary, dateFrom } = req.query;
 
         const where: any = {};
         if (circuitId) where.circuitId = circuitId;
@@ -21,6 +21,10 @@ adminRegistrationsRouter.get('/', requireAdmin, async (req, res) => {
         if (category) where.category = category;
         if (isMilitary !== undefined && isMilitary !== '') {
             where.isMilitary = isMilitary === 'true';
+        }
+        if (dateFrom) {
+            const from = new Date(String(dateFrom));
+            if (!isNaN(from.getTime())) where.createdAt = { gte: from };
         }
 
         // Efficient flat column search
