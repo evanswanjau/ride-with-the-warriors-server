@@ -21,6 +21,7 @@ import shortenerRouter from './routes/s.js';
 import { referralsRouter } from './routes/referrals.js';
 import { adminReferralsRouter } from './routes/admin/referrals.js';
 import { bikeHiresRouter } from './routes/admin/bike-hires.js';
+import { adminBibsRouter } from './routes/admin/bibs.js';
 import { prisma } from './storage/prisma.js';
 
 
@@ -62,6 +63,7 @@ app.use('/api/v1/admin/email', emailRouter);
 app.use('/api/v1/admin/dashboard', adminDashboardRouter);
 app.use('/api/v1/admin/referrals', adminReferralsRouter);
 app.use('/api/v1/admin/bike-hires', bikeHiresRouter);
+app.use('/api/v1/admin/bibs', adminBibsRouter);
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
