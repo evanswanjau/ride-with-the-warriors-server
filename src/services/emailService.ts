@@ -1012,7 +1012,7 @@ export function getTemplatePreview(type: EmailType): string {
 }
 
 export async function sendBulkCustomEmail(
-  recipients: Array<{ email: string, firstName: string, lastName: string, bibNumber?: string, idNumber?: string, message?: string }>,
+  recipients: Array<{ email: string, firstName: string, lastName: string, bibNumber?: string, message?: string }>,
   subject: string,
   messageTemplate?: string
 ): Promise<{ successCount: number; failedCount: number; errors: any[] }> {
@@ -1022,16 +1022,15 @@ export async function sendBulkCustomEmail(
 
   for (const recipient of recipients) {
     if (!recipient.email) continue;
-    
+
     // Use pre-compiled message if provided, otherwise compile from template
     let compiledMessage = recipient.message;
-    
+
     if (!compiledMessage && messageTemplate) {
       compiledMessage = messageTemplate
         .replace(/{firstName}/g, recipient.firstName || '')
         .replace(/{lastName}/g, recipient.lastName || '')
-        .replace(/{bibNumber}/g, recipient.bibNumber || '')
-        .replace(/{idNumber}/g, recipient.idNumber || '');
+        .replace(/{bibNumber}/g, recipient.bibNumber || '');
     }
 
     if (!compiledMessage) continue;

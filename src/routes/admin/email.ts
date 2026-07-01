@@ -470,7 +470,7 @@ emailRouter.post('/bulk-send', async (req, res) => {
         if (!message) return res.status(400).json({ ok: false, error: 'Message is required' });
         if ((mode === 'email' || mode === 'both') && !subject) return res.status(400).json({ ok: false, error: 'Subject is required for email' });
 
-        let finalRecipients: Array<{ name: string; phone?: string; email?: string; bibNumber?: string; idNumber?: string; entityId: string }> = [];
+        let finalRecipients: Array<{ name: string; phone?: string; email?: string; bibNumber?: string; entityId: string }> = [];
 
         if (targetEntity === 'custom') {
             const phonesList = (customPhones || '').split(',').map((p: string) => p.trim()).filter(Boolean);
@@ -483,7 +483,6 @@ emailRouter.post('/bulk-send', async (req, res) => {
                     phone: phonesList[i] || undefined,
                     email: emailsList[i] || undefined,
                     bibNumber: '',
-                    idNumber: '',
                     entityId: `custom-${i}`
                 });
             }
@@ -493,23 +492,21 @@ emailRouter.post('/bulk-send', async (req, res) => {
             else if (targetStatus === 'unpaid') whereClause.status = 'UNPAID';
 
             if (targetEntity === 'cyclist') {
-                const regs = await prisma.registration.findMany({ where: whereClause, select: { id: true, firstName: true, lastName: true, idNumber: true, phoneNumber: true, email: true } });
+                const regs = await prisma.registration.findMany({ where: whereClause, select: { id: true, firstName: true, lastName: true, phoneNumber: true, email: true } });
                 finalRecipients = regs.map(r => ({
                     name: `${r.firstName} ${r.lastName}`.trim(),
                     phone: r.phoneNumber || undefined,
                     email: r.email || undefined,
                     bibNumber: r.id,
-                    idNumber: r.idNumber || '',
                     entityId: r.id
                 }));
             } else if (targetEntity === 'raffle') {
-                const raffles = await prisma.raffleTicket.findMany({ where: whereClause, select: { id: true, firstName: true, lastName: true, idNumber: true, phoneNumber: true, email: true } });
+                const raffles = await prisma.raffleTicket.findMany({ where: whereClause, select: { id: true, firstName: true, lastName: true, phoneNumber: true, email: true } });
                 finalRecipients = raffles.map(r => ({
                     name: `${r.firstName} ${r.lastName}`.trim(),
                     phone: r.phoneNumber || undefined,
                     email: r.email || undefined,
                     bibNumber: r.id,
-                    idNumber: r.idNumber || '',
                     entityId: r.id
                 }));
             } else if (targetEntity === 'donor') {
@@ -520,7 +517,6 @@ emailRouter.post('/bulk-send', async (req, res) => {
                     phone: d.phone || undefined,
                     email: d.email || undefined,
                     bibNumber: '',
-                    idNumber: '',
                     entityId: d.id
                 }));
             }
@@ -547,7 +543,6 @@ emailRouter.post('/bulk-send', async (req, res) => {
                     .replace(/{firstName}/g, r.name.split(' ')[0] || '')
                     .replace(/{lastName}/g, r.name.split(' ').slice(1).join(' ') || '')
                     .replace(/{bibNumber}/g, r.bibNumber || '')
-                    .replace(/{idNumber}/g, r.idNumber || '')
                     .replace(/{link}/g, linkToUse);
 
                 return {
@@ -569,8 +564,7 @@ emailRouter.post('/bulk-send', async (req, res) => {
                 let compiledMessage = message
                     .replace(/{firstName}/g, r.name.split(' ')[0] || '')
                     .replace(/{lastName}/g, r.name.split(' ').slice(1).join(' ') || '')
-                    .replace(/{bibNumber}/g, r.bibNumber || '')
-                    .replace(/{idNumber}/g, r.idNumber || '');
+                    .replace(/{bibNumber}/g, r.bibNumber || '');
 
                 if (compiledMessage.includes('{link}')) {
                     const targetUrl = getLinkForEntity(targetEntity as any, r.entityId);
@@ -591,7 +585,6 @@ emailRouter.post('/bulk-send', async (req, res) => {
                     .replace(/{firstName}/g, r.name.split(' ')[0] || '')
                     .replace(/{lastName}/g, r.name.split(' ').slice(1).join(' ') || '')
                     .replace(/{bibNumber}/g, r.bibNumber || '')
-                    .replace(/{idNumber}/g, r.idNumber || '')
                     .replace(/{link}/g, targetUrl); // Use long URL for emails
 
                 return {
@@ -599,7 +592,6 @@ emailRouter.post('/bulk-send', async (req, res) => {
                     firstName: r.name.split(' ')[0] || '',
                     lastName: r.name.split(' ').slice(1).join(' ') || '',
                     bibNumber: r.bibNumber,
-                    idNumber: r.idNumber,
                     message: emailMessage
                 };
             });

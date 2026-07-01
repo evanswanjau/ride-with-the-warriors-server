@@ -243,8 +243,7 @@ dtbCallbacksRouter.post('/stkpush', async (req, res) => {
                     if (isSuccess) {
                         const reg = await prisma.registration.findUnique({ where: { id: registrationId } });
                         if (reg?.phoneNumber) {
-                            const ref = reg.idNumber ? ` (ID: ${reg.idNumber})` : '';
-                            smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, your payment of KES ${reg.totalAmount} for Ride With The Warriors cycling registration${ref} is confirmed. Thank you!`);
+                            smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, your payment of KES ${reg.totalAmount} for Ride With The Warriors cycling registration (BIB: ${reg.id}) is confirmed. Thank you!`);
                         }
                         if (reg?.email) {
                             sendConfirmationEmail({
