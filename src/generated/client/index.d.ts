@@ -73,6 +73,11 @@ export type ShortLink = $Result.DefaultSelection<Prisma.$ShortLinkPayload>
  * 
  */
 export type BikeHire = $Result.DefaultSelection<Prisma.$BikeHirePayload>
+/**
+ * Model NotifyInterest
+ * 
+ */
+export type NotifyInterest = $Result.DefaultSelection<Prisma.$NotifyInterestPayload>
 
 /**
  * Enums
@@ -334,6 +339,16 @@ export class PrismaClient<
     * ```
     */
   get bikeHire(): Prisma.BikeHireDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.notifyInterest`: Exposes CRUD operations for the **NotifyInterest** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more NotifyInterests
+    * const notifyInterests = await prisma.notifyInterest.findMany()
+    * ```
+    */
+  get notifyInterest(): Prisma.NotifyInterestDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -779,7 +794,8 @@ export namespace Prisma {
     Donation: 'Donation',
     SmsLog: 'SmsLog',
     ShortLink: 'ShortLink',
-    BikeHire: 'BikeHire'
+    BikeHire: 'BikeHire',
+    NotifyInterest: 'NotifyInterest'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -795,7 +811,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "registration" | "admin" | "adminSession" | "payment" | "pricingCategory" | "emailLog" | "raffleTicket" | "referral" | "donation" | "smsLog" | "shortLink" | "bikeHire"
+      modelProps: "registration" | "admin" | "adminSession" | "payment" | "pricingCategory" | "emailLog" | "raffleTicket" | "referral" | "donation" | "smsLog" | "shortLink" | "bikeHire" | "notifyInterest"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1687,6 +1703,80 @@ export namespace Prisma {
           }
         }
       }
+      NotifyInterest: {
+        payload: Prisma.$NotifyInterestPayload<ExtArgs>
+        fields: Prisma.NotifyInterestFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.NotifyInterestFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotifyInterestPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.NotifyInterestFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotifyInterestPayload>
+          }
+          findFirst: {
+            args: Prisma.NotifyInterestFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotifyInterestPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.NotifyInterestFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotifyInterestPayload>
+          }
+          findMany: {
+            args: Prisma.NotifyInterestFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotifyInterestPayload>[]
+          }
+          create: {
+            args: Prisma.NotifyInterestCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotifyInterestPayload>
+          }
+          createMany: {
+            args: Prisma.NotifyInterestCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.NotifyInterestCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotifyInterestPayload>[]
+          }
+          delete: {
+            args: Prisma.NotifyInterestDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotifyInterestPayload>
+          }
+          update: {
+            args: Prisma.NotifyInterestUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotifyInterestPayload>
+          }
+          deleteMany: {
+            args: Prisma.NotifyInterestDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.NotifyInterestUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.NotifyInterestUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotifyInterestPayload>[]
+          }
+          upsert: {
+            args: Prisma.NotifyInterestUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotifyInterestPayload>
+          }
+          aggregate: {
+            args: Prisma.NotifyInterestAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateNotifyInterest>
+          }
+          groupBy: {
+            args: Prisma.NotifyInterestGroupByArgs<ExtArgs>
+            result: $Utils.Optional<NotifyInterestGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.NotifyInterestCountArgs<ExtArgs>
+            result: $Utils.Optional<NotifyInterestCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1807,6 +1897,7 @@ export namespace Prisma {
     smsLog?: SmsLogOmit
     shortLink?: ShortLinkOmit
     bikeHire?: BikeHireOmit
+    notifyInterest?: NotifyInterestOmit
   }
 
   /* Types for Logging */
@@ -15393,6 +15484,993 @@ export namespace Prisma {
 
 
   /**
+   * Model NotifyInterest
+   */
+
+  export type AggregateNotifyInterest = {
+    _count: NotifyInterestCountAggregateOutputType | null
+    _min: NotifyInterestMinAggregateOutputType | null
+    _max: NotifyInterestMaxAggregateOutputType | null
+  }
+
+  export type NotifyInterestMinAggregateOutputType = {
+    id: string | null
+    email: string | null
+    firstName: string | null
+    createdAt: Date | null
+  }
+
+  export type NotifyInterestMaxAggregateOutputType = {
+    id: string | null
+    email: string | null
+    firstName: string | null
+    createdAt: Date | null
+  }
+
+  export type NotifyInterestCountAggregateOutputType = {
+    id: number
+    email: number
+    firstName: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type NotifyInterestMinAggregateInputType = {
+    id?: true
+    email?: true
+    firstName?: true
+    createdAt?: true
+  }
+
+  export type NotifyInterestMaxAggregateInputType = {
+    id?: true
+    email?: true
+    firstName?: true
+    createdAt?: true
+  }
+
+  export type NotifyInterestCountAggregateInputType = {
+    id?: true
+    email?: true
+    firstName?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type NotifyInterestAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which NotifyInterest to aggregate.
+     */
+    where?: NotifyInterestWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NotifyInterests to fetch.
+     */
+    orderBy?: NotifyInterestOrderByWithRelationInput | NotifyInterestOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: NotifyInterestWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NotifyInterests from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NotifyInterests.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned NotifyInterests
+    **/
+    _count?: true | NotifyInterestCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: NotifyInterestMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: NotifyInterestMaxAggregateInputType
+  }
+
+  export type GetNotifyInterestAggregateType<T extends NotifyInterestAggregateArgs> = {
+        [P in keyof T & keyof AggregateNotifyInterest]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateNotifyInterest[P]>
+      : GetScalarType<T[P], AggregateNotifyInterest[P]>
+  }
+
+
+
+
+  export type NotifyInterestGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: NotifyInterestWhereInput
+    orderBy?: NotifyInterestOrderByWithAggregationInput | NotifyInterestOrderByWithAggregationInput[]
+    by: NotifyInterestScalarFieldEnum[] | NotifyInterestScalarFieldEnum
+    having?: NotifyInterestScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: NotifyInterestCountAggregateInputType | true
+    _min?: NotifyInterestMinAggregateInputType
+    _max?: NotifyInterestMaxAggregateInputType
+  }
+
+  export type NotifyInterestGroupByOutputType = {
+    id: string
+    email: string
+    firstName: string | null
+    createdAt: Date
+    _count: NotifyInterestCountAggregateOutputType | null
+    _min: NotifyInterestMinAggregateOutputType | null
+    _max: NotifyInterestMaxAggregateOutputType | null
+  }
+
+  type GetNotifyInterestGroupByPayload<T extends NotifyInterestGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<NotifyInterestGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof NotifyInterestGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], NotifyInterestGroupByOutputType[P]>
+            : GetScalarType<T[P], NotifyInterestGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type NotifyInterestSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    email?: boolean
+    firstName?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["notifyInterest"]>
+
+  export type NotifyInterestSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    email?: boolean
+    firstName?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["notifyInterest"]>
+
+  export type NotifyInterestSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    email?: boolean
+    firstName?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["notifyInterest"]>
+
+  export type NotifyInterestSelectScalar = {
+    id?: boolean
+    email?: boolean
+    firstName?: boolean
+    createdAt?: boolean
+  }
+
+  export type NotifyInterestOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "email" | "firstName" | "createdAt", ExtArgs["result"]["notifyInterest"]>
+
+  export type $NotifyInterestPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "NotifyInterest"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      email: string
+      firstName: string | null
+      createdAt: Date
+    }, ExtArgs["result"]["notifyInterest"]>
+    composites: {}
+  }
+
+  type NotifyInterestGetPayload<S extends boolean | null | undefined | NotifyInterestDefaultArgs> = $Result.GetResult<Prisma.$NotifyInterestPayload, S>
+
+  type NotifyInterestCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<NotifyInterestFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: NotifyInterestCountAggregateInputType | true
+    }
+
+  export interface NotifyInterestDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['NotifyInterest'], meta: { name: 'NotifyInterest' } }
+    /**
+     * Find zero or one NotifyInterest that matches the filter.
+     * @param {NotifyInterestFindUniqueArgs} args - Arguments to find a NotifyInterest
+     * @example
+     * // Get one NotifyInterest
+     * const notifyInterest = await prisma.notifyInterest.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends NotifyInterestFindUniqueArgs>(args: SelectSubset<T, NotifyInterestFindUniqueArgs<ExtArgs>>): Prisma__NotifyInterestClient<$Result.GetResult<Prisma.$NotifyInterestPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one NotifyInterest that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {NotifyInterestFindUniqueOrThrowArgs} args - Arguments to find a NotifyInterest
+     * @example
+     * // Get one NotifyInterest
+     * const notifyInterest = await prisma.notifyInterest.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends NotifyInterestFindUniqueOrThrowArgs>(args: SelectSubset<T, NotifyInterestFindUniqueOrThrowArgs<ExtArgs>>): Prisma__NotifyInterestClient<$Result.GetResult<Prisma.$NotifyInterestPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first NotifyInterest that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotifyInterestFindFirstArgs} args - Arguments to find a NotifyInterest
+     * @example
+     * // Get one NotifyInterest
+     * const notifyInterest = await prisma.notifyInterest.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends NotifyInterestFindFirstArgs>(args?: SelectSubset<T, NotifyInterestFindFirstArgs<ExtArgs>>): Prisma__NotifyInterestClient<$Result.GetResult<Prisma.$NotifyInterestPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first NotifyInterest that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotifyInterestFindFirstOrThrowArgs} args - Arguments to find a NotifyInterest
+     * @example
+     * // Get one NotifyInterest
+     * const notifyInterest = await prisma.notifyInterest.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends NotifyInterestFindFirstOrThrowArgs>(args?: SelectSubset<T, NotifyInterestFindFirstOrThrowArgs<ExtArgs>>): Prisma__NotifyInterestClient<$Result.GetResult<Prisma.$NotifyInterestPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more NotifyInterests that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotifyInterestFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all NotifyInterests
+     * const notifyInterests = await prisma.notifyInterest.findMany()
+     * 
+     * // Get first 10 NotifyInterests
+     * const notifyInterests = await prisma.notifyInterest.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const notifyInterestWithIdOnly = await prisma.notifyInterest.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends NotifyInterestFindManyArgs>(args?: SelectSubset<T, NotifyInterestFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotifyInterestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a NotifyInterest.
+     * @param {NotifyInterestCreateArgs} args - Arguments to create a NotifyInterest.
+     * @example
+     * // Create one NotifyInterest
+     * const NotifyInterest = await prisma.notifyInterest.create({
+     *   data: {
+     *     // ... data to create a NotifyInterest
+     *   }
+     * })
+     * 
+     */
+    create<T extends NotifyInterestCreateArgs>(args: SelectSubset<T, NotifyInterestCreateArgs<ExtArgs>>): Prisma__NotifyInterestClient<$Result.GetResult<Prisma.$NotifyInterestPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many NotifyInterests.
+     * @param {NotifyInterestCreateManyArgs} args - Arguments to create many NotifyInterests.
+     * @example
+     * // Create many NotifyInterests
+     * const notifyInterest = await prisma.notifyInterest.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends NotifyInterestCreateManyArgs>(args?: SelectSubset<T, NotifyInterestCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many NotifyInterests and returns the data saved in the database.
+     * @param {NotifyInterestCreateManyAndReturnArgs} args - Arguments to create many NotifyInterests.
+     * @example
+     * // Create many NotifyInterests
+     * const notifyInterest = await prisma.notifyInterest.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many NotifyInterests and only return the `id`
+     * const notifyInterestWithIdOnly = await prisma.notifyInterest.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends NotifyInterestCreateManyAndReturnArgs>(args?: SelectSubset<T, NotifyInterestCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotifyInterestPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a NotifyInterest.
+     * @param {NotifyInterestDeleteArgs} args - Arguments to delete one NotifyInterest.
+     * @example
+     * // Delete one NotifyInterest
+     * const NotifyInterest = await prisma.notifyInterest.delete({
+     *   where: {
+     *     // ... filter to delete one NotifyInterest
+     *   }
+     * })
+     * 
+     */
+    delete<T extends NotifyInterestDeleteArgs>(args: SelectSubset<T, NotifyInterestDeleteArgs<ExtArgs>>): Prisma__NotifyInterestClient<$Result.GetResult<Prisma.$NotifyInterestPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one NotifyInterest.
+     * @param {NotifyInterestUpdateArgs} args - Arguments to update one NotifyInterest.
+     * @example
+     * // Update one NotifyInterest
+     * const notifyInterest = await prisma.notifyInterest.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends NotifyInterestUpdateArgs>(args: SelectSubset<T, NotifyInterestUpdateArgs<ExtArgs>>): Prisma__NotifyInterestClient<$Result.GetResult<Prisma.$NotifyInterestPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more NotifyInterests.
+     * @param {NotifyInterestDeleteManyArgs} args - Arguments to filter NotifyInterests to delete.
+     * @example
+     * // Delete a few NotifyInterests
+     * const { count } = await prisma.notifyInterest.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends NotifyInterestDeleteManyArgs>(args?: SelectSubset<T, NotifyInterestDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more NotifyInterests.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotifyInterestUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many NotifyInterests
+     * const notifyInterest = await prisma.notifyInterest.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends NotifyInterestUpdateManyArgs>(args: SelectSubset<T, NotifyInterestUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more NotifyInterests and returns the data updated in the database.
+     * @param {NotifyInterestUpdateManyAndReturnArgs} args - Arguments to update many NotifyInterests.
+     * @example
+     * // Update many NotifyInterests
+     * const notifyInterest = await prisma.notifyInterest.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more NotifyInterests and only return the `id`
+     * const notifyInterestWithIdOnly = await prisma.notifyInterest.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends NotifyInterestUpdateManyAndReturnArgs>(args: SelectSubset<T, NotifyInterestUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotifyInterestPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one NotifyInterest.
+     * @param {NotifyInterestUpsertArgs} args - Arguments to update or create a NotifyInterest.
+     * @example
+     * // Update or create a NotifyInterest
+     * const notifyInterest = await prisma.notifyInterest.upsert({
+     *   create: {
+     *     // ... data to create a NotifyInterest
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the NotifyInterest we want to update
+     *   }
+     * })
+     */
+    upsert<T extends NotifyInterestUpsertArgs>(args: SelectSubset<T, NotifyInterestUpsertArgs<ExtArgs>>): Prisma__NotifyInterestClient<$Result.GetResult<Prisma.$NotifyInterestPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of NotifyInterests.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotifyInterestCountArgs} args - Arguments to filter NotifyInterests to count.
+     * @example
+     * // Count the number of NotifyInterests
+     * const count = await prisma.notifyInterest.count({
+     *   where: {
+     *     // ... the filter for the NotifyInterests we want to count
+     *   }
+     * })
+    **/
+    count<T extends NotifyInterestCountArgs>(
+      args?: Subset<T, NotifyInterestCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], NotifyInterestCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a NotifyInterest.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotifyInterestAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends NotifyInterestAggregateArgs>(args: Subset<T, NotifyInterestAggregateArgs>): Prisma.PrismaPromise<GetNotifyInterestAggregateType<T>>
+
+    /**
+     * Group by NotifyInterest.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotifyInterestGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends NotifyInterestGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: NotifyInterestGroupByArgs['orderBy'] }
+        : { orderBy?: NotifyInterestGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, NotifyInterestGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetNotifyInterestGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the NotifyInterest model
+   */
+  readonly fields: NotifyInterestFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for NotifyInterest.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__NotifyInterestClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the NotifyInterest model
+   */
+  interface NotifyInterestFieldRefs {
+    readonly id: FieldRef<"NotifyInterest", 'String'>
+    readonly email: FieldRef<"NotifyInterest", 'String'>
+    readonly firstName: FieldRef<"NotifyInterest", 'String'>
+    readonly createdAt: FieldRef<"NotifyInterest", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * NotifyInterest findUnique
+   */
+  export type NotifyInterestFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotifyInterest
+     */
+    select?: NotifyInterestSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotifyInterest
+     */
+    omit?: NotifyInterestOmit<ExtArgs> | null
+    /**
+     * Filter, which NotifyInterest to fetch.
+     */
+    where: NotifyInterestWhereUniqueInput
+  }
+
+  /**
+   * NotifyInterest findUniqueOrThrow
+   */
+  export type NotifyInterestFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotifyInterest
+     */
+    select?: NotifyInterestSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotifyInterest
+     */
+    omit?: NotifyInterestOmit<ExtArgs> | null
+    /**
+     * Filter, which NotifyInterest to fetch.
+     */
+    where: NotifyInterestWhereUniqueInput
+  }
+
+  /**
+   * NotifyInterest findFirst
+   */
+  export type NotifyInterestFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotifyInterest
+     */
+    select?: NotifyInterestSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotifyInterest
+     */
+    omit?: NotifyInterestOmit<ExtArgs> | null
+    /**
+     * Filter, which NotifyInterest to fetch.
+     */
+    where?: NotifyInterestWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NotifyInterests to fetch.
+     */
+    orderBy?: NotifyInterestOrderByWithRelationInput | NotifyInterestOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for NotifyInterests.
+     */
+    cursor?: NotifyInterestWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NotifyInterests from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NotifyInterests.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of NotifyInterests.
+     */
+    distinct?: NotifyInterestScalarFieldEnum | NotifyInterestScalarFieldEnum[]
+  }
+
+  /**
+   * NotifyInterest findFirstOrThrow
+   */
+  export type NotifyInterestFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotifyInterest
+     */
+    select?: NotifyInterestSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotifyInterest
+     */
+    omit?: NotifyInterestOmit<ExtArgs> | null
+    /**
+     * Filter, which NotifyInterest to fetch.
+     */
+    where?: NotifyInterestWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NotifyInterests to fetch.
+     */
+    orderBy?: NotifyInterestOrderByWithRelationInput | NotifyInterestOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for NotifyInterests.
+     */
+    cursor?: NotifyInterestWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NotifyInterests from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NotifyInterests.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of NotifyInterests.
+     */
+    distinct?: NotifyInterestScalarFieldEnum | NotifyInterestScalarFieldEnum[]
+  }
+
+  /**
+   * NotifyInterest findMany
+   */
+  export type NotifyInterestFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotifyInterest
+     */
+    select?: NotifyInterestSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotifyInterest
+     */
+    omit?: NotifyInterestOmit<ExtArgs> | null
+    /**
+     * Filter, which NotifyInterests to fetch.
+     */
+    where?: NotifyInterestWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of NotifyInterests to fetch.
+     */
+    orderBy?: NotifyInterestOrderByWithRelationInput | NotifyInterestOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing NotifyInterests.
+     */
+    cursor?: NotifyInterestWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` NotifyInterests from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` NotifyInterests.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of NotifyInterests.
+     */
+    distinct?: NotifyInterestScalarFieldEnum | NotifyInterestScalarFieldEnum[]
+  }
+
+  /**
+   * NotifyInterest create
+   */
+  export type NotifyInterestCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotifyInterest
+     */
+    select?: NotifyInterestSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotifyInterest
+     */
+    omit?: NotifyInterestOmit<ExtArgs> | null
+    /**
+     * The data needed to create a NotifyInterest.
+     */
+    data: XOR<NotifyInterestCreateInput, NotifyInterestUncheckedCreateInput>
+  }
+
+  /**
+   * NotifyInterest createMany
+   */
+  export type NotifyInterestCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many NotifyInterests.
+     */
+    data: NotifyInterestCreateManyInput | NotifyInterestCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * NotifyInterest createManyAndReturn
+   */
+  export type NotifyInterestCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotifyInterest
+     */
+    select?: NotifyInterestSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotifyInterest
+     */
+    omit?: NotifyInterestOmit<ExtArgs> | null
+    /**
+     * The data used to create many NotifyInterests.
+     */
+    data: NotifyInterestCreateManyInput | NotifyInterestCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * NotifyInterest update
+   */
+  export type NotifyInterestUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotifyInterest
+     */
+    select?: NotifyInterestSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotifyInterest
+     */
+    omit?: NotifyInterestOmit<ExtArgs> | null
+    /**
+     * The data needed to update a NotifyInterest.
+     */
+    data: XOR<NotifyInterestUpdateInput, NotifyInterestUncheckedUpdateInput>
+    /**
+     * Choose, which NotifyInterest to update.
+     */
+    where: NotifyInterestWhereUniqueInput
+  }
+
+  /**
+   * NotifyInterest updateMany
+   */
+  export type NotifyInterestUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update NotifyInterests.
+     */
+    data: XOR<NotifyInterestUpdateManyMutationInput, NotifyInterestUncheckedUpdateManyInput>
+    /**
+     * Filter which NotifyInterests to update
+     */
+    where?: NotifyInterestWhereInput
+    /**
+     * Limit how many NotifyInterests to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * NotifyInterest updateManyAndReturn
+   */
+  export type NotifyInterestUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotifyInterest
+     */
+    select?: NotifyInterestSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotifyInterest
+     */
+    omit?: NotifyInterestOmit<ExtArgs> | null
+    /**
+     * The data used to update NotifyInterests.
+     */
+    data: XOR<NotifyInterestUpdateManyMutationInput, NotifyInterestUncheckedUpdateManyInput>
+    /**
+     * Filter which NotifyInterests to update
+     */
+    where?: NotifyInterestWhereInput
+    /**
+     * Limit how many NotifyInterests to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * NotifyInterest upsert
+   */
+  export type NotifyInterestUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotifyInterest
+     */
+    select?: NotifyInterestSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotifyInterest
+     */
+    omit?: NotifyInterestOmit<ExtArgs> | null
+    /**
+     * The filter to search for the NotifyInterest to update in case it exists.
+     */
+    where: NotifyInterestWhereUniqueInput
+    /**
+     * In case the NotifyInterest found by the `where` argument doesn't exist, create a new NotifyInterest with this data.
+     */
+    create: XOR<NotifyInterestCreateInput, NotifyInterestUncheckedCreateInput>
+    /**
+     * In case the NotifyInterest was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<NotifyInterestUpdateInput, NotifyInterestUncheckedUpdateInput>
+  }
+
+  /**
+   * NotifyInterest delete
+   */
+  export type NotifyInterestDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotifyInterest
+     */
+    select?: NotifyInterestSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotifyInterest
+     */
+    omit?: NotifyInterestOmit<ExtArgs> | null
+    /**
+     * Filter which NotifyInterest to delete.
+     */
+    where: NotifyInterestWhereUniqueInput
+  }
+
+  /**
+   * NotifyInterest deleteMany
+   */
+  export type NotifyInterestDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which NotifyInterests to delete
+     */
+    where?: NotifyInterestWhereInput
+    /**
+     * Limit how many NotifyInterests to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * NotifyInterest without action
+   */
+  export type NotifyInterestDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the NotifyInterest
+     */
+    select?: NotifyInterestSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the NotifyInterest
+     */
+    omit?: NotifyInterestOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -15612,6 +16690,16 @@ export namespace Prisma {
   };
 
   export type BikeHireScalarFieldEnum = (typeof BikeHireScalarFieldEnum)[keyof typeof BikeHireScalarFieldEnum]
+
+
+  export const NotifyInterestScalarFieldEnum: {
+    id: 'id',
+    email: 'email',
+    firstName: 'firstName',
+    createdAt: 'createdAt'
+  };
+
+  export type NotifyInterestScalarFieldEnum = (typeof NotifyInterestScalarFieldEnum)[keyof typeof NotifyInterestScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -16783,6 +17871,53 @@ export namespace Prisma {
     amount?: FloatWithAggregatesFilter<"BikeHire"> | number
     createdAt?: DateTimeWithAggregatesFilter<"BikeHire"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"BikeHire"> | Date | string
+  }
+
+  export type NotifyInterestWhereInput = {
+    AND?: NotifyInterestWhereInput | NotifyInterestWhereInput[]
+    OR?: NotifyInterestWhereInput[]
+    NOT?: NotifyInterestWhereInput | NotifyInterestWhereInput[]
+    id?: StringFilter<"NotifyInterest"> | string
+    email?: StringFilter<"NotifyInterest"> | string
+    firstName?: StringNullableFilter<"NotifyInterest"> | string | null
+    createdAt?: DateTimeFilter<"NotifyInterest"> | Date | string
+  }
+
+  export type NotifyInterestOrderByWithRelationInput = {
+    id?: SortOrder
+    email?: SortOrder
+    firstName?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type NotifyInterestWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    email?: string
+    AND?: NotifyInterestWhereInput | NotifyInterestWhereInput[]
+    OR?: NotifyInterestWhereInput[]
+    NOT?: NotifyInterestWhereInput | NotifyInterestWhereInput[]
+    firstName?: StringNullableFilter<"NotifyInterest"> | string | null
+    createdAt?: DateTimeFilter<"NotifyInterest"> | Date | string
+  }, "id" | "email">
+
+  export type NotifyInterestOrderByWithAggregationInput = {
+    id?: SortOrder
+    email?: SortOrder
+    firstName?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: NotifyInterestCountOrderByAggregateInput
+    _max?: NotifyInterestMaxOrderByAggregateInput
+    _min?: NotifyInterestMinOrderByAggregateInput
+  }
+
+  export type NotifyInterestScalarWhereWithAggregatesInput = {
+    AND?: NotifyInterestScalarWhereWithAggregatesInput | NotifyInterestScalarWhereWithAggregatesInput[]
+    OR?: NotifyInterestScalarWhereWithAggregatesInput[]
+    NOT?: NotifyInterestScalarWhereWithAggregatesInput | NotifyInterestScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"NotifyInterest"> | string
+    email?: StringWithAggregatesFilter<"NotifyInterest"> | string
+    firstName?: StringNullableWithAggregatesFilter<"NotifyInterest"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"NotifyInterest"> | Date | string
   }
 
   export type RegistrationCreateInput = {
@@ -17995,6 +19130,55 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type NotifyInterestCreateInput = {
+    id?: string
+    email: string
+    firstName?: string | null
+    createdAt?: Date | string
+  }
+
+  export type NotifyInterestUncheckedCreateInput = {
+    id?: string
+    email: string
+    firstName?: string | null
+    createdAt?: Date | string
+  }
+
+  export type NotifyInterestUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    firstName?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NotifyInterestUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    firstName?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NotifyInterestCreateManyInput = {
+    id?: string
+    email: string
+    firstName?: string | null
+    createdAt?: Date | string
+  }
+
+  export type NotifyInterestUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    firstName?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NotifyInterestUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    firstName?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -18876,6 +20060,27 @@ export namespace Prisma {
 
   export type BikeHireSumOrderByAggregateInput = {
     amount?: SortOrder
+  }
+
+  export type NotifyInterestCountOrderByAggregateInput = {
+    id?: SortOrder
+    email?: SortOrder
+    firstName?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type NotifyInterestMaxOrderByAggregateInput = {
+    id?: SortOrder
+    email?: SortOrder
+    firstName?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type NotifyInterestMinOrderByAggregateInput = {
+    id?: SortOrder
+    email?: SortOrder
+    firstName?: SortOrder
+    createdAt?: SortOrder
   }
 
   export type BikeHireCreateNestedOneWithoutRegistrationInput = {

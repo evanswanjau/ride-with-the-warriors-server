@@ -219,3 +219,12 @@ model BikeHire {
 
   @@index([registrationId])
 }
+
+model NotifyInterest {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  firstName String?
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}

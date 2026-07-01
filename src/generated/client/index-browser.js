@@ -292,6 +292,13 @@ exports.Prisma.BikeHireScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.NotifyInterestScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  firstName: 'firstName',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -337,7 +344,8 @@ exports.Prisma.ModelName = {
   Donation: 'Donation',
   SmsLog: 'SmsLog',
   ShortLink: 'ShortLink',
-  BikeHire: 'BikeHire'
+  BikeHire: 'BikeHire',
+  NotifyInterest: 'NotifyInterest'
 };
 
 /**
