@@ -54,9 +54,10 @@ adminDonationsRouter.get('/', requireAdmin, async (req, res) => {
 // Statistics for donations
 adminDonationsRouter.get('/stats/summary', requireAdmin, async (_req, res) => {
     try {
-        const [totalCount, paidCount, revenueResult] = await Promise.all([
+        const [totalCount, paidCount, unpaidCount, revenueResult] = await Promise.all([
             prisma.donation.count(),
             prisma.donation.count({ where: { status: 'PAID' } }),
+            prisma.donation.count({ where: { status: { not: 'PAID' } } }),
             prisma.donation.aggregate({
                 where: { status: 'PAID' },
                 _sum: { amount: true },
@@ -67,11 +68,23 @@ adminDonationsRouter.get('/stats/summary', requireAdmin, async (_req, res) => {
             summary: {
                 totalCount,
                 paidCount,
+                unpaidCount,
                 totalAmount: revenueResult._sum?.amount ?? 0,
             },
         });
     } catch (error) {
         console.error('[Admin Donations] Stats error:', error);
         res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to fetch donation stats' } });
+    }
+});
+
+// Delete a donation
+adminDonationsRouter.delete('/:id', requireAdmin, async (req, res) => {
+    try {
+        await prisma.donation.delete({ where: { id: req.params.id } });
+        res.json({ success: true });
+    } catch (error) {
+        console.error('[Admin Donations] Delete error:', error);
+        res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to delete donation' } });
     }
 });

@@ -20,11 +20,13 @@ const GENDER_COLORS: Record<string, string> = {
 
 const RAFFLE_TICKET_PRICE = 1000;
 
-adminDashboardRouter.get('/', requireAdmin, async (_req, res) => {
+adminDashboardRouter.get('/', requireAdmin, async (req, res) => {
     try {
         const now = new Date();
-        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+        const defaultFrom = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        const thirtyDaysAgo = req.query.dateFrom ? new Date(String(req.query.dateFrom)) : defaultFrom;
+        const dateTo = req.query.dateTo ? new Date(String(req.query.dateTo)) : now;
+        const fourteenDaysAgo = new Date(dateTo.getTime() - 14 * 24 * 60 * 60 * 1000);
         const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
 
         // ── 1. Core summary stats (optimised to prevent pool exhaustion) ──
@@ -243,7 +245,7 @@ adminDashboardRouter.get('/', requireAdmin, async (_req, res) => {
         const genderBreakdown = genderRaw
             .filter(g => g.gender)
             .map(g => ({
-                label: g.gender!.charAt(0) + g.gender!.slice(1).toLowerCase(),
+                label: g.gender!.charAt(0).toUpperCase() + g.gender!.slice(1).toLowerCase(),
                 count: g._count,
                 pct: Math.round((g._count / totalGender) * 100),
                 color: GENDER_COLORS[g.gender!.toUpperCase()] || '#6b7280',
