@@ -20,13 +20,10 @@ const GENDER_COLORS: Record<string, string> = {
 
 const RAFFLE_TICKET_PRICE = 1000;
 
-adminDashboardRouter.get('/', requireAdmin, async (req, res) => {
+adminDashboardRouter.get('/', requireAdmin, async (_req, res) => {
     try {
         const now = new Date();
-        const defaultFrom = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        const thirtyDaysAgo = req.query.dateFrom ? new Date(String(req.query.dateFrom)) : defaultFrom;
-        const dateTo = req.query.dateTo ? new Date(String(req.query.dateTo)) : now;
-        const fourteenDaysAgo = new Date(dateTo.getTime() - 14 * 24 * 60 * 60 * 1000);
+        const thirtyDaysAgo = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000); // 6 months — client slices per chart
         const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
 
         // ── 1. Core summary stats (optimised to prevent pool exhaustion) ──
@@ -129,7 +126,7 @@ adminDashboardRouter.get('/', requireAdmin, async (req, res) => {
                 COALESCE(SUM(CASE WHEN r.status = 'UNPAID' THEN 1 ELSE 0 END), 0)::int               AS unpaid,
                 COALESCE(SUM(CASE WHEN r.status = 'CANCELLED' THEN 1 ELSE 0 END), 0)::int             AS cancelled
             FROM generate_series(
-                ${fourteenDaysAgo}::date,
+                ${thirtyDaysAgo}::date,
                 ${now}::date,
                 '1 day'::interval
             ) AS d(day)
