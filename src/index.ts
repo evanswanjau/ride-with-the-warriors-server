@@ -21,6 +21,7 @@ import shortenerRouter from './routes/s.js';
 import { referralsRouter } from './routes/referrals.js';
 import { adminReferralsRouter } from './routes/admin/referrals.js';
 import { notifyRouter, adminNotifyRouter } from './routes/notify.js';
+import { feedbackRouter, adminFeedbackRouter } from './routes/feedback.js';
 import { bikeHiresRouter } from './routes/admin/bike-hires.js';
 import { adminBibsRouter } from './routes/admin/bibs.js';
 import { prisma } from './storage/prisma.js';
@@ -53,6 +54,7 @@ app.use('/api/sms', smsCallbacksRouter);
 app.use('/s', shortenerRouter);
 app.use('/api/v1/referrals', referralsRouter);
 app.use('/api/v1/notify', notifyRouter);
+app.use('/api/v1/feedback', feedbackRouter);
 
 
 // Admin Routes
@@ -67,6 +69,7 @@ app.use('/api/v1/admin/referrals', adminReferralsRouter);
 app.use('/api/v1/admin/bike-hires', bikeHiresRouter);
 app.use('/api/v1/admin/bibs', adminBibsRouter);
 app.use('/api/v1/admin/notify', adminNotifyRouter);
+app.use('/api/v1/admin/feedback', adminFeedbackRouter);
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

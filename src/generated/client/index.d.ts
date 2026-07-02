@@ -78,6 +78,11 @@ export type BikeHire = $Result.DefaultSelection<Prisma.$BikeHirePayload>
  * 
  */
 export type NotifyInterest = $Result.DefaultSelection<Prisma.$NotifyInterestPayload>
+/**
+ * Model EventFeedback
+ * 
+ */
+export type EventFeedback = $Result.DefaultSelection<Prisma.$EventFeedbackPayload>
 
 /**
  * Enums
@@ -349,6 +354,16 @@ export class PrismaClient<
     * ```
     */
   get notifyInterest(): Prisma.NotifyInterestDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.eventFeedback`: Exposes CRUD operations for the **EventFeedback** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more EventFeedbacks
+    * const eventFeedbacks = await prisma.eventFeedback.findMany()
+    * ```
+    */
+  get eventFeedback(): Prisma.EventFeedbackDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -795,7 +810,8 @@ export namespace Prisma {
     SmsLog: 'SmsLog',
     ShortLink: 'ShortLink',
     BikeHire: 'BikeHire',
-    NotifyInterest: 'NotifyInterest'
+    NotifyInterest: 'NotifyInterest',
+    EventFeedback: 'EventFeedback'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -811,7 +827,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "registration" | "admin" | "adminSession" | "payment" | "pricingCategory" | "emailLog" | "raffleTicket" | "referral" | "donation" | "smsLog" | "shortLink" | "bikeHire" | "notifyInterest"
+      modelProps: "registration" | "admin" | "adminSession" | "payment" | "pricingCategory" | "emailLog" | "raffleTicket" | "referral" | "donation" | "smsLog" | "shortLink" | "bikeHire" | "notifyInterest" | "eventFeedback"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1777,6 +1793,80 @@ export namespace Prisma {
           }
         }
       }
+      EventFeedback: {
+        payload: Prisma.$EventFeedbackPayload<ExtArgs>
+        fields: Prisma.EventFeedbackFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.EventFeedbackFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventFeedbackPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.EventFeedbackFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventFeedbackPayload>
+          }
+          findFirst: {
+            args: Prisma.EventFeedbackFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventFeedbackPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.EventFeedbackFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventFeedbackPayload>
+          }
+          findMany: {
+            args: Prisma.EventFeedbackFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventFeedbackPayload>[]
+          }
+          create: {
+            args: Prisma.EventFeedbackCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventFeedbackPayload>
+          }
+          createMany: {
+            args: Prisma.EventFeedbackCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.EventFeedbackCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventFeedbackPayload>[]
+          }
+          delete: {
+            args: Prisma.EventFeedbackDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventFeedbackPayload>
+          }
+          update: {
+            args: Prisma.EventFeedbackUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventFeedbackPayload>
+          }
+          deleteMany: {
+            args: Prisma.EventFeedbackDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.EventFeedbackUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.EventFeedbackUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventFeedbackPayload>[]
+          }
+          upsert: {
+            args: Prisma.EventFeedbackUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventFeedbackPayload>
+          }
+          aggregate: {
+            args: Prisma.EventFeedbackAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateEventFeedback>
+          }
+          groupBy: {
+            args: Prisma.EventFeedbackGroupByArgs<ExtArgs>
+            result: $Utils.Optional<EventFeedbackGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.EventFeedbackCountArgs<ExtArgs>
+            result: $Utils.Optional<EventFeedbackCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1898,6 +1988,7 @@ export namespace Prisma {
     shortLink?: ShortLinkOmit
     bikeHire?: BikeHireOmit
     notifyInterest?: NotifyInterestOmit
+    eventFeedback?: EventFeedbackOmit
   }
 
   /* Types for Logging */
@@ -16471,6 +16562,1053 @@ export namespace Prisma {
 
 
   /**
+   * Model EventFeedback
+   */
+
+  export type AggregateEventFeedback = {
+    _count: EventFeedbackCountAggregateOutputType | null
+    _avg: EventFeedbackAvgAggregateOutputType | null
+    _sum: EventFeedbackSumAggregateOutputType | null
+    _min: EventFeedbackMinAggregateOutputType | null
+    _max: EventFeedbackMaxAggregateOutputType | null
+  }
+
+  export type EventFeedbackAvgAggregateOutputType = {
+    rating: number | null
+  }
+
+  export type EventFeedbackSumAggregateOutputType = {
+    rating: number | null
+  }
+
+  export type EventFeedbackMinAggregateOutputType = {
+    id: string | null
+    role: string | null
+    rating: number | null
+    highlights: string | null
+    improvements: string | null
+    createdAt: Date | null
+  }
+
+  export type EventFeedbackMaxAggregateOutputType = {
+    id: string | null
+    role: string | null
+    rating: number | null
+    highlights: string | null
+    improvements: string | null
+    createdAt: Date | null
+  }
+
+  export type EventFeedbackCountAggregateOutputType = {
+    id: number
+    role: number
+    rating: number
+    highlights: number
+    improvements: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type EventFeedbackAvgAggregateInputType = {
+    rating?: true
+  }
+
+  export type EventFeedbackSumAggregateInputType = {
+    rating?: true
+  }
+
+  export type EventFeedbackMinAggregateInputType = {
+    id?: true
+    role?: true
+    rating?: true
+    highlights?: true
+    improvements?: true
+    createdAt?: true
+  }
+
+  export type EventFeedbackMaxAggregateInputType = {
+    id?: true
+    role?: true
+    rating?: true
+    highlights?: true
+    improvements?: true
+    createdAt?: true
+  }
+
+  export type EventFeedbackCountAggregateInputType = {
+    id?: true
+    role?: true
+    rating?: true
+    highlights?: true
+    improvements?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type EventFeedbackAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which EventFeedback to aggregate.
+     */
+    where?: EventFeedbackWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EventFeedbacks to fetch.
+     */
+    orderBy?: EventFeedbackOrderByWithRelationInput | EventFeedbackOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: EventFeedbackWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EventFeedbacks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EventFeedbacks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned EventFeedbacks
+    **/
+    _count?: true | EventFeedbackCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: EventFeedbackAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: EventFeedbackSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: EventFeedbackMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: EventFeedbackMaxAggregateInputType
+  }
+
+  export type GetEventFeedbackAggregateType<T extends EventFeedbackAggregateArgs> = {
+        [P in keyof T & keyof AggregateEventFeedback]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateEventFeedback[P]>
+      : GetScalarType<T[P], AggregateEventFeedback[P]>
+  }
+
+
+
+
+  export type EventFeedbackGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: EventFeedbackWhereInput
+    orderBy?: EventFeedbackOrderByWithAggregationInput | EventFeedbackOrderByWithAggregationInput[]
+    by: EventFeedbackScalarFieldEnum[] | EventFeedbackScalarFieldEnum
+    having?: EventFeedbackScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: EventFeedbackCountAggregateInputType | true
+    _avg?: EventFeedbackAvgAggregateInputType
+    _sum?: EventFeedbackSumAggregateInputType
+    _min?: EventFeedbackMinAggregateInputType
+    _max?: EventFeedbackMaxAggregateInputType
+  }
+
+  export type EventFeedbackGroupByOutputType = {
+    id: string
+    role: string
+    rating: number
+    highlights: string | null
+    improvements: string | null
+    createdAt: Date
+    _count: EventFeedbackCountAggregateOutputType | null
+    _avg: EventFeedbackAvgAggregateOutputType | null
+    _sum: EventFeedbackSumAggregateOutputType | null
+    _min: EventFeedbackMinAggregateOutputType | null
+    _max: EventFeedbackMaxAggregateOutputType | null
+  }
+
+  type GetEventFeedbackGroupByPayload<T extends EventFeedbackGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<EventFeedbackGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof EventFeedbackGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], EventFeedbackGroupByOutputType[P]>
+            : GetScalarType<T[P], EventFeedbackGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type EventFeedbackSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    role?: boolean
+    rating?: boolean
+    highlights?: boolean
+    improvements?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["eventFeedback"]>
+
+  export type EventFeedbackSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    role?: boolean
+    rating?: boolean
+    highlights?: boolean
+    improvements?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["eventFeedback"]>
+
+  export type EventFeedbackSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    role?: boolean
+    rating?: boolean
+    highlights?: boolean
+    improvements?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["eventFeedback"]>
+
+  export type EventFeedbackSelectScalar = {
+    id?: boolean
+    role?: boolean
+    rating?: boolean
+    highlights?: boolean
+    improvements?: boolean
+    createdAt?: boolean
+  }
+
+  export type EventFeedbackOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "role" | "rating" | "highlights" | "improvements" | "createdAt", ExtArgs["result"]["eventFeedback"]>
+
+  export type $EventFeedbackPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "EventFeedback"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      role: string
+      rating: number
+      highlights: string | null
+      improvements: string | null
+      createdAt: Date
+    }, ExtArgs["result"]["eventFeedback"]>
+    composites: {}
+  }
+
+  type EventFeedbackGetPayload<S extends boolean | null | undefined | EventFeedbackDefaultArgs> = $Result.GetResult<Prisma.$EventFeedbackPayload, S>
+
+  type EventFeedbackCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<EventFeedbackFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: EventFeedbackCountAggregateInputType | true
+    }
+
+  export interface EventFeedbackDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['EventFeedback'], meta: { name: 'EventFeedback' } }
+    /**
+     * Find zero or one EventFeedback that matches the filter.
+     * @param {EventFeedbackFindUniqueArgs} args - Arguments to find a EventFeedback
+     * @example
+     * // Get one EventFeedback
+     * const eventFeedback = await prisma.eventFeedback.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends EventFeedbackFindUniqueArgs>(args: SelectSubset<T, EventFeedbackFindUniqueArgs<ExtArgs>>): Prisma__EventFeedbackClient<$Result.GetResult<Prisma.$EventFeedbackPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one EventFeedback that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {EventFeedbackFindUniqueOrThrowArgs} args - Arguments to find a EventFeedback
+     * @example
+     * // Get one EventFeedback
+     * const eventFeedback = await prisma.eventFeedback.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends EventFeedbackFindUniqueOrThrowArgs>(args: SelectSubset<T, EventFeedbackFindUniqueOrThrowArgs<ExtArgs>>): Prisma__EventFeedbackClient<$Result.GetResult<Prisma.$EventFeedbackPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first EventFeedback that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventFeedbackFindFirstArgs} args - Arguments to find a EventFeedback
+     * @example
+     * // Get one EventFeedback
+     * const eventFeedback = await prisma.eventFeedback.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends EventFeedbackFindFirstArgs>(args?: SelectSubset<T, EventFeedbackFindFirstArgs<ExtArgs>>): Prisma__EventFeedbackClient<$Result.GetResult<Prisma.$EventFeedbackPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first EventFeedback that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventFeedbackFindFirstOrThrowArgs} args - Arguments to find a EventFeedback
+     * @example
+     * // Get one EventFeedback
+     * const eventFeedback = await prisma.eventFeedback.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends EventFeedbackFindFirstOrThrowArgs>(args?: SelectSubset<T, EventFeedbackFindFirstOrThrowArgs<ExtArgs>>): Prisma__EventFeedbackClient<$Result.GetResult<Prisma.$EventFeedbackPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more EventFeedbacks that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventFeedbackFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all EventFeedbacks
+     * const eventFeedbacks = await prisma.eventFeedback.findMany()
+     * 
+     * // Get first 10 EventFeedbacks
+     * const eventFeedbacks = await prisma.eventFeedback.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const eventFeedbackWithIdOnly = await prisma.eventFeedback.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends EventFeedbackFindManyArgs>(args?: SelectSubset<T, EventFeedbackFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventFeedbackPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a EventFeedback.
+     * @param {EventFeedbackCreateArgs} args - Arguments to create a EventFeedback.
+     * @example
+     * // Create one EventFeedback
+     * const EventFeedback = await prisma.eventFeedback.create({
+     *   data: {
+     *     // ... data to create a EventFeedback
+     *   }
+     * })
+     * 
+     */
+    create<T extends EventFeedbackCreateArgs>(args: SelectSubset<T, EventFeedbackCreateArgs<ExtArgs>>): Prisma__EventFeedbackClient<$Result.GetResult<Prisma.$EventFeedbackPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many EventFeedbacks.
+     * @param {EventFeedbackCreateManyArgs} args - Arguments to create many EventFeedbacks.
+     * @example
+     * // Create many EventFeedbacks
+     * const eventFeedback = await prisma.eventFeedback.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends EventFeedbackCreateManyArgs>(args?: SelectSubset<T, EventFeedbackCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many EventFeedbacks and returns the data saved in the database.
+     * @param {EventFeedbackCreateManyAndReturnArgs} args - Arguments to create many EventFeedbacks.
+     * @example
+     * // Create many EventFeedbacks
+     * const eventFeedback = await prisma.eventFeedback.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many EventFeedbacks and only return the `id`
+     * const eventFeedbackWithIdOnly = await prisma.eventFeedback.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends EventFeedbackCreateManyAndReturnArgs>(args?: SelectSubset<T, EventFeedbackCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventFeedbackPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a EventFeedback.
+     * @param {EventFeedbackDeleteArgs} args - Arguments to delete one EventFeedback.
+     * @example
+     * // Delete one EventFeedback
+     * const EventFeedback = await prisma.eventFeedback.delete({
+     *   where: {
+     *     // ... filter to delete one EventFeedback
+     *   }
+     * })
+     * 
+     */
+    delete<T extends EventFeedbackDeleteArgs>(args: SelectSubset<T, EventFeedbackDeleteArgs<ExtArgs>>): Prisma__EventFeedbackClient<$Result.GetResult<Prisma.$EventFeedbackPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one EventFeedback.
+     * @param {EventFeedbackUpdateArgs} args - Arguments to update one EventFeedback.
+     * @example
+     * // Update one EventFeedback
+     * const eventFeedback = await prisma.eventFeedback.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends EventFeedbackUpdateArgs>(args: SelectSubset<T, EventFeedbackUpdateArgs<ExtArgs>>): Prisma__EventFeedbackClient<$Result.GetResult<Prisma.$EventFeedbackPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more EventFeedbacks.
+     * @param {EventFeedbackDeleteManyArgs} args - Arguments to filter EventFeedbacks to delete.
+     * @example
+     * // Delete a few EventFeedbacks
+     * const { count } = await prisma.eventFeedback.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends EventFeedbackDeleteManyArgs>(args?: SelectSubset<T, EventFeedbackDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more EventFeedbacks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventFeedbackUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many EventFeedbacks
+     * const eventFeedback = await prisma.eventFeedback.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends EventFeedbackUpdateManyArgs>(args: SelectSubset<T, EventFeedbackUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more EventFeedbacks and returns the data updated in the database.
+     * @param {EventFeedbackUpdateManyAndReturnArgs} args - Arguments to update many EventFeedbacks.
+     * @example
+     * // Update many EventFeedbacks
+     * const eventFeedback = await prisma.eventFeedback.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more EventFeedbacks and only return the `id`
+     * const eventFeedbackWithIdOnly = await prisma.eventFeedback.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends EventFeedbackUpdateManyAndReturnArgs>(args: SelectSubset<T, EventFeedbackUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventFeedbackPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one EventFeedback.
+     * @param {EventFeedbackUpsertArgs} args - Arguments to update or create a EventFeedback.
+     * @example
+     * // Update or create a EventFeedback
+     * const eventFeedback = await prisma.eventFeedback.upsert({
+     *   create: {
+     *     // ... data to create a EventFeedback
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the EventFeedback we want to update
+     *   }
+     * })
+     */
+    upsert<T extends EventFeedbackUpsertArgs>(args: SelectSubset<T, EventFeedbackUpsertArgs<ExtArgs>>): Prisma__EventFeedbackClient<$Result.GetResult<Prisma.$EventFeedbackPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of EventFeedbacks.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventFeedbackCountArgs} args - Arguments to filter EventFeedbacks to count.
+     * @example
+     * // Count the number of EventFeedbacks
+     * const count = await prisma.eventFeedback.count({
+     *   where: {
+     *     // ... the filter for the EventFeedbacks we want to count
+     *   }
+     * })
+    **/
+    count<T extends EventFeedbackCountArgs>(
+      args?: Subset<T, EventFeedbackCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], EventFeedbackCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a EventFeedback.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventFeedbackAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends EventFeedbackAggregateArgs>(args: Subset<T, EventFeedbackAggregateArgs>): Prisma.PrismaPromise<GetEventFeedbackAggregateType<T>>
+
+    /**
+     * Group by EventFeedback.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventFeedbackGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends EventFeedbackGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: EventFeedbackGroupByArgs['orderBy'] }
+        : { orderBy?: EventFeedbackGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, EventFeedbackGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetEventFeedbackGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the EventFeedback model
+   */
+  readonly fields: EventFeedbackFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for EventFeedback.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__EventFeedbackClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the EventFeedback model
+   */
+  interface EventFeedbackFieldRefs {
+    readonly id: FieldRef<"EventFeedback", 'String'>
+    readonly role: FieldRef<"EventFeedback", 'String'>
+    readonly rating: FieldRef<"EventFeedback", 'Int'>
+    readonly highlights: FieldRef<"EventFeedback", 'String'>
+    readonly improvements: FieldRef<"EventFeedback", 'String'>
+    readonly createdAt: FieldRef<"EventFeedback", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * EventFeedback findUnique
+   */
+  export type EventFeedbackFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventFeedback
+     */
+    select?: EventFeedbackSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventFeedback
+     */
+    omit?: EventFeedbackOmit<ExtArgs> | null
+    /**
+     * Filter, which EventFeedback to fetch.
+     */
+    where: EventFeedbackWhereUniqueInput
+  }
+
+  /**
+   * EventFeedback findUniqueOrThrow
+   */
+  export type EventFeedbackFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventFeedback
+     */
+    select?: EventFeedbackSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventFeedback
+     */
+    omit?: EventFeedbackOmit<ExtArgs> | null
+    /**
+     * Filter, which EventFeedback to fetch.
+     */
+    where: EventFeedbackWhereUniqueInput
+  }
+
+  /**
+   * EventFeedback findFirst
+   */
+  export type EventFeedbackFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventFeedback
+     */
+    select?: EventFeedbackSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventFeedback
+     */
+    omit?: EventFeedbackOmit<ExtArgs> | null
+    /**
+     * Filter, which EventFeedback to fetch.
+     */
+    where?: EventFeedbackWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EventFeedbacks to fetch.
+     */
+    orderBy?: EventFeedbackOrderByWithRelationInput | EventFeedbackOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for EventFeedbacks.
+     */
+    cursor?: EventFeedbackWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EventFeedbacks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EventFeedbacks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EventFeedbacks.
+     */
+    distinct?: EventFeedbackScalarFieldEnum | EventFeedbackScalarFieldEnum[]
+  }
+
+  /**
+   * EventFeedback findFirstOrThrow
+   */
+  export type EventFeedbackFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventFeedback
+     */
+    select?: EventFeedbackSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventFeedback
+     */
+    omit?: EventFeedbackOmit<ExtArgs> | null
+    /**
+     * Filter, which EventFeedback to fetch.
+     */
+    where?: EventFeedbackWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EventFeedbacks to fetch.
+     */
+    orderBy?: EventFeedbackOrderByWithRelationInput | EventFeedbackOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for EventFeedbacks.
+     */
+    cursor?: EventFeedbackWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EventFeedbacks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EventFeedbacks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EventFeedbacks.
+     */
+    distinct?: EventFeedbackScalarFieldEnum | EventFeedbackScalarFieldEnum[]
+  }
+
+  /**
+   * EventFeedback findMany
+   */
+  export type EventFeedbackFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventFeedback
+     */
+    select?: EventFeedbackSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventFeedback
+     */
+    omit?: EventFeedbackOmit<ExtArgs> | null
+    /**
+     * Filter, which EventFeedbacks to fetch.
+     */
+    where?: EventFeedbackWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EventFeedbacks to fetch.
+     */
+    orderBy?: EventFeedbackOrderByWithRelationInput | EventFeedbackOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing EventFeedbacks.
+     */
+    cursor?: EventFeedbackWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EventFeedbacks from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EventFeedbacks.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EventFeedbacks.
+     */
+    distinct?: EventFeedbackScalarFieldEnum | EventFeedbackScalarFieldEnum[]
+  }
+
+  /**
+   * EventFeedback create
+   */
+  export type EventFeedbackCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventFeedback
+     */
+    select?: EventFeedbackSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventFeedback
+     */
+    omit?: EventFeedbackOmit<ExtArgs> | null
+    /**
+     * The data needed to create a EventFeedback.
+     */
+    data: XOR<EventFeedbackCreateInput, EventFeedbackUncheckedCreateInput>
+  }
+
+  /**
+   * EventFeedback createMany
+   */
+  export type EventFeedbackCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many EventFeedbacks.
+     */
+    data: EventFeedbackCreateManyInput | EventFeedbackCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * EventFeedback createManyAndReturn
+   */
+  export type EventFeedbackCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventFeedback
+     */
+    select?: EventFeedbackSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventFeedback
+     */
+    omit?: EventFeedbackOmit<ExtArgs> | null
+    /**
+     * The data used to create many EventFeedbacks.
+     */
+    data: EventFeedbackCreateManyInput | EventFeedbackCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * EventFeedback update
+   */
+  export type EventFeedbackUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventFeedback
+     */
+    select?: EventFeedbackSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventFeedback
+     */
+    omit?: EventFeedbackOmit<ExtArgs> | null
+    /**
+     * The data needed to update a EventFeedback.
+     */
+    data: XOR<EventFeedbackUpdateInput, EventFeedbackUncheckedUpdateInput>
+    /**
+     * Choose, which EventFeedback to update.
+     */
+    where: EventFeedbackWhereUniqueInput
+  }
+
+  /**
+   * EventFeedback updateMany
+   */
+  export type EventFeedbackUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update EventFeedbacks.
+     */
+    data: XOR<EventFeedbackUpdateManyMutationInput, EventFeedbackUncheckedUpdateManyInput>
+    /**
+     * Filter which EventFeedbacks to update
+     */
+    where?: EventFeedbackWhereInput
+    /**
+     * Limit how many EventFeedbacks to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * EventFeedback updateManyAndReturn
+   */
+  export type EventFeedbackUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventFeedback
+     */
+    select?: EventFeedbackSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventFeedback
+     */
+    omit?: EventFeedbackOmit<ExtArgs> | null
+    /**
+     * The data used to update EventFeedbacks.
+     */
+    data: XOR<EventFeedbackUpdateManyMutationInput, EventFeedbackUncheckedUpdateManyInput>
+    /**
+     * Filter which EventFeedbacks to update
+     */
+    where?: EventFeedbackWhereInput
+    /**
+     * Limit how many EventFeedbacks to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * EventFeedback upsert
+   */
+  export type EventFeedbackUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventFeedback
+     */
+    select?: EventFeedbackSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventFeedback
+     */
+    omit?: EventFeedbackOmit<ExtArgs> | null
+    /**
+     * The filter to search for the EventFeedback to update in case it exists.
+     */
+    where: EventFeedbackWhereUniqueInput
+    /**
+     * In case the EventFeedback found by the `where` argument doesn't exist, create a new EventFeedback with this data.
+     */
+    create: XOR<EventFeedbackCreateInput, EventFeedbackUncheckedCreateInput>
+    /**
+     * In case the EventFeedback was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<EventFeedbackUpdateInput, EventFeedbackUncheckedUpdateInput>
+  }
+
+  /**
+   * EventFeedback delete
+   */
+  export type EventFeedbackDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventFeedback
+     */
+    select?: EventFeedbackSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventFeedback
+     */
+    omit?: EventFeedbackOmit<ExtArgs> | null
+    /**
+     * Filter which EventFeedback to delete.
+     */
+    where: EventFeedbackWhereUniqueInput
+  }
+
+  /**
+   * EventFeedback deleteMany
+   */
+  export type EventFeedbackDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which EventFeedbacks to delete
+     */
+    where?: EventFeedbackWhereInput
+    /**
+     * Limit how many EventFeedbacks to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * EventFeedback without action
+   */
+  export type EventFeedbackDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventFeedback
+     */
+    select?: EventFeedbackSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventFeedback
+     */
+    omit?: EventFeedbackOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -16700,6 +17838,18 @@ export namespace Prisma {
   };
 
   export type NotifyInterestScalarFieldEnum = (typeof NotifyInterestScalarFieldEnum)[keyof typeof NotifyInterestScalarFieldEnum]
+
+
+  export const EventFeedbackScalarFieldEnum: {
+    id: 'id',
+    role: 'role',
+    rating: 'rating',
+    highlights: 'highlights',
+    improvements: 'improvements',
+    createdAt: 'createdAt'
+  };
+
+  export type EventFeedbackScalarFieldEnum = (typeof EventFeedbackScalarFieldEnum)[keyof typeof EventFeedbackScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -17918,6 +19068,65 @@ export namespace Prisma {
     email?: StringWithAggregatesFilter<"NotifyInterest"> | string
     firstName?: StringNullableWithAggregatesFilter<"NotifyInterest"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"NotifyInterest"> | Date | string
+  }
+
+  export type EventFeedbackWhereInput = {
+    AND?: EventFeedbackWhereInput | EventFeedbackWhereInput[]
+    OR?: EventFeedbackWhereInput[]
+    NOT?: EventFeedbackWhereInput | EventFeedbackWhereInput[]
+    id?: StringFilter<"EventFeedback"> | string
+    role?: StringFilter<"EventFeedback"> | string
+    rating?: IntFilter<"EventFeedback"> | number
+    highlights?: StringNullableFilter<"EventFeedback"> | string | null
+    improvements?: StringNullableFilter<"EventFeedback"> | string | null
+    createdAt?: DateTimeFilter<"EventFeedback"> | Date | string
+  }
+
+  export type EventFeedbackOrderByWithRelationInput = {
+    id?: SortOrder
+    role?: SortOrder
+    rating?: SortOrder
+    highlights?: SortOrderInput | SortOrder
+    improvements?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type EventFeedbackWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: EventFeedbackWhereInput | EventFeedbackWhereInput[]
+    OR?: EventFeedbackWhereInput[]
+    NOT?: EventFeedbackWhereInput | EventFeedbackWhereInput[]
+    role?: StringFilter<"EventFeedback"> | string
+    rating?: IntFilter<"EventFeedback"> | number
+    highlights?: StringNullableFilter<"EventFeedback"> | string | null
+    improvements?: StringNullableFilter<"EventFeedback"> | string | null
+    createdAt?: DateTimeFilter<"EventFeedback"> | Date | string
+  }, "id">
+
+  export type EventFeedbackOrderByWithAggregationInput = {
+    id?: SortOrder
+    role?: SortOrder
+    rating?: SortOrder
+    highlights?: SortOrderInput | SortOrder
+    improvements?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: EventFeedbackCountOrderByAggregateInput
+    _avg?: EventFeedbackAvgOrderByAggregateInput
+    _max?: EventFeedbackMaxOrderByAggregateInput
+    _min?: EventFeedbackMinOrderByAggregateInput
+    _sum?: EventFeedbackSumOrderByAggregateInput
+  }
+
+  export type EventFeedbackScalarWhereWithAggregatesInput = {
+    AND?: EventFeedbackScalarWhereWithAggregatesInput | EventFeedbackScalarWhereWithAggregatesInput[]
+    OR?: EventFeedbackScalarWhereWithAggregatesInput[]
+    NOT?: EventFeedbackScalarWhereWithAggregatesInput | EventFeedbackScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"EventFeedback"> | string
+    role?: StringWithAggregatesFilter<"EventFeedback"> | string
+    rating?: IntWithAggregatesFilter<"EventFeedback"> | number
+    highlights?: StringNullableWithAggregatesFilter<"EventFeedback"> | string | null
+    improvements?: StringNullableWithAggregatesFilter<"EventFeedback"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"EventFeedback"> | Date | string
   }
 
   export type RegistrationCreateInput = {
@@ -19179,6 +20388,69 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type EventFeedbackCreateInput = {
+    id?: string
+    role: string
+    rating: number
+    highlights?: string | null
+    improvements?: string | null
+    createdAt?: Date | string
+  }
+
+  export type EventFeedbackUncheckedCreateInput = {
+    id?: string
+    role: string
+    rating: number
+    highlights?: string | null
+    improvements?: string | null
+    createdAt?: Date | string
+  }
+
+  export type EventFeedbackUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    rating?: IntFieldUpdateOperationsInput | number
+    highlights?: NullableStringFieldUpdateOperationsInput | string | null
+    improvements?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EventFeedbackUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    rating?: IntFieldUpdateOperationsInput | number
+    highlights?: NullableStringFieldUpdateOperationsInput | string | null
+    improvements?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EventFeedbackCreateManyInput = {
+    id?: string
+    role: string
+    rating: number
+    highlights?: string | null
+    improvements?: string | null
+    createdAt?: Date | string
+  }
+
+  export type EventFeedbackUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    rating?: IntFieldUpdateOperationsInput | number
+    highlights?: NullableStringFieldUpdateOperationsInput | string | null
+    improvements?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EventFeedbackUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    rating?: IntFieldUpdateOperationsInput | number
+    highlights?: NullableStringFieldUpdateOperationsInput | string | null
+    improvements?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -20081,6 +21353,41 @@ export namespace Prisma {
     email?: SortOrder
     firstName?: SortOrder
     createdAt?: SortOrder
+  }
+
+  export type EventFeedbackCountOrderByAggregateInput = {
+    id?: SortOrder
+    role?: SortOrder
+    rating?: SortOrder
+    highlights?: SortOrder
+    improvements?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type EventFeedbackAvgOrderByAggregateInput = {
+    rating?: SortOrder
+  }
+
+  export type EventFeedbackMaxOrderByAggregateInput = {
+    id?: SortOrder
+    role?: SortOrder
+    rating?: SortOrder
+    highlights?: SortOrder
+    improvements?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type EventFeedbackMinOrderByAggregateInput = {
+    id?: SortOrder
+    role?: SortOrder
+    rating?: SortOrder
+    highlights?: SortOrder
+    improvements?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type EventFeedbackSumOrderByAggregateInput = {
+    rating?: SortOrder
   }
 
   export type BikeHireCreateNestedOneWithoutRegistrationInput = {

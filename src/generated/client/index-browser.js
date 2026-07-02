@@ -299,6 +299,15 @@ exports.Prisma.NotifyInterestScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.EventFeedbackScalarFieldEnum = {
+  id: 'id',
+  role: 'role',
+  rating: 'rating',
+  highlights: 'highlights',
+  improvements: 'improvements',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -345,7 +354,8 @@ exports.Prisma.ModelName = {
   SmsLog: 'SmsLog',
   ShortLink: 'ShortLink',
   BikeHire: 'BikeHire',
-  NotifyInterest: 'NotifyInterest'
+  NotifyInterest: 'NotifyInterest',
+  EventFeedback: 'EventFeedback'
 };
 
 /**

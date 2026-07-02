@@ -228,3 +228,15 @@ model NotifyInterest {
 
   @@index([email])
 }
+
+model EventFeedback {
+  id           String   @id @default(uuid())
+  role         String // CYCLIST | ATTENDEE | SPONSOR | ORGANISER
+  rating       Int // 1-5 overall experience
+  highlights   String? // what went well
+  improvements String? // what to improve
+  createdAt    DateTime @default(now())
+
+  @@index([role])
+  @@index([createdAt])
+}
