@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { getAllRegistrations, getRegistration } from '../storage/memoryRegistrations.js';
 import { prisma } from '../storage/prisma.js';
-import { maskRegistration, maskRaffleTicket } from '../utils/masking.js';
+import { maskRegistration, maskRaffleTicket, maskPhone, maskIdNumber } from '../utils/masking.js';
 import fs from 'fs';
 
 export const profileRouter = Router();
@@ -176,6 +176,14 @@ profileRouter.post('/search', async (req, res) => {
         if (searchType === 'id') {
             if (foundRegistration) foundRegistration = maskRegistration(foundRegistration);
             if (foundRaffleTicket) foundRaffleTicket = maskRaffleTicket(foundRaffleTicket);
+            allRaffleTickets = allRaffleTickets.map(maskRaffleTicket);
+            if (latestRegPayment) {
+                latestRegPayment = {
+                    ...latestRegPayment,
+                    phone: maskPhone(latestRegPayment.phone),
+                    mpesaReceiptNumber: maskIdNumber(latestRegPayment.mpesaReceiptNumber)
+                };
+            }
         }
 
         res.json({
