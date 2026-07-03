@@ -173,17 +173,16 @@ profileRouter.post('/search', async (req, res) => {
             });
         }
 
-        if (searchType === 'id') {
-            if (foundRegistration) foundRegistration = maskRegistration(foundRegistration);
-            if (foundRaffleTicket) foundRaffleTicket = maskRaffleTicket(foundRaffleTicket);
-            allRaffleTickets = allRaffleTickets.map(maskRaffleTicket);
-            if (latestRegPayment) {
-                latestRegPayment = {
-                    ...latestRegPayment,
-                    phone: maskPhone(latestRegPayment.phone),
-                    mpesaReceiptNumber: maskIdNumber(latestRegPayment.mpesaReceiptNumber)
-                };
-            }
+        // Mask personal information for all search types (id, email, phone)
+        if (foundRegistration) foundRegistration = maskRegistration(foundRegistration);
+        if (foundRaffleTicket) foundRaffleTicket = maskRaffleTicket(foundRaffleTicket);
+        allRaffleTickets = allRaffleTickets.map(maskRaffleTicket);
+        if (latestRegPayment) {
+            latestRegPayment = {
+                ...latestRegPayment,
+                phone: maskPhone(latestRegPayment.phone),
+                mpesaReceiptNumber: maskIdNumber(latestRegPayment.mpesaReceiptNumber)
+            };
         }
 
         res.json({

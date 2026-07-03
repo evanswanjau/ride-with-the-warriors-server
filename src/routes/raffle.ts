@@ -223,9 +223,9 @@ raffleRouter.get('/by-email/:email', async (req, res) => {
     if (!tickets || tickets.length === 0) {
       return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'No raffle tickets found for this email' } });
     }
-    // Return tickets with status unmasked so the profile UI can differentiate paid/unpaid.
-    // Personal fields (idNumber) remain as-is since this is a private profile view.
-    return res.json({ tickets, email });
+    // This endpoint is unauthenticated, so mask personal fields; the profile UI
+    // only needs ticket id, status, and createdAt.
+    return res.json({ tickets: tickets.map(maskRaffleTicket), email });
   } catch (err) {
     console.error('[Raffle] By-email fetch error:', err);
     return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to fetch raffle tickets' } });
@@ -265,7 +265,6 @@ raffleRouter.post('/search', async (req, res) => {
       ticket = await (prisma.raffleTicket as any).findUnique({
         where: { id: searchValue.toUpperCase() },
       });
-      if (ticket) ticket = maskRaffleTicket(ticket);
     } else if (searchType === 'email') {
       ticket = await (prisma.raffleTicket as any).findFirst({
         where: { email: searchValue.trim().toLowerCase() },
@@ -285,7 +284,7 @@ raffleRouter.post('/search', async (req, res) => {
       return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'No raffle ticket found' } });
     }
 
-    return res.json({ ticket });
+    return res.json({ ticket: maskRaffleTicket(ticket) });
   } catch (err) {
     console.error('[Raffle] Search error:', err);
     return res.status(500).json({ error: { code: 'INTERNAL', message: 'Search failed' } });
