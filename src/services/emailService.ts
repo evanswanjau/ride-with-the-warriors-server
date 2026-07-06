@@ -1011,6 +1011,35 @@ export function getTemplatePreview(type: EmailType): string {
   }
 }
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/** Converts plain-text message to HTML with line breaks and clickable URLs. */
+export function formatBulkEmailBody(plainText: string): string {
+  const escaped = escapeHtml(plainText);
+  const withBreaks = escaped.replace(/\r\n/g, '\n').replace(/\n/g, '<br>');
+
+  return withBreaks.replace(
+    /(https?:\/\/[^\s<>"']+)/gi,
+    (url) => {
+      let cleanUrl = url;
+      let trailing = '';
+      const trailingMatch = url.match(/([.,;:!?)]+)$/);
+      if (trailingMatch) {
+        cleanUrl = url.slice(0, -trailingMatch[1].length);
+        trailing = trailingMatch[1];
+      }
+      return `<a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" style="color: #2d6a2d; font-weight: 600; word-break: break-all;">${cleanUrl}</a>${trailing}`;
+    }
+  );
+}
+
 export async function sendBulkCustomEmail(
   recipients: Array<{ email: string, firstName: string, lastName: string, bibNumber?: string, message?: string }>,
   subject: string,
@@ -1035,9 +1064,10 @@ export async function sendBulkCustomEmail(
 
     if (!compiledMessage) continue;
 
+    const htmlBody = formatBulkEmailBody(compiledMessage);
     const htmlContent = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
-        <p>${compiledMessage.replace(/\n/g, '<br>')}</p>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
+        <p style="margin: 0;">${htmlBody}</p>
         <p style="margin-top: 30px; font-size: 12px; color: #666;">
           Ride With The Warriors
         </p>
@@ -1049,6 +1079,7 @@ export async function sendBulkCustomEmail(
         from: EMAIL_FROM,
         to: recipient.email,
         subject: subject,
+        text: compiledMessage,
         html: htmlContent,
       });
       successCount++;

@@ -3,7 +3,6 @@ import { prisma } from '../../storage/prisma.js';
 import { sendConfirmationEmail, verifyEmailConnection, getTemplatePreview, sendEmail, sendRaffleEmail, sendBulkCustomEmail } from '../../services/emailService.js';
 import { triggerReminderCheck } from '../../services/reminderScheduler.js';
 import { smsService } from '../../services/smsService.js';
-import { createShortLink, getLinkForEntity, formatShortLink } from '../../utils/shortLinkService.js';
 
 export const emailRouter = Router();
 
@@ -483,18 +482,10 @@ emailRouter.post('/bulk-send', async (req, res) => {
         const getFirstName = (r: Recipient) => r.firstName || r.name.split(' ')[0] || '';
         const getLastName = (r: Recipient) => r.lastName || r.name.split(' ').slice(1).join(' ') || '';
 
-        const compileMessage = (r: Recipient, linkUrl?: string) => {
-            let compiled = message
-                .replace(/{firstName}/g, getFirstName(r))
-                .replace(/{lastName}/g, getLastName(r))
-                .replace(/{bibNumber}/g, r.bibNumber || '');
-            if (linkUrl) {
-                compiled = compiled.replace(/{link}/g, linkUrl);
-            }
-            return compiled;
-        };
-
-        const feedbackUrl = `${process.env.WEBSITE_URL || process.env.APP_URL || 'https://airbornefraternity.com/ride-with-the-warriors'}/feedback`;
+        const compileMessage = (r: Recipient) => message
+            .replace(/{firstName}/g, getFirstName(r))
+            .replace(/{lastName}/g, getLastName(r))
+            .replace(/{bibNumber}/g, r.bibNumber || '');
 
         let finalRecipients: Recipient[] = [];
 
@@ -579,24 +570,10 @@ emailRouter.post('/bulk-send', async (req, res) => {
         });
 
         if (testMode) {
-            const sample = await Promise.all(validRecipients.slice(0, 5).map(async r => {
-                const targetUrl = targetEntity === 'csv'
-                    ? feedbackUrl
-                    : getLinkForEntity(targetEntity as any, r.entityId);
-                
-                // For preview: shorten only if mode involves SMS
-                let linkToUse = targetUrl;
-                if (mode === 'sms' || mode === 'both') {
-                    linkToUse = await createShortLink(targetUrl);
-                }
-
-                const compiledMessage = compileMessage(r, linkToUse);
-
-                return {
-                    name: r.name,
-                    contact: mode === 'sms' ? r.phone : mode === 'email' ? r.email : `${r.phone || 'N/A'} / ${r.email || 'N/A'}`,
-                    compiledMessage
-                };
+            const sample = validRecipients.slice(0, 5).map(r => ({
+                name: r.name,
+                contact: mode === 'sms' ? r.phone : mode === 'email' ? r.email : `${r.phone || 'N/A'} / ${r.email || 'N/A'}`,
+                compiledMessage: compileMessage(r),
             }));
             return res.json({ ok: true, recipientsCount: validRecipients.length, sampleRecipients: sample });
         }
@@ -608,16 +585,7 @@ emailRouter.post('/bulk-send', async (req, res) => {
 
         if (mode === 'sms' || mode === 'both') {
             for (const r of validRecipients.filter(r => Boolean(r.phone))) {
-                let compiledMessage = compileMessage(r);
-
-                if (compiledMessage.includes('{link}')) {
-                    const targetUrl = targetEntity === 'csv'
-                        ? feedbackUrl
-                        : getLinkForEntity(targetEntity as any, r.entityId);
-                    const shortLink = await createShortLink(targetUrl);
-                    compiledMessage = compiledMessage.replace(/{link}/g, shortLink);
-                }
-
+                const compiledMessage = compileMessage(r);
                 const result = await smsService.sendSMS([r.phone!], compiledMessage);
                 smsSuccess += result.successCount;
                 smsFail += result.failedCount;
@@ -625,20 +593,13 @@ emailRouter.post('/bulk-send', async (req, res) => {
         }
 
         if (mode === 'email' || mode === 'both') {
-            const emailTargets = validRecipients.filter(r => Boolean(r.email)).map(r => {
-                const targetUrl = targetEntity === 'csv'
-                    ? feedbackUrl
-                    : getLinkForEntity(targetEntity as any, r.entityId);
-                const emailMessage = compileMessage(r, targetUrl);
-
-                return {
-                    email: r.email!,
-                    firstName: getFirstName(r),
-                    lastName: getLastName(r),
-                    bibNumber: r.bibNumber,
-                    message: emailMessage
-                };
-            });
+            const emailTargets = validRecipients.filter(r => Boolean(r.email)).map(r => ({
+                email: r.email!,
+                firstName: getFirstName(r),
+                lastName: getLastName(r),
+                bibNumber: r.bibNumber,
+                message: compileMessage(r),
+            }));
             // We need a way to pass the custom message to sendBulkCustomEmail
             const eResult = await sendBulkCustomEmail(emailTargets, subject);
             emailSuccess = eResult.successCount;
