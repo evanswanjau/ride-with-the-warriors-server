@@ -466,13 +466,58 @@ emailRouter.post('/raffle-reminders', async (req, res) => {
 // ── Admin: Send Unified Bulk Communications ──
 emailRouter.post('/bulk-send', async (req, res) => {
     try {
-        const { mode, targetEntity, targetStatus, message, subject, customPhones, customEmails, testMode } = req.body;
+        const { mode, targetEntity, targetStatus, message, subject, customPhones, customEmails, csvRecipients, testMode } = req.body;
         if (!message) return res.status(400).json({ ok: false, error: 'Message is required' });
         if ((mode === 'email' || mode === 'both') && !subject) return res.status(400).json({ ok: false, error: 'Subject is required for email' });
 
-        let finalRecipients: Array<{ name: string; phone?: string; email?: string; bibNumber?: string; entityId: string }> = [];
+        type Recipient = {
+            firstName?: string;
+            lastName?: string;
+            name: string;
+            phone?: string;
+            email?: string;
+            bibNumber?: string;
+            entityId: string;
+        };
 
-        if (targetEntity === 'custom') {
+        const getFirstName = (r: Recipient) => r.firstName || r.name.split(' ')[0] || '';
+        const getLastName = (r: Recipient) => r.lastName || r.name.split(' ').slice(1).join(' ') || '';
+
+        const compileMessage = (r: Recipient, linkUrl?: string) => {
+            let compiled = message
+                .replace(/{firstName}/g, getFirstName(r))
+                .replace(/{lastName}/g, getLastName(r))
+                .replace(/{bibNumber}/g, r.bibNumber || '');
+            if (linkUrl) {
+                compiled = compiled.replace(/{link}/g, linkUrl);
+            }
+            return compiled;
+        };
+
+        const feedbackUrl = `${process.env.WEBSITE_URL || process.env.APP_URL || 'https://airbornefraternity.com/ride-with-the-warriors'}/feedback`;
+
+        let finalRecipients: Recipient[] = [];
+
+        if (targetEntity === 'csv') {
+            const list = Array.isArray(csvRecipients) ? csvRecipients : [];
+            if (list.length === 0) {
+                return res.status(400).json({ ok: false, error: 'CSV recipients are required. Upload a CSV with firstName and email columns.' });
+            }
+            finalRecipients = list.map((r: { firstName?: string; lastName?: string; email?: string; phone?: string }, i: number) => {
+                const firstName = (r.firstName || '').trim();
+                const lastName = (r.lastName || '').trim();
+                const email = (r.email || '').trim().toLowerCase();
+                return {
+                    firstName,
+                    lastName,
+                    name: [firstName, lastName].filter(Boolean).join(' ') || 'Friend',
+                    email: email || undefined,
+                    phone: (r.phone || '').trim() || undefined,
+                    bibNumber: '',
+                    entityId: `csv-${i}`,
+                };
+            });
+        } else if (targetEntity === 'custom') {
             const phonesList = (customPhones || '').split(',').map((p: string) => p.trim()).filter(Boolean);
             const emailsList = (customEmails || '').split(',').map((e: string) => e.trim()).filter(Boolean);
 
@@ -494,6 +539,8 @@ emailRouter.post('/bulk-send', async (req, res) => {
             if (targetEntity === 'cyclist') {
                 const regs = await prisma.registration.findMany({ where: whereClause, select: { id: true, firstName: true, lastName: true, phoneNumber: true, email: true } });
                 finalRecipients = regs.map(r => ({
+                    firstName: r.firstName,
+                    lastName: r.lastName,
                     name: `${r.firstName} ${r.lastName}`.trim(),
                     phone: r.phoneNumber || undefined,
                     email: r.email || undefined,
@@ -503,6 +550,8 @@ emailRouter.post('/bulk-send', async (req, res) => {
             } else if (targetEntity === 'raffle') {
                 const raffles = await prisma.raffleTicket.findMany({ where: whereClause, select: { id: true, firstName: true, lastName: true, phoneNumber: true, email: true } });
                 finalRecipients = raffles.map(r => ({
+                    firstName: r.firstName,
+                    lastName: r.lastName,
                     name: `${r.firstName} ${r.lastName}`.trim(),
                     phone: r.phoneNumber || undefined,
                     email: r.email || undefined,
@@ -531,7 +580,9 @@ emailRouter.post('/bulk-send', async (req, res) => {
 
         if (testMode) {
             const sample = await Promise.all(validRecipients.slice(0, 5).map(async r => {
-                const targetUrl = getLinkForEntity(targetEntity as any, r.entityId);
+                const targetUrl = targetEntity === 'csv'
+                    ? feedbackUrl
+                    : getLinkForEntity(targetEntity as any, r.entityId);
                 
                 // For preview: shorten only if mode involves SMS
                 let linkToUse = targetUrl;
@@ -539,11 +590,7 @@ emailRouter.post('/bulk-send', async (req, res) => {
                     linkToUse = await createShortLink(targetUrl);
                 }
 
-                const compiledMessage = message
-                    .replace(/{firstName}/g, r.name.split(' ')[0] || '')
-                    .replace(/{lastName}/g, r.name.split(' ').slice(1).join(' ') || '')
-                    .replace(/{bibNumber}/g, r.bibNumber || '')
-                    .replace(/{link}/g, linkToUse);
+                const compiledMessage = compileMessage(r, linkToUse);
 
                 return {
                     name: r.name,
@@ -561,13 +608,12 @@ emailRouter.post('/bulk-send', async (req, res) => {
 
         if (mode === 'sms' || mode === 'both') {
             for (const r of validRecipients.filter(r => Boolean(r.phone))) {
-                let compiledMessage = message
-                    .replace(/{firstName}/g, r.name.split(' ')[0] || '')
-                    .replace(/{lastName}/g, r.name.split(' ').slice(1).join(' ') || '')
-                    .replace(/{bibNumber}/g, r.bibNumber || '');
+                let compiledMessage = compileMessage(r);
 
                 if (compiledMessage.includes('{link}')) {
-                    const targetUrl = getLinkForEntity(targetEntity as any, r.entityId);
+                    const targetUrl = targetEntity === 'csv'
+                        ? feedbackUrl
+                        : getLinkForEntity(targetEntity as any, r.entityId);
                     const shortLink = await createShortLink(targetUrl);
                     compiledMessage = compiledMessage.replace(/{link}/g, shortLink);
                 }
@@ -580,17 +626,15 @@ emailRouter.post('/bulk-send', async (req, res) => {
 
         if (mode === 'email' || mode === 'both') {
             const emailTargets = validRecipients.filter(r => Boolean(r.email)).map(r => {
-                const targetUrl = getLinkForEntity(targetEntity as any, r.entityId);
-                const emailMessage = message
-                    .replace(/{firstName}/g, r.name.split(' ')[0] || '')
-                    .replace(/{lastName}/g, r.name.split(' ').slice(1).join(' ') || '')
-                    .replace(/{bibNumber}/g, r.bibNumber || '')
-                    .replace(/{link}/g, targetUrl); // Use long URL for emails
+                const targetUrl = targetEntity === 'csv'
+                    ? feedbackUrl
+                    : getLinkForEntity(targetEntity as any, r.entityId);
+                const emailMessage = compileMessage(r, targetUrl);
 
                 return {
                     email: r.email!,
-                    firstName: r.name.split(' ')[0] || '',
-                    lastName: r.name.split(' ').slice(1).join(' ') || '',
+                    firstName: getFirstName(r),
+                    lastName: getLastName(r),
                     bibNumber: r.bibNumber,
                     message: emailMessage
                 };
