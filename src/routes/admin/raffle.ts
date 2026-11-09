@@ -20,6 +20,7 @@ adminRaffleRouter.get('/', requireAdmin, async (req, res) => {
             const s = String(search).trim();
             where.OR = [
                 { id: { contains: s, mode: 'insensitive' } },
+                { ticketNumber: { contains: s, mode: 'insensitive' } },
                 { email: { contains: s, mode: 'insensitive' } },
                 { phoneNumber: { contains: s, mode: 'insensitive' } },
                 { firstName: { contains: s, mode: 'insensitive' } },

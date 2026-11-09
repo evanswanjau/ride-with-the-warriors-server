@@ -32,6 +32,7 @@ adminRegistrationsRouter.get('/', requireAdmin, async (req, res) => {
             const s = String(search);
             where.OR = [
                 { id: { contains: s, mode: 'insensitive' } },
+                { bibNumber: { contains: s, mode: 'insensitive' } },
                 { firstName: { contains: s, mode: 'insensitive' } },
                 { lastName: { contains: s, mode: 'insensitive' } },
                 { email: { contains: s, mode: 'insensitive' } },

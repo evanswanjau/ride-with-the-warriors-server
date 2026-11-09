@@ -43,8 +43,22 @@ adminPaymentsRouter.get('/', requireAdmin, async (req, res) => {
             prisma.payment.count({ where }),
         ]);
 
+        // Show the numbers people know (bib / ticket number) next to each payment.
+        const regIds = [...new Set(payments.map(p => p.registrationId).filter((id): id is string => !!id))];
+        const ticketIds = [...new Set(payments.flatMap(p => p.raffleTicketIds ?? []))];
+        const [regs, tickets] = await Promise.all([
+            regIds.length ? prisma.registration.findMany({ where: { id: { in: regIds } }, select: { id: true, bibNumber: true } }) : [],
+            ticketIds.length ? prisma.raffleTicket.findMany({ where: { id: { in: ticketIds } }, select: { id: true, ticketNumber: true } }) : [],
+        ]);
+        const bibById = new Map(regs.map(r => [r.id, r.bibNumber]));
+        const ticketById = new Map(tickets.map(t => [t.id, t.ticketNumber]));
+
         res.json({
-            payments,
+            payments: payments.map(p => ({
+                ...p,
+                bibNumber: p.registrationId ? bibById.get(p.registrationId) ?? null : null,
+                ticketNumbers: (p.raffleTicketIds ?? []).map(id => ticketById.get(id)).filter(Boolean),
+            })),
             pagination: {
                 total,
                 pages: Math.ceil(total / limit),
