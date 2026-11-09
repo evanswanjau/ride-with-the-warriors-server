@@ -34,16 +34,18 @@ export interface UploadResult {
 }
 
 /**
- * Uploads one image. `publicId` makes re-runs idempotent (overwrite=false keeps
- * the existing asset instead of uploading a duplicate).
+ * Uploads one image, either file contents or a public URL that Cloudinary
+ * fetches itself (nothing is downloaded locally). `publicId` makes re-runs
+ * idempotent (overwrite=false keeps the existing asset instead of duplicating it).
  */
-export async function uploadImage(file: Buffer, filename: string, folder: string, publicId: string): Promise<UploadResult> {
+export async function uploadImage(file: Buffer | string, filename: string, folder: string, publicId: string): Promise<UploadResult> {
     const cfg = cloudinaryConfig();
     if (!cfg) throw new Error('CLOUDINARY_URL is not set');
 
     const params = { folder, public_id: publicId, overwrite: 'false', timestamp: Math.floor(Date.now() / 1000) };
     const form = new FormData();
-    form.append('file', new Blob([new Uint8Array(file)]), filename);
+    if (typeof file === 'string') form.append('file', file);
+    else form.append('file', new Blob([new Uint8Array(file)]), filename);
     for (const [k, v] of Object.entries(params)) form.append(k, String(v));
     form.append('api_key', cfg.apiKey);
     form.append('signature', sign(params, cfg.apiSecret));
