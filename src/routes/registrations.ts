@@ -409,11 +409,25 @@ registrationsRouter.get('/:id', requireUser, async (req: UserRequest, res) => {
     return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Registration not found' } });
   }
   const p = (rec.payload ?? {}) as any;
+  // Owner sees every rider in the group; a participant sees only their own row.
+  const groupRows = rec.accountId === me && rec.groupId
+    ? await prisma.registration.findMany({ where: { groupId: rec.groupId }, orderBy: { createdAt: 'asc' } })
+    : [rec as any];
   res.json({
     registration: {
       id: rec.id,
       status: rec.status,
       bibNumber: rec.bibNumber ?? null,
+      riders: groupRows.map((r: any) => ({
+        id: r.id,
+        firstName: r.firstName,
+        lastName: r.lastName,
+        category: r.category,
+        bibNumber: r.bibNumber ?? null,
+        isCaptain: !!r.isCaptain,
+        gender: r.gender,
+        dob: r.dob,
+      })),
       type: rec.type,
       circuitId: rec.circuitId,
       phoneNumber: rec.phoneNumber,
