@@ -257,45 +257,6 @@ registrationsRouter.post('/pay/stk-push', async (req, res) => {
   }
 });
 
-// SIMULATED M-PESA VERIFICATION
-
-registrationsRouter.post('/verify-mpesa', async (req, res) => {
-  const { registrationId, mpesaCode } = req.body;
-
-  if (!registrationId || !mpesaCode) {
-    return res.status(400).json({ error: { code: 'VALIDATION', message: 'Registration ID and M-Pesa code are required' } });
-  }
-
-  console.log(`[M-Pesa Simulation] Verifying code ${mpesaCode} for ${registrationId}...`);
-
-  // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 3000));
-
-  // Any 10-char code starting with 'S' is valid for simulation
-  const isValid = mpesaCode.length === 10 && mpesaCode.toUpperCase().startsWith('S');
-
-  if (isValid) {
-    try {
-      await updateRegistration(registrationId, {
-        status: 'PAID',
-        mpesaCode: mpesaCode.toUpperCase()
-      });
-      console.log(`[M-Pesa Simulation] Success! ${mpesaCode} verified for ${registrationId}`);
-      return res.json({ ok: true, message: 'Payment verified successfully' });
-    } catch (error) {
-      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Registration not found' } });
-    }
-  } else {
-    console.log(`[M-Pesa Simulation] Failed! ${mpesaCode} is invalid`);
-    return res.status(400).json({
-      error: {
-        code: 'INVALID_CODE',
-        message: 'Invalid M-Pesa transaction code. For simulation, use a 10-character code starting with S (e.g., S123456789)'
-      }
-    });
-  }
-});
-
 registrationsRouter.post('/', async (req, res, next) => {
   const start = Date.now();
   try {
@@ -432,10 +393,36 @@ registrationsRouter.post('/', async (req, res, next) => {
   }
 });
 
+// Public, unauthenticated lookup (used by the payment page to show a summary and
+// poll for payment status). Registration IDs are sequential, so this must only
+// return what that page needs: no contact details, ID numbers or DOB.
 registrationsRouter.get('/:id', async (req, res) => {
   const rec = await getRegistration(req.params.id);
   if (!rec) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Registration not found' } });
-  res.json({ registration: rec });
+  const p = (rec.payload ?? {}) as any;
+  res.json({
+    registration: {
+      id: rec.id,
+      status: rec.status,
+      type: rec.type,
+      circuitId: rec.circuitId,
+      classifications: Array.isArray(rec.classifications)
+        ? rec.classifications.map((c: any) => ({ category: c?.category }))
+        : [],
+      pricing: { totalAmount: rec.pricing?.totalAmount ?? rec.totalAmount },
+      payload: {
+        riderDetails: p.riderDetails
+          ? { firstName: p.riderDetails.firstName, lastName: p.riderDetails.lastName }
+          : undefined,
+        teamDetails: p.teamDetails ? { teamName: p.teamDetails.teamName } : undefined,
+        familyDetails: p.familyDetails?.guardian
+          ? { guardian: { firstName: p.familyDetails.guardian.firstName, lastName: p.familyDetails.guardian.lastName } }
+          : undefined,
+        paymentFailed: p.paymentFailed,
+        paymentFailureReason: p.paymentFailureReason,
+      },
+    },
+  });
 });
 
 registrationsRouter.get('/config/categories', async (_req, res, next) => {

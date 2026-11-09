@@ -1,10 +1,32 @@
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
+import { timingSafeEqual } from 'crypto';
 import { prisma } from '../storage/prisma.js';
 import { updateRegistration, getRegistration } from '../storage/memoryRegistrations.js';
 import { sendConfirmationEmail, sendRaffleConfirmationEmail } from '../services/emailService.js';
 import { smsService } from '../services/smsService.js';
 
 export const dtbCallbacksRouter = Router();
+
+/**
+ * Rejects callbacks that don't carry DTB_CALLBACK_SECRET (sent to DTB as the
+ * `key` query param on UserCallback). If the secret is not configured the check
+ * is skipped with a warning, so payments keep working until it is set.
+ */
+function verifyCallbackKey(req: Request, res: Response, next: NextFunction) {
+    const secret = process.env.DTB_CALLBACK_SECRET;
+    if (!secret) {
+        console.warn('[DTB Callback] DTB_CALLBACK_SECRET is not set — callback is NOT authenticated');
+        return next();
+    }
+    const key = typeof req.query.key === 'string' ? req.query.key : '';
+    const a = Buffer.from(key);
+    const b = Buffer.from(secret);
+    if (a.length !== b.length || !timingSafeEqual(a, b)) {
+        console.warn(`[DTB Callback] Rejected callback with invalid key from ${req.ip}`);
+        return res.status(401).json({ received: false, error: 'Unauthorized' });
+    }
+    next();
+}
 
 /**
  * Unified DTB STK Push Callback Handler
@@ -21,7 +43,7 @@ export const dtbCallbacksRouter = Router();
  *   "transactionId": "..."
  * }
  */
-dtbCallbacksRouter.post('/stkpush', async (req, res) => {
+dtbCallbacksRouter.post('/stkpush', verifyCallbackKey, async (req, res) => {
     console.log('[DTB Unified Callback] Received payload:', JSON.stringify(req.body, null, 2));
 
     // DTB wraps in Body.stkCallback only for Safaricom direct; for Fiorano the body IS the payload.
@@ -67,10 +89,7 @@ dtbCallbacksRouter.post('/stkpush', async (req, res) => {
         // ── 1. Try Donation ──────────────────────────────────────────────────
         const donation = await prisma.donation.findFirst({
             where: {
-                OR: [
-                    { checkoutRequestId: externalReference },
-                    { id: externalReference },
-                ],
+                checkoutRequestId: externalReference,
             },
         });
 
@@ -122,20 +141,14 @@ dtbCallbacksRouter.post('/stkpush', async (req, res) => {
         // ── 2. Try Raffle Ticket ─────────────────────────────────────────────
         const tickets = await (prisma.raffleTicket as any).findMany({
             where: {
-                OR: [
-                    { checkoutRequestId: externalReference },
-                    { id: externalReference },
-                ],
+                checkoutRequestId: externalReference,
             },
         });
 
         if (tickets.length > 0) {
             await (prisma.raffleTicket as any).updateMany({
                 where: {
-                    OR: [
-                        { checkoutRequestId: externalReference },
-                        { id: externalReference },
-                    ],
+                    checkoutRequestId: externalReference,
                 },
                 data: {
                     status: isSuccess ? 'PAID' : 'UNPAID',
@@ -202,10 +215,7 @@ dtbCallbacksRouter.post('/stkpush', async (req, res) => {
         // ── 3. Try Registration (via Payment audit table) ────────────────────
         const paymentAudit = await prisma.payment.findFirst({
             where: {
-                OR: [
-                    { checkoutRequestId: externalReference },
-                    { registrationId: externalReference },
-                ],
+                checkoutRequestId: externalReference,
             },
         });
 

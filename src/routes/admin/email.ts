@@ -1,10 +1,14 @@
 import { Router } from 'express';
+import { requireAdmin } from '../../middleware/auth.js';
 import { prisma } from '../../storage/prisma.js';
 import { sendConfirmationEmail, verifyEmailConnection, getTemplatePreview, sendEmail, sendRaffleEmail, sendBulkCustomEmail } from '../../services/emailService.js';
 import { triggerReminderCheck } from '../../services/reminderScheduler.js';
 import { smsService } from '../../services/smsService.js';
 
 export const emailRouter = Router();
+
+// Every route in this router is admin-only.
+emailRouter.use(requireAdmin);
 
 // Preview email templates (returns HTML)
 emailRouter.get('/preview/:type', (req, res) => {

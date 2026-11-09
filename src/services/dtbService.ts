@@ -2,6 +2,17 @@
 import { randomUUID } from 'crypto';
 
 /**
+ * Appends DTB_CALLBACK_SECRET as a `key` query param so the callback route can
+ * reject requests that did not originate from a URL we handed to DTB.
+ */
+function withCallbackKey(url: string): string {
+    const secret = process.env.DTB_CALLBACK_SECRET;
+    if (!secret) return url;
+    const sep = url.includes('?') ? '&' : '?';
+    return `${url}${sep}key=${encodeURIComponent(secret)}`;
+}
+
+/**
  * DTB (Diamond Trust Bank) Payment Service
  * 
  * This service handles interactions with the DTB API via the Fiorano platform.
@@ -128,7 +139,7 @@ export const dtbService = {
                 BusinessShortCode: DTB_CONFIG.shortCode,
                 TransactionDesc: `Ride With Warriors - ${details.registrationId}`,
                 PromptDisplayAccount: process.env.DTB_PROMPT_ACCOUNT || 'RideWithWarriors',
-                UserCallback: details.callbackUrl || `${process.env.APP_URL || process.env.BASE_URL}/api/dtb/stkpush`,
+                UserCallback: withCallbackKey(details.callbackUrl || `${process.env.APP_URL || process.env.BASE_URL}/api/dtb/stkpush`),
             };
 
             const response = await fetch(DTB_CONFIG.stkPushUrl, {
