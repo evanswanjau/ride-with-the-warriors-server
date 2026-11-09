@@ -25,6 +25,7 @@ import { bikeHiresRouter } from './routes/admin/bike-hires.js';
 import { adminBibsRouter } from './routes/admin/bibs.js';
 import { authRouter as userAuthRouter } from './routes/auth.js';
 import { meRouter } from './routes/me.js';
+import { galleryRouter } from './routes/gallery.js';
 import { prisma } from './storage/prisma.js';
 
 
@@ -59,6 +60,7 @@ app.use('/api/v1/feedback', feedbackRouter);
 // Participant accounts (OTP login) and their own data
 app.use('/api/v1/auth', userAuthRouter);
 app.use('/api/v1/me', meRouter);
+app.use('/api/v1/gallery', galleryRouter);
 
 
 // Admin Routes
