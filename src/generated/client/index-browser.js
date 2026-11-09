@@ -152,7 +152,11 @@ exports.Prisma.RegistrationScalarFieldEnum = {
   rank: 'rank',
   service: 'service',
   serviceNumber: 'serviceNumber',
-  unit: 'unit'
+  unit: 'unit',
+  bibNumber: 'bibNumber',
+  eventYear: 'eventYear',
+  accountId: 'accountId',
+  participantAccountId: 'participantAccountId'
 };
 
 exports.Prisma.AdminScalarFieldEnum = {
@@ -190,7 +194,8 @@ exports.Prisma.PaymentScalarFieldEnum = {
   transactionDate: 'transactionDate',
   mnoReference: 'mnoReference',
   cbsReference: 'cbsReference',
-  paymentDetails: 'paymentDetails'
+  paymentDetails: 'paymentDetails',
+  bikeHireId: 'bikeHireId'
 };
 
 exports.Prisma.PricingCategoryScalarFieldEnum = {
@@ -235,7 +240,10 @@ exports.Prisma.RaffleTicketScalarFieldEnum = {
   failureReason: 'failureReason',
   mpesaCode: 'mpesaCode',
   paymentDetails: 'paymentDetails',
-  referralCode: 'referralCode'
+  referralCode: 'referralCode',
+  ticketNumber: 'ticketNumber',
+  eventYear: 'eventYear',
+  accountId: 'accountId'
 };
 
 exports.Prisma.ReferralScalarFieldEnum = {
@@ -262,7 +270,9 @@ exports.Prisma.DonationScalarFieldEnum = {
   updatedAt: 'updatedAt',
   failureReason: 'failureReason',
   mpesaCode: 'mpesaCode',
-  paymentDetails: 'paymentDetails'
+  paymentDetails: 'paymentDetails',
+  eventYear: 'eventYear',
+  accountId: 'accountId'
 };
 
 exports.Prisma.SmsLogScalarFieldEnum = {
@@ -289,7 +299,10 @@ exports.Prisma.BikeHireScalarFieldEnum = {
   status: 'status',
   amount: 'amount',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  checkoutRequestId: 'checkoutRequestId',
+  eventYear: 'eventYear',
+  accountId: 'accountId'
 };
 
 exports.Prisma.NotifyInterestScalarFieldEnum = {
@@ -303,8 +316,55 @@ exports.Prisma.EventFeedbackScalarFieldEnum = {
   id: 'id',
   role: 'role',
   rating: 'rating',
+  firstName: 'firstName',
+  lastName: 'lastName',
   highlights: 'highlights',
   improvements: 'improvements',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.AccountScalarFieldEnum = {
+  id: 'id',
+  firstName: 'firstName',
+  lastName: 'lastName',
+  email: 'email',
+  phone: 'phone',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  lastLoginAt: 'lastLoginAt'
+};
+
+exports.Prisma.OtpCodeScalarFieldEnum = {
+  id: 'id',
+  channel: 'channel',
+  destination: 'destination',
+  purpose: 'purpose',
+  codeHash: 'codeHash',
+  context: 'context',
+  attempts: 'attempts',
+  expiresAt: 'expiresAt',
+  consumedAt: 'consumedAt',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.UserSessionScalarFieldEnum = {
+  id: 'id',
+  accountId: 'accountId',
+  token: 'token',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.GalleryPhotoScalarFieldEnum = {
+  id: 'id',
+  eventYear: 'eventYear',
+  album: 'album',
+  publicId: 'publicId',
+  width: 'width',
+  height: 'height',
+  caption: 'caption',
+  sortOrder: 'sortOrder',
+  isPublished: 'isPublished',
   createdAt: 'createdAt'
 };
 
@@ -355,7 +415,11 @@ exports.Prisma.ModelName = {
   ShortLink: 'ShortLink',
   BikeHire: 'BikeHire',
   NotifyInterest: 'NotifyInterest',
-  EventFeedback: 'EventFeedback'
+  EventFeedback: 'EventFeedback',
+  Account: 'Account',
+  OtpCode: 'OtpCode',
+  UserSession: 'UserSession',
+  GalleryPhoto: 'GalleryPhoto'
 };
 
 /**

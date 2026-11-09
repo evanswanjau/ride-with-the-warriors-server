@@ -41,10 +41,22 @@ model Registration {
   serviceNumber        String?
   unit                 String?
   bikeHire             BikeHire?
+  // Assigned only once the registration is paid (or made complementary).
+  bibNumber            String?            @unique
+  eventYear            Int                @default(2026)
+  // Account that registered and pays for this row (guardian / team captain / rider).
+  accountId            String?
+  account              Account?           @relation("RegistrationOwner", fields: [accountId], references: [id], onDelete: SetNull)
+  // The rider's own account, when it differs from the owner (team members, adult family riders).
+  participantAccountId String?
+  participantAccount   Account?           @relation("RegistrationParticipant", fields: [participantAccountId], references: [id], onDelete: SetNull)
 
   @@index([groupId])
   @@index([email])
   @@index([phoneNumber])
+  @@index([accountId])
+  @@index([participantAccountId])
+  @@index([eventYear])
 }
 
 model Admin {
@@ -71,7 +83,7 @@ model Payment {
   id                 String   @id @default(uuid())
   registrationId     String?
   raffleTicketIds    String[] // New: store array of ticket IDs for bulk payments
-  donationId         String?  // New: link to donation
+  donationId         String? // New: link to donation
   checkoutRequestId  String?  @unique
   merchantRequestId  String?
   phone              String?
@@ -82,9 +94,10 @@ model Payment {
   updatedAt          DateTime @updatedAt
   mpesaReceiptNumber String?
   transactionDate    String?
-  mnoReference       String?  // New: generic bank reference
-  cbsReference       String?  // New: core banking system reference
-  paymentDetails     Json?    // New: store full callback payload
+  mnoReference       String? // New: generic bank reference
+  cbsReference       String? // New: core banking system reference
+  paymentDetails     Json? // New: store full callback payload
+  bikeHireId         String? // Payment for a bike hire added after registration
 
   @@index([registrationId])
   @@index([checkoutRequestId])
@@ -124,25 +137,31 @@ model EmailLog {
 }
 
 model RaffleTicket {
-  id                 String   @id
-  firstName          String
-  lastName           String
-  email              String
-  phoneNumber        String?
-  status             String   @default("UNPAID")
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  checkoutRequestId  String?
-  paymentFailed      Boolean  @default(false)
-  gender             String?
-  idNumber           String?
-  failureReason      String?
-  mpesaCode          String?  // New: store Receipt Number directly
-  paymentDetails     Json?    // New: store full callback payload
-  referralCode       String?  // Referral code used at purchase
+  id                String   @id
+  firstName         String
+  lastName          String
+  email             String
+  phoneNumber       String?
+  status            String   @default("UNPAID")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  checkoutRequestId String?
+  paymentFailed     Boolean  @default(false)
+  gender            String?
+  idNumber          String?
+  failureReason     String?
+  mpesaCode         String? // New: store Receipt Number directly
+  paymentDetails    Json? // New: store full callback payload
+  referralCode      String? // Referral code used at purchase
+  // Assigned only once the ticket is paid.
+  ticketNumber      String?  @unique
+  eventYear         Int      @default(2026)
+  accountId         String?
+  account           Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
 
   @@index([email])
   @@index([referralCode])
+  @@index([accountId])
 }
 
 model Referral {
@@ -170,11 +189,16 @@ model Donation {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
   failureReason     String?
-  mpesaCode         String?  // New
-  paymentDetails    Json?    // New
+  mpesaCode         String? // New
+  paymentDetails    Json? // New
+  eventYear         Int      @default(2026)
+  // Optional: donations can be anonymous.
+  accountId         String?
+  account           Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
 
   @@index([email])
   @@index([checkoutRequestId])
+  @@index([accountId])
 }
 
 enum RegistrationStatus {
@@ -186,13 +210,13 @@ enum RegistrationStatus {
 }
 
 model SmsLog {
-  id             String   @id @default(uuid())
-  phoneNumber    String
-  message        String
-  status         String
-  messageId      String?
-  cost           String?
-  sentAt         DateTime @default(now())
+  id          String   @id @default(uuid())
+  phoneNumber String
+  message     String
+  status      String
+  messageId   String?
+  cost        String?
+  sentAt      DateTime @default(now())
 
   @@index([phoneNumber])
   @@index([status])
@@ -200,7 +224,7 @@ model SmsLog {
 
 model ShortLink {
   id        String   @id // The short ID
-  url       String   // original URL
+  url       String // original URL
   createdAt DateTime @default(now())
   clicks    Int      @default(0)
 
@@ -208,16 +232,21 @@ model ShortLink {
 }
 
 model BikeHire {
-  id              String       @id @default(uuid())
-  registrationId  String       @unique
-  registration    Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
-  bikeType        String       @default("Standard")
-  status          String       @default("PENDING") // PENDING, PAID, COLLECTED, RETURNED
-  amount          Float        @default(1500)
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  id                String       @id @default(uuid())
+  registrationId    String       @unique
+  registration      Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  bikeType          String       @default("Standard")
+  status            String       @default("PENDING") // PENDING, PAID, COLLECTED, RETURNED
+  amount            Float        @default(1500)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  checkoutRequestId String?      @unique
+  eventYear         Int          @default(2026)
+  accountId         String?
+  account           Account?     @relation(fields: [accountId], references: [id], onDelete: SetNull)
 
   @@index([registrationId])
+  @@index([accountId])
 }
 
 model NotifyInterest {
@@ -231,14 +260,78 @@ model NotifyInterest {
 
 model EventFeedback {
   id           String   @id @default(uuid())
-  role         String   // CYCLIST | ATTENDEE | SPONSOR | ORGANISER
-  rating       Int      // 1-5 overall experience
+  role         String // CYCLIST | ATTENDEE | SPONSOR | ORGANISER
+  rating       Int // 1-5 overall experience
   firstName    String?
   lastName     String?
-  highlights   String?  // what went well
-  improvements String?  // what to improve
+  highlights   String? // what went well
+  improvements String? // what to improve
   createdAt    DateTime @default(now())
 
   @@index([role])
   @@index([createdAt])
+}
+
+// ─── Participant accounts (passwordless, OTP login) ─────────────────────────
+
+model Account {
+  id             String         @id @default(uuid())
+  firstName      String
+  lastName       String
+  // Normalised: lowercase email, phone as 2547XXXXXXXX / 2541XXXXXXXX. At least one is set.
+  email          String?        @unique
+  phone          String?        @unique
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  lastLoginAt    DateTime?
+  sessions       UserSession[]
+  registrations  Registration[] @relation("RegistrationOwner")
+  participations Registration[] @relation("RegistrationParticipant")
+  raffleTickets  RaffleTicket[]
+  donations      Donation[]
+  bikeHires      BikeHire[]
+}
+
+model OtpCode {
+  id          String    @id @default(uuid())
+  channel     String // EMAIL | SMS
+  destination String // normalised email or phone
+  purpose     String // LOGIN | SIGNUP | ADD_CONTACT
+  codeHash    String
+  // Signup details or the account adding a contact, carried until verification.
+  context     Json?
+  attempts    Int       @default(0)
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([destination, createdAt])
+}
+
+model UserSession {
+  id        String   @id @default(uuid())
+  accountId String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+}
+
+// ─── Gallery (Cloudinary-hosted) ──────────────────────────────────────────────
+
+model GalleryPhoto {
+  id          String   @id @default(uuid())
+  eventYear   Int
+  album       String
+  publicId    String   @unique // Cloudinary public_id
+  width       Int
+  height      Int
+  caption     String?
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@index([eventYear, album, sortOrder])
 }
