@@ -46,7 +46,12 @@ export const smsService = {
     /**
      * Send an SMS to one or more recipients.
      */
-    async sendSMS(recipients: string[], message: string): Promise<{ success: boolean; successCount: number; failedCount: number }> {
+    /**
+     * @param opts.logAs  Text stored in SmsLog instead of the real message
+     *                    (used for one-time codes, which must never be stored).
+     */
+    async sendSMS(recipients: string[], message: string, opts: { logAs?: string } = {}): Promise<{ success: boolean; successCount: number; failedCount: number }> {
+        const logMessage = opts.logAs ?? message;
         if (messagingDisabled()) {
             logSuppressed('sms', recipients.length);
             return { success: true, successCount: 0, failedCount: 0 };
@@ -94,7 +99,7 @@ export const smsService = {
 
                     logsData.push({
                         phoneNumber: String(res.mobile),
-                        message: message,
+                        message: logMessage,
                         status: res['response-description'] || (isSuccess ? 'Success' : 'Failed'),
                         messageId: res.messageid ? String(res.messageid) : null,
                     });
@@ -135,7 +140,7 @@ export const smsService = {
 
                             logsData.push({
                                 phoneNumber: String(res.mobile),
-                                message: message,
+                                message: logMessage,
                                 status: res['response-description'] || (isSuccess ? 'Success' : 'Failed'),
                                 messageId: res.messageid ? String(res.messageid) : null,
                             });
@@ -153,7 +158,7 @@ export const smsService = {
             console.error(`[SMS Service] Error sending SMS:`, (error as Error).message);
             const failedLogs = formattedRecipients.map(r => ({
                 phoneNumber: r,
-                message: message,
+                message: logMessage,
                 status: 'Error: ' + String((error as Error).message).substring(0, 50),
             }));
             await prisma.smsLog.createMany({ data: failedLogs });

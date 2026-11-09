@@ -974,6 +974,33 @@ export async function sendAlertEmail(
   }
 }
 
+/** One-time login code. The code itself is never logged. */
+export async function sendOtpEmail(to: string, code: string): Promise<boolean> {
+  const content = `
+    <h2 style="margin: 0 0 14px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
+      font-size: 26px; font-weight: 700; color: ${C.textMain};">Your login code</h2>
+    <p style="margin: 0 0 18px; font-size: 15px; line-height: 1.6; color: ${C.textMuted};">
+      Use this code to log in to your Ride With The Warriors account. It expires in 10 minutes.
+    </p>
+    ${renderIdBlock('Login code', code, 'Never share this code with anyone')}
+    <p style="margin: 18px 0 0; font-size: 13px; line-height: 1.6; color: ${C.textMuted};">
+      If you didn't try to log in, you can ignore this email.
+    </p>`;
+  try {
+    await transporter.sendMail({
+      from: EMAIL_FROM,
+      to,
+      subject: 'Your Ride With The Warriors login code',
+      text: `${code} is your Ride With The Warriors login code. It expires in 10 minutes.`,
+      html: getEmailTemplate(content, 'Your login code', 'Your one-time login code'),
+    });
+    return true;
+  } catch (error) {
+    console.error('[Email] Failed to send login code:', error instanceof Error ? error.message : error);
+    return false;
+  }
+}
+
 export async function verifyEmailConnection(): Promise<boolean> {
   try {
     await transporter.verify();
