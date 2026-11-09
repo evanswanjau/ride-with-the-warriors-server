@@ -40,6 +40,7 @@ export type EmailType =
 
 interface RegistrationData {
   id: string;
+  bibNumber?: string | null; // assigned once paid
   firstName: string;
   lastName: string;
   email: string;
@@ -403,7 +404,7 @@ function getConfirmationEmail(data: RegistrationData): { subject: string; html: 
       Your registration is confirmed. Keep your ID handy &mdash; you'll need it at check-in.
     </p>
 
-    ${renderIdBlock('Registration ID', getNumericId(data.id), 'Present this at event check-in')}
+    ${renderIdBlock('Registration ID', getNumericId(data.bibNumber ?? data.id), 'Present this at event check-in')}
     ${renderDetailsTable(data)}
     ${renderEventMeta(data)}
 
@@ -424,7 +425,7 @@ function getConfirmationEmail(data: RegistrationData): { subject: string; html: 
 
   return {
     subject: `Registration Confirmed — ${EVENT_NAME}`,
-    html: getEmailTemplate(content, 'Registration Confirmed', `Your Registration ID is ${getNumericId(data.id)}`),
+    html: getEmailTemplate(content, 'Registration Confirmed', `Your Registration ID is ${getNumericId(data.bibNumber ?? data.id)}`),
   };
 }
 
@@ -515,7 +516,7 @@ function getEventReminderEmail(data: RegistrationData, daysUntil: number): { sub
       Hi <strong>${data.firstName}</strong> &mdash; ${cfg.sub}
     </p>
 
-    ${renderIdBlock('Your BIB Number', getNumericId(data.id), 'Present this at check-in')}
+    ${renderIdBlock('Your BIB Number', getNumericId(data.bibNumber ?? data.id), 'Present this at check-in')}
     ${renderEventMeta(data)}
     ${renderDetailsTable(data)}
 

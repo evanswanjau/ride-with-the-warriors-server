@@ -4,7 +4,7 @@ import { ZodError } from 'zod';
 import { quoteRequestSchema, riderDetailsSchema, teamDetailsSchema, familyDetailsSchema } from '../validation/registrationSchemas.js';
 import { zodToApiError } from '../validation/zodError.js';
 import { buildQuote, getPricingCategories } from '../services/pricing.js';
-import { createRegistration, getRegistration, getAllRegistrations, generateNextId, updateRegistration, findExistingRegistrationsByEmails, findExistingRegistrationsByIdNumbers, RegistrationRecord } from '../storage/memoryRegistrations.js';
+import { createRegistration, getRegistration, getAllRegistrations, updateRegistration, findExistingRegistrationsByEmails, findExistingRegistrationsByIdNumbers, RegistrationRecord } from '../storage/memoryRegistrations.js';
 import { dtbService } from '../services/dtbService.js';
 
 import { prisma } from '../storage/prisma.js';
@@ -130,11 +130,8 @@ registrationsRouter.post('/quote', async (req, res, next) => {
 
     const quote = await buildQuote({ circuitId: base.circuitId, type: base.type, payload });
 
-    // Get projected ID based on this quote
-    const mainCategory = quote.classifications[0]?.category || 'Individual';
-    const projectedId = await generateNextId(mainCategory, base.circuitId, base.type);
-
-    return res.json({ ...quote, projectedId });
+    // Bib numbers are assigned only after payment, so there is no projected number.
+    return res.json(quote);
   } catch (err) {
     if (err instanceof ZodError) return res.status(400).json(zodToApiError(err));
     next(err);

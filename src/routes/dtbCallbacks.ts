@@ -4,6 +4,7 @@ import { prisma } from '../storage/prisma.js';
 import { updateRegistration, getRegistration } from '../storage/memoryRegistrations.js';
 import { sendConfirmationEmail, sendRaffleConfirmationEmail } from '../services/emailService.js';
 import { smsService } from '../services/smsService.js';
+import { assignTicketNumbers } from '../services/numbering.js';
 
 export const dtbCallbacksRouter = Router();
 
@@ -188,15 +189,18 @@ dtbCallbacksRouter.post('/stkpush', verifyCallbackKey, async (req, res) => {
             console.log(`[DTB Callback] Updated ${tickets.length} Raffle Ticket(s) → ${isSuccess ? 'PAID' : 'FAILED'}`);
 
             if (isSuccess) {
+                // Ticket numbers are only handed out once paid.
+                const numbered = await assignTicketNumbers(tickets.map((t: any) => t.id));
+                const numbers = numbered.map(t => t.ticketNumber ?? t.id);
                 const first = tickets[0];
                 if (first?.phoneNumber) {
-                    const tids = tickets.map((t: any) => String(t.id).toUpperCase()).join(', ');
+                    const tids = numbers.join(', ');
                     smsService.sendSMS([first.phoneNumber], `Hi ${first.firstName}, payment received for your ${tickets.length} raffle ticket(s) (Nos: ${tids}). Thank you for supporting Ride With The Warriors!`);
                 }
                 if (first?.email) {
                     sendRaffleConfirmationEmail({
-                        id: first.id,
-                        ids: (tickets as any[]).map((t) => t.id),
+                        id: numbers[0],
+                        ids: numbers,
                         firstName: first.firstName,
                         lastName: first.lastName,
                         email: first.email,
@@ -253,11 +257,12 @@ dtbCallbacksRouter.post('/stkpush', verifyCallbackKey, async (req, res) => {
                     if (isSuccess) {
                         const reg = await prisma.registration.findUnique({ where: { id: registrationId } });
                         if (reg?.phoneNumber) {
-                            smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, your payment of KES ${reg.totalAmount} for Ride With The Warriors cycling registration (BIB: ${reg.id}) is confirmed. Thank you!`);
+                            smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, your payment of KES ${reg.totalAmount} for Ride With The Warriors cycling registration (BIB: ${reg.bibNumber ?? 'pending'}) is confirmed. Thank you!`);
                         }
                         if (reg?.email) {
                             sendConfirmationEmail({
                                 id: reg.id,
+                                bibNumber: reg.bibNumber,
                                 firstName: reg.firstName,
                                 lastName: reg.lastName,
                                 email: reg.email,

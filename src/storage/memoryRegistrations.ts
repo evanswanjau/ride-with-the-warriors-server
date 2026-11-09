@@ -1,5 +1,7 @@
+import { randomUUID } from 'crypto';
 import { prisma } from './prisma.js';
 import { sendConfirmationEmail } from '../services/emailService.js';
+import { assignBibs } from '../services/numbering.js';
 
 export type RegistrationStatus = 'UNPAID' | 'PAID' | 'CONFIRMED' | 'COMPLEMENTARY' | 'CANCELLED';
 
@@ -35,89 +37,24 @@ export type RegistrationRecord = {
   payload?: any;
   pricing?: any;
   classifications?: any;
+  bibNumber?: string | null;
+  accountId?: string | null;
+  participantAccountId?: string | null;
 };
 
-export async function generateNextId(categoryName: string, circuitId: string, type: string, usedIds: string[] = []): Promise<string> {
-  // Fetch category rule from DB
-  const cat = await prisma.pricingCategory.findFirst({
-    where: {
-      categoryName,
-      circuitId,
-      type
-    }
-  });
+/** Statuses that count as "paid" and therefore get a bib. */
+export const PAID_STATUSES: RegistrationStatus[] = ['PAID', 'CONFIRMED', 'COMPLEMENTARY'];
 
-  if (!cat) {
-    console.warn(`[ID Generator] No range found for category ${categoryName}, using fallback random ID`);
-    return Math.random().toString(36).substring(2, 10).toUpperCase();
-  }
-
-  // Parse regRange (e.g., "5001–6000" or "C200–C299")
-  const rangeStr = cat.regRange;
-  const parts = rangeStr.split(/[–-]/); // handle both en-dash and hyphen
-  if (parts.length !== 2) {
-    console.warn(`[ID Generator] Invalid range format ${rangeStr} for ${categoryName}`);
-    return Math.random().toString(36).substring(2, 10).toUpperCase();
-  }
-
-  const startStr = parts[0].trim();
-  const endStr = parts[1].trim();
-
-  const prefix = startStr.match(/^[A-Z]+/)?.[0] || '';
-  const startNum = parseInt(startStr.replace(/^[A-Z]+/, ''), 10);
-  const endNum = parseInt(endStr.replace(/^[A-Z]+/, ''), 10);
-
-  // Fetch all records in range to find the TRUE numeric maximum.
-  // Note: findFirst with orderBy:'desc' uses string sorting, which fails (e.g., "999" > "1000")
-  const records = await (prisma.registration as any).findMany({
-    where: {
-      id: {
-        gte: startStr,
-        lte: endStr,
-        startsWith: prefix || undefined
-      }
-    },
-    select: { id: true }
-  });
-
-  const numericDbIds = (records as { id: string }[])
-    .map(r => parseInt(prefix ? r.id.substring(prefix.length) : r.id, 10))
-    .filter(n => !isNaN(n) && n >= startNum && n <= endNum);
-
-  // Combine DB IDs and IDs used in the current batch
-  const allUsedNums = new Set([
-    ...numericDbIds,
-    ...usedIds
-      .filter(id => id.startsWith(prefix))
-      .map(id => parseInt(prefix ? id.substring(prefix.length) : id, 10))
-      .filter(n => !isNaN(n) && n >= startNum && n <= endNum)
-  ]);
-
-  let nextVal = startNum;
-  while (allUsedNums.has(nextVal) && nextVal <= endNum) {
-    nextVal++;
-  }
-
-  // Protect against range overflow
-  if (nextVal > endNum) {
-    console.error(`Range overflow for category ${categoryName}. Max is ${endNum}, attempted ${nextVal}`);
-    return (Math.random().toString(36).substring(2, 6) + Date.now().toString(36).substring(5)).toUpperCase();
-  }
-
-  const result = prefix ? `${prefix}${nextVal}` : nextVal.toString().padStart(4, '0');
-  return result;
-}
-
+// Rows get random UUID ids. Bib numbers are assigned only once the group is paid
+// (see services/numbering.ts).
 export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 'createdAt' | 'updatedAt' | 'firstName' | 'lastName' | 'isCaptain' | 'totalAmount'>): Promise<RegistrationRecord> {
   const payload = JSON.parse(JSON.stringify(input.payload)) as any;
-  const usedIds: string[] = [];
   const recordsToCreate: any[] = [];
   const groupId = Math.random().toString(36).substring(2, 11).toUpperCase();
 
   if (input.type === 'individual') {
     const category = (input.classifications as any[])?.[0]?.category || 'Individual';
-    const id = await generateNextId(category, input.circuitId, input.type, usedIds);
-    usedIds.push(id);
+    const id = randomUUID();
     const rider = payload.riderDetails;
 
     recordsToCreate.push({
@@ -145,6 +82,7 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
       service: rider.service || null,
       unit: rider.unit || null,
       payload: { ...payload, groupId },
+      accountId: input.accountId ?? null,
       pricing: input.pricing,
       classifications: input.classifications,
     });
@@ -152,16 +90,7 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
     const teamClass = (input.classifications as any[])?.[0]?.category || 'Blitz Team';
     const members = payload.teamDetails.members;
 
-    // Generate a single base ID for the entire team
-    const baseId = await generateNextId(teamClass, input.circuitId, input.type, usedIds);
-    usedIds.push(baseId); // This ensures the next registration will increment from this baseId
-
-    const memberIds: string[] = [];
-    for (let i = 0; i < members.length; i++) {
-      const id = `${baseId}-${i + 1}`;
-      memberIds.push(id);
-      members[i].regId = id; // Inject into payload
-    }
+    const memberIds: string[] = members.map(() => randomUUID());
 
     for (let i = 0; i < members.length; i++) {
       const id = memberIds[i];
@@ -193,6 +122,8 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
         service: m.service || null,
         unit: m.unit || null,
         payload: { ...payload, groupId, isPrimary: i === 0, memberIndex: i },
+        accountId: input.accountId ?? null,
+        participantAccountId: i === 0 ? null : (m.participantAccountId ?? null),
         pricing: input.pricing,
         classifications: input.classifications,
       });
@@ -207,19 +138,7 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
       }
     });
 
-    // First pass: Generate IDs and inject into payload
-    const riderIds: string[] = [];
-    for (let i = 0; i < riders.length; i++) {
-      const rider = riders[i];
-      const participantCategory = rider.category === 'cubs' ? 'Cubs' : rider.category === 'champs' ? 'Champs' : 'Parent';
-      const id = await generateNextId(participantCategory, input.circuitId, input.type, usedIds);
-      usedIds.push(id);
-      riderIds.push(id);
-
-      // Find the original rider object in the nested payload and inject ID
-      const originalRider = payload.familyDetails.riders[rider.category].find((r: any) => r.id === rider.id);
-      if (originalRider) originalRider.regId = id;
-    }
+    const riderIds: string[] = riders.map(() => randomUUID());
 
     // Build a per-category price map from the pricing line items
     const categoryPriceMap: Record<string, number> = {};
@@ -263,6 +182,7 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
         service: i === 0 ? payload.familyDetails.guardian.service : null,
         unit: i === 0 ? payload.familyDetails.guardian.unit : null,
         payload: { ...payload, groupId, isPrimary: i === 0, riderId: rider.id },
+        accountId: input.accountId ?? null,
         pricing: input.pricing,
         classifications: input.classifications,
       });
@@ -284,14 +204,19 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
     throw new Error('No records to create');
   }
 
-  // Send confirmation emails if the registration is created with PAID status (e.g. military/zero-cost)
-  if (input.status === 'PAID') {
+  // Created already paid (e.g. military/zero-cost): assign bibs, then send confirmations.
+  if (PAID_STATUSES.includes(input.status)) {
+    const numbered = await assignBibs(recordsToCreate[0].id);
+    const bibById = new Map(numbered.map(r => [r.id, r.bibNumber]));
+    for (const reg of recordsToCreate) reg.bibNumber = bibById.get(reg.id) ?? null;
+
     const emailPromises = [];
     for (const reg of recordsToCreate) {
       if (reg.email) {
         emailPromises.push(
           sendConfirmationEmail({
             id: reg.id,
+            bibNumber: reg.bibNumber,
             firstName: reg.firstName,
             lastName: reg.lastName,
             email: reg.email,
@@ -418,11 +343,9 @@ export async function updateRegistration(id: string, input: Partial<Omit<Registr
     data: updateData,
   });
 
-  // Trigger confirmation email if status changed to PAID, CONFIRMED, or COMPLEMENTARY
-  if (input.status === 'PAID' || input.status === 'CONFIRMED' || input.status === 'COMPLEMENTARY') {
-    const registrationsToSend = groupId
-      ? await prisma.registration.findMany({ where: { groupId } })
-      : [rec];
+  // Paid (or complementary): assign bibs, then send confirmation emails.
+  if (input.status && PAID_STATUSES.includes(input.status)) {
+    const registrationsToSend = await assignBibs(id);
 
     const emailPromises = [];
     for (const reg of registrationsToSend) {
@@ -430,6 +353,7 @@ export async function updateRegistration(id: string, input: Partial<Omit<Registr
         emailPromises.push(
           sendConfirmationEmail({
             id: reg.id,
+            bibNumber: reg.bibNumber,
             firstName: reg.firstName,
             lastName: reg.lastName,
             email: reg.email,

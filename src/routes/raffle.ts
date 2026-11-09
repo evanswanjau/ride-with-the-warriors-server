@@ -1,65 +1,17 @@
 import { Router } from 'express';
+import { randomUUID } from 'crypto';
 import { prisma } from '../storage/prisma.js';
 import { dtbService } from '../services/dtbService.js';
 import { maskRaffleTicket } from '../utils/masking.js';
 import { raffleRateLimiter } from '../middleware/rateLimit.js';
+import { assignTicketNumbers } from '../services/numbering.js';
 
 export const raffleRouter = Router();
 
 const RAFFLE_AMOUNT = 1000;
 
-// ─── Code Generation ──────────────────────────────────────────────────────────
-// Range: AA001 → AZ999 → BA001 → BB999
-const FIRST_LETTERS = ['A', 'B'];
-const SECOND_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-const MAX_DIGITS = 999;
-
-function parseCode(code: string): { fl: string; sl: string; num: number } | null {
-  const m = code.match(/^([AB])([A-Z])(\d{3})$/);
-  if (!m) return null;
-  return { fl: m[1], sl: m[2], num: parseInt(m[3], 10) };
-}
-
-function codeToOrdinal(code: string): number {
-  const p = parseCode(code);
-  if (!p) return 0;
-  const fiIdx = FIRST_LETTERS.indexOf(p.fl);
-  const siIdx = SECOND_LETTERS.indexOf(p.sl);
-  return fiIdx * SECOND_LETTERS.length * MAX_DIGITS + siIdx * MAX_DIGITS + p.num;
-}
-
-function ordinalToCode(ordinal: number): string | null {
-  if (ordinal < 1) return null;
-  const total = FIRST_LETTERS.length * SECOND_LETTERS.length * MAX_DIGITS;
-  if (ordinal > total) return null;
-  const adj = ordinal - 1;
-  const fiIdx = Math.floor(adj / (SECOND_LETTERS.length * MAX_DIGITS));
-  const rem1 = adj % (SECOND_LETTERS.length * MAX_DIGITS);
-  const siIdx = Math.floor(rem1 / MAX_DIGITS);
-  const num = (rem1 % MAX_DIGITS) + 1;
-  return `${FIRST_LETTERS[fiIdx]}${SECOND_LETTERS[siIdx]}${num.toString().padStart(3, '0')}`;
-}
-
-async function generateNextRaffleCode(): Promise<string> {
-  const existing = await (prisma.raffleTicket as any).findMany({
-    select: { id: true },
-  });
-  
-  const usedOrdinals = new Set<number>();
-  for (const r of existing as { id: string }[]) {
-    const ord = codeToOrdinal(r.id);
-    if (ord > 0) usedOrdinals.add(ord);
-  }
-
-  let nextOrdinal = 1;
-  while (usedOrdinals.has(nextOrdinal)) {
-    nextOrdinal++;
-  }
-
-  const code = ordinalToCode(nextOrdinal);
-  if (!code) throw new Error('RAFFLE_FULL');
-  return code;
-}
+// Ticket numbers (AA001…) are assigned only once a ticket is paid —
+// see services/numbering.ts. Unpaid tickets only have a UUID id.
 
 // ─── POST / — Create raffle ticket(s) (UNPAID) ──────────────────────────────────
 raffleRouter.post('/', raffleRateLimiter, async (req, res) => {
@@ -102,36 +54,20 @@ raffleRouter.post('/', raffleRateLimiter, async (req, res) => {
       });
     }
 
-    const ticketIds: string[] = [];
-
-    for (let i = 0; i < numTickets; i++) {
-      try {
-        const id = await generateNextRaffleCode();
-        ticketIds.push(id);
-
-        // Create the ticket immediately to "reserve" the ID
-        await (prisma.raffleTicket as any).create({
-          data: {
-            id,
-            firstName: firstName.trim(),
-            lastName: lastName.trim(),
-            email: email.trim().toLowerCase(),
-            phoneNumber: phoneNumber ? phoneNumber.trim() : null,
-            idNumber: idNumber.trim(),
-            gender: gender || null,
-            status: 'UNPAID',
-            referralCode: validatedRefCode,
-          },
-        });
-      } catch (e: any) {
-        if (e.message === 'RAFFLE_FULL') {
-          return res.status(503).json({
-            error: { code: 'RAFFLE_FULL', message: 'All raffle tickets have been claimed.' },
-          });
-        }
-        throw e;
-      }
-    }
+    const ticketIds: string[] = Array.from({ length: numTickets }, () => randomUUID());
+    await prisma.raffleTicket.createMany({
+      data: ticketIds.map(id => ({
+        id,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim().toLowerCase(),
+        phoneNumber: phoneNumber ? phoneNumber.trim() : null,
+        idNumber: idNumber.trim(),
+        gender: gender || null,
+        status: 'UNPAID',
+        referralCode: validatedRefCode,
+      })),
+    });
 
     console.log(`[Raffle] ${numTickets} Ticket(s) created UNPAID for ${email}: ${ticketIds.join(', ')}`);
     return res.status(201).json({
@@ -164,6 +100,7 @@ raffleRouter.post('/pay/stk-push', async (req, res) => {
       where: { id: { in: ticketIds } },
       data: { status: 'PAID', checkoutRequestId: simRef, paymentFailed: false, mpesaCode: simRef },
     });
+    await assignTicketNumbers(ticketIds);
     return res.json({ success: true, transactionReference: simRef, message: 'Payment simulated successfully.' });
   }
   // ─────────────────────────────────────────────────────────────────────────────
@@ -236,8 +173,11 @@ raffleRouter.get('/by-email/:email', async (req, res) => {
 
 raffleRouter.get('/:id', async (req, res) => {
   try {
-    const id = req.params.id.toUpperCase();
-    const ticket = await (prisma.raffleTicket as any).findUnique({ where: { id } });
+    // Accepts the ticket's id, or its ticket number once paid (e.g. "AA001").
+    const id = req.params.id;
+    const ticket = await prisma.raffleTicket.findFirst({
+      where: { OR: [{ id }, { ticketNumber: id.toUpperCase() }] },
+    });
     if (!ticket) {
       return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Raffle ticket not found' } });
     }

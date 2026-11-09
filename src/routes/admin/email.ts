@@ -91,6 +91,7 @@ emailRouter.post('/send-confirmation/:registrationId', async (req, res) => {
 
         const sent = await sendConfirmationEmail({
             id: registration.id,
+            bibNumber: registration.bibNumber,
             firstName: registration.firstName,
             lastName: registration.lastName,
             email: registration.email,
@@ -165,6 +166,7 @@ emailRouter.post('/resend/:registrationId', async (req, res) => {
 
         const sent = await sendEmail(registrationId, 'confirmation', {
             id: registration.id,
+            bibNumber: registration.bibNumber,
             firstName: registration.firstName,
             lastName: registration.lastName,
             email: registration.email,
@@ -264,6 +266,7 @@ emailRouter.post('/resend-military', async (req, res) => {
 
                 const sent = await sendEmail(reg.id, 'confirmation', {
                     id: reg.id,
+                    bibNumber: reg.bibNumber,
                     firstName: reg.firstName,
                     lastName: reg.lastName,
                     email: reg.email!,
@@ -532,25 +535,25 @@ emailRouter.post('/bulk-send', async (req, res) => {
             else if (targetStatus === 'unpaid') whereClause.status = 'UNPAID';
 
             if (targetEntity === 'cyclist') {
-                const regs = await prisma.registration.findMany({ where: whereClause, select: { id: true, firstName: true, lastName: true, phoneNumber: true, email: true } });
+                const regs = await prisma.registration.findMany({ where: whereClause, select: { id: true, bibNumber: true, firstName: true, lastName: true, phoneNumber: true, email: true } });
                 finalRecipients = regs.map(r => ({
                     firstName: r.firstName,
                     lastName: r.lastName,
                     name: `${r.firstName} ${r.lastName}`.trim(),
                     phone: r.phoneNumber || undefined,
                     email: r.email || undefined,
-                    bibNumber: r.id,
+                    bibNumber: r.bibNumber || '',
                     entityId: r.id
                 }));
             } else if (targetEntity === 'raffle') {
-                const raffles = await prisma.raffleTicket.findMany({ where: whereClause, select: { id: true, firstName: true, lastName: true, phoneNumber: true, email: true } });
+                const raffles = await prisma.raffleTicket.findMany({ where: whereClause, select: { id: true, ticketNumber: true, firstName: true, lastName: true, phoneNumber: true, email: true } });
                 finalRecipients = raffles.map(r => ({
                     firstName: r.firstName,
                     lastName: r.lastName,
                     name: `${r.firstName} ${r.lastName}`.trim(),
                     phone: r.phoneNumber || undefined,
                     email: r.email || undefined,
-                    bibNumber: r.id,
+                    bibNumber: r.ticketNumber || '',
                     entityId: r.id
                 }));
             } else if (targetEntity === 'donor') {
