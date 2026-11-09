@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { messagingDisabled, logSuppressed } from '../utils/messaging.js';
 import { prisma } from '../storage/prisma.js';
 import { calculateAge } from './pricing.js';
 import { generateRaffleTicketPdf } from './pdfService.js';
@@ -90,6 +91,19 @@ const transporter = nodemailer.createTransport({
   },
   tls: { rejectUnauthorized: false },
 });
+
+// Kill switch: never contact anyone when messaging is disabled (see utils/messaging.ts).
+{
+  const realSendMail = transporter.sendMail.bind(transporter);
+  (transporter as any).sendMail = async (mail: any) => {
+    if (messagingDisabled()) {
+      const to = Array.isArray(mail?.to) ? mail.to.length : 1;
+      logSuppressed('email', to, mail?.subject);
+      return { messageId: 'suppressed', accepted: [], rejected: [] };
+    }
+    return realSendMail(mail);
+  };
+}
 
 // --- HELPERS ---
 

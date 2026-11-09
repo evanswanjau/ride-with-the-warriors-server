@@ -1,4 +1,5 @@
 import cron from 'node-cron';
+import { messagingDisabled } from '../utils/messaging.js';
 import { prisma } from '../storage/prisma.js';
 import { sendEmail, EmailType, sendRaffleEmail } from './emailService.js';
 import { smsService } from './smsService.js';
@@ -261,6 +262,10 @@ export async function runScheduledTasks() {
 
 // Initialize cron jobs
 export function initializeScheduler() {
+    if (messagingDisabled()) {
+        console.log('[Scheduler] MESSAGING_DISABLED: reminder cron jobs not started');
+        return;
+    }
     console.log('[Scheduler] Initializing cron jobs...');
 
     // Main job: payment reminders + 7d/1d event reminders at 8:00 AM daily

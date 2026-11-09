@@ -1,4 +1,5 @@
 import { prisma } from '../storage/prisma.js';
+import { messagingDisabled, logSuppressed } from '../utils/messaging.js';
 
 const BASE_URL = 'https://sms.textsms.co.ke/api/services';
 
@@ -46,6 +47,10 @@ export const smsService = {
      * Send an SMS to one or more recipients.
      */
     async sendSMS(recipients: string[], message: string): Promise<{ success: boolean; successCount: number; failedCount: number }> {
+        if (messagingDisabled()) {
+            logSuppressed('sms', recipients.length);
+            return { success: true, successCount: 0, failedCount: 0 };
+        }
         const { apiKey, partnerId, shortcode } = getCredentials();
         if (!apiKey || !partnerId) {
             console.error("[SMS Service] Credentials not set.");
