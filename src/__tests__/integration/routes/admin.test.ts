@@ -102,7 +102,7 @@ vi.mock('../../../storage/memoryRegistrations.js', () => ({
     createRegistration: vi.fn(),
     getRegistration: vi.fn(),
     findExistingRegistrationsByEmails: vi.fn().mockResolvedValue([]),
-    generateNextId: vi.fn().mockResolvedValue('REG-003'),
+    findExistingRegistrationsByIdNumbers: vi.fn().mockResolvedValue([]),
 }));
 
 describe('Admin Registrations API', () => {

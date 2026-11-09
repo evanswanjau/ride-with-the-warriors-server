@@ -95,6 +95,7 @@ const validFamilyDetails = {
         emergencyPhone: '0712345678',
         emergencyContactName: 'Other Parent',
         email: 'parent@example.com',
+        phoneNumber: '0712345670',
         relationship: 'parent',
         tshirtSize: 'M',
         participation: 'mom' as const,
@@ -129,7 +130,7 @@ vi.mock('../../../storage/prisma.js', () => ({
 // Mock memoryRegistrations for tests
 vi.mock('../../../storage/memoryRegistrations.js', () => ({
     findExistingRegistrationsByEmails: vi.fn().mockResolvedValue([]),
-    generateNextId: vi.fn().mockResolvedValue('REG-2001'),
+    findExistingRegistrationsByIdNumbers: vi.fn().mockResolvedValue([]),
     createRegistration: vi.fn(),
     getRegistration: vi.fn(),
     updateRegistration: vi.fn(),

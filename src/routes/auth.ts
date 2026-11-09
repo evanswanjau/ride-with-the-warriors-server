@@ -21,9 +21,12 @@ import { requireUser, UserRequest } from '../middleware/userAuth.js';
 
 export const authRouter = Router();
 
+// Per-IP limits are skipped in the test suite (many logins from one IP); the
+// per-address OTP limit in otpService still applies.
+const skipInTests = () => process.env.NODE_ENV === 'test';
 const limitMessage = { error: { code: 'TOO_MANY_REQUESTS', message: 'Too many attempts. Please try again later.' } };
-const startLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false, message: limitMessage });
-const verifyLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 30, standardHeaders: true, legacyHeaders: false, message: limitMessage });
+const startLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false, message: limitMessage, skip: skipInTests });
+const verifyLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 30, standardHeaders: true, legacyHeaders: false, message: limitMessage, skip: skipInTests });
 
 const startSchema = z.object({
     identifier: z.string().min(3).max(200),
