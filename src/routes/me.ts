@@ -5,6 +5,10 @@
 import { Router } from 'express';
 import { prisma } from '../storage/prisma.js';
 import { requireUser, UserRequest } from '../middleware/userAuth.js';
+import { dtbService } from '../services/dtbService.js';
+
+// Same fee charged when a bike is hired during registration (services/pricing.ts).
+const BIKE_HIRE_FEE = 1500;
 
 export const meRouter = Router();
 meRouter.use(requireUser);
@@ -96,6 +100,99 @@ meRouter.get('/history', async (req: UserRequest, res, next) => {
             raffleTickets: tickets.map(t => ({ id: t.id, ticketNumber: t.ticketNumber, status: t.status, paymentFailed: t.paymentFailed, createdAt: t.createdAt })),
             donations: donations.map(d => ({ id: d.id, amount: d.amount, status: d.status, createdAt: d.createdAt })),
         });
+    } catch (err) {
+        next(err);
+    }
+});
+
+// ─── Bike hire ────────────────────────────────────────────────────────────────
+
+/**
+ * POST /me/bike-hire { registrationId }
+ * - Registration still unpaid: the bike is added to that registration's total
+ *   and paid with it.
+ * - Registration already paid: a separate bike-hire payment is needed
+ *   (POST /me/bike-hire/:id/pay).
+ */
+meRouter.post('/bike-hire', async (req: UserRequest, res, next) => {
+    try {
+        const accountId = req.account!.id;
+        const reg = await prisma.registration.findUnique({ where: { id: String(req.body?.registrationId || '') }, include: { bikeHire: true } });
+        if (!reg || reg.accountId !== accountId) {
+            return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Registration not found' } });
+        }
+        if (reg.status === 'CANCELLED') {
+            return res.status(400).json({ error: { code: 'CANCELLED', message: 'This registration is cancelled.' } });
+        }
+        if (reg.bikeHire) {
+            return res.status(400).json({ error: { code: 'ALREADY_EXISTS', message: 'A bike is already booked for this registration.' } });
+        }
+
+        const unpaid = reg.status === 'UNPAID';
+        const bikeHire = await prisma.bikeHire.create({
+            data: { registrationId: reg.id, amount: BIKE_HIRE_FEE, status: 'PENDING', accountId, eventYear: reg.eventYear },
+        });
+
+        if (unpaid) {
+            // Fold the fee into the registration's own payment.
+            const pricing = { ...((reg.pricing as any) ?? {}) };
+            pricing.totalAmount = Number(pricing.totalAmount ?? reg.totalAmount ?? 0) + BIKE_HIRE_FEE;
+            pricing.lineItems = [...(pricing.lineItems ?? []), { label: 'Bike Hire', amount: BIKE_HIRE_FEE }];
+            const rows = reg.groupId ? { groupId: reg.groupId } : { id: reg.id };
+            await prisma.registration.updateMany({ where: rows, data: { pricing } });
+            await prisma.registration.update({ where: { id: reg.id }, data: { totalAmount: reg.totalAmount + BIKE_HIRE_FEE } });
+        }
+
+        res.status(201).json({ bikeHire, payWithRegistration: unpaid });
+    } catch (err) {
+        next(err);
+    }
+});
+
+/** POST /me/bike-hire/:id/pay { phoneNumber } — M-Pesa prompt for a bike added after paying. */
+meRouter.post('/bike-hire/:id/pay', async (req: UserRequest, res, next) => {
+    try {
+        const { phoneNumber } = req.body ?? {};
+        if (!phoneNumber) return res.status(400).json({ error: { code: 'VALIDATION', message: 'phoneNumber is required' } });
+
+        const bikeHire = await prisma.bikeHire.findUnique({ where: { id: req.params.id }, include: { registration: true } });
+        if (!bikeHire || bikeHire.registration.accountId !== req.account!.id) {
+            return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Bike hire not found' } });
+        }
+        if (bikeHire.status !== 'PENDING') {
+            return res.status(400).json({ error: { code: 'ALREADY_PAID', message: 'This bike hire is already paid.' } });
+        }
+        if (bikeHire.registration.status === 'UNPAID') {
+            return res.status(400).json({ error: { code: 'PAY_WITH_REGISTRATION', message: 'Pay for the registration; the bike is included.' } });
+        }
+
+        if (process.env.PAYMENT_MODE === 'simulate') {
+            const simRef = `SIM-${Date.now()}`;
+            await prisma.bikeHire.update({ where: { id: bikeHire.id }, data: { status: 'PAID', checkoutRequestId: simRef } });
+            await prisma.payment.create({ data: { bikeHireId: bikeHire.id, registrationId: bikeHire.registrationId, checkoutRequestId: simRef, phone: phoneNumber, amount: bikeHire.amount, status: 'PAID', mpesaReceiptNumber: simRef } });
+            return res.json({ success: true, transactionReference: simRef, message: 'Payment simulated successfully.' });
+        }
+
+        const result = await dtbService.initiateStkPush({ registrationId: bikeHire.registrationId, amount: bikeHire.amount, phoneNumber });
+        if (!result.success || !result.transactionReference) {
+            return res.status(502).json({ error: { code: 'PAYMENT_FAILED', message: result.message || 'Failed to trigger M-Pesa prompt.' } });
+        }
+        await prisma.bikeHire.update({ where: { id: bikeHire.id }, data: { checkoutRequestId: result.transactionReference } });
+        await prisma.payment.create({ data: { bikeHireId: bikeHire.id, registrationId: bikeHire.registrationId, checkoutRequestId: result.transactionReference, phone: phoneNumber, amount: bikeHire.amount, status: 'PENDING' } });
+        res.json({ success: true, transactionReference: result.transactionReference, message: result.message });
+    } catch (err) {
+        next(err);
+    }
+});
+
+/** GET /me/bike-hire/:id — status polling for the bike-hire payment. */
+meRouter.get('/bike-hire/:id', async (req: UserRequest, res, next) => {
+    try {
+        const bikeHire = await prisma.bikeHire.findUnique({ where: { id: req.params.id }, include: { registration: { select: { accountId: true } } } });
+        if (!bikeHire || bikeHire.registration.accountId !== req.account!.id) {
+            return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Bike hire not found' } });
+        }
+        res.json({ bikeHire: { id: bikeHire.id, status: bikeHire.status, amount: bikeHire.amount } });
     } catch (err) {
         next(err);
     }

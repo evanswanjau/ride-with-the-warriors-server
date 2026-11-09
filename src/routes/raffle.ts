@@ -2,9 +2,16 @@ import { Router } from 'express';
 import { randomUUID } from 'crypto';
 import { prisma } from '../storage/prisma.js';
 import { dtbService } from '../services/dtbService.js';
-import { maskRaffleTicket } from '../utils/masking.js';
 import { raffleRateLimiter } from '../middleware/rateLimit.js';
 import { assignTicketNumbers } from '../services/numbering.js';
+import { requireUser, UserRequest } from '../middleware/userAuth.js';
+
+const MAX_TICKETS_PER_PURCHASE = 20;
+
+/** The raffle opens per event via RAFFLE_OPEN=true; closed otherwise. */
+function raffleOpen() {
+  return process.env.RAFFLE_OPEN === 'true';
+}
 
 export const raffleRouter = Router();
 
@@ -14,9 +21,20 @@ const RAFFLE_AMOUNT = 1000;
 // see services/numbering.ts. Unpaid tickets only have a UUID id.
 
 // ─── POST / — Create raffle ticket(s) (UNPAID) ──────────────────────────────────
-raffleRouter.post('/', raffleRateLimiter, async (req, res) => {
+raffleRouter.post('/', requireUser, raffleRateLimiter, async (req: UserRequest, res) => {
   try {
-    const { firstName, lastName, email, phoneNumber, idNumber, gender, quantity = 1, referralCode } = req.body;
+    if (!raffleOpen()) {
+      return res.status(403).json({ error: { code: 'RAFFLE_CLOSED', message: 'The raffle is closed.' } });
+    }
+    const account = req.account!;
+    // Contact details default to the logged-in account's.
+    const {
+      firstName = account.firstName,
+      lastName = account.lastName,
+      email = account.email,
+      phoneNumber = account.phone,
+      idNumber, gender, quantity = 1, referralCode,
+    } = req.body;
 
     if (!firstName || !lastName || !email || !idNumber) {
       return res.status(400).json({
@@ -34,14 +52,14 @@ raffleRouter.post('/', raffleRateLimiter, async (req, res) => {
       }
     }
 
-    const numTickets = Math.max(1, parseInt(quantity as string, 10));
+    const numTickets = parseInt(String(quantity), 10);
+    if (!Number.isInteger(numTickets) || numTickets < 1 || numTickets > MAX_TICKETS_PER_PURCHASE) {
+      return res.status(400).json({ error: { code: 'VALIDATION', message: `Choose between 1 and ${MAX_TICKETS_PER_PURCHASE} tickets.` } });
+    }
 
-    // Block purchase if user has unpaid tickets
-    const unpaidCount = await (prisma.raffleTicket as any).count({
-      where: {
-        email: { equals: email.trim().toLowerCase(), mode: 'insensitive' },
-        status: 'UNPAID',
-      }
+    // Block purchase if this account has unpaid tickets
+    const unpaidCount = await prisma.raffleTicket.count({
+      where: { accountId: account.id, status: 'UNPAID' },
     });
 
     if (unpaidCount > 0) {
@@ -66,6 +84,7 @@ raffleRouter.post('/', raffleRateLimiter, async (req, res) => {
         gender: gender || null,
         status: 'UNPAID',
         referralCode: validatedRefCode,
+        accountId: account.id,
       })),
     });
 
@@ -82,11 +101,17 @@ raffleRouter.post('/', raffleRateLimiter, async (req, res) => {
 });
 
 // ─── POST /pay/stk-push — Initiate M-Pesa payment ────────────────────────────
-raffleRouter.post('/pay/stk-push', async (req, res) => {
+raffleRouter.post('/pay/stk-push', requireUser, async (req: UserRequest, res) => {
   const { ticketIds, phoneNumber } = req.body;
 
-  if (!ticketIds || !Array.isArray(ticketIds) || ticketIds.length === 0 || !phoneNumber) {
+  if (!ticketIds || !Array.isArray(ticketIds) || ticketIds.length === 0 || ticketIds.length > MAX_TICKETS_PER_PURCHASE || !phoneNumber) {
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'ticketIds (array) and phoneNumber are required' } });
+  }
+
+  // Every ticket must be this account's and still unpaid.
+  const owned = await prisma.raffleTicket.count({ where: { id: { in: ticketIds }, accountId: req.account!.id, status: 'UNPAID' } });
+  if (owned !== new Set(ticketIds).size) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Unpaid tickets not found' } });
   }
 
   const totalAmount = RAFFLE_AMOUNT * ticketIds.length;
@@ -145,88 +170,21 @@ raffleRouter.post('/pay/stk-push', async (req, res) => {
 });
 
 
-// ─── GET /by-email/:email — Fetch ALL tickets for an email address ──────────
-// Used by the email-linked profile page so users can see all their tickets.
-raffleRouter.get('/by-email/:email', async (req, res) => {
-  try {
-    const email = decodeURIComponent(req.params.email).toLowerCase().trim();
-    if (!email) {
-      return res.status(400).json({ error: { code: 'VALIDATION', message: 'email is required' } });
-    }
-    const tickets = await (prisma.raffleTicket as any).findMany({
-      where: { email: { equals: email, mode: 'insensitive' } },
-      orderBy: { createdAt: 'asc' },
-    });
-    if (!tickets || tickets.length === 0) {
-      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'No raffle tickets found for this email' } });
-    }
-    // This endpoint is unauthenticated, so mask personal fields; the profile UI
-    // only needs ticket id, status, and createdAt.
-    return res.json({ tickets: tickets.map(maskRaffleTicket), email });
-  } catch (err) {
-    console.error('[Raffle] By-email fetch error:', err);
-    return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to fetch raffle tickets' } });
-  }
-});
-
 // ─── GET /:id — Fetch a ticket by code (also used for polling) ───────────────
 
-raffleRouter.get('/:id', async (req, res) => {
+raffleRouter.get('/:id', requireUser, async (req: UserRequest, res) => {
   try {
     // Accepts the ticket's id, or its ticket number once paid (e.g. "AA001").
     const id = req.params.id;
     const ticket = await prisma.raffleTicket.findFirst({
-      where: { OR: [{ id }, { ticketNumber: id.toUpperCase() }] },
+      where: { OR: [{ id }, { ticketNumber: id.toUpperCase() }], accountId: req.account!.id },
     });
     if (!ticket) {
       return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Raffle ticket not found' } });
     }
-    return res.json({ ticket: maskRaffleTicket(ticket) });
+    return res.json({ ticket });
   } catch (err) {
     console.error('[Raffle] Fetch error:', err);
     return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to fetch raffle ticket' } });
-  }
-});
-
-// ─── POST /search — Look up by email, phone, or code ─────────────────────────
-raffleRouter.post('/search', async (req, res) => {
-  try {
-    const { searchType, searchValue } = req.body;
-
-    if (!searchType || !searchValue) {
-      return res.status(400).json({
-        error: { code: 'VALIDATION', message: 'searchType and searchValue are required' },
-      });
-    }
-
-    let ticket = null;
-
-    if (searchType === 'id') {
-      ticket = await (prisma.raffleTicket as any).findUnique({
-        where: { id: searchValue.toUpperCase() },
-      });
-    } else if (searchType === 'email') {
-      ticket = await (prisma.raffleTicket as any).findFirst({
-        where: { email: searchValue.trim().toLowerCase() },
-      });
-    } else if (searchType === 'phone') {
-      const normalized = searchValue.replace(/\s+/g, '');
-      ticket = await (prisma.raffleTicket as any).findFirst({
-        where: { phoneNumber: { contains: normalized } },
-      });
-    } else {
-      return res.status(400).json({
-        error: { code: 'VALIDATION', message: 'Invalid searchType. Must be "id", "email", or "phone"' },
-      });
-    }
-
-    if (!ticket) {
-      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'No raffle ticket found' } });
-    }
-
-    return res.json({ ticket: maskRaffleTicket(ticket) });
-  } catch (err) {
-    console.error('[Raffle] Search error:', err);
-    return res.status(500).json({ error: { code: 'INTERNAL', message: 'Search failed' } });
   }
 });

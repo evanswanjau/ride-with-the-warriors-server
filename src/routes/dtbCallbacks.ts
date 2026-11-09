@@ -216,7 +216,32 @@ dtbCallbacksRouter.post('/stkpush', verifyCallbackKey, async (req, res) => {
             return res.json({ received: true });
         }
 
-        // ── 3. Try Registration (via Payment audit table) ────────────────────
+        // ── 3. Try Bike Hire (bike added after the registration was paid) ────
+        const bikeHire = await prisma.bikeHire.findUnique({
+            where: { checkoutRequestId: externalReference },
+            include: { registration: true },
+        });
+        if (bikeHire) {
+            await prisma.bikeHire.update({ where: { id: bikeHire.id }, data: { status: isSuccess ? 'PAID' : 'PENDING' } });
+            await prisma.payment.updateMany({
+                where: { checkoutRequestId: externalReference },
+                data: {
+                    status: isSuccess ? 'PAID' : 'FAILED',
+                    failureReason: isSuccess ? null : resultDesc,
+                    mpesaReceiptNumber: mnoRef || null,
+                    mnoReference: mnoRef || null,
+                    cbsReference: cbsRef || null,
+                    paymentDetails: callbackData as any,
+                },
+            });
+            console.log(`[DTB Callback] Updated BikeHire ${bikeHire.id} → ${isSuccess ? 'PAID' : 'FAILED'}`);
+            if (isSuccess && bikeHire.registration.phoneNumber) {
+                smsService.sendSMS([bikeHire.registration.phoneNumber], `Hi ${bikeHire.registration.firstName}, your bike hire payment of KES ${bikeHire.amount} for Ride With The Warriors is confirmed. Thank you!`);
+            }
+            return res.json({ received: true });
+        }
+
+        // ── 4. Try Registration (via Payment audit table) ────────────────────
         const paymentAudit = await prisma.payment.findFirst({
             where: {
                 checkoutRequestId: externalReference,

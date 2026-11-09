@@ -67,3 +67,24 @@ export async function claimUnlinkedRecords(accountId: string) {
     const owned = await prisma.registration.findMany({ where: { accountId }, select: { id: true } });
     await prisma.bikeHire.updateMany({ where: { accountId: null, registrationId: { in: owned.map(o => o.id) } }, data: { accountId } });
 }
+
+/**
+ * After a registration is created: rows whose own email/phone belongs to an
+ * existing account other than the owner's get that account as participant.
+ */
+export async function linkGroupParticipants(registrationId: string, ownerId: string) {
+    const anchor = await prisma.registration.findUnique({ where: { id: registrationId } });
+    if (!anchor) return;
+    const rows = anchor.groupId ? await prisma.registration.findMany({ where: { groupId: anchor.groupId } }) : [anchor];
+    for (const r of rows) {
+        const email = normalizeEmail(r.email);
+        const phone = normalizePhone(r.phoneNumber);
+        const acc =
+            (email && await prisma.account.findUnique({ where: { email } })) ||
+            (phone && await prisma.account.findUnique({ where: { phone } })) ||
+            null;
+        if (acc && acc.id !== ownerId) {
+            await prisma.registration.update({ where: { id: r.id }, data: { participantAccountId: acc.id } });
+        }
+    }
+}
