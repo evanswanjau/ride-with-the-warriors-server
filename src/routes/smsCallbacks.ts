@@ -8,7 +8,7 @@ const router = Router();
  */
 router.post('/delivery-reports', (req, res) => {
     try {
-        const { status, phoneNumber, networkCode, failureReason, id } = req.body;
+        const { status, phoneNumber, failureReason, id } = req.body;
         console.log(`[SMS Webhook - Delivery Report] ID: ${id}, Phone: ${phoneNumber}, Status: ${status}`);
         
         if (failureReason && failureReason !== 'None') {
@@ -28,7 +28,7 @@ router.post('/delivery-reports', (req, res) => {
  */
 router.post('/incoming-messages', (req, res) => {
     try {
-        const { from, to, text, date, id } = req.body;
+        const { from, to, text, date } = req.body;
         console.log(`[SMS Webhook - Incoming] From: ${from}, To: ${to}, Message: "${text}", Date: ${date}`);
 
         // We could store these in the database if necessary. For now, just logging.
