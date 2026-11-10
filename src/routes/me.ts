@@ -6,6 +6,7 @@ import { Router } from 'express';
 import { prisma } from '../storage/prisma.js';
 import { requireUser, UserRequest } from '../middleware/userAuth.js';
 import { paymentGateway } from '../services/paymentGateway.js';
+import { beginAttempt, recordAttempt } from '../services/payments.js';
 
 // Same fee charged when a bike is hired during registration (services/pricing.ts).
 const BIKE_HIRE_FEE = 1500;
@@ -169,16 +170,20 @@ meRouter.post('/bike-hire/:id/pay', async (req: UserRequest, res, next) => {
         if (process.env.PAYMENT_MODE === 'simulate') {
             const simRef = `SIM-${Date.now()}`;
             await prisma.bikeHire.update({ where: { id: bikeHire.id }, data: { status: 'PAID', checkoutRequestId: simRef } });
-            await prisma.payment.create({ data: { bikeHireId: bikeHire.id, registrationId: bikeHire.registrationId, checkoutRequestId: simRef, phone: phoneNumber, amount: bikeHire.amount, status: 'PAID', mpesaReceiptNumber: simRef } });
+            await prisma.payment.create({ data: { purpose: 'BIKE_HIRE', bikeHireId: bikeHire.id, registrationId: bikeHire.registrationId, checkoutRequestId: simRef, phone: phoneNumber, amount: bikeHire.amount, status: 'PAID', mpesaReceiptNumber: simRef } });
             return res.json({ success: true, transactionReference: simRef, message: 'Payment simulated successfully.' });
         }
 
+        const target = { purpose: 'BIKE_HIRE' as const, bikeHireId: bikeHire.id, registrationId: bikeHire.registrationId };
+        if (await beginAttempt(target) === 'busy') {
+            return res.status(409).json({ error: { code: 'PAYMENT_IN_PROGRESS', message: 'An M-Pesa prompt was just sent. Complete it on your phone, or wait a minute and try again.' } });
+        }
         const result = await paymentGateway.initiateStkPush({ registrationId: bikeHire.registrationId, amount: bikeHire.amount, phoneNumber });
         if (!result.success || !result.transactionReference) {
             return res.status(502).json({ error: { code: 'PAYMENT_FAILED', message: result.message || 'Failed to trigger M-Pesa prompt.' } });
         }
         await prisma.bikeHire.update({ where: { id: bikeHire.id }, data: { checkoutRequestId: result.transactionReference } });
-        await prisma.payment.create({ data: { bikeHireId: bikeHire.id, registrationId: bikeHire.registrationId, checkoutRequestId: result.transactionReference, phone: phoneNumber, amount: bikeHire.amount, status: 'PENDING' } });
+        await recordAttempt(target, result.transactionReference, bikeHire.amount, phoneNumber);
         res.json({ success: true, transactionReference: result.transactionReference, message: result.message });
     } catch (err) {
         next(err);

@@ -81,6 +81,9 @@ model AdminSession {
 
 model Payment {
   id                 String   @id @default(uuid())
+  // REGISTRATION | RAFFLE | DONATION | BIKE_HIRE. Every M-Pesa prompt is one row; callbacks
+  // are matched on checkoutRequestId here, never on the item's own column.
+  purpose            String?
   registrationId     String?
   raffleTicketIds    String[] // New: store array of ticket IDs for bulk payments
   donationId         String? // New: link to donation
@@ -88,6 +91,8 @@ model Payment {
   merchantRequestId  String?
   phone              String?
   amount             Float
+  // PENDING -> PAID | FAILED | EXPIRED. A success also settles FAILED/EXPIRED (money was taken);
+  // a failure only settles PENDING. See src/services/payments.ts.
   status             String   @default("PENDING")
   failureReason      String?
   createdAt          DateTime @default(now())
@@ -102,6 +107,8 @@ model Payment {
   @@index([registrationId])
   @@index([checkoutRequestId])
   @@index([donationId])
+  @@index([bikeHireId])
+  @@index([status, createdAt])
 }
 
 model PricingCategory {

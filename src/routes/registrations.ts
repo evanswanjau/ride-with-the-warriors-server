@@ -6,6 +6,7 @@ import { zodToApiError } from '../validation/zodError.js';
 import { buildQuote, getPricingCategories } from '../services/pricing.js';
 import { createRegistration, getRegistration, updateRegistration, findExistingRegistrationsByEmails, findExistingRegistrationsByIdNumbers } from '../storage/memoryRegistrations.js';
 import { paymentGateway } from '../services/paymentGateway.js';
+import { beginAttempt, recordAttempt } from '../services/payments.js';
 
 import { prisma } from '../storage/prisma.js';
 import { requireUser, UserRequest } from '../middleware/userAuth.js';
@@ -180,12 +181,16 @@ registrationsRouter.post('/pay/stk-push', requireUser, async (req: UserRequest, 
     try {
       await updateRegistration(registrationId, { status: 'PAID', mpesaCode: simRef });
       await prisma.payment.create({
-        data: { registrationId, checkoutRequestId: simRef, phone: phoneNumber, amount, status: 'PAID', mpesaReceiptNumber: simRef },
+        data: { purpose: 'REGISTRATION', registrationId, checkoutRequestId: simRef, phone: phoneNumber, amount, status: 'PAID', mpesaReceiptNumber: simRef },
       });
     } catch (dbErr) { console.error('[STK Push SIM] DB error:', dbErr); }
     return res.json({ success: true, transactionReference: simRef, message: 'Payment simulated successfully.' });
   }
   // ─────────────────────────────────────────────────────────────────────────────
+
+  if (await beginAttempt({ purpose: 'REGISTRATION', registrationId }) === 'busy') {
+    return res.status(409).json({ error: { code: 'PAYMENT_IN_PROGRESS', message: 'An M-Pesa prompt was just sent. Complete it on your phone, or wait a minute and try again.' } });
+  }
 
   try {
     const result = await paymentGateway.initiateStkPush({
@@ -193,34 +198,11 @@ registrationsRouter.post('/pay/stk-push', requireUser, async (req: UserRequest, 
       amount,
       phoneNumber,
       callbackUrl: `${process.env.APP_URL || process.env.BASE_URL}/api/dtb/stkpush`,
-
     });
 
-
-    if (result.success) {
-      // externalReference from DTB IS the registrationId we sent as TransactionRef
-      const ref = result.transactionReference || registrationId;
-      // Store checkoutRequestId in registration record for callback lookup
-      await updateRegistration(registrationId, {
-        payload: {
-          ...(await getRegistration(registrationId))?.payload,
-          checkoutRequestId: ref
-        }
-      });
-      // Create a Payment audit record
-      try {
-        await prisma.payment.create({
-          data: {
-            registrationId,
-            checkoutRequestId: ref,
-            phone: phoneNumber,
-            amount,
-            status: 'PENDING',
-          }
-        });
-      } catch (dbErr) {
-        console.error('[STK Push] Failed to create Payment record:', dbErr);
-      }
+    if (result.success && result.transactionReference) {
+      const ref = result.transactionReference;
+      await recordAttempt({ purpose: 'REGISTRATION', registrationId }, ref, amount, phoneNumber);
       return res.json({
         success: true,
         transactionReference: ref,
@@ -231,7 +213,7 @@ registrationsRouter.post('/pay/stk-push', requireUser, async (req: UserRequest, 
       // Record the failed attempt with no checkoutRequestId
       try {
         await prisma.payment.create({
-          data: { registrationId, phone: phoneNumber, amount, status: 'FAILED', failureReason: result.message || 'STK push rejected' }
+          data: { purpose: 'REGISTRATION', registrationId, phone: phoneNumber, amount, status: 'FAILED', failureReason: result.message || 'STK push rejected' }
         });
       } catch (dbErr) {
         console.error('[STK Push] Failed to create failure Payment record:', dbErr);

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { randomUUID } from 'crypto';
 import { prisma } from '../storage/prisma.js';
 import { paymentGateway } from '../services/paymentGateway.js';
+import { beginAttempt, recordAttempt } from '../services/payments.js';
 import { raffleRateLimiter } from '../middleware/rateLimit.js';
 import { assignTicketNumbers } from '../services/numbering.js';
 import { requireUser, UserRequest } from '../middleware/userAuth.js';
@@ -130,6 +131,11 @@ raffleRouter.post('/pay/stk-push', requireUser, async (req: UserRequest, res) =>
   }
   // ─────────────────────────────────────────────────────────────────────────────
 
+  const target = { purpose: 'RAFFLE' as const, raffleTicketIds: ticketIds as string[] };
+  if (await beginAttempt(target) === 'busy') {
+    return res.status(409).json({ error: { code: 'PAYMENT_IN_PROGRESS', message: 'An M-Pesa prompt was just sent. Complete it on your phone, or wait a minute and try again.' } });
+  }
+
   try {
     const result = await paymentGateway.initiateStkPush({
       registrationId: ticketIds[0],
@@ -138,20 +144,9 @@ raffleRouter.post('/pay/stk-push', requireUser, async (req: UserRequest, res) =>
       callbackUrl: `${process.env.APP_URL || process.env.BASE_URL}/api/dtb/stkpush`,
     });
 
-
-
-
-    if (result.success) {
-      // externalReference from DTB IS the first ticketId we sent as TransactionRef
-      const ref = result.transactionReference || ticketIds[0];
-      // Store checkoutRequestId on ALL tickets
-      await (prisma.raffleTicket as any).updateMany({
-        where: { id: { in: ticketIds } },
-        data: {
-          checkoutRequestId: ref,
-          paymentFailed: false,
-        },
-      });
+    if (result.success && result.transactionReference) {
+      const ref = result.transactionReference;
+      await recordAttempt(target, ref, totalAmount, phoneNumber);
       return res.json({
         success: true,
         transactionReference: ref,
