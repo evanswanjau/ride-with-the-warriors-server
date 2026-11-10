@@ -732,7 +732,15 @@ export async function sendRaffleConfirmationEmail(
 
 // --- ENQUIRY EMAILS ---
 
-function getEnquiryAdminEmail(data: EnquiryData): { subject: string; html: string } {
+/** Email to support. Every visitor field is HTML-escaped. */
+export function getEnquiryAdminEmail(raw: EnquiryData): { subject: string; html: string } {
+  const data = {
+    name: escapeHtml(raw.name),
+    email: escapeHtml(raw.email),
+    phone: escapeHtml(raw.phone),
+    subject: escapeHtml(raw.subject),
+    message: escapeHtml(raw.message),
+  };
   const content = `
     <p style="margin: 0 0 5px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
       font-size: 10px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; color: ${C.primaryLight};">
@@ -758,7 +766,7 @@ function getEnquiryAdminEmail(data: EnquiryData): { subject: string; html: strin
           <p style="margin: 0; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: ${C.textMuted};">Email</p>
         </td>
         <td style="padding: 11px 14px; border-bottom: 1px solid ${C.borderLight};">
-          <a href="mailto:${data.email}" style="font-size: 14px; font-weight: 600; color: ${C.primary};">${data.email}</a>
+          <a href="mailto:${encodeURIComponent(raw.email)}" style="font-size: 14px; font-weight: 600; color: ${C.primary};">${data.email}</a>
         </td>
       </tr>
       <tr>
@@ -766,7 +774,7 @@ function getEnquiryAdminEmail(data: EnquiryData): { subject: string; html: strin
           <p style="margin: 0; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: ${C.textMuted};">Phone</p>
         </td>
         <td style="padding: 11px 14px; border-bottom: 1px solid ${C.borderLight};">
-          <a href="tel:${data.phone}" style="font-size: 14px; font-weight: 600; color: ${C.primary};">${data.phone}</a>
+          <a href="tel:${encodeURIComponent(raw.phone.replace(/[^0-9+]/g, ''))}" style="font-size: 14px; font-weight: 600; color: ${C.primary};">${data.phone}</a>
         </td>
       </tr>
       <tr>
@@ -786,12 +794,16 @@ function getEnquiryAdminEmail(data: EnquiryData): { subject: string; html: strin
     </table>`;
 
   return {
-    subject: `[Enquiry] ${data.subject} — ${data.name}`,
+    subject: `[Enquiry] ${oneLine(raw.subject)} — ${oneLine(raw.name)}`,
     html: getEmailTemplate(content, 'New Enquiry', `Enquiry from ${data.name}: ${data.subject}`),
   };
 }
 
-function getEnquiryAckEmail(data: EnquiryData): { subject: string; html: string } {
+/**
+ * Auto-reply to the visitor. It quotes nothing they typed, so the form cannot
+ * be used to send someone else an email with chosen text or links.
+ */
+export function getEnquiryAckEmail(_data: EnquiryData): { subject: string; html: string } {
   const content = `
     <p style="margin: 0 0 5px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
       font-size: 10px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; color: ${C.primaryLight};">
@@ -799,31 +811,17 @@ function getEnquiryAckEmail(data: EnquiryData): { subject: string; html: string 
     </p>
     <h2 style="margin: 0 0 14px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
       font-size: 28px; font-weight: 900; letter-spacing: 0.04em; text-transform: uppercase; color: ${C.textMain}; line-height: 1.05;">
-      We'll be in touch, ${data.name.split(' ')[0]}.
+      We'll be in touch.
     </h2>
     <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.65; color: ${C.textMuted};">
-      We received your message regarding <strong>"${data.subject}"</strong> and will respond within 24–48 hours.
+      Thank you for contacting Ride With The Warriors. We received your message and will respond within 24–48 hours.
     </p>
-
-    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
-      style="border: 1px solid ${C.border}; border-left: 4px solid ${C.primary};">
-      <tr>
-        <td style="padding: 16px 18px;">
-          <p style="margin: 0 0 6px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
-            font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: ${C.textMuted};">Your Message</p>
-          <p style="margin: 0; font-size: 14px; color: ${C.textMuted}; line-height: 1.6; font-style: italic;">
-            "${data.message.substring(0, 150)}${data.message.length > 150 ? '...' : ''}"
-          </p>
-        </td>
-      </tr>
-    </table>
-
     <p style="margin: 20px 0 0; font-size: 13px; color: ${C.textMuted}; line-height: 1.6;">
       Need immediate help? Call <strong>0703 752 118</strong> or reply to this email.
     </p>`;
 
   return {
-    subject: `Message received: ${data.subject}`,
+    subject: 'We received your message',
     html: getEmailTemplate(content, 'Thanks for Contacting Us', 'We have received your enquiry and will be in touch shortly.'),
   };
 }
@@ -1050,7 +1048,12 @@ export function getTemplatePreview(type: EmailType): string {
   }
 }
 
-function escapeHtml(text: string): string {
+/** Removes line breaks (for email subjects). */
+function oneLine(text: string): string {
+  return text.replace(/\s+/g, ' ').trim().slice(0, 150);
+}
+
+export function escapeHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')

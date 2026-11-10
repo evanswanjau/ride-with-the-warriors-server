@@ -9,8 +9,9 @@ import { paymentGateway } from '../services/paymentGateway.js';
 import { beginAttempt, recordAttempt } from '../services/payments.js';
 
 import { prisma } from '../storage/prisma.js';
-import { requireUser, UserRequest } from '../middleware/userAuth.js';
+import { requireUser, optionalUser, UserRequest } from '../middleware/userAuth.js';
 import { linkGroupParticipants } from '../services/accountService.js';
+import { quoteLimiter } from '../middleware/rateLimit.js';
 
 export const registrationsRouter = Router();
 
@@ -28,6 +29,11 @@ async function loadOwnedRegistration(id: string, accountId: string) {
   if (!reg || reg.accountId !== accountId) return null;
   const amountDue = Number((reg.pricing as any)?.totalAmount ?? reg.totalAmount ?? 0);
   return { reg, amountDue };
+}
+
+/** True when every registration belongs to this account. */
+function ownsAll(regs: { accountId?: string | null }[], accountId?: string | null) {
+  return !!accountId && regs.length > 0 && regs.every((r) => r.accountId === accountId);
 }
 
 function getEmailsFromPayload(type: string, payload: any): string[] {
@@ -78,7 +84,7 @@ function validateTeamRules(circuitId: 'blitz' | 'recon' | 'corporate' | 'family'
   return formErrors;
 }
 
-registrationsRouter.post('/quote', async (req, res, next) => {
+registrationsRouter.post('/quote', quoteLimiter, optionalUser, async (req: UserRequest, res, next) => {
   try {
     const base = quoteRequestSchema.parse(req.body);
 
@@ -141,7 +147,9 @@ registrationsRouter.post('/quote', async (req, res, next) => {
           message: 'One or more participants are already registered and paid.',
           details: {
             formErrors: ['One or more participants are already registered.'],
-            duplicates: [...new Set(duplicateInfo)]
+            // Which emails/ID numbers matched is shown only to the account that owns those
+            // registrations, so this endpoint cannot be used to check who is registered.
+            ...(ownsAll(blockingDuplicates, req.account?.id) ? { duplicates: [...new Set(duplicateInfo)] } : {})
           }
         }
       });
@@ -305,14 +313,14 @@ registrationsRouter.post('/', requireUser, async (req: UserRequest, res, next) =
         }
       });
 
-      console.log(`[Registration] Duplicate check failed for PAID entries: ${duplicateInfo.join(', ')}`);
+      console.log(`[Registration] Duplicate check failed: ${duplicateInfo.length} paid match(es)`);
       return res.status(400).json({
         error: {
           code: 'DUPLICATE',
           message: 'One or more participants are already registered and paid.',
           details: {
             formErrors: ['One or more participants are already registered.'],
-            duplicates: [...new Set(duplicateInfo)]
+            ...(ownsAll(paidDuplicates, accountId) ? { duplicates: [...new Set(duplicateInfo)] } : {})
           }
         }
       });

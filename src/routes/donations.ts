@@ -3,6 +3,8 @@ import { prisma } from '../storage/prisma.js';
 import { paymentGateway } from '../services/paymentGateway.js';
 import { optionalUser, UserRequest } from '../middleware/userAuth.js';
 import { beginAttempt, recordAttempt } from '../services/payments.js';
+import { ownerToken, checkOwnerToken } from '../utils/ownerToken.js';
+import { donationLimiter } from '../middleware/rateLimit.js';
 
 const MIN_DONATION = 10;
 const MAX_DONATION = 1_000_000;
@@ -10,10 +12,21 @@ const MAX_DONATION = 1_000_000;
 
 export const donationsRouter = Router();
 
+/**
+ * Paying for a donation or reading its status needs the donationToken returned
+ * at creation, or the logged-in account that made it. Anything else gets 404,
+ * so ids cannot be probed.
+ */
+function mayUseDonation(req: UserRequest, donation: { id: string; accountId: string | null }) {
+    const token = req.body?.donationToken ?? req.query.token ?? req.headers['x-donation-token'];
+    if (checkOwnerToken('donation', donation.id, token)) return true;
+    return !!req.account && donation.accountId === req.account.id;
+}
+
 // Create a PENDING donation record
 // Logging in is optional for donations; when logged in, the donation is
 // linked to the account and missing contact details come from it.
-donationsRouter.post('/', optionalUser, async (req: UserRequest, res) => {
+donationsRouter.post('/', donationLimiter, optionalUser, async (req: UserRequest, res) => {
     try {
         const account = req.account;
         const {
@@ -44,7 +57,7 @@ donationsRouter.post('/', optionalUser, async (req: UserRequest, res) => {
         });
 
         console.log(`[Donation] Created PENDING donation record: ${donation.id} for KES ${amount}`);
-        return res.status(201).json({ donationId: donation.id, amount: donation.amount });
+        return res.status(201).json({ donationId: donation.id, donationToken: ownerToken('donation', donation.id), amount: donation.amount });
     } catch (err) {
         console.error('[Donation] Create error:', err);
         return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to create donation record' } });
@@ -52,7 +65,7 @@ donationsRouter.post('/', optionalUser, async (req: UserRequest, res) => {
 });
 
 // Initiate STK Push
-donationsRouter.post('/pay/stk-push', async (req, res) => {
+donationsRouter.post('/pay/stk-push', donationLimiter, optionalUser, async (req: UserRequest, res) => {
     const { donationId, phoneNumber } = req.body;
 
     if (!donationId || !phoneNumber) {
@@ -61,7 +74,7 @@ donationsRouter.post('/pay/stk-push', async (req, res) => {
 
     try {
         const donation = await prisma.donation.findUnique({ where: { id: donationId } });
-        if (!donation) {
+        if (!donation || !mayUseDonation(req, donation)) {
             return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Donation record not found' } });
         }
         if (donation.status === 'PAID') {
@@ -109,20 +122,20 @@ donationsRouter.post('/pay/stk-push', async (req, res) => {
         }
     } catch (err: any) {
         console.error('[Donation STK Push] Error:', err);
-        return res.status(500).json({ error: { code: 'INTERNAL', message: err.message || 'Payment initiation failed' } });
+        return res.status(500).json({ error: { code: 'INTERNAL', message: 'Payment initiation failed. Please try again.' } });
     }
 });
 
 
 // Fetch donation status (for polling)
 
-donationsRouter.get('/:id', async (req, res) => {
+donationsRouter.get('/:id', optionalUser, async (req: UserRequest, res) => {
     try {
         const donation = await prisma.donation.findUnique({ where: { id: req.params.id } });
-        if (!donation) {
+        if (!donation || !mayUseDonation(req, donation)) {
             return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Donation not found' } });
         }
-        // Public endpoint (anyone with the id): status only, no contact details.
+        // Status only, no contact details.
         const { id, status, amount, failureReason } = donation;
         return res.json({ donation: { id, status, amount, failureReason } });
     } catch (err) {
