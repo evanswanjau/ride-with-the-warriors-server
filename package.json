@@ -37,6 +37,7 @@
     "db:reset": "dotenv -e .env.stack -- node scripts/assert-local-db.mjs && dotenv -e .env.stack -- prisma migrate reset --force && npm run db:seed && npm run db:seed:demo",
     "db:studio": "dotenv -e .env.stack -- prisma studio",
     "db:clone-anon": "bash scripts/db-clone-anon.sh",
+    "repair:paid": "tsx src/scripts/repairPaidRegistrations.ts",
     "db:test:prepare": "dotenv -e .env.test -- node scripts/assert-local-db.mjs && dotenv -e .env.test -- prisma migrate reset --force && dotenv -e .env.test -- tsx prisma/seed.ts",
     "test:db": "dotenv -e .env.test -- vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.dev.json",
