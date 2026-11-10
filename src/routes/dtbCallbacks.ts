@@ -58,7 +58,8 @@ dtbCallbacksRouter.post('/stkpush', verifyCallbackKey, async (req, res) => {
         callbackData.checkout_request_id;
 
     // Determine success: DTB uses status="SUCCESS" and responseCode="200"
-    const rawStatus = callbackData.status || callbackData.ResultCode || callbackData.result_code;
+    // `??`, not `||`: Daraja reports success as ResultCode 0, which is falsy.
+    const rawStatus = callbackData.status ?? callbackData.ResultCode ?? callbackData.result_code;
     const rawCode = callbackData.responseCode || callbackData.ResponseCode;
     const isSuccess =
         rawStatus === 'SUCCESS' ||
@@ -74,7 +75,10 @@ dtbCallbacksRouter.post('/stkpush', verifyCallbackKey, async (req, res) => {
         callbackData.failure_reason ||
         req.body.message;
 
-    const mnoRef = callbackData.mnoReference || callbackData.MnoReference || '';
+    // Daraja puts the M-Pesa receipt in CallbackMetadata.Item[{ Name, Value }].
+    const metaItems: { Name?: string; Value?: unknown }[] = callbackData.CallbackMetadata?.Item ?? [];
+    const darajaReceipt = metaItems.find(i => i.Name === 'MpesaReceiptNumber')?.Value;
+    const mnoRef = callbackData.mnoReference || callbackData.MnoReference || (darajaReceipt ? String(darajaReceipt) : '');
     const cbsRef = callbackData.cbsReference || callbackData.CbsReference || '';
 
     console.log(

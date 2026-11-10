@@ -27,6 +27,7 @@ const schema = z.object({
     APP_ENV: z.enum(['local', 'test', 'uat', 'production']).optional(),
     DATABASE_URL: z.string().url('DATABASE_URL must be a postgres URL').optional(),
     PAYMENT_MODE: z.enum(['live', 'simulate']).optional(),
+    PAYMENT_PROVIDER: z.enum(['dtb', 'sandbox']).optional(),
     DTB_CALLBACK_SECRET: z.string().optional(),
     OTP_PEPPER: z.string().optional(),
     DTB_INSECURE: z.string().optional(),
@@ -72,6 +73,19 @@ export function checkConfig(env: NodeJS.ProcessEnv = process.env): ConfigReport 
         if (isTrue(env.OTP_DEV_ECHO)) errors.push('OTP_DEV_ECHO=true is not allowed in production.');
         if (isTrue(env.MESSAGING_DISABLED)) errors.push('MESSAGING_DISABLED=true is not allowed in production.');
         if (!env.DTB_CLIENT_ID || !env.DTB_CLIENT_SECRET) errors.push('DTB_CLIENT_ID and DTB_CLIENT_SECRET must be set in production.');
+        // Unset means dtb, so existing production settings keep working.
+        if (env.PAYMENT_PROVIDER === 'sandbox') errors.push('PAYMENT_PROVIDER=sandbox is not allowed in production; production pays through DTB.');
+    }
+
+    if (env.PAYMENT_PROVIDER === 'sandbox') {
+        if (!env.DARAJA_CONSUMER_KEY || !env.DARAJA_CONSUMER_SECRET) {
+            const msg = 'PAYMENT_PROVIDER=sandbox needs DARAJA_CONSUMER_KEY and DARAJA_CONSUMER_SECRET (developer.safaricom.co.ke).';
+            if (deployed) errors.push(msg); else warnings.push(msg);
+        }
+        if (deployed && isTrue(env.DARAJA_POLL)) warnings.push('DARAJA_POLL=true is meant for local runs without a public callback URL.');
+    }
+    if (which === 'uat' && env.PAYMENT_PROVIDER !== 'sandbox') {
+        warnings.push('UAT is not using the M-Pesa sandbox (PAYMENT_PROVIDER is not "sandbox").');
     }
 
     if (which === 'uat' && isTrue(env.DTB_INSECURE)) {

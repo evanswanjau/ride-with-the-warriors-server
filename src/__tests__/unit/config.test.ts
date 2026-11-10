@@ -59,6 +59,32 @@ describe('checkConfig', () => {
         expect(r.errors).toEqual([]);
     });
 
+    it('refuses the M-Pesa sandbox in production; unset or dtb is fine', () => {
+        expect(checkConfig({ ...prodBase, PAYMENT_PROVIDER: 'sandbox', DARAJA_CONSUMER_KEY: 'k', DARAJA_CONSUMER_SECRET: 's' }).errors.join()).toContain('PAYMENT_PROVIDER');
+        expect(checkConfig({ ...prodBase, PAYMENT_PROVIDER: 'dtb' }).errors).toEqual([]);
+        expect(checkConfig(prodBase).errors).toEqual([]);
+    });
+
+    it('rejects an unknown PAYMENT_PROVIDER', () => {
+        expect(checkConfig({ ...prodBase, PAYMENT_PROVIDER: 'mpesa' }).errors.join()).toContain('PAYMENT_PROVIDER');
+    });
+
+    it('allows the sandbox in UAT with Daraja credentials, refuses it without', () => {
+        const uat = { ...prodBase, APP_ENV: 'uat', PAYMENT_PROVIDER: 'sandbox' };
+        expect(checkConfig({ ...uat, DARAJA_CONSUMER_KEY: 'k', DARAJA_CONSUMER_SECRET: 's' }).errors).toEqual([]);
+        expect(checkConfig(uat).errors.join()).toContain('DARAJA_CONSUMER_KEY');
+    });
+
+    it('warns when UAT is not on the sandbox', () => {
+        expect(checkConfig({ ...prodBase, APP_ENV: 'uat' }).warnings.join()).toContain('sandbox');
+    });
+
+    it('only warns about missing Daraja credentials locally', () => {
+        const r = checkConfig({ APP_ENV: 'local', DATABASE_URL: 'postgresql://postgres:rwtw@localhost:54329/rwtw_dev', PAYMENT_PROVIDER: 'sandbox' });
+        expect(r.errors).toEqual([]);
+        expect(r.warnings.join()).toContain('DARAJA_CONSUMER_KEY');
+    });
+
     it('requires DATABASE_URL outside tests', () => {
         expect(checkConfig({ APP_ENV: 'local' }).errors.join()).toContain('DATABASE_URL');
         expect(checkConfig({ APP_ENV: 'test' }).errors).toEqual([]);

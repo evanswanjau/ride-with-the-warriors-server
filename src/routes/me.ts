@@ -5,7 +5,7 @@
 import { Router } from 'express';
 import { prisma } from '../storage/prisma.js';
 import { requireUser, UserRequest } from '../middleware/userAuth.js';
-import { dtbService } from '../services/dtbService.js';
+import { paymentGateway } from '../services/paymentGateway.js';
 
 // Same fee charged when a bike is hired during registration (services/pricing.ts).
 const BIKE_HIRE_FEE = 1500;
@@ -173,7 +173,7 @@ meRouter.post('/bike-hire/:id/pay', async (req: UserRequest, res, next) => {
             return res.json({ success: true, transactionReference: simRef, message: 'Payment simulated successfully.' });
         }
 
-        const result = await dtbService.initiateStkPush({ registrationId: bikeHire.registrationId, amount: bikeHire.amount, phoneNumber });
+        const result = await paymentGateway.initiateStkPush({ registrationId: bikeHire.registrationId, amount: bikeHire.amount, phoneNumber });
         if (!result.success || !result.transactionReference) {
             return res.status(502).json({ error: { code: 'PAYMENT_FAILED', message: result.message || 'Failed to trigger M-Pesa prompt.' } });
         }
