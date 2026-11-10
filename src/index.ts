@@ -1,6 +1,8 @@
 // import 'dotenv/config'; // Moved to conditional or command line
+import { initSentry, Sentry } from './instrument.js';
 import express from 'express';
 import cors from 'cors';
+import { assertConfig } from './config.js';
 
 import { circuitsRouter } from './routes/circuits.js';
 import { registrationsRouter } from './routes/registrations.js';
@@ -28,6 +30,10 @@ import { meRouter } from './routes/me.js';
 import { galleryRouter } from './routes/gallery.js';
 import { prisma } from './storage/prisma.js';
 
+
+// Refuse to start with unsafe settings (see src/config.ts).
+const config = assertConfig();
+initSentry(config.env);
 
 const app = express();
 
@@ -76,6 +82,9 @@ app.use('/api/v1/admin/bike-hires', bikeHiresRouter);
 app.use('/api/v1/admin/bibs', adminBibsRouter);
 app.use('/api/v1/admin/notify', adminNotifyRouter);
 app.use('/api/v1/admin/feedback', adminFeedbackRouter);
+
+// Reports unhandled errors to Sentry (no-op when SENTRY_DSN is not set).
+Sentry.setupExpressErrorHandler(app);
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

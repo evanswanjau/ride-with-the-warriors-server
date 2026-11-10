@@ -1,9 +1,8 @@
+import nodemailer from 'nodemailer';
 import { prisma } from '../storage/prisma.js';
 import { messagingDisabled, logSuppressed } from '../utils/messaging.js';
 
 const BASE_URL = 'https://sms.textsms.co.ke/api/services';
-
-console.log(`[SMS Service] Initializing TextSMS Service`);
 
 /**
  * Get credentials from environment
@@ -22,7 +21,7 @@ function getCredentials() {
  */
 function formatPhoneNumber(phone: string): string {
     // Remove all non-numeric characters
-    let cleanPhone = phone.trim().replace(/\D/g, '');
+    const cleanPhone = phone.trim().replace(/\D/g, '');
     
     // If it starts with 07... or 01... (Kenyan mobile formats)
     if (cleanPhone.startsWith('0')) {
@@ -42,6 +41,51 @@ function formatPhoneNumber(phone: string): string {
     return cleanPhone;
 }
 
+/**
+ * SMS_DRIVER=mailpit (local only): every SMS is delivered as an email to the
+ * local Mailpit inbox (http://localhost:8025), addressed to
+ * sms+<number>@sms.local, so emails, SMS and login codes all land in one place.
+ * Any other value (default "textsms") sends real SMS through TextSMS.
+ */
+function smsDriver(): 'mailpit' | 'textsms' {
+    return process.env.SMS_DRIVER === 'mailpit' ? 'mailpit' : 'textsms';
+}
+
+let mailpitTransport: nodemailer.Transporter | null = null;
+
+async function sendViaMailpit(recipients: string[], message: string, logMessage: string) {
+    mailpitTransport ??= nodemailer.createTransport({
+        host: process.env.SMTP_HOST || 'localhost',
+        port: Number(process.env.SMTP_PORT || 1025),
+        secure: false,
+        ignoreTLS: true,
+    });
+    const numbers = recipients.filter(r => r && r.trim().length > 5).map(formatPhoneNumber);
+    let successCount = 0;
+    let failedCount = 0;
+    for (const mobile of numbers) {
+        try {
+            await mailpitTransport.sendMail({
+                from: 'SMS Gateway <sms@sms.local>',
+                to: `sms+${mobile}@sms.local`,
+                subject: `SMS to +${mobile}: ${message.slice(0, 60)}`,
+                text: message,
+                headers: { 'X-RWTW-Channel': 'sms' },
+            });
+            successCount++;
+        } catch (err) {
+            console.error(`[SMS Service] Mailpit delivery failed for ${mobile}:`, (err as Error).message);
+            failedCount++;
+        }
+    }
+    if (numbers.length > 0) {
+        await prisma.smsLog.createMany({
+            data: numbers.map(phoneNumber => ({ phoneNumber, message: logMessage, status: 'Local (Mailpit)' })),
+        });
+    }
+    return { success: successCount > 0 || numbers.length === 0, successCount, failedCount };
+}
+
 export const smsService = {
     /**
      * Send an SMS to one or more recipients.
@@ -55,6 +99,9 @@ export const smsService = {
         if (messagingDisabled()) {
             logSuppressed('sms', recipients.length);
             return { success: true, successCount: 0, failedCount: 0 };
+        }
+        if (smsDriver() === 'mailpit') {
+            return sendViaMailpit(recipients, message, logMessage);
         }
         const { apiKey, partnerId, shortcode } = getCredentials();
         if (!apiKey || !partnerId) {

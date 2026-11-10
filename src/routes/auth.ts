@@ -18,12 +18,13 @@ import { maskEmail, maskPhone } from '../utils/masking.js';
 import { issueOtp, verifyOtp, OtpError } from '../services/otpService.js';
 import { createSession, publicAccount, claimUnlinkedRecords } from '../services/accountService.js';
 import { requireUser, UserRequest } from '../middleware/userAuth.js';
+import { rateLimitsOff } from '../middleware/rateLimit.js';
 
 export const authRouter = Router();
 
-// Per-IP limits are skipped in the test suite (many logins from one IP); the
-// per-address OTP limit in otpService still applies.
-const skipInTests = () => process.env.NODE_ENV === 'test';
+// Per-IP limits are skipped in the test suite and local E2E (many logins from
+// one IP); the per-address OTP limit in otpService still applies.
+const skipInTests = rateLimitsOff;
 const limitMessage = { error: { code: 'TOO_MANY_REQUESTS', message: 'Too many attempts. Please try again later.' } };
 const startLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false, message: limitMessage, skip: skipInTests });
 const verifyLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 30, standardHeaders: true, legacyHeaders: false, message: limitMessage, skip: skipInTests });
