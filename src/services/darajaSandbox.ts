@@ -16,6 +16,8 @@ export const SANDBOX_BASE_URL = 'https://sandbox.safaricom.co.ke';
 // Public sandbox test credentials published by Safaricom.
 const DEFAULT_SHORTCODE = '174379';
 const DEFAULT_PASSKEY = 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919';
+// Sent when we poll for the result locally; Daraja's callback to it is ignored.
+export const LOCAL_PLACEHOLDER_CALLBACK = 'https://example.com/rwtw-sandbox-callback';
 
 export interface StkPushRequest {
     registrationId: string;
@@ -175,6 +177,13 @@ export function createDarajaSandbox(env: Env = process.env, http: Fetch = fetch)
         const timestamp = darajaTimestamp();
         const phone = toMsisdn(details.phoneNumber);
         const callback = details.callbackUrl || `${env.APP_URL || env.BASE_URL}/api/dtb/stkpush`;
+        // Daraja only accepts public https callback URLs. Locally (http://localhost) we poll
+        // instead, so hand Daraja a harmless placeholder that carries no secret.
+        const publicCallback = /^https:\/\//.test(callback) && !/\/\/(localhost|127\.0\.0\.1)/.test(callback);
+        if (!publicCallback && !poll) {
+            return { success: false, message: `M-Pesa sandbox needs a public https callback URL (got ${callback}). Set APP_URL, or DARAJA_POLL=true locally.` };
+        }
+        const callBackUrl = publicCallback ? withCallbackKey(callback, env) : LOCAL_PLACEHOLDER_CALLBACK;
         const payload = {
             BusinessShortCode: shortCode,
             Password: darajaPassword(shortCode, passKey, timestamp),
@@ -184,7 +193,7 @@ export function createDarajaSandbox(env: Env = process.env, http: Fetch = fetch)
             PartyA: phone,
             PartyB: shortCode,
             PhoneNumber: phone,
-            CallBackURL: withCallbackKey(callback, env),
+            CallBackURL: callBackUrl,
             AccountReference: 'RWTW',
             TransactionDesc: 'RWTW',
         };

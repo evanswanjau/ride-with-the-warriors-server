@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
-    createDarajaSandbox, resetDarajaToken, toMsisdn, darajaTimestamp, darajaPassword, SANDBOX_BASE_URL,
+    createDarajaSandbox, resetDarajaToken, toMsisdn, darajaTimestamp, darajaPassword, SANDBOX_BASE_URL, LOCAL_PLACEHOLDER_CALLBACK,
 } from '../../../services/darajaSandbox.js';
 import { paymentProvider } from '../../../services/paymentGateway.js';
 
@@ -90,6 +90,24 @@ describe('initiateStkPush', () => {
         });
         const result = await createDarajaSandbox(env, http.fn).initiateStkPush({ registrationId: 'r', amount: 1, phoneNumber: '123' });
         expect(result).toMatchObject({ success: false, message: 'Bad Request - Invalid PhoneNumber' });
+    });
+
+    it('locally (http callback + polling) sends a placeholder callback without the secret', async () => {
+        const http = fakeFetch({ '/oauth/v1/generate': token, '/processrequest': accepted });
+        const local = { ...env, APP_URL: 'http://localhost:4000', DARAJA_POLL: 'true', DARAJA_POLL_INTERVAL_MS: '1', DARAJA_POLL_TIMEOUT_MS: '1' };
+        const result = await createDarajaSandbox(local, http.fn).initiateStkPush({ registrationId: 'r', amount: 1, phoneNumber: '0712345678' });
+        expect(result.success).toBe(true);
+        const body = JSON.parse(String(http.calls[1].init?.body));
+        expect(body.CallBackURL).toBe(LOCAL_PLACEHOLDER_CALLBACK);
+        expect(body.CallBackURL).not.toContain('key=');
+    });
+
+    it('refuses a non-public callback URL when not polling', async () => {
+        const http = fakeFetch({ '/oauth/v1/generate': token, '/processrequest': accepted });
+        const result = await createDarajaSandbox({ ...env, APP_URL: 'http://localhost:4000' }, http.fn).initiateStkPush({ registrationId: 'r', amount: 1, phoneNumber: '0712345678' });
+        expect(result.success).toBe(false);
+        expect(result.message).toContain('public https callback');
+        expect(http.calls.some(c => c.url.includes('/processrequest'))).toBe(false);
     });
 
     it('fails without consumer credentials and makes no request', async () => {
