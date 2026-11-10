@@ -94,3 +94,5 @@ dist
 /prisma/dev.db-journal
 .vercel
 .env*.local
+# Local stack
+dev/dumps/
