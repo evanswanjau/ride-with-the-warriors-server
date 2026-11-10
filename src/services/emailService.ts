@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { messagingDisabled, logSuppressed } from '../utils/messaging.js';
 import { prisma } from '../storage/prisma.js';
 import { calculateAge } from './pricing.js';
 import { generateRaffleTicketPdf } from './pdfService.js';
@@ -40,6 +41,7 @@ export type EmailType =
 
 interface RegistrationData {
   id: string;
+  bibNumber?: string | null; // assigned once paid
   firstName: string;
   lastName: string;
   email: string;
@@ -89,6 +91,19 @@ const transporter = nodemailer.createTransport({
   },
   tls: { rejectUnauthorized: false },
 });
+
+// Kill switch: never contact anyone when messaging is disabled (see utils/messaging.ts).
+{
+  const realSendMail = transporter.sendMail.bind(transporter);
+  (transporter as any).sendMail = async (mail: any) => {
+    if (messagingDisabled()) {
+      const to = Array.isArray(mail?.to) ? mail.to.length : 1;
+      logSuppressed('email', to, mail?.subject);
+      return { messageId: 'suppressed', accepted: [], rejected: [] };
+    }
+    return realSendMail(mail);
+  };
+}
 
 // --- HELPERS ---
 
@@ -403,7 +418,7 @@ function getConfirmationEmail(data: RegistrationData): { subject: string; html: 
       Your registration is confirmed. Keep your ID handy &mdash; you'll need it at check-in.
     </p>
 
-    ${renderIdBlock('Registration ID', getNumericId(data.id), 'Present this at event check-in')}
+    ${renderIdBlock('Registration ID', getNumericId(data.bibNumber ?? data.id), 'Present this at event check-in')}
     ${renderDetailsTable(data)}
     ${renderEventMeta(data)}
 
@@ -424,7 +439,7 @@ function getConfirmationEmail(data: RegistrationData): { subject: string; html: 
 
   return {
     subject: `Registration Confirmed — ${EVENT_NAME}`,
-    html: getEmailTemplate(content, 'Registration Confirmed', `Your Registration ID is ${getNumericId(data.id)}`),
+    html: getEmailTemplate(content, 'Registration Confirmed', `Your Registration ID is ${getNumericId(data.bibNumber ?? data.id)}`),
   };
 }
 
@@ -515,7 +530,7 @@ function getEventReminderEmail(data: RegistrationData, daysUntil: number): { sub
       Hi <strong>${data.firstName}</strong> &mdash; ${cfg.sub}
     </p>
 
-    ${renderIdBlock('Your BIB Number', getNumericId(data.id), 'Present this at check-in')}
+    ${renderIdBlock('Your BIB Number', getNumericId(data.bibNumber ?? data.id), 'Present this at check-in')}
     ${renderEventMeta(data)}
     ${renderDetailsTable(data)}
 
@@ -955,6 +970,33 @@ export async function sendAlertEmail(
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
     console.error(`[Email] Failed to send alert to ${to}:`, msg);
+    return false;
+  }
+}
+
+/** One-time login code. The code itself is never logged. */
+export async function sendOtpEmail(to: string, code: string): Promise<boolean> {
+  const content = `
+    <h2 style="margin: 0 0 14px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
+      font-size: 26px; font-weight: 700; color: ${C.textMain};">Your login code</h2>
+    <p style="margin: 0 0 18px; font-size: 15px; line-height: 1.6; color: ${C.textMuted};">
+      Use this code to log in to your Ride With The Warriors account. It expires in 10 minutes.
+    </p>
+    ${renderIdBlock('Login code', code, 'Never share this code with anyone')}
+    <p style="margin: 18px 0 0; font-size: 13px; line-height: 1.6; color: ${C.textMuted};">
+      If you didn't try to log in, you can ignore this email.
+    </p>`;
+  try {
+    await transporter.sendMail({
+      from: EMAIL_FROM,
+      to,
+      subject: 'Your Ride With The Warriors login code',
+      text: `${code} is your Ride With The Warriors login code. It expires in 10 minutes.`,
+      html: getEmailTemplate(content, 'Your login code', 'Your one-time login code'),
+    });
+    return true;
+  } catch (error) {
+    console.error('[Email] Failed to send login code:', error instanceof Error ? error.message : error);
     return false;
   }
 }

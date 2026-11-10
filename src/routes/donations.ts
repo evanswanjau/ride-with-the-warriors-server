@@ -1,14 +1,23 @@
 import { Router } from 'express';
 import { prisma } from '../storage/prisma.js';
 import { dtbService } from '../services/dtbService.js';
+import { optionalUser, UserRequest } from '../middleware/userAuth.js';
 
 
 export const donationsRouter = Router();
 
 // Create a PENDING donation record
-donationsRouter.post('/', async (req, res) => {
+// Logging in is optional for donations; when logged in, the donation is
+// linked to the account and missing contact details come from it.
+donationsRouter.post('/', optionalUser, async (req: UserRequest, res) => {
     try {
-        const { amount, name, email, phone } = req.body;
+        const account = req.account;
+        const {
+            amount,
+            name = account ? `${account.firstName} ${account.lastName}`.trim() : undefined,
+            email = account?.email ?? undefined,
+            phone = account?.phone ?? undefined,
+        } = req.body;
 
         if (!amount || isNaN(amount)) {
             return res.status(400).json({ error: { code: 'VALIDATION', message: 'Valid amount is required' } });
@@ -25,6 +34,7 @@ donationsRouter.post('/', async (req, res) => {
                 email: email || null,
                 phone: phone || null,
                 status: 'PENDING',
+                accountId: account?.id ?? null,
             },
         });
 

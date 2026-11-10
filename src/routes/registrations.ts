@@ -4,12 +4,30 @@ import { ZodError } from 'zod';
 import { quoteRequestSchema, riderDetailsSchema, teamDetailsSchema, familyDetailsSchema } from '../validation/registrationSchemas.js';
 import { zodToApiError } from '../validation/zodError.js';
 import { buildQuote, getPricingCategories } from '../services/pricing.js';
-import { createRegistration, getRegistration, getAllRegistrations, generateNextId, updateRegistration, findExistingRegistrationsByEmails, findExistingRegistrationsByIdNumbers, RegistrationRecord } from '../storage/memoryRegistrations.js';
+import { createRegistration, getRegistration, getAllRegistrations, updateRegistration, findExistingRegistrationsByEmails, findExistingRegistrationsByIdNumbers, RegistrationRecord } from '../storage/memoryRegistrations.js';
 import { dtbService } from '../services/dtbService.js';
 
 import { prisma } from '../storage/prisma.js';
+import { requireUser, UserRequest } from '../middleware/userAuth.js';
+import { linkGroupParticipants } from '../services/accountService.js';
 
 export const registrationsRouter = Router();
+
+/** Registration opens per event via REGISTRATION_OPEN=true; closed otherwise. */
+function registrationOpen() {
+  return process.env.REGISTRATION_OPEN === 'true';
+}
+
+/**
+ * Loads a registration the logged-in account may act on (owner), plus the
+ * amount due for its whole group. Returns null when missing or not theirs.
+ */
+async function loadOwnedRegistration(id: string, accountId: string) {
+  const reg = await prisma.registration.findUnique({ where: { id } });
+  if (!reg || reg.accountId !== accountId) return null;
+  const amountDue = Number((reg.pricing as any)?.totalAmount ?? reg.totalAmount ?? 0);
+  return { reg, amountDue };
+}
 
 function getEmailsFromPayload(type: string, payload: any): string[] {
   const emails: string[] = [];
@@ -130,11 +148,8 @@ registrationsRouter.post('/quote', async (req, res, next) => {
 
     const quote = await buildQuote({ circuitId: base.circuitId, type: base.type, payload });
 
-    // Get projected ID based on this quote
-    const mainCategory = quote.classifications[0]?.category || 'Individual';
-    const projectedId = await generateNextId(mainCategory, base.circuitId, base.type);
-
-    return res.json({ ...quote, projectedId });
+    // Bib numbers are assigned only after payment, so there is no projected number.
+    return res.json(quote);
   } catch (err) {
     if (err instanceof ZodError) return res.status(400).json(zodToApiError(err));
     next(err);
@@ -142,43 +157,20 @@ registrationsRouter.post('/quote', async (req, res, next) => {
 });
 
 // DTB PAYMENT HANDLERS
-registrationsRouter.post('/pay/dtb', async (req, res) => {
-  const { registrationId, amount, email, name } = req.body;
+registrationsRouter.post('/pay/stk-push', requireUser, async (req: UserRequest, res) => {
+  const { registrationId, phoneNumber } = req.body;
 
-  if (!registrationId || !amount || !email) {
+  if (!registrationId || !phoneNumber) {
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'Missing required payment details' } });
   }
 
-  try {
-    // DTB typically uses STK Push as the primary M-Pesa method via Fiorano
-    // For now, we point this to a generic 'payment initiation' if supported, 
-    // or just trigger STK Push if that's the preferred path.
-    const result = await dtbService.initiateStkPush({
-      registrationId,
-      amount,
-      phoneNumber: req.body.phoneNumber || '', // DTB STK Push needs a phone
-      callbackUrl: `${process.env.APP_URL || process.env.BASE_URL}/api/dtb/stkpush`,
-
-    });
-
-    if (result.success) {
-      return res.json(result);
-    } else {
-      return res.status(500).json({ error: { code: 'PAYMENT_FAILED', message: result.message } });
-    }
-  } catch (err: any) {
-    console.error('[DTB Payment] Error:', err);
-    return res.status(500).json({ error: { code: 'INTERNAL', message: err.message || 'Payment initiation failed' } });
+  // The amount always comes from the stored registration, never from the client.
+  const owned = await loadOwnedRegistration(registrationId, req.account!.id);
+  if (!owned) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Registration not found' } });
+  if (owned.reg.status !== 'UNPAID') {
+    return res.status(400).json({ error: { code: 'ALREADY_PAID', message: 'This registration is already paid.' } });
   }
-});
-
-
-registrationsRouter.post('/pay/stk-push', async (req, res) => {
-  const { registrationId, amount, phoneNumber } = req.body;
-
-  if (!registrationId || !amount || !phoneNumber) {
-    return res.status(400).json({ error: { code: 'VALIDATION', message: 'Missing required payment details' } });
-  }
+  const amount = owned.amountDue;
 
   // ── SIMULATION MODE ──────────────────────────────────────────────────────────
   if (process.env.PAYMENT_MODE === 'simulate') {
@@ -257,47 +249,12 @@ registrationsRouter.post('/pay/stk-push', async (req, res) => {
   }
 });
 
-// SIMULATED M-PESA VERIFICATION
-
-registrationsRouter.post('/verify-mpesa', async (req, res) => {
-  const { registrationId, mpesaCode } = req.body;
-
-  if (!registrationId || !mpesaCode) {
-    return res.status(400).json({ error: { code: 'VALIDATION', message: 'Registration ID and M-Pesa code are required' } });
-  }
-
-  console.log(`[M-Pesa Simulation] Verifying code ${mpesaCode} for ${registrationId}...`);
-
-  // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 3000));
-
-  // Any 10-char code starting with 'S' is valid for simulation
-  const isValid = mpesaCode.length === 10 && mpesaCode.toUpperCase().startsWith('S');
-
-  if (isValid) {
-    try {
-      await updateRegistration(registrationId, {
-        status: 'PAID',
-        mpesaCode: mpesaCode.toUpperCase()
-      });
-      console.log(`[M-Pesa Simulation] Success! ${mpesaCode} verified for ${registrationId}`);
-      return res.json({ ok: true, message: 'Payment verified successfully' });
-    } catch (error) {
-      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Registration not found' } });
-    }
-  } else {
-    console.log(`[M-Pesa Simulation] Failed! ${mpesaCode} is invalid`);
-    return res.status(400).json({
-      error: {
-        code: 'INVALID_CODE',
-        message: 'Invalid M-Pesa transaction code. For simulation, use a 10-character code starting with S (e.g., S123456789)'
-      }
-    });
-  }
-});
-
-registrationsRouter.post('/', async (req, res, next) => {
+registrationsRouter.post('/', requireUser, async (req: UserRequest, res, next) => {
   const start = Date.now();
+  if (!registrationOpen()) {
+    return res.status(403).json({ error: { code: 'REGISTRATION_CLOSED', message: 'Registration is closed.' } });
+  }
+  const accountId = req.account!.id;
   try {
     const { registrationId: existingId } = req.body;
     const base = quoteRequestSchema.parse(req.body);
@@ -325,9 +282,13 @@ registrationsRouter.post('/', async (req, res, next) => {
     let excludeGroupId: string | undefined;
     if (existingId) {
       const existing = await getRegistration(existingId);
-      if (existing) {
-        excludeGroupId = (existing as any).groupId || (existing.payload as any)?.groupId;
+      if (!existing || existing.accountId !== accountId) {
+        return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Registration not found' } });
       }
+      if (existing.status !== 'UNPAID') {
+        return res.status(400).json({ error: { code: 'ALREADY_PAID', message: 'Paid registrations cannot be edited.' } });
+      }
+      excludeGroupId = (existing as any).groupId || (existing.payload as any)?.groupId;
     }
 
     const duplicateByEmail = emailsToCheck.length > 0 ? await findExistingRegistrationsByEmails(emailsToCheck, excludeGroupId, existingId) : [];
@@ -375,8 +336,11 @@ registrationsRouter.post('/', async (req, res, next) => {
       });
     }
 
-    // AUTO-CLEANUP: If we have UNPAID duplicates and no PAID ones, we delete the old groups to allow fresh start
-    if (unpaidDuplicates.length > 0) {
+    // AUTO-CLEANUP: replace this account's own earlier UNPAID attempts. Never
+    // delete unpaid registrations that belong to someone else.
+    const myUnpaidDuplicates = unpaidDuplicates.filter(reg => reg.accountId === accountId);
+    if (myUnpaidDuplicates.length > 0) {
+      const unpaidDuplicates = myUnpaidDuplicates;
       const groupIds = [...new Set(unpaidDuplicates.map(reg => (reg as any).groupId).filter(Boolean))];
       console.log(`[Registration] Cleaning up ${unpaidDuplicates.length} UNPAID records in groups: ${groupIds.join(', ')}`);
 
@@ -407,6 +371,7 @@ registrationsRouter.post('/', async (req, res, next) => {
         payload,
         pricing: quote.pricing,
         classifications: quote.classifications,
+        accountId,
       });
     } else {
       console.log(`[Registration] Creating new ${type} record`);
@@ -418,8 +383,11 @@ registrationsRouter.post('/', async (req, res, next) => {
         classifications: quote.classifications,
         status: quote.pricing.totalAmount === 0 ? 'PAID' : 'UNPAID',
         mpesaCode: base.mpesaCode || null,
+        accountId,
       });
     }
+    // Team members / adult riders who already have accounts see their own entry.
+    await linkGroupParticipants(rec.id, accountId);
 
     const duration = Date.now() - start;
     console.log(`[Registration] Success! ID: ${rec.id}, Duration: ${duration}ms`);
@@ -432,10 +400,54 @@ registrationsRouter.post('/', async (req, res, next) => {
   }
 });
 
-registrationsRouter.get('/:id', async (req, res) => {
+// Used by the payment page (summary + polling). Only the owner or the rider
+// themselves can read a registration.
+registrationsRouter.get('/:id', requireUser, async (req: UserRequest, res) => {
   const rec = await getRegistration(req.params.id);
-  if (!rec) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Registration not found' } });
-  res.json({ registration: rec });
+  const me = req.account!.id;
+  if (!rec || (rec.accountId !== me && rec.participantAccountId !== me)) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Registration not found' } });
+  }
+  const p = (rec.payload ?? {}) as any;
+  // Owner sees every rider in the group; a participant sees only their own row.
+  const groupRows = rec.accountId === me && rec.groupId
+    ? await prisma.registration.findMany({ where: { groupId: rec.groupId }, orderBy: { createdAt: 'asc' } })
+    : [rec as any];
+  res.json({
+    registration: {
+      id: rec.id,
+      status: rec.status,
+      bibNumber: rec.bibNumber ?? null,
+      riders: groupRows.map((r: any) => ({
+        id: r.id,
+        firstName: r.firstName,
+        lastName: r.lastName,
+        category: r.category,
+        bibNumber: r.bibNumber ?? null,
+        isCaptain: !!r.isCaptain,
+        gender: r.gender,
+        dob: r.dob,
+      })),
+      type: rec.type,
+      circuitId: rec.circuitId,
+      phoneNumber: rec.phoneNumber,
+      classifications: Array.isArray(rec.classifications)
+        ? rec.classifications.map((c: any) => ({ category: c?.category }))
+        : [],
+      pricing: { totalAmount: Number(rec.pricing?.totalAmount ?? rec.totalAmount) },
+      payload: {
+        riderDetails: p.riderDetails
+          ? { firstName: p.riderDetails.firstName, lastName: p.riderDetails.lastName }
+          : undefined,
+        teamDetails: p.teamDetails ? { teamName: p.teamDetails.teamName } : undefined,
+        familyDetails: p.familyDetails?.guardian
+          ? { guardian: { firstName: p.familyDetails.guardian.firstName, lastName: p.familyDetails.guardian.lastName } }
+          : undefined,
+        paymentFailed: p.paymentFailed,
+        paymentFailureReason: p.paymentFailureReason,
+      },
+    },
+  });
 });
 
 registrationsRouter.get('/config/categories', async (_req, res, next) => {

@@ -11,7 +11,6 @@ import { adminDonationsRouter } from './routes/admin/donations.js';
 import { authRouter } from './routes/admin/auth.js';
 import { emailRouter } from './routes/admin/email.js';
 import { adminDashboardRouter } from './routes/admin/dashboard.js';
-import { profileRouter } from './routes/profile.js';
 import { raffleRouter } from './routes/raffle.js';
 import { enquiryRouter } from './routes/enquiry.js';
 import { donationsRouter } from './routes/donations.js';
@@ -24,6 +23,9 @@ import { notifyRouter, adminNotifyRouter } from './routes/notify.js';
 import { feedbackRouter, adminFeedbackRouter } from './routes/feedback.js';
 import { bikeHiresRouter } from './routes/admin/bike-hires.js';
 import { adminBibsRouter } from './routes/admin/bibs.js';
+import { authRouter as userAuthRouter } from './routes/auth.js';
+import { meRouter } from './routes/me.js';
+import { galleryRouter } from './routes/gallery.js';
 import { prisma } from './storage/prisma.js';
 
 
@@ -45,7 +47,6 @@ app.get('/health', async (_req, res) => {
 
 app.use('/api/v1/circuits', circuitsRouter);
 app.use('/api/v1/registrations', registrationsRouter);
-app.use('/api/v1/profile', profileRouter);
 app.use('/api/v1/raffle', raffleRouter);
 app.use('/api/v1/enquiry', enquiryRouter);
 app.use('/api/v1/donations', donationsRouter);
@@ -55,6 +56,11 @@ app.use('/s', shortenerRouter);
 app.use('/api/v1/referrals', referralsRouter);
 app.use('/api/v1/notify', notifyRouter);
 app.use('/api/v1/feedback', feedbackRouter);
+
+// Participant accounts (OTP login) and their own data
+app.use('/api/v1/auth', userAuthRouter);
+app.use('/api/v1/me', meRouter);
+app.use('/api/v1/gallery', galleryRouter);
 
 
 // Admin Routes

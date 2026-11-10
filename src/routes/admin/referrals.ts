@@ -1,7 +1,11 @@
 import { Router } from 'express';
+import { requireAdmin } from '../../middleware/auth.js';
 import { prisma } from '../../storage/prisma.js';
 
 export const adminReferralsRouter = Router();
+
+// Every route in this router is admin-only.
+adminReferralsRouter.use(requireAdmin);
 
 // ─── GET / — List all referrals with ticket counts ───────────────────────────
 adminReferralsRouter.get('/', async (req, res) => {

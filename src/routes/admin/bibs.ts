@@ -31,7 +31,8 @@ setInterval(() => {
 async function buildBibs(query: any): Promise<{ bibs: BibEntry[]; filename: string } | { error: string; code: string }> {
     const { circuitId, type, status, category, isMilitary, dateFrom } = query;
 
-    const where: any = {};
+    // Only rows that have been paid (or made complementary) have a bib to print.
+    const where: any = { bibNumber: { not: null } };
     if (circuitId) where.circuitId = circuitId;
     if (type)      where.type = type;
     if (status)    where.status = status;
@@ -46,7 +47,7 @@ async function buildBibs(query: any): Promise<{ bibs: BibEntry[]; filename: stri
 
     const regsRaw = await (prisma.registration as any).findMany({
         where,
-        orderBy: [{ category: 'asc' }, { id: 'asc' }],
+        orderBy: [{ category: 'asc' }, { bibNumber: 'asc' }],
     });
 
     if (!regsRaw.length) return { error: 'No registrations match the current filters.', code: 'NOT_FOUND' };
@@ -54,7 +55,7 @@ async function buildBibs(query: any): Promise<{ bibs: BibEntry[]; filename: stri
     const pricingCats = await getPricingCategories();
 
     const bibs: BibEntry[] = regsRaw.map((reg: any) => ({
-        id:        reg.id,
+        id:        reg.bibNumber,
         firstName: reg.firstName || '',
         lastName:  reg.lastName  || '',
         category:  reg.category  || '',

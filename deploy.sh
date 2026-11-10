@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e  # stop on the first failure (e.g. a failed migration)
 echo "🚀 Starting deployment..."
 
 # Pull latest changes
@@ -9,9 +10,10 @@ git pull
 echo "📦 Installing dependencies..."
 npm install
 
-# Sync database schema
-echo "🗄️ Syncing database schema..."
-npx prisma db push --accept-data-loss
+# Apply database migrations (never `db push --accept-data-loss` on production:
+# it can drop columns and data). See docs/ACCOUNTS_ROLLOUT.md for the one-time baseline step.
+echo "🗄️ Applying database migrations..."
+npx prisma migrate deploy
 
 # Build the project
 echo "🏗️ Building the project..."

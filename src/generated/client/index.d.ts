@@ -83,6 +83,26 @@ export type NotifyInterest = $Result.DefaultSelection<Prisma.$NotifyInterestPayl
  * 
  */
 export type EventFeedback = $Result.DefaultSelection<Prisma.$EventFeedbackPayload>
+/**
+ * Model Account
+ * 
+ */
+export type Account = $Result.DefaultSelection<Prisma.$AccountPayload>
+/**
+ * Model OtpCode
+ * 
+ */
+export type OtpCode = $Result.DefaultSelection<Prisma.$OtpCodePayload>
+/**
+ * Model UserSession
+ * 
+ */
+export type UserSession = $Result.DefaultSelection<Prisma.$UserSessionPayload>
+/**
+ * Model GalleryPhoto
+ * 
+ */
+export type GalleryPhoto = $Result.DefaultSelection<Prisma.$GalleryPhotoPayload>
 
 /**
  * Enums
@@ -364,6 +384,46 @@ export class PrismaClient<
     * ```
     */
   get eventFeedback(): Prisma.EventFeedbackDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.account`: Exposes CRUD operations for the **Account** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Accounts
+    * const accounts = await prisma.account.findMany()
+    * ```
+    */
+  get account(): Prisma.AccountDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.otpCode`: Exposes CRUD operations for the **OtpCode** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more OtpCodes
+    * const otpCodes = await prisma.otpCode.findMany()
+    * ```
+    */
+  get otpCode(): Prisma.OtpCodeDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.userSession`: Exposes CRUD operations for the **UserSession** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more UserSessions
+    * const userSessions = await prisma.userSession.findMany()
+    * ```
+    */
+  get userSession(): Prisma.UserSessionDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.galleryPhoto`: Exposes CRUD operations for the **GalleryPhoto** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more GalleryPhotos
+    * const galleryPhotos = await prisma.galleryPhoto.findMany()
+    * ```
+    */
+  get galleryPhoto(): Prisma.GalleryPhotoDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -811,7 +871,11 @@ export namespace Prisma {
     ShortLink: 'ShortLink',
     BikeHire: 'BikeHire',
     NotifyInterest: 'NotifyInterest',
-    EventFeedback: 'EventFeedback'
+    EventFeedback: 'EventFeedback',
+    Account: 'Account',
+    OtpCode: 'OtpCode',
+    UserSession: 'UserSession',
+    GalleryPhoto: 'GalleryPhoto'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -827,7 +891,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "registration" | "admin" | "adminSession" | "payment" | "pricingCategory" | "emailLog" | "raffleTicket" | "referral" | "donation" | "smsLog" | "shortLink" | "bikeHire" | "notifyInterest" | "eventFeedback"
+      modelProps: "registration" | "admin" | "adminSession" | "payment" | "pricingCategory" | "emailLog" | "raffleTicket" | "referral" | "donation" | "smsLog" | "shortLink" | "bikeHire" | "notifyInterest" | "eventFeedback" | "account" | "otpCode" | "userSession" | "galleryPhoto"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1867,6 +1931,302 @@ export namespace Prisma {
           }
         }
       }
+      Account: {
+        payload: Prisma.$AccountPayload<ExtArgs>
+        fields: Prisma.AccountFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AccountFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AccountPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AccountFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AccountPayload>
+          }
+          findFirst: {
+            args: Prisma.AccountFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AccountPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AccountFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AccountPayload>
+          }
+          findMany: {
+            args: Prisma.AccountFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AccountPayload>[]
+          }
+          create: {
+            args: Prisma.AccountCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AccountPayload>
+          }
+          createMany: {
+            args: Prisma.AccountCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AccountCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AccountPayload>[]
+          }
+          delete: {
+            args: Prisma.AccountDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AccountPayload>
+          }
+          update: {
+            args: Prisma.AccountUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AccountPayload>
+          }
+          deleteMany: {
+            args: Prisma.AccountDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AccountUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AccountUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AccountPayload>[]
+          }
+          upsert: {
+            args: Prisma.AccountUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AccountPayload>
+          }
+          aggregate: {
+            args: Prisma.AccountAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAccount>
+          }
+          groupBy: {
+            args: Prisma.AccountGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AccountGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AccountCountArgs<ExtArgs>
+            result: $Utils.Optional<AccountCountAggregateOutputType> | number
+          }
+        }
+      }
+      OtpCode: {
+        payload: Prisma.$OtpCodePayload<ExtArgs>
+        fields: Prisma.OtpCodeFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.OtpCodeFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OtpCodePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.OtpCodeFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OtpCodePayload>
+          }
+          findFirst: {
+            args: Prisma.OtpCodeFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OtpCodePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.OtpCodeFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OtpCodePayload>
+          }
+          findMany: {
+            args: Prisma.OtpCodeFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OtpCodePayload>[]
+          }
+          create: {
+            args: Prisma.OtpCodeCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OtpCodePayload>
+          }
+          createMany: {
+            args: Prisma.OtpCodeCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.OtpCodeCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OtpCodePayload>[]
+          }
+          delete: {
+            args: Prisma.OtpCodeDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OtpCodePayload>
+          }
+          update: {
+            args: Prisma.OtpCodeUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OtpCodePayload>
+          }
+          deleteMany: {
+            args: Prisma.OtpCodeDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.OtpCodeUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.OtpCodeUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OtpCodePayload>[]
+          }
+          upsert: {
+            args: Prisma.OtpCodeUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OtpCodePayload>
+          }
+          aggregate: {
+            args: Prisma.OtpCodeAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateOtpCode>
+          }
+          groupBy: {
+            args: Prisma.OtpCodeGroupByArgs<ExtArgs>
+            result: $Utils.Optional<OtpCodeGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.OtpCodeCountArgs<ExtArgs>
+            result: $Utils.Optional<OtpCodeCountAggregateOutputType> | number
+          }
+        }
+      }
+      UserSession: {
+        payload: Prisma.$UserSessionPayload<ExtArgs>
+        fields: Prisma.UserSessionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.UserSessionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserSessionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.UserSessionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserSessionPayload>
+          }
+          findFirst: {
+            args: Prisma.UserSessionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserSessionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.UserSessionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserSessionPayload>
+          }
+          findMany: {
+            args: Prisma.UserSessionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserSessionPayload>[]
+          }
+          create: {
+            args: Prisma.UserSessionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserSessionPayload>
+          }
+          createMany: {
+            args: Prisma.UserSessionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.UserSessionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserSessionPayload>[]
+          }
+          delete: {
+            args: Prisma.UserSessionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserSessionPayload>
+          }
+          update: {
+            args: Prisma.UserSessionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserSessionPayload>
+          }
+          deleteMany: {
+            args: Prisma.UserSessionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.UserSessionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.UserSessionUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserSessionPayload>[]
+          }
+          upsert: {
+            args: Prisma.UserSessionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserSessionPayload>
+          }
+          aggregate: {
+            args: Prisma.UserSessionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateUserSession>
+          }
+          groupBy: {
+            args: Prisma.UserSessionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<UserSessionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.UserSessionCountArgs<ExtArgs>
+            result: $Utils.Optional<UserSessionCountAggregateOutputType> | number
+          }
+        }
+      }
+      GalleryPhoto: {
+        payload: Prisma.$GalleryPhotoPayload<ExtArgs>
+        fields: Prisma.GalleryPhotoFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.GalleryPhotoFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GalleryPhotoPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.GalleryPhotoFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GalleryPhotoPayload>
+          }
+          findFirst: {
+            args: Prisma.GalleryPhotoFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GalleryPhotoPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.GalleryPhotoFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GalleryPhotoPayload>
+          }
+          findMany: {
+            args: Prisma.GalleryPhotoFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GalleryPhotoPayload>[]
+          }
+          create: {
+            args: Prisma.GalleryPhotoCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GalleryPhotoPayload>
+          }
+          createMany: {
+            args: Prisma.GalleryPhotoCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.GalleryPhotoCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GalleryPhotoPayload>[]
+          }
+          delete: {
+            args: Prisma.GalleryPhotoDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GalleryPhotoPayload>
+          }
+          update: {
+            args: Prisma.GalleryPhotoUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GalleryPhotoPayload>
+          }
+          deleteMany: {
+            args: Prisma.GalleryPhotoDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.GalleryPhotoUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.GalleryPhotoUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GalleryPhotoPayload>[]
+          }
+          upsert: {
+            args: Prisma.GalleryPhotoUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$GalleryPhotoPayload>
+          }
+          aggregate: {
+            args: Prisma.GalleryPhotoAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateGalleryPhoto>
+          }
+          groupBy: {
+            args: Prisma.GalleryPhotoGroupByArgs<ExtArgs>
+            result: $Utils.Optional<GalleryPhotoGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.GalleryPhotoCountArgs<ExtArgs>
+            result: $Utils.Optional<GalleryPhotoCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1989,6 +2349,10 @@ export namespace Prisma {
     bikeHire?: BikeHireOmit
     notifyInterest?: NotifyInterestOmit
     eventFeedback?: EventFeedbackOmit
+    account?: AccountOmit
+    otpCode?: OtpCodeOmit
+    userSession?: UserSessionOmit
+    galleryPhoto?: GalleryPhotoOmit
   }
 
   /* Types for Logging */
@@ -2096,6 +2460,82 @@ export namespace Prisma {
 
 
   /**
+   * Count Type AccountCountOutputType
+   */
+
+  export type AccountCountOutputType = {
+    sessions: number
+    registrations: number
+    participations: number
+    raffleTickets: number
+    donations: number
+    bikeHires: number
+  }
+
+  export type AccountCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    sessions?: boolean | AccountCountOutputTypeCountSessionsArgs
+    registrations?: boolean | AccountCountOutputTypeCountRegistrationsArgs
+    participations?: boolean | AccountCountOutputTypeCountParticipationsArgs
+    raffleTickets?: boolean | AccountCountOutputTypeCountRaffleTicketsArgs
+    donations?: boolean | AccountCountOutputTypeCountDonationsArgs
+    bikeHires?: boolean | AccountCountOutputTypeCountBikeHiresArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * AccountCountOutputType without action
+   */
+  export type AccountCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AccountCountOutputType
+     */
+    select?: AccountCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * AccountCountOutputType without action
+   */
+  export type AccountCountOutputTypeCountSessionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserSessionWhereInput
+  }
+
+  /**
+   * AccountCountOutputType without action
+   */
+  export type AccountCountOutputTypeCountRegistrationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RegistrationWhereInput
+  }
+
+  /**
+   * AccountCountOutputType without action
+   */
+  export type AccountCountOutputTypeCountParticipationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RegistrationWhereInput
+  }
+
+  /**
+   * AccountCountOutputType without action
+   */
+  export type AccountCountOutputTypeCountRaffleTicketsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RaffleTicketWhereInput
+  }
+
+  /**
+   * AccountCountOutputType without action
+   */
+  export type AccountCountOutputTypeCountDonationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: DonationWhereInput
+  }
+
+  /**
+   * AccountCountOutputType without action
+   */
+  export type AccountCountOutputTypeCountBikeHiresArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BikeHireWhereInput
+  }
+
+
+  /**
    * Models
    */
 
@@ -2113,10 +2553,12 @@ export namespace Prisma {
 
   export type RegistrationAvgAggregateOutputType = {
     totalAmount: number | null
+    eventYear: number | null
   }
 
   export type RegistrationSumAggregateOutputType = {
     totalAmount: number | null
+    eventYear: number | null
   }
 
   export type RegistrationMinAggregateOutputType = {
@@ -2149,6 +2591,10 @@ export namespace Prisma {
     service: string | null
     serviceNumber: string | null
     unit: string | null
+    bibNumber: string | null
+    eventYear: number | null
+    accountId: string | null
+    participantAccountId: string | null
   }
 
   export type RegistrationMaxAggregateOutputType = {
@@ -2181,6 +2627,10 @@ export namespace Prisma {
     service: string | null
     serviceNumber: string | null
     unit: string | null
+    bibNumber: string | null
+    eventYear: number | null
+    accountId: string | null
+    participantAccountId: string | null
   }
 
   export type RegistrationCountAggregateOutputType = {
@@ -2216,16 +2666,22 @@ export namespace Prisma {
     service: number
     serviceNumber: number
     unit: number
+    bibNumber: number
+    eventYear: number
+    accountId: number
+    participantAccountId: number
     _all: number
   }
 
 
   export type RegistrationAvgAggregateInputType = {
     totalAmount?: true
+    eventYear?: true
   }
 
   export type RegistrationSumAggregateInputType = {
     totalAmount?: true
+    eventYear?: true
   }
 
   export type RegistrationMinAggregateInputType = {
@@ -2258,6 +2714,10 @@ export namespace Prisma {
     service?: true
     serviceNumber?: true
     unit?: true
+    bibNumber?: true
+    eventYear?: true
+    accountId?: true
+    participantAccountId?: true
   }
 
   export type RegistrationMaxAggregateInputType = {
@@ -2290,6 +2750,10 @@ export namespace Prisma {
     service?: true
     serviceNumber?: true
     unit?: true
+    bibNumber?: true
+    eventYear?: true
+    accountId?: true
+    participantAccountId?: true
   }
 
   export type RegistrationCountAggregateInputType = {
@@ -2325,6 +2789,10 @@ export namespace Prisma {
     service?: true
     serviceNumber?: true
     unit?: true
+    bibNumber?: true
+    eventYear?: true
+    accountId?: true
+    participantAccountId?: true
     _all?: true
   }
 
@@ -2447,6 +2915,10 @@ export namespace Prisma {
     service: string | null
     serviceNumber: string | null
     unit: string | null
+    bibNumber: string | null
+    eventYear: number
+    accountId: string | null
+    participantAccountId: string | null
     _count: RegistrationCountAggregateOutputType | null
     _avg: RegistrationAvgAggregateOutputType | null
     _sum: RegistrationSumAggregateOutputType | null
@@ -2501,7 +2973,13 @@ export namespace Prisma {
     service?: boolean
     serviceNumber?: boolean
     unit?: boolean
+    bibNumber?: boolean
+    eventYear?: boolean
+    accountId?: boolean
+    participantAccountId?: boolean
     bikeHire?: boolean | Registration$bikeHireArgs<ExtArgs>
+    account?: boolean | Registration$accountArgs<ExtArgs>
+    participantAccount?: boolean | Registration$participantAccountArgs<ExtArgs>
   }, ExtArgs["result"]["registration"]>
 
   export type RegistrationSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -2537,6 +3015,12 @@ export namespace Prisma {
     service?: boolean
     serviceNumber?: boolean
     unit?: boolean
+    bibNumber?: boolean
+    eventYear?: boolean
+    accountId?: boolean
+    participantAccountId?: boolean
+    account?: boolean | Registration$accountArgs<ExtArgs>
+    participantAccount?: boolean | Registration$participantAccountArgs<ExtArgs>
   }, ExtArgs["result"]["registration"]>
 
   export type RegistrationSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -2572,6 +3056,12 @@ export namespace Prisma {
     service?: boolean
     serviceNumber?: boolean
     unit?: boolean
+    bibNumber?: boolean
+    eventYear?: boolean
+    accountId?: boolean
+    participantAccountId?: boolean
+    account?: boolean | Registration$accountArgs<ExtArgs>
+    participantAccount?: boolean | Registration$participantAccountArgs<ExtArgs>
   }, ExtArgs["result"]["registration"]>
 
   export type RegistrationSelectScalar = {
@@ -2607,19 +3097,33 @@ export namespace Prisma {
     service?: boolean
     serviceNumber?: boolean
     unit?: boolean
+    bibNumber?: boolean
+    eventYear?: boolean
+    accountId?: boolean
+    participantAccountId?: boolean
   }
 
-  export type RegistrationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "createdAt" | "updatedAt" | "circuitId" | "type" | "status" | "firstName" | "lastName" | "email" | "phoneNumber" | "idNumber" | "dob" | "gender" | "groupId" | "teamName" | "isCaptain" | "guardianName" | "emergencyPhone" | "relationship" | "category" | "totalAmount" | "payload" | "pricing" | "classifications" | "emergencyContactName" | "tshirtSize" | "mpesaCode" | "isMilitary" | "rank" | "service" | "serviceNumber" | "unit", ExtArgs["result"]["registration"]>
+  export type RegistrationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "createdAt" | "updatedAt" | "circuitId" | "type" | "status" | "firstName" | "lastName" | "email" | "phoneNumber" | "idNumber" | "dob" | "gender" | "groupId" | "teamName" | "isCaptain" | "guardianName" | "emergencyPhone" | "relationship" | "category" | "totalAmount" | "payload" | "pricing" | "classifications" | "emergencyContactName" | "tshirtSize" | "mpesaCode" | "isMilitary" | "rank" | "service" | "serviceNumber" | "unit" | "bibNumber" | "eventYear" | "accountId" | "participantAccountId", ExtArgs["result"]["registration"]>
   export type RegistrationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     bikeHire?: boolean | Registration$bikeHireArgs<ExtArgs>
+    account?: boolean | Registration$accountArgs<ExtArgs>
+    participantAccount?: boolean | Registration$participantAccountArgs<ExtArgs>
   }
-  export type RegistrationIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
-  export type RegistrationIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type RegistrationIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    account?: boolean | Registration$accountArgs<ExtArgs>
+    participantAccount?: boolean | Registration$participantAccountArgs<ExtArgs>
+  }
+  export type RegistrationIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    account?: boolean | Registration$accountArgs<ExtArgs>
+    participantAccount?: boolean | Registration$participantAccountArgs<ExtArgs>
+  }
 
   export type $RegistrationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Registration"
     objects: {
       bikeHire: Prisma.$BikeHirePayload<ExtArgs> | null
+      account: Prisma.$AccountPayload<ExtArgs> | null
+      participantAccount: Prisma.$AccountPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -2654,6 +3158,10 @@ export namespace Prisma {
       service: string | null
       serviceNumber: string | null
       unit: string | null
+      bibNumber: string | null
+      eventYear: number
+      accountId: string | null
+      participantAccountId: string | null
     }, ExtArgs["result"]["registration"]>
     composites: {}
   }
@@ -3049,6 +3557,8 @@ export namespace Prisma {
   export interface Prisma__RegistrationClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     bikeHire<T extends Registration$bikeHireArgs<ExtArgs> = {}>(args?: Subset<T, Registration$bikeHireArgs<ExtArgs>>): Prisma__BikeHireClient<$Result.GetResult<Prisma.$BikeHirePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    account<T extends Registration$accountArgs<ExtArgs> = {}>(args?: Subset<T, Registration$accountArgs<ExtArgs>>): Prisma__AccountClient<$Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    participantAccount<T extends Registration$participantAccountArgs<ExtArgs> = {}>(args?: Subset<T, Registration$participantAccountArgs<ExtArgs>>): Prisma__AccountClient<$Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3110,6 +3620,10 @@ export namespace Prisma {
     readonly service: FieldRef<"Registration", 'String'>
     readonly serviceNumber: FieldRef<"Registration", 'String'>
     readonly unit: FieldRef<"Registration", 'String'>
+    readonly bibNumber: FieldRef<"Registration", 'String'>
+    readonly eventYear: FieldRef<"Registration", 'Int'>
+    readonly accountId: FieldRef<"Registration", 'String'>
+    readonly participantAccountId: FieldRef<"Registration", 'String'>
   }
     
 
@@ -3364,6 +3878,10 @@ export namespace Prisma {
      */
     data: RegistrationCreateManyInput | RegistrationCreateManyInput[]
     skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationIncludeCreateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -3434,6 +3952,10 @@ export namespace Prisma {
      * Limit how many Registrations to update.
      */
     limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationIncludeUpdateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -3519,6 +4041,44 @@ export namespace Prisma {
      */
     include?: BikeHireInclude<ExtArgs> | null
     where?: BikeHireWhereInput
+  }
+
+  /**
+   * Registration.account
+   */
+  export type Registration$accountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Account
+     */
+    select?: AccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Account
+     */
+    omit?: AccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AccountInclude<ExtArgs> | null
+    where?: AccountWhereInput
+  }
+
+  /**
+   * Registration.participantAccount
+   */
+  export type Registration$participantAccountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Account
+     */
+    select?: AccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Account
+     */
+    omit?: AccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AccountInclude<ExtArgs> | null
+    where?: AccountWhereInput
   }
 
   /**
@@ -5740,6 +6300,7 @@ export namespace Prisma {
     transactionDate: string | null
     mnoReference: string | null
     cbsReference: string | null
+    bikeHireId: string | null
   }
 
   export type PaymentMaxAggregateOutputType = {
@@ -5758,6 +6319,7 @@ export namespace Prisma {
     transactionDate: string | null
     mnoReference: string | null
     cbsReference: string | null
+    bikeHireId: string | null
   }
 
   export type PaymentCountAggregateOutputType = {
@@ -5778,6 +6340,7 @@ export namespace Prisma {
     mnoReference: number
     cbsReference: number
     paymentDetails: number
+    bikeHireId: number
     _all: number
   }
 
@@ -5806,6 +6369,7 @@ export namespace Prisma {
     transactionDate?: true
     mnoReference?: true
     cbsReference?: true
+    bikeHireId?: true
   }
 
   export type PaymentMaxAggregateInputType = {
@@ -5824,6 +6388,7 @@ export namespace Prisma {
     transactionDate?: true
     mnoReference?: true
     cbsReference?: true
+    bikeHireId?: true
   }
 
   export type PaymentCountAggregateInputType = {
@@ -5844,6 +6409,7 @@ export namespace Prisma {
     mnoReference?: true
     cbsReference?: true
     paymentDetails?: true
+    bikeHireId?: true
     _all?: true
   }
 
@@ -5951,6 +6517,7 @@ export namespace Prisma {
     mnoReference: string | null
     cbsReference: string | null
     paymentDetails: JsonValue | null
+    bikeHireId: string | null
     _count: PaymentCountAggregateOutputType | null
     _avg: PaymentAvgAggregateOutputType | null
     _sum: PaymentSumAggregateOutputType | null
@@ -5990,6 +6557,7 @@ export namespace Prisma {
     mnoReference?: boolean
     cbsReference?: boolean
     paymentDetails?: boolean
+    bikeHireId?: boolean
   }, ExtArgs["result"]["payment"]>
 
   export type PaymentSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -6010,6 +6578,7 @@ export namespace Prisma {
     mnoReference?: boolean
     cbsReference?: boolean
     paymentDetails?: boolean
+    bikeHireId?: boolean
   }, ExtArgs["result"]["payment"]>
 
   export type PaymentSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -6030,6 +6599,7 @@ export namespace Prisma {
     mnoReference?: boolean
     cbsReference?: boolean
     paymentDetails?: boolean
+    bikeHireId?: boolean
   }, ExtArgs["result"]["payment"]>
 
   export type PaymentSelectScalar = {
@@ -6050,9 +6620,10 @@ export namespace Prisma {
     mnoReference?: boolean
     cbsReference?: boolean
     paymentDetails?: boolean
+    bikeHireId?: boolean
   }
 
-  export type PaymentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "registrationId" | "raffleTicketIds" | "donationId" | "checkoutRequestId" | "merchantRequestId" | "phone" | "amount" | "status" | "failureReason" | "createdAt" | "updatedAt" | "mpesaReceiptNumber" | "transactionDate" | "mnoReference" | "cbsReference" | "paymentDetails", ExtArgs["result"]["payment"]>
+  export type PaymentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "registrationId" | "raffleTicketIds" | "donationId" | "checkoutRequestId" | "merchantRequestId" | "phone" | "amount" | "status" | "failureReason" | "createdAt" | "updatedAt" | "mpesaReceiptNumber" | "transactionDate" | "mnoReference" | "cbsReference" | "paymentDetails" | "bikeHireId", ExtArgs["result"]["payment"]>
 
   export type $PaymentPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Payment"
@@ -6075,6 +6646,7 @@ export namespace Prisma {
       mnoReference: string | null
       cbsReference: string | null
       paymentDetails: Prisma.JsonValue | null
+      bikeHireId: string | null
     }, ExtArgs["result"]["payment"]>
     composites: {}
   }
@@ -6515,6 +7087,7 @@ export namespace Prisma {
     readonly mnoReference: FieldRef<"Payment", 'String'>
     readonly cbsReference: FieldRef<"Payment", 'String'>
     readonly paymentDetails: FieldRef<"Payment", 'Json'>
+    readonly bikeHireId: FieldRef<"Payment", 'String'>
   }
     
 
@@ -9064,8 +9637,18 @@ export namespace Prisma {
 
   export type AggregateRaffleTicket = {
     _count: RaffleTicketCountAggregateOutputType | null
+    _avg: RaffleTicketAvgAggregateOutputType | null
+    _sum: RaffleTicketSumAggregateOutputType | null
     _min: RaffleTicketMinAggregateOutputType | null
     _max: RaffleTicketMaxAggregateOutputType | null
+  }
+
+  export type RaffleTicketAvgAggregateOutputType = {
+    eventYear: number | null
+  }
+
+  export type RaffleTicketSumAggregateOutputType = {
+    eventYear: number | null
   }
 
   export type RaffleTicketMinAggregateOutputType = {
@@ -9084,6 +9667,9 @@ export namespace Prisma {
     failureReason: string | null
     mpesaCode: string | null
     referralCode: string | null
+    ticketNumber: string | null
+    eventYear: number | null
+    accountId: string | null
   }
 
   export type RaffleTicketMaxAggregateOutputType = {
@@ -9102,6 +9688,9 @@ export namespace Prisma {
     failureReason: string | null
     mpesaCode: string | null
     referralCode: string | null
+    ticketNumber: string | null
+    eventYear: number | null
+    accountId: string | null
   }
 
   export type RaffleTicketCountAggregateOutputType = {
@@ -9121,9 +9710,20 @@ export namespace Prisma {
     mpesaCode: number
     paymentDetails: number
     referralCode: number
+    ticketNumber: number
+    eventYear: number
+    accountId: number
     _all: number
   }
 
+
+  export type RaffleTicketAvgAggregateInputType = {
+    eventYear?: true
+  }
+
+  export type RaffleTicketSumAggregateInputType = {
+    eventYear?: true
+  }
 
   export type RaffleTicketMinAggregateInputType = {
     id?: true
@@ -9141,6 +9741,9 @@ export namespace Prisma {
     failureReason?: true
     mpesaCode?: true
     referralCode?: true
+    ticketNumber?: true
+    eventYear?: true
+    accountId?: true
   }
 
   export type RaffleTicketMaxAggregateInputType = {
@@ -9159,6 +9762,9 @@ export namespace Prisma {
     failureReason?: true
     mpesaCode?: true
     referralCode?: true
+    ticketNumber?: true
+    eventYear?: true
+    accountId?: true
   }
 
   export type RaffleTicketCountAggregateInputType = {
@@ -9178,6 +9784,9 @@ export namespace Prisma {
     mpesaCode?: true
     paymentDetails?: true
     referralCode?: true
+    ticketNumber?: true
+    eventYear?: true
+    accountId?: true
     _all?: true
   }
 
@@ -9219,6 +9828,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: RaffleTicketAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: RaffleTicketSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: RaffleTicketMinAggregateInputType
@@ -9249,6 +9870,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: RaffleTicketCountAggregateInputType | true
+    _avg?: RaffleTicketAvgAggregateInputType
+    _sum?: RaffleTicketSumAggregateInputType
     _min?: RaffleTicketMinAggregateInputType
     _max?: RaffleTicketMaxAggregateInputType
   }
@@ -9270,7 +9893,12 @@ export namespace Prisma {
     mpesaCode: string | null
     paymentDetails: JsonValue | null
     referralCode: string | null
+    ticketNumber: string | null
+    eventYear: number
+    accountId: string | null
     _count: RaffleTicketCountAggregateOutputType | null
+    _avg: RaffleTicketAvgAggregateOutputType | null
+    _sum: RaffleTicketSumAggregateOutputType | null
     _min: RaffleTicketMinAggregateOutputType | null
     _max: RaffleTicketMaxAggregateOutputType | null
   }
@@ -9306,6 +9934,10 @@ export namespace Prisma {
     mpesaCode?: boolean
     paymentDetails?: boolean
     referralCode?: boolean
+    ticketNumber?: boolean
+    eventYear?: boolean
+    accountId?: boolean
+    account?: boolean | RaffleTicket$accountArgs<ExtArgs>
   }, ExtArgs["result"]["raffleTicket"]>
 
   export type RaffleTicketSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -9325,6 +9957,10 @@ export namespace Prisma {
     mpesaCode?: boolean
     paymentDetails?: boolean
     referralCode?: boolean
+    ticketNumber?: boolean
+    eventYear?: boolean
+    accountId?: boolean
+    account?: boolean | RaffleTicket$accountArgs<ExtArgs>
   }, ExtArgs["result"]["raffleTicket"]>
 
   export type RaffleTicketSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -9344,6 +9980,10 @@ export namespace Prisma {
     mpesaCode?: boolean
     paymentDetails?: boolean
     referralCode?: boolean
+    ticketNumber?: boolean
+    eventYear?: boolean
+    accountId?: boolean
+    account?: boolean | RaffleTicket$accountArgs<ExtArgs>
   }, ExtArgs["result"]["raffleTicket"]>
 
   export type RaffleTicketSelectScalar = {
@@ -9363,13 +10003,27 @@ export namespace Prisma {
     mpesaCode?: boolean
     paymentDetails?: boolean
     referralCode?: boolean
+    ticketNumber?: boolean
+    eventYear?: boolean
+    accountId?: boolean
   }
 
-  export type RaffleTicketOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "firstName" | "lastName" | "email" | "phoneNumber" | "status" | "createdAt" | "updatedAt" | "checkoutRequestId" | "paymentFailed" | "gender" | "idNumber" | "failureReason" | "mpesaCode" | "paymentDetails" | "referralCode", ExtArgs["result"]["raffleTicket"]>
+  export type RaffleTicketOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "firstName" | "lastName" | "email" | "phoneNumber" | "status" | "createdAt" | "updatedAt" | "checkoutRequestId" | "paymentFailed" | "gender" | "idNumber" | "failureReason" | "mpesaCode" | "paymentDetails" | "referralCode" | "ticketNumber" | "eventYear" | "accountId", ExtArgs["result"]["raffleTicket"]>
+  export type RaffleTicketInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    account?: boolean | RaffleTicket$accountArgs<ExtArgs>
+  }
+  export type RaffleTicketIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    account?: boolean | RaffleTicket$accountArgs<ExtArgs>
+  }
+  export type RaffleTicketIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    account?: boolean | RaffleTicket$accountArgs<ExtArgs>
+  }
 
   export type $RaffleTicketPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "RaffleTicket"
-    objects: {}
+    objects: {
+      account: Prisma.$AccountPayload<ExtArgs> | null
+    }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       firstName: string
@@ -9387,6 +10041,9 @@ export namespace Prisma {
       mpesaCode: string | null
       paymentDetails: Prisma.JsonValue | null
       referralCode: string | null
+      ticketNumber: string | null
+      eventYear: number
+      accountId: string | null
     }, ExtArgs["result"]["raffleTicket"]>
     composites: {}
   }
@@ -9781,6 +10438,7 @@ export namespace Prisma {
    */
   export interface Prisma__RaffleTicketClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    account<T extends RaffleTicket$accountArgs<ExtArgs> = {}>(args?: Subset<T, RaffleTicket$accountArgs<ExtArgs>>): Prisma__AccountClient<$Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -9826,6 +10484,9 @@ export namespace Prisma {
     readonly mpesaCode: FieldRef<"RaffleTicket", 'String'>
     readonly paymentDetails: FieldRef<"RaffleTicket", 'Json'>
     readonly referralCode: FieldRef<"RaffleTicket", 'String'>
+    readonly ticketNumber: FieldRef<"RaffleTicket", 'String'>
+    readonly eventYear: FieldRef<"RaffleTicket", 'Int'>
+    readonly accountId: FieldRef<"RaffleTicket", 'String'>
   }
     
 
@@ -9842,6 +10503,10 @@ export namespace Prisma {
      * Omit specific fields from the RaffleTicket
      */
     omit?: RaffleTicketOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RaffleTicketInclude<ExtArgs> | null
     /**
      * Filter, which RaffleTicket to fetch.
      */
@@ -9861,6 +10526,10 @@ export namespace Prisma {
      */
     omit?: RaffleTicketOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RaffleTicketInclude<ExtArgs> | null
+    /**
      * Filter, which RaffleTicket to fetch.
      */
     where: RaffleTicketWhereUniqueInput
@@ -9878,6 +10547,10 @@ export namespace Prisma {
      * Omit specific fields from the RaffleTicket
      */
     omit?: RaffleTicketOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RaffleTicketInclude<ExtArgs> | null
     /**
      * Filter, which RaffleTicket to fetch.
      */
@@ -9927,6 +10600,10 @@ export namespace Prisma {
      */
     omit?: RaffleTicketOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RaffleTicketInclude<ExtArgs> | null
+    /**
      * Filter, which RaffleTicket to fetch.
      */
     where?: RaffleTicketWhereInput
@@ -9974,6 +10651,10 @@ export namespace Prisma {
      * Omit specific fields from the RaffleTicket
      */
     omit?: RaffleTicketOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RaffleTicketInclude<ExtArgs> | null
     /**
      * Filter, which RaffleTickets to fetch.
      */
@@ -10023,6 +10704,10 @@ export namespace Prisma {
      */
     omit?: RaffleTicketOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RaffleTicketInclude<ExtArgs> | null
+    /**
      * The data needed to create a RaffleTicket.
      */
     data: XOR<RaffleTicketCreateInput, RaffleTicketUncheckedCreateInput>
@@ -10056,6 +10741,10 @@ export namespace Prisma {
      */
     data: RaffleTicketCreateManyInput | RaffleTicketCreateManyInput[]
     skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RaffleTicketIncludeCreateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -10070,6 +10759,10 @@ export namespace Prisma {
      * Omit specific fields from the RaffleTicket
      */
     omit?: RaffleTicketOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RaffleTicketInclude<ExtArgs> | null
     /**
      * The data needed to update a RaffleTicket.
      */
@@ -10122,6 +10815,10 @@ export namespace Prisma {
      * Limit how many RaffleTickets to update.
      */
     limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RaffleTicketIncludeUpdateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -10136,6 +10833,10 @@ export namespace Prisma {
      * Omit specific fields from the RaffleTicket
      */
     omit?: RaffleTicketOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RaffleTicketInclude<ExtArgs> | null
     /**
      * The filter to search for the RaffleTicket to update in case it exists.
      */
@@ -10163,6 +10864,10 @@ export namespace Prisma {
      */
     omit?: RaffleTicketOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RaffleTicketInclude<ExtArgs> | null
+    /**
      * Filter which RaffleTicket to delete.
      */
     where: RaffleTicketWhereUniqueInput
@@ -10183,6 +10888,25 @@ export namespace Prisma {
   }
 
   /**
+   * RaffleTicket.account
+   */
+  export type RaffleTicket$accountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Account
+     */
+    select?: AccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Account
+     */
+    omit?: AccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AccountInclude<ExtArgs> | null
+    where?: AccountWhereInput
+  }
+
+  /**
    * RaffleTicket without action
    */
   export type RaffleTicketDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -10194,6 +10918,10 @@ export namespace Prisma {
      * Omit specific fields from the RaffleTicket
      */
     omit?: RaffleTicketOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RaffleTicketInclude<ExtArgs> | null
   }
 
 
@@ -11297,10 +12025,12 @@ export namespace Prisma {
 
   export type DonationAvgAggregateOutputType = {
     amount: number | null
+    eventYear: number | null
   }
 
   export type DonationSumAggregateOutputType = {
     amount: number | null
+    eventYear: number | null
   }
 
   export type DonationMinAggregateOutputType = {
@@ -11315,6 +12045,8 @@ export namespace Prisma {
     updatedAt: Date | null
     failureReason: string | null
     mpesaCode: string | null
+    eventYear: number | null
+    accountId: string | null
   }
 
   export type DonationMaxAggregateOutputType = {
@@ -11329,6 +12061,8 @@ export namespace Prisma {
     updatedAt: Date | null
     failureReason: string | null
     mpesaCode: string | null
+    eventYear: number | null
+    accountId: string | null
   }
 
   export type DonationCountAggregateOutputType = {
@@ -11344,16 +12078,20 @@ export namespace Prisma {
     failureReason: number
     mpesaCode: number
     paymentDetails: number
+    eventYear: number
+    accountId: number
     _all: number
   }
 
 
   export type DonationAvgAggregateInputType = {
     amount?: true
+    eventYear?: true
   }
 
   export type DonationSumAggregateInputType = {
     amount?: true
+    eventYear?: true
   }
 
   export type DonationMinAggregateInputType = {
@@ -11368,6 +12106,8 @@ export namespace Prisma {
     updatedAt?: true
     failureReason?: true
     mpesaCode?: true
+    eventYear?: true
+    accountId?: true
   }
 
   export type DonationMaxAggregateInputType = {
@@ -11382,6 +12122,8 @@ export namespace Prisma {
     updatedAt?: true
     failureReason?: true
     mpesaCode?: true
+    eventYear?: true
+    accountId?: true
   }
 
   export type DonationCountAggregateInputType = {
@@ -11397,6 +12139,8 @@ export namespace Prisma {
     failureReason?: true
     mpesaCode?: true
     paymentDetails?: true
+    eventYear?: true
+    accountId?: true
     _all?: true
   }
 
@@ -11499,6 +12243,8 @@ export namespace Prisma {
     failureReason: string | null
     mpesaCode: string | null
     paymentDetails: JsonValue | null
+    eventYear: number
+    accountId: string | null
     _count: DonationCountAggregateOutputType | null
     _avg: DonationAvgAggregateOutputType | null
     _sum: DonationSumAggregateOutputType | null
@@ -11533,6 +12279,9 @@ export namespace Prisma {
     failureReason?: boolean
     mpesaCode?: boolean
     paymentDetails?: boolean
+    eventYear?: boolean
+    accountId?: boolean
+    account?: boolean | Donation$accountArgs<ExtArgs>
   }, ExtArgs["result"]["donation"]>
 
   export type DonationSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -11548,6 +12297,9 @@ export namespace Prisma {
     failureReason?: boolean
     mpesaCode?: boolean
     paymentDetails?: boolean
+    eventYear?: boolean
+    accountId?: boolean
+    account?: boolean | Donation$accountArgs<ExtArgs>
   }, ExtArgs["result"]["donation"]>
 
   export type DonationSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -11563,6 +12315,9 @@ export namespace Prisma {
     failureReason?: boolean
     mpesaCode?: boolean
     paymentDetails?: boolean
+    eventYear?: boolean
+    accountId?: boolean
+    account?: boolean | Donation$accountArgs<ExtArgs>
   }, ExtArgs["result"]["donation"]>
 
   export type DonationSelectScalar = {
@@ -11578,13 +12333,26 @@ export namespace Prisma {
     failureReason?: boolean
     mpesaCode?: boolean
     paymentDetails?: boolean
+    eventYear?: boolean
+    accountId?: boolean
   }
 
-  export type DonationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "amount" | "name" | "email" | "phone" | "status" | "checkoutRequestId" | "createdAt" | "updatedAt" | "failureReason" | "mpesaCode" | "paymentDetails", ExtArgs["result"]["donation"]>
+  export type DonationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "amount" | "name" | "email" | "phone" | "status" | "checkoutRequestId" | "createdAt" | "updatedAt" | "failureReason" | "mpesaCode" | "paymentDetails" | "eventYear" | "accountId", ExtArgs["result"]["donation"]>
+  export type DonationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    account?: boolean | Donation$accountArgs<ExtArgs>
+  }
+  export type DonationIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    account?: boolean | Donation$accountArgs<ExtArgs>
+  }
+  export type DonationIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    account?: boolean | Donation$accountArgs<ExtArgs>
+  }
 
   export type $DonationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Donation"
-    objects: {}
+    objects: {
+      account: Prisma.$AccountPayload<ExtArgs> | null
+    }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       amount: number
@@ -11598,6 +12366,8 @@ export namespace Prisma {
       failureReason: string | null
       mpesaCode: string | null
       paymentDetails: Prisma.JsonValue | null
+      eventYear: number
+      accountId: string | null
     }, ExtArgs["result"]["donation"]>
     composites: {}
   }
@@ -11992,6 +12762,7 @@ export namespace Prisma {
    */
   export interface Prisma__DonationClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    account<T extends Donation$accountArgs<ExtArgs> = {}>(args?: Subset<T, Donation$accountArgs<ExtArgs>>): Prisma__AccountClient<$Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -12033,6 +12804,8 @@ export namespace Prisma {
     readonly failureReason: FieldRef<"Donation", 'String'>
     readonly mpesaCode: FieldRef<"Donation", 'String'>
     readonly paymentDetails: FieldRef<"Donation", 'Json'>
+    readonly eventYear: FieldRef<"Donation", 'Int'>
+    readonly accountId: FieldRef<"Donation", 'String'>
   }
     
 
@@ -12049,6 +12822,10 @@ export namespace Prisma {
      * Omit specific fields from the Donation
      */
     omit?: DonationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DonationInclude<ExtArgs> | null
     /**
      * Filter, which Donation to fetch.
      */
@@ -12068,6 +12845,10 @@ export namespace Prisma {
      */
     omit?: DonationOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DonationInclude<ExtArgs> | null
+    /**
      * Filter, which Donation to fetch.
      */
     where: DonationWhereUniqueInput
@@ -12085,6 +12866,10 @@ export namespace Prisma {
      * Omit specific fields from the Donation
      */
     omit?: DonationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DonationInclude<ExtArgs> | null
     /**
      * Filter, which Donation to fetch.
      */
@@ -12134,6 +12919,10 @@ export namespace Prisma {
      */
     omit?: DonationOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DonationInclude<ExtArgs> | null
+    /**
      * Filter, which Donation to fetch.
      */
     where?: DonationWhereInput
@@ -12181,6 +12970,10 @@ export namespace Prisma {
      * Omit specific fields from the Donation
      */
     omit?: DonationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DonationInclude<ExtArgs> | null
     /**
      * Filter, which Donations to fetch.
      */
@@ -12230,6 +13023,10 @@ export namespace Prisma {
      */
     omit?: DonationOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DonationInclude<ExtArgs> | null
+    /**
      * The data needed to create a Donation.
      */
     data: XOR<DonationCreateInput, DonationUncheckedCreateInput>
@@ -12263,6 +13060,10 @@ export namespace Prisma {
      */
     data: DonationCreateManyInput | DonationCreateManyInput[]
     skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DonationIncludeCreateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -12277,6 +13078,10 @@ export namespace Prisma {
      * Omit specific fields from the Donation
      */
     omit?: DonationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DonationInclude<ExtArgs> | null
     /**
      * The data needed to update a Donation.
      */
@@ -12329,6 +13134,10 @@ export namespace Prisma {
      * Limit how many Donations to update.
      */
     limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DonationIncludeUpdateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -12343,6 +13152,10 @@ export namespace Prisma {
      * Omit specific fields from the Donation
      */
     omit?: DonationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DonationInclude<ExtArgs> | null
     /**
      * The filter to search for the Donation to update in case it exists.
      */
@@ -12370,6 +13183,10 @@ export namespace Prisma {
      */
     omit?: DonationOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DonationInclude<ExtArgs> | null
+    /**
      * Filter which Donation to delete.
      */
     where: DonationWhereUniqueInput
@@ -12390,6 +13207,25 @@ export namespace Prisma {
   }
 
   /**
+   * Donation.account
+   */
+  export type Donation$accountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Account
+     */
+    select?: AccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Account
+     */
+    omit?: AccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AccountInclude<ExtArgs> | null
+    where?: AccountWhereInput
+  }
+
+  /**
    * Donation without action
    */
   export type DonationDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -12401,6 +13237,10 @@ export namespace Prisma {
      * Omit specific fields from the Donation
      */
     omit?: DonationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DonationInclude<ExtArgs> | null
   }
 
 
@@ -14465,10 +15305,12 @@ export namespace Prisma {
 
   export type BikeHireAvgAggregateOutputType = {
     amount: number | null
+    eventYear: number | null
   }
 
   export type BikeHireSumAggregateOutputType = {
     amount: number | null
+    eventYear: number | null
   }
 
   export type BikeHireMinAggregateOutputType = {
@@ -14479,6 +15321,9 @@ export namespace Prisma {
     amount: number | null
     createdAt: Date | null
     updatedAt: Date | null
+    checkoutRequestId: string | null
+    eventYear: number | null
+    accountId: string | null
   }
 
   export type BikeHireMaxAggregateOutputType = {
@@ -14489,6 +15334,9 @@ export namespace Prisma {
     amount: number | null
     createdAt: Date | null
     updatedAt: Date | null
+    checkoutRequestId: string | null
+    eventYear: number | null
+    accountId: string | null
   }
 
   export type BikeHireCountAggregateOutputType = {
@@ -14499,16 +15347,21 @@ export namespace Prisma {
     amount: number
     createdAt: number
     updatedAt: number
+    checkoutRequestId: number
+    eventYear: number
+    accountId: number
     _all: number
   }
 
 
   export type BikeHireAvgAggregateInputType = {
     amount?: true
+    eventYear?: true
   }
 
   export type BikeHireSumAggregateInputType = {
     amount?: true
+    eventYear?: true
   }
 
   export type BikeHireMinAggregateInputType = {
@@ -14519,6 +15372,9 @@ export namespace Prisma {
     amount?: true
     createdAt?: true
     updatedAt?: true
+    checkoutRequestId?: true
+    eventYear?: true
+    accountId?: true
   }
 
   export type BikeHireMaxAggregateInputType = {
@@ -14529,6 +15385,9 @@ export namespace Prisma {
     amount?: true
     createdAt?: true
     updatedAt?: true
+    checkoutRequestId?: true
+    eventYear?: true
+    accountId?: true
   }
 
   export type BikeHireCountAggregateInputType = {
@@ -14539,6 +15398,9 @@ export namespace Prisma {
     amount?: true
     createdAt?: true
     updatedAt?: true
+    checkoutRequestId?: true
+    eventYear?: true
+    accountId?: true
     _all?: true
   }
 
@@ -14636,6 +15498,9 @@ export namespace Prisma {
     amount: number
     createdAt: Date
     updatedAt: Date
+    checkoutRequestId: string | null
+    eventYear: number
+    accountId: string | null
     _count: BikeHireCountAggregateOutputType | null
     _avg: BikeHireAvgAggregateOutputType | null
     _sum: BikeHireSumAggregateOutputType | null
@@ -14665,7 +15530,11 @@ export namespace Prisma {
     amount?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    checkoutRequestId?: boolean
+    eventYear?: boolean
+    accountId?: boolean
     registration?: boolean | RegistrationDefaultArgs<ExtArgs>
+    account?: boolean | BikeHire$accountArgs<ExtArgs>
   }, ExtArgs["result"]["bikeHire"]>
 
   export type BikeHireSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -14676,7 +15545,11 @@ export namespace Prisma {
     amount?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    checkoutRequestId?: boolean
+    eventYear?: boolean
+    accountId?: boolean
     registration?: boolean | RegistrationDefaultArgs<ExtArgs>
+    account?: boolean | BikeHire$accountArgs<ExtArgs>
   }, ExtArgs["result"]["bikeHire"]>
 
   export type BikeHireSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -14687,7 +15560,11 @@ export namespace Prisma {
     amount?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    checkoutRequestId?: boolean
+    eventYear?: boolean
+    accountId?: boolean
     registration?: boolean | RegistrationDefaultArgs<ExtArgs>
+    account?: boolean | BikeHire$accountArgs<ExtArgs>
   }, ExtArgs["result"]["bikeHire"]>
 
   export type BikeHireSelectScalar = {
@@ -14698,23 +15575,30 @@ export namespace Prisma {
     amount?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    checkoutRequestId?: boolean
+    eventYear?: boolean
+    accountId?: boolean
   }
 
-  export type BikeHireOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "registrationId" | "bikeType" | "status" | "amount" | "createdAt" | "updatedAt", ExtArgs["result"]["bikeHire"]>
+  export type BikeHireOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "registrationId" | "bikeType" | "status" | "amount" | "createdAt" | "updatedAt" | "checkoutRequestId" | "eventYear" | "accountId", ExtArgs["result"]["bikeHire"]>
   export type BikeHireInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     registration?: boolean | RegistrationDefaultArgs<ExtArgs>
+    account?: boolean | BikeHire$accountArgs<ExtArgs>
   }
   export type BikeHireIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     registration?: boolean | RegistrationDefaultArgs<ExtArgs>
+    account?: boolean | BikeHire$accountArgs<ExtArgs>
   }
   export type BikeHireIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     registration?: boolean | RegistrationDefaultArgs<ExtArgs>
+    account?: boolean | BikeHire$accountArgs<ExtArgs>
   }
 
   export type $BikeHirePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "BikeHire"
     objects: {
       registration: Prisma.$RegistrationPayload<ExtArgs>
+      account: Prisma.$AccountPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -14724,6 +15608,9 @@ export namespace Prisma {
       amount: number
       createdAt: Date
       updatedAt: Date
+      checkoutRequestId: string | null
+      eventYear: number
+      accountId: string | null
     }, ExtArgs["result"]["bikeHire"]>
     composites: {}
   }
@@ -15119,6 +16006,7 @@ export namespace Prisma {
   export interface Prisma__BikeHireClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     registration<T extends RegistrationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, RegistrationDefaultArgs<ExtArgs>>): Prisma__RegistrationClient<$Result.GetResult<Prisma.$RegistrationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    account<T extends BikeHire$accountArgs<ExtArgs> = {}>(args?: Subset<T, BikeHire$accountArgs<ExtArgs>>): Prisma__AccountClient<$Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -15155,6 +16043,9 @@ export namespace Prisma {
     readonly amount: FieldRef<"BikeHire", 'Float'>
     readonly createdAt: FieldRef<"BikeHire", 'DateTime'>
     readonly updatedAt: FieldRef<"BikeHire", 'DateTime'>
+    readonly checkoutRequestId: FieldRef<"BikeHire", 'String'>
+    readonly eventYear: FieldRef<"BikeHire", 'Int'>
+    readonly accountId: FieldRef<"BikeHire", 'String'>
   }
     
 
@@ -15553,6 +16444,25 @@ export namespace Prisma {
      * Limit how many BikeHires to delete.
      */
     limit?: number
+  }
+
+  /**
+   * BikeHire.account
+   */
+  export type BikeHire$accountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Account
+     */
+    select?: AccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Account
+     */
+    omit?: AccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AccountInclude<ExtArgs> | null
+    where?: AccountWhereInput
   }
 
   /**
@@ -16585,6 +17495,8 @@ export namespace Prisma {
     id: string | null
     role: string | null
     rating: number | null
+    firstName: string | null
+    lastName: string | null
     highlights: string | null
     improvements: string | null
     createdAt: Date | null
@@ -16594,6 +17506,8 @@ export namespace Prisma {
     id: string | null
     role: string | null
     rating: number | null
+    firstName: string | null
+    lastName: string | null
     highlights: string | null
     improvements: string | null
     createdAt: Date | null
@@ -16603,6 +17517,8 @@ export namespace Prisma {
     id: number
     role: number
     rating: number
+    firstName: number
+    lastName: number
     highlights: number
     improvements: number
     createdAt: number
@@ -16622,6 +17538,8 @@ export namespace Prisma {
     id?: true
     role?: true
     rating?: true
+    firstName?: true
+    lastName?: true
     highlights?: true
     improvements?: true
     createdAt?: true
@@ -16631,6 +17549,8 @@ export namespace Prisma {
     id?: true
     role?: true
     rating?: true
+    firstName?: true
+    lastName?: true
     highlights?: true
     improvements?: true
     createdAt?: true
@@ -16640,6 +17560,8 @@ export namespace Prisma {
     id?: true
     role?: true
     rating?: true
+    firstName?: true
+    lastName?: true
     highlights?: true
     improvements?: true
     createdAt?: true
@@ -16736,6 +17658,8 @@ export namespace Prisma {
     id: string
     role: string
     rating: number
+    firstName: string | null
+    lastName: string | null
     highlights: string | null
     improvements: string | null
     createdAt: Date
@@ -16764,6 +17688,8 @@ export namespace Prisma {
     id?: boolean
     role?: boolean
     rating?: boolean
+    firstName?: boolean
+    lastName?: boolean
     highlights?: boolean
     improvements?: boolean
     createdAt?: boolean
@@ -16773,6 +17699,8 @@ export namespace Prisma {
     id?: boolean
     role?: boolean
     rating?: boolean
+    firstName?: boolean
+    lastName?: boolean
     highlights?: boolean
     improvements?: boolean
     createdAt?: boolean
@@ -16782,6 +17710,8 @@ export namespace Prisma {
     id?: boolean
     role?: boolean
     rating?: boolean
+    firstName?: boolean
+    lastName?: boolean
     highlights?: boolean
     improvements?: boolean
     createdAt?: boolean
@@ -16791,12 +17721,14 @@ export namespace Prisma {
     id?: boolean
     role?: boolean
     rating?: boolean
+    firstName?: boolean
+    lastName?: boolean
     highlights?: boolean
     improvements?: boolean
     createdAt?: boolean
   }
 
-  export type EventFeedbackOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "role" | "rating" | "highlights" | "improvements" | "createdAt", ExtArgs["result"]["eventFeedback"]>
+  export type EventFeedbackOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "role" | "rating" | "firstName" | "lastName" | "highlights" | "improvements" | "createdAt", ExtArgs["result"]["eventFeedback"]>
 
   export type $EventFeedbackPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "EventFeedback"
@@ -16805,6 +17737,8 @@ export namespace Prisma {
       id: string
       role: string
       rating: number
+      firstName: string | null
+      lastName: string | null
       highlights: string | null
       improvements: string | null
       createdAt: Date
@@ -17234,6 +18168,8 @@ export namespace Prisma {
     readonly id: FieldRef<"EventFeedback", 'String'>
     readonly role: FieldRef<"EventFeedback", 'String'>
     readonly rating: FieldRef<"EventFeedback", 'Int'>
+    readonly firstName: FieldRef<"EventFeedback", 'String'>
+    readonly lastName: FieldRef<"EventFeedback", 'String'>
     readonly highlights: FieldRef<"EventFeedback", 'String'>
     readonly improvements: FieldRef<"EventFeedback", 'String'>
     readonly createdAt: FieldRef<"EventFeedback", 'DateTime'>
@@ -17609,6 +18545,4529 @@ export namespace Prisma {
 
 
   /**
+   * Model Account
+   */
+
+  export type AggregateAccount = {
+    _count: AccountCountAggregateOutputType | null
+    _min: AccountMinAggregateOutputType | null
+    _max: AccountMaxAggregateOutputType | null
+  }
+
+  export type AccountMinAggregateOutputType = {
+    id: string | null
+    firstName: string | null
+    lastName: string | null
+    email: string | null
+    phone: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    lastLoginAt: Date | null
+  }
+
+  export type AccountMaxAggregateOutputType = {
+    id: string | null
+    firstName: string | null
+    lastName: string | null
+    email: string | null
+    phone: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+    lastLoginAt: Date | null
+  }
+
+  export type AccountCountAggregateOutputType = {
+    id: number
+    firstName: number
+    lastName: number
+    email: number
+    phone: number
+    createdAt: number
+    updatedAt: number
+    lastLoginAt: number
+    _all: number
+  }
+
+
+  export type AccountMinAggregateInputType = {
+    id?: true
+    firstName?: true
+    lastName?: true
+    email?: true
+    phone?: true
+    createdAt?: true
+    updatedAt?: true
+    lastLoginAt?: true
+  }
+
+  export type AccountMaxAggregateInputType = {
+    id?: true
+    firstName?: true
+    lastName?: true
+    email?: true
+    phone?: true
+    createdAt?: true
+    updatedAt?: true
+    lastLoginAt?: true
+  }
+
+  export type AccountCountAggregateInputType = {
+    id?: true
+    firstName?: true
+    lastName?: true
+    email?: true
+    phone?: true
+    createdAt?: true
+    updatedAt?: true
+    lastLoginAt?: true
+    _all?: true
+  }
+
+  export type AccountAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Account to aggregate.
+     */
+    where?: AccountWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Accounts to fetch.
+     */
+    orderBy?: AccountOrderByWithRelationInput | AccountOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AccountWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Accounts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Accounts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Accounts
+    **/
+    _count?: true | AccountCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AccountMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AccountMaxAggregateInputType
+  }
+
+  export type GetAccountAggregateType<T extends AccountAggregateArgs> = {
+        [P in keyof T & keyof AggregateAccount]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAccount[P]>
+      : GetScalarType<T[P], AggregateAccount[P]>
+  }
+
+
+
+
+  export type AccountGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AccountWhereInput
+    orderBy?: AccountOrderByWithAggregationInput | AccountOrderByWithAggregationInput[]
+    by: AccountScalarFieldEnum[] | AccountScalarFieldEnum
+    having?: AccountScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AccountCountAggregateInputType | true
+    _min?: AccountMinAggregateInputType
+    _max?: AccountMaxAggregateInputType
+  }
+
+  export type AccountGroupByOutputType = {
+    id: string
+    firstName: string
+    lastName: string
+    email: string | null
+    phone: string | null
+    createdAt: Date
+    updatedAt: Date
+    lastLoginAt: Date | null
+    _count: AccountCountAggregateOutputType | null
+    _min: AccountMinAggregateOutputType | null
+    _max: AccountMaxAggregateOutputType | null
+  }
+
+  type GetAccountGroupByPayload<T extends AccountGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AccountGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AccountGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AccountGroupByOutputType[P]>
+            : GetScalarType<T[P], AccountGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AccountSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    firstName?: boolean
+    lastName?: boolean
+    email?: boolean
+    phone?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    lastLoginAt?: boolean
+    sessions?: boolean | Account$sessionsArgs<ExtArgs>
+    registrations?: boolean | Account$registrationsArgs<ExtArgs>
+    participations?: boolean | Account$participationsArgs<ExtArgs>
+    raffleTickets?: boolean | Account$raffleTicketsArgs<ExtArgs>
+    donations?: boolean | Account$donationsArgs<ExtArgs>
+    bikeHires?: boolean | Account$bikeHiresArgs<ExtArgs>
+    _count?: boolean | AccountCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["account"]>
+
+  export type AccountSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    firstName?: boolean
+    lastName?: boolean
+    email?: boolean
+    phone?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    lastLoginAt?: boolean
+  }, ExtArgs["result"]["account"]>
+
+  export type AccountSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    firstName?: boolean
+    lastName?: boolean
+    email?: boolean
+    phone?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    lastLoginAt?: boolean
+  }, ExtArgs["result"]["account"]>
+
+  export type AccountSelectScalar = {
+    id?: boolean
+    firstName?: boolean
+    lastName?: boolean
+    email?: boolean
+    phone?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    lastLoginAt?: boolean
+  }
+
+  export type AccountOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "firstName" | "lastName" | "email" | "phone" | "createdAt" | "updatedAt" | "lastLoginAt", ExtArgs["result"]["account"]>
+  export type AccountInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    sessions?: boolean | Account$sessionsArgs<ExtArgs>
+    registrations?: boolean | Account$registrationsArgs<ExtArgs>
+    participations?: boolean | Account$participationsArgs<ExtArgs>
+    raffleTickets?: boolean | Account$raffleTicketsArgs<ExtArgs>
+    donations?: boolean | Account$donationsArgs<ExtArgs>
+    bikeHires?: boolean | Account$bikeHiresArgs<ExtArgs>
+    _count?: boolean | AccountCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type AccountIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type AccountIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $AccountPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Account"
+    objects: {
+      sessions: Prisma.$UserSessionPayload<ExtArgs>[]
+      registrations: Prisma.$RegistrationPayload<ExtArgs>[]
+      participations: Prisma.$RegistrationPayload<ExtArgs>[]
+      raffleTickets: Prisma.$RaffleTicketPayload<ExtArgs>[]
+      donations: Prisma.$DonationPayload<ExtArgs>[]
+      bikeHires: Prisma.$BikeHirePayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      firstName: string
+      lastName: string
+      email: string | null
+      phone: string | null
+      createdAt: Date
+      updatedAt: Date
+      lastLoginAt: Date | null
+    }, ExtArgs["result"]["account"]>
+    composites: {}
+  }
+
+  type AccountGetPayload<S extends boolean | null | undefined | AccountDefaultArgs> = $Result.GetResult<Prisma.$AccountPayload, S>
+
+  type AccountCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AccountFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AccountCountAggregateInputType | true
+    }
+
+  export interface AccountDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Account'], meta: { name: 'Account' } }
+    /**
+     * Find zero or one Account that matches the filter.
+     * @param {AccountFindUniqueArgs} args - Arguments to find a Account
+     * @example
+     * // Get one Account
+     * const account = await prisma.account.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AccountFindUniqueArgs>(args: SelectSubset<T, AccountFindUniqueArgs<ExtArgs>>): Prisma__AccountClient<$Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Account that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AccountFindUniqueOrThrowArgs} args - Arguments to find a Account
+     * @example
+     * // Get one Account
+     * const account = await prisma.account.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AccountFindUniqueOrThrowArgs>(args: SelectSubset<T, AccountFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AccountClient<$Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Account that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AccountFindFirstArgs} args - Arguments to find a Account
+     * @example
+     * // Get one Account
+     * const account = await prisma.account.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AccountFindFirstArgs>(args?: SelectSubset<T, AccountFindFirstArgs<ExtArgs>>): Prisma__AccountClient<$Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Account that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AccountFindFirstOrThrowArgs} args - Arguments to find a Account
+     * @example
+     * // Get one Account
+     * const account = await prisma.account.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AccountFindFirstOrThrowArgs>(args?: SelectSubset<T, AccountFindFirstOrThrowArgs<ExtArgs>>): Prisma__AccountClient<$Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Accounts that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AccountFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Accounts
+     * const accounts = await prisma.account.findMany()
+     * 
+     * // Get first 10 Accounts
+     * const accounts = await prisma.account.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const accountWithIdOnly = await prisma.account.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends AccountFindManyArgs>(args?: SelectSubset<T, AccountFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Account.
+     * @param {AccountCreateArgs} args - Arguments to create a Account.
+     * @example
+     * // Create one Account
+     * const Account = await prisma.account.create({
+     *   data: {
+     *     // ... data to create a Account
+     *   }
+     * })
+     * 
+     */
+    create<T extends AccountCreateArgs>(args: SelectSubset<T, AccountCreateArgs<ExtArgs>>): Prisma__AccountClient<$Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Accounts.
+     * @param {AccountCreateManyArgs} args - Arguments to create many Accounts.
+     * @example
+     * // Create many Accounts
+     * const account = await prisma.account.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AccountCreateManyArgs>(args?: SelectSubset<T, AccountCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Accounts and returns the data saved in the database.
+     * @param {AccountCreateManyAndReturnArgs} args - Arguments to create many Accounts.
+     * @example
+     * // Create many Accounts
+     * const account = await prisma.account.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Accounts and only return the `id`
+     * const accountWithIdOnly = await prisma.account.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AccountCreateManyAndReturnArgs>(args?: SelectSubset<T, AccountCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Account.
+     * @param {AccountDeleteArgs} args - Arguments to delete one Account.
+     * @example
+     * // Delete one Account
+     * const Account = await prisma.account.delete({
+     *   where: {
+     *     // ... filter to delete one Account
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AccountDeleteArgs>(args: SelectSubset<T, AccountDeleteArgs<ExtArgs>>): Prisma__AccountClient<$Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Account.
+     * @param {AccountUpdateArgs} args - Arguments to update one Account.
+     * @example
+     * // Update one Account
+     * const account = await prisma.account.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AccountUpdateArgs>(args: SelectSubset<T, AccountUpdateArgs<ExtArgs>>): Prisma__AccountClient<$Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Accounts.
+     * @param {AccountDeleteManyArgs} args - Arguments to filter Accounts to delete.
+     * @example
+     * // Delete a few Accounts
+     * const { count } = await prisma.account.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AccountDeleteManyArgs>(args?: SelectSubset<T, AccountDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Accounts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AccountUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Accounts
+     * const account = await prisma.account.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AccountUpdateManyArgs>(args: SelectSubset<T, AccountUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Accounts and returns the data updated in the database.
+     * @param {AccountUpdateManyAndReturnArgs} args - Arguments to update many Accounts.
+     * @example
+     * // Update many Accounts
+     * const account = await prisma.account.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Accounts and only return the `id`
+     * const accountWithIdOnly = await prisma.account.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AccountUpdateManyAndReturnArgs>(args: SelectSubset<T, AccountUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Account.
+     * @param {AccountUpsertArgs} args - Arguments to update or create a Account.
+     * @example
+     * // Update or create a Account
+     * const account = await prisma.account.upsert({
+     *   create: {
+     *     // ... data to create a Account
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Account we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AccountUpsertArgs>(args: SelectSubset<T, AccountUpsertArgs<ExtArgs>>): Prisma__AccountClient<$Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Accounts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AccountCountArgs} args - Arguments to filter Accounts to count.
+     * @example
+     * // Count the number of Accounts
+     * const count = await prisma.account.count({
+     *   where: {
+     *     // ... the filter for the Accounts we want to count
+     *   }
+     * })
+    **/
+    count<T extends AccountCountArgs>(
+      args?: Subset<T, AccountCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AccountCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Account.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AccountAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AccountAggregateArgs>(args: Subset<T, AccountAggregateArgs>): Prisma.PrismaPromise<GetAccountAggregateType<T>>
+
+    /**
+     * Group by Account.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AccountGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AccountGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AccountGroupByArgs['orderBy'] }
+        : { orderBy?: AccountGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AccountGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAccountGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Account model
+   */
+  readonly fields: AccountFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Account.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AccountClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    sessions<T extends Account$sessionsArgs<ExtArgs> = {}>(args?: Subset<T, Account$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    registrations<T extends Account$registrationsArgs<ExtArgs> = {}>(args?: Subset<T, Account$registrationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RegistrationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    participations<T extends Account$participationsArgs<ExtArgs> = {}>(args?: Subset<T, Account$participationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RegistrationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    raffleTickets<T extends Account$raffleTicketsArgs<ExtArgs> = {}>(args?: Subset<T, Account$raffleTicketsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RaffleTicketPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    donations<T extends Account$donationsArgs<ExtArgs> = {}>(args?: Subset<T, Account$donationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DonationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    bikeHires<T extends Account$bikeHiresArgs<ExtArgs> = {}>(args?: Subset<T, Account$bikeHiresArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BikeHirePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Account model
+   */
+  interface AccountFieldRefs {
+    readonly id: FieldRef<"Account", 'String'>
+    readonly firstName: FieldRef<"Account", 'String'>
+    readonly lastName: FieldRef<"Account", 'String'>
+    readonly email: FieldRef<"Account", 'String'>
+    readonly phone: FieldRef<"Account", 'String'>
+    readonly createdAt: FieldRef<"Account", 'DateTime'>
+    readonly updatedAt: FieldRef<"Account", 'DateTime'>
+    readonly lastLoginAt: FieldRef<"Account", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Account findUnique
+   */
+  export type AccountFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Account
+     */
+    select?: AccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Account
+     */
+    omit?: AccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AccountInclude<ExtArgs> | null
+    /**
+     * Filter, which Account to fetch.
+     */
+    where: AccountWhereUniqueInput
+  }
+
+  /**
+   * Account findUniqueOrThrow
+   */
+  export type AccountFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Account
+     */
+    select?: AccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Account
+     */
+    omit?: AccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AccountInclude<ExtArgs> | null
+    /**
+     * Filter, which Account to fetch.
+     */
+    where: AccountWhereUniqueInput
+  }
+
+  /**
+   * Account findFirst
+   */
+  export type AccountFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Account
+     */
+    select?: AccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Account
+     */
+    omit?: AccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AccountInclude<ExtArgs> | null
+    /**
+     * Filter, which Account to fetch.
+     */
+    where?: AccountWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Accounts to fetch.
+     */
+    orderBy?: AccountOrderByWithRelationInput | AccountOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Accounts.
+     */
+    cursor?: AccountWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Accounts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Accounts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Accounts.
+     */
+    distinct?: AccountScalarFieldEnum | AccountScalarFieldEnum[]
+  }
+
+  /**
+   * Account findFirstOrThrow
+   */
+  export type AccountFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Account
+     */
+    select?: AccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Account
+     */
+    omit?: AccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AccountInclude<ExtArgs> | null
+    /**
+     * Filter, which Account to fetch.
+     */
+    where?: AccountWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Accounts to fetch.
+     */
+    orderBy?: AccountOrderByWithRelationInput | AccountOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Accounts.
+     */
+    cursor?: AccountWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Accounts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Accounts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Accounts.
+     */
+    distinct?: AccountScalarFieldEnum | AccountScalarFieldEnum[]
+  }
+
+  /**
+   * Account findMany
+   */
+  export type AccountFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Account
+     */
+    select?: AccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Account
+     */
+    omit?: AccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AccountInclude<ExtArgs> | null
+    /**
+     * Filter, which Accounts to fetch.
+     */
+    where?: AccountWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Accounts to fetch.
+     */
+    orderBy?: AccountOrderByWithRelationInput | AccountOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Accounts.
+     */
+    cursor?: AccountWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Accounts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Accounts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Accounts.
+     */
+    distinct?: AccountScalarFieldEnum | AccountScalarFieldEnum[]
+  }
+
+  /**
+   * Account create
+   */
+  export type AccountCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Account
+     */
+    select?: AccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Account
+     */
+    omit?: AccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AccountInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Account.
+     */
+    data: XOR<AccountCreateInput, AccountUncheckedCreateInput>
+  }
+
+  /**
+   * Account createMany
+   */
+  export type AccountCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Accounts.
+     */
+    data: AccountCreateManyInput | AccountCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Account createManyAndReturn
+   */
+  export type AccountCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Account
+     */
+    select?: AccountSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Account
+     */
+    omit?: AccountOmit<ExtArgs> | null
+    /**
+     * The data used to create many Accounts.
+     */
+    data: AccountCreateManyInput | AccountCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Account update
+   */
+  export type AccountUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Account
+     */
+    select?: AccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Account
+     */
+    omit?: AccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AccountInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Account.
+     */
+    data: XOR<AccountUpdateInput, AccountUncheckedUpdateInput>
+    /**
+     * Choose, which Account to update.
+     */
+    where: AccountWhereUniqueInput
+  }
+
+  /**
+   * Account updateMany
+   */
+  export type AccountUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Accounts.
+     */
+    data: XOR<AccountUpdateManyMutationInput, AccountUncheckedUpdateManyInput>
+    /**
+     * Filter which Accounts to update
+     */
+    where?: AccountWhereInput
+    /**
+     * Limit how many Accounts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Account updateManyAndReturn
+   */
+  export type AccountUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Account
+     */
+    select?: AccountSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Account
+     */
+    omit?: AccountOmit<ExtArgs> | null
+    /**
+     * The data used to update Accounts.
+     */
+    data: XOR<AccountUpdateManyMutationInput, AccountUncheckedUpdateManyInput>
+    /**
+     * Filter which Accounts to update
+     */
+    where?: AccountWhereInput
+    /**
+     * Limit how many Accounts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Account upsert
+   */
+  export type AccountUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Account
+     */
+    select?: AccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Account
+     */
+    omit?: AccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AccountInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Account to update in case it exists.
+     */
+    where: AccountWhereUniqueInput
+    /**
+     * In case the Account found by the `where` argument doesn't exist, create a new Account with this data.
+     */
+    create: XOR<AccountCreateInput, AccountUncheckedCreateInput>
+    /**
+     * In case the Account was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AccountUpdateInput, AccountUncheckedUpdateInput>
+  }
+
+  /**
+   * Account delete
+   */
+  export type AccountDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Account
+     */
+    select?: AccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Account
+     */
+    omit?: AccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AccountInclude<ExtArgs> | null
+    /**
+     * Filter which Account to delete.
+     */
+    where: AccountWhereUniqueInput
+  }
+
+  /**
+   * Account deleteMany
+   */
+  export type AccountDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Accounts to delete
+     */
+    where?: AccountWhereInput
+    /**
+     * Limit how many Accounts to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Account.sessions
+   */
+  export type Account$sessionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserSession
+     */
+    select?: UserSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserSession
+     */
+    omit?: UserSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserSessionInclude<ExtArgs> | null
+    where?: UserSessionWhereInput
+    orderBy?: UserSessionOrderByWithRelationInput | UserSessionOrderByWithRelationInput[]
+    cursor?: UserSessionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: UserSessionScalarFieldEnum | UserSessionScalarFieldEnum[]
+  }
+
+  /**
+   * Account.registrations
+   */
+  export type Account$registrationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Registration
+     */
+    select?: RegistrationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Registration
+     */
+    omit?: RegistrationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationInclude<ExtArgs> | null
+    where?: RegistrationWhereInput
+    orderBy?: RegistrationOrderByWithRelationInput | RegistrationOrderByWithRelationInput[]
+    cursor?: RegistrationWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RegistrationScalarFieldEnum | RegistrationScalarFieldEnum[]
+  }
+
+  /**
+   * Account.participations
+   */
+  export type Account$participationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Registration
+     */
+    select?: RegistrationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Registration
+     */
+    omit?: RegistrationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RegistrationInclude<ExtArgs> | null
+    where?: RegistrationWhereInput
+    orderBy?: RegistrationOrderByWithRelationInput | RegistrationOrderByWithRelationInput[]
+    cursor?: RegistrationWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RegistrationScalarFieldEnum | RegistrationScalarFieldEnum[]
+  }
+
+  /**
+   * Account.raffleTickets
+   */
+  export type Account$raffleTicketsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RaffleTicket
+     */
+    select?: RaffleTicketSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RaffleTicket
+     */
+    omit?: RaffleTicketOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RaffleTicketInclude<ExtArgs> | null
+    where?: RaffleTicketWhereInput
+    orderBy?: RaffleTicketOrderByWithRelationInput | RaffleTicketOrderByWithRelationInput[]
+    cursor?: RaffleTicketWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RaffleTicketScalarFieldEnum | RaffleTicketScalarFieldEnum[]
+  }
+
+  /**
+   * Account.donations
+   */
+  export type Account$donationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Donation
+     */
+    select?: DonationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Donation
+     */
+    omit?: DonationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DonationInclude<ExtArgs> | null
+    where?: DonationWhereInput
+    orderBy?: DonationOrderByWithRelationInput | DonationOrderByWithRelationInput[]
+    cursor?: DonationWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: DonationScalarFieldEnum | DonationScalarFieldEnum[]
+  }
+
+  /**
+   * Account.bikeHires
+   */
+  export type Account$bikeHiresArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BikeHire
+     */
+    select?: BikeHireSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BikeHire
+     */
+    omit?: BikeHireOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BikeHireInclude<ExtArgs> | null
+    where?: BikeHireWhereInput
+    orderBy?: BikeHireOrderByWithRelationInput | BikeHireOrderByWithRelationInput[]
+    cursor?: BikeHireWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: BikeHireScalarFieldEnum | BikeHireScalarFieldEnum[]
+  }
+
+  /**
+   * Account without action
+   */
+  export type AccountDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Account
+     */
+    select?: AccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Account
+     */
+    omit?: AccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AccountInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model OtpCode
+   */
+
+  export type AggregateOtpCode = {
+    _count: OtpCodeCountAggregateOutputType | null
+    _avg: OtpCodeAvgAggregateOutputType | null
+    _sum: OtpCodeSumAggregateOutputType | null
+    _min: OtpCodeMinAggregateOutputType | null
+    _max: OtpCodeMaxAggregateOutputType | null
+  }
+
+  export type OtpCodeAvgAggregateOutputType = {
+    attempts: number | null
+  }
+
+  export type OtpCodeSumAggregateOutputType = {
+    attempts: number | null
+  }
+
+  export type OtpCodeMinAggregateOutputType = {
+    id: string | null
+    channel: string | null
+    destination: string | null
+    purpose: string | null
+    codeHash: string | null
+    attempts: number | null
+    expiresAt: Date | null
+    consumedAt: Date | null
+    createdAt: Date | null
+  }
+
+  export type OtpCodeMaxAggregateOutputType = {
+    id: string | null
+    channel: string | null
+    destination: string | null
+    purpose: string | null
+    codeHash: string | null
+    attempts: number | null
+    expiresAt: Date | null
+    consumedAt: Date | null
+    createdAt: Date | null
+  }
+
+  export type OtpCodeCountAggregateOutputType = {
+    id: number
+    channel: number
+    destination: number
+    purpose: number
+    codeHash: number
+    context: number
+    attempts: number
+    expiresAt: number
+    consumedAt: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type OtpCodeAvgAggregateInputType = {
+    attempts?: true
+  }
+
+  export type OtpCodeSumAggregateInputType = {
+    attempts?: true
+  }
+
+  export type OtpCodeMinAggregateInputType = {
+    id?: true
+    channel?: true
+    destination?: true
+    purpose?: true
+    codeHash?: true
+    attempts?: true
+    expiresAt?: true
+    consumedAt?: true
+    createdAt?: true
+  }
+
+  export type OtpCodeMaxAggregateInputType = {
+    id?: true
+    channel?: true
+    destination?: true
+    purpose?: true
+    codeHash?: true
+    attempts?: true
+    expiresAt?: true
+    consumedAt?: true
+    createdAt?: true
+  }
+
+  export type OtpCodeCountAggregateInputType = {
+    id?: true
+    channel?: true
+    destination?: true
+    purpose?: true
+    codeHash?: true
+    context?: true
+    attempts?: true
+    expiresAt?: true
+    consumedAt?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type OtpCodeAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OtpCode to aggregate.
+     */
+    where?: OtpCodeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OtpCodes to fetch.
+     */
+    orderBy?: OtpCodeOrderByWithRelationInput | OtpCodeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: OtpCodeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OtpCodes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OtpCodes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned OtpCodes
+    **/
+    _count?: true | OtpCodeCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: OtpCodeAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: OtpCodeSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: OtpCodeMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: OtpCodeMaxAggregateInputType
+  }
+
+  export type GetOtpCodeAggregateType<T extends OtpCodeAggregateArgs> = {
+        [P in keyof T & keyof AggregateOtpCode]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateOtpCode[P]>
+      : GetScalarType<T[P], AggregateOtpCode[P]>
+  }
+
+
+
+
+  export type OtpCodeGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OtpCodeWhereInput
+    orderBy?: OtpCodeOrderByWithAggregationInput | OtpCodeOrderByWithAggregationInput[]
+    by: OtpCodeScalarFieldEnum[] | OtpCodeScalarFieldEnum
+    having?: OtpCodeScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: OtpCodeCountAggregateInputType | true
+    _avg?: OtpCodeAvgAggregateInputType
+    _sum?: OtpCodeSumAggregateInputType
+    _min?: OtpCodeMinAggregateInputType
+    _max?: OtpCodeMaxAggregateInputType
+  }
+
+  export type OtpCodeGroupByOutputType = {
+    id: string
+    channel: string
+    destination: string
+    purpose: string
+    codeHash: string
+    context: JsonValue | null
+    attempts: number
+    expiresAt: Date
+    consumedAt: Date | null
+    createdAt: Date
+    _count: OtpCodeCountAggregateOutputType | null
+    _avg: OtpCodeAvgAggregateOutputType | null
+    _sum: OtpCodeSumAggregateOutputType | null
+    _min: OtpCodeMinAggregateOutputType | null
+    _max: OtpCodeMaxAggregateOutputType | null
+  }
+
+  type GetOtpCodeGroupByPayload<T extends OtpCodeGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<OtpCodeGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof OtpCodeGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], OtpCodeGroupByOutputType[P]>
+            : GetScalarType<T[P], OtpCodeGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type OtpCodeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    channel?: boolean
+    destination?: boolean
+    purpose?: boolean
+    codeHash?: boolean
+    context?: boolean
+    attempts?: boolean
+    expiresAt?: boolean
+    consumedAt?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["otpCode"]>
+
+  export type OtpCodeSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    channel?: boolean
+    destination?: boolean
+    purpose?: boolean
+    codeHash?: boolean
+    context?: boolean
+    attempts?: boolean
+    expiresAt?: boolean
+    consumedAt?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["otpCode"]>
+
+  export type OtpCodeSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    channel?: boolean
+    destination?: boolean
+    purpose?: boolean
+    codeHash?: boolean
+    context?: boolean
+    attempts?: boolean
+    expiresAt?: boolean
+    consumedAt?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["otpCode"]>
+
+  export type OtpCodeSelectScalar = {
+    id?: boolean
+    channel?: boolean
+    destination?: boolean
+    purpose?: boolean
+    codeHash?: boolean
+    context?: boolean
+    attempts?: boolean
+    expiresAt?: boolean
+    consumedAt?: boolean
+    createdAt?: boolean
+  }
+
+  export type OtpCodeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "channel" | "destination" | "purpose" | "codeHash" | "context" | "attempts" | "expiresAt" | "consumedAt" | "createdAt", ExtArgs["result"]["otpCode"]>
+
+  export type $OtpCodePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "OtpCode"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      channel: string
+      destination: string
+      purpose: string
+      codeHash: string
+      context: Prisma.JsonValue | null
+      attempts: number
+      expiresAt: Date
+      consumedAt: Date | null
+      createdAt: Date
+    }, ExtArgs["result"]["otpCode"]>
+    composites: {}
+  }
+
+  type OtpCodeGetPayload<S extends boolean | null | undefined | OtpCodeDefaultArgs> = $Result.GetResult<Prisma.$OtpCodePayload, S>
+
+  type OtpCodeCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<OtpCodeFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: OtpCodeCountAggregateInputType | true
+    }
+
+  export interface OtpCodeDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['OtpCode'], meta: { name: 'OtpCode' } }
+    /**
+     * Find zero or one OtpCode that matches the filter.
+     * @param {OtpCodeFindUniqueArgs} args - Arguments to find a OtpCode
+     * @example
+     * // Get one OtpCode
+     * const otpCode = await prisma.otpCode.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends OtpCodeFindUniqueArgs>(args: SelectSubset<T, OtpCodeFindUniqueArgs<ExtArgs>>): Prisma__OtpCodeClient<$Result.GetResult<Prisma.$OtpCodePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one OtpCode that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {OtpCodeFindUniqueOrThrowArgs} args - Arguments to find a OtpCode
+     * @example
+     * // Get one OtpCode
+     * const otpCode = await prisma.otpCode.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends OtpCodeFindUniqueOrThrowArgs>(args: SelectSubset<T, OtpCodeFindUniqueOrThrowArgs<ExtArgs>>): Prisma__OtpCodeClient<$Result.GetResult<Prisma.$OtpCodePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first OtpCode that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OtpCodeFindFirstArgs} args - Arguments to find a OtpCode
+     * @example
+     * // Get one OtpCode
+     * const otpCode = await prisma.otpCode.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends OtpCodeFindFirstArgs>(args?: SelectSubset<T, OtpCodeFindFirstArgs<ExtArgs>>): Prisma__OtpCodeClient<$Result.GetResult<Prisma.$OtpCodePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first OtpCode that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OtpCodeFindFirstOrThrowArgs} args - Arguments to find a OtpCode
+     * @example
+     * // Get one OtpCode
+     * const otpCode = await prisma.otpCode.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends OtpCodeFindFirstOrThrowArgs>(args?: SelectSubset<T, OtpCodeFindFirstOrThrowArgs<ExtArgs>>): Prisma__OtpCodeClient<$Result.GetResult<Prisma.$OtpCodePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more OtpCodes that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OtpCodeFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all OtpCodes
+     * const otpCodes = await prisma.otpCode.findMany()
+     * 
+     * // Get first 10 OtpCodes
+     * const otpCodes = await prisma.otpCode.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const otpCodeWithIdOnly = await prisma.otpCode.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends OtpCodeFindManyArgs>(args?: SelectSubset<T, OtpCodeFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OtpCodePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a OtpCode.
+     * @param {OtpCodeCreateArgs} args - Arguments to create a OtpCode.
+     * @example
+     * // Create one OtpCode
+     * const OtpCode = await prisma.otpCode.create({
+     *   data: {
+     *     // ... data to create a OtpCode
+     *   }
+     * })
+     * 
+     */
+    create<T extends OtpCodeCreateArgs>(args: SelectSubset<T, OtpCodeCreateArgs<ExtArgs>>): Prisma__OtpCodeClient<$Result.GetResult<Prisma.$OtpCodePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many OtpCodes.
+     * @param {OtpCodeCreateManyArgs} args - Arguments to create many OtpCodes.
+     * @example
+     * // Create many OtpCodes
+     * const otpCode = await prisma.otpCode.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends OtpCodeCreateManyArgs>(args?: SelectSubset<T, OtpCodeCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many OtpCodes and returns the data saved in the database.
+     * @param {OtpCodeCreateManyAndReturnArgs} args - Arguments to create many OtpCodes.
+     * @example
+     * // Create many OtpCodes
+     * const otpCode = await prisma.otpCode.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many OtpCodes and only return the `id`
+     * const otpCodeWithIdOnly = await prisma.otpCode.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends OtpCodeCreateManyAndReturnArgs>(args?: SelectSubset<T, OtpCodeCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OtpCodePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a OtpCode.
+     * @param {OtpCodeDeleteArgs} args - Arguments to delete one OtpCode.
+     * @example
+     * // Delete one OtpCode
+     * const OtpCode = await prisma.otpCode.delete({
+     *   where: {
+     *     // ... filter to delete one OtpCode
+     *   }
+     * })
+     * 
+     */
+    delete<T extends OtpCodeDeleteArgs>(args: SelectSubset<T, OtpCodeDeleteArgs<ExtArgs>>): Prisma__OtpCodeClient<$Result.GetResult<Prisma.$OtpCodePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one OtpCode.
+     * @param {OtpCodeUpdateArgs} args - Arguments to update one OtpCode.
+     * @example
+     * // Update one OtpCode
+     * const otpCode = await prisma.otpCode.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends OtpCodeUpdateArgs>(args: SelectSubset<T, OtpCodeUpdateArgs<ExtArgs>>): Prisma__OtpCodeClient<$Result.GetResult<Prisma.$OtpCodePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more OtpCodes.
+     * @param {OtpCodeDeleteManyArgs} args - Arguments to filter OtpCodes to delete.
+     * @example
+     * // Delete a few OtpCodes
+     * const { count } = await prisma.otpCode.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends OtpCodeDeleteManyArgs>(args?: SelectSubset<T, OtpCodeDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OtpCodes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OtpCodeUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many OtpCodes
+     * const otpCode = await prisma.otpCode.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends OtpCodeUpdateManyArgs>(args: SelectSubset<T, OtpCodeUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OtpCodes and returns the data updated in the database.
+     * @param {OtpCodeUpdateManyAndReturnArgs} args - Arguments to update many OtpCodes.
+     * @example
+     * // Update many OtpCodes
+     * const otpCode = await prisma.otpCode.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more OtpCodes and only return the `id`
+     * const otpCodeWithIdOnly = await prisma.otpCode.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends OtpCodeUpdateManyAndReturnArgs>(args: SelectSubset<T, OtpCodeUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OtpCodePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one OtpCode.
+     * @param {OtpCodeUpsertArgs} args - Arguments to update or create a OtpCode.
+     * @example
+     * // Update or create a OtpCode
+     * const otpCode = await prisma.otpCode.upsert({
+     *   create: {
+     *     // ... data to create a OtpCode
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the OtpCode we want to update
+     *   }
+     * })
+     */
+    upsert<T extends OtpCodeUpsertArgs>(args: SelectSubset<T, OtpCodeUpsertArgs<ExtArgs>>): Prisma__OtpCodeClient<$Result.GetResult<Prisma.$OtpCodePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of OtpCodes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OtpCodeCountArgs} args - Arguments to filter OtpCodes to count.
+     * @example
+     * // Count the number of OtpCodes
+     * const count = await prisma.otpCode.count({
+     *   where: {
+     *     // ... the filter for the OtpCodes we want to count
+     *   }
+     * })
+    **/
+    count<T extends OtpCodeCountArgs>(
+      args?: Subset<T, OtpCodeCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], OtpCodeCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a OtpCode.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OtpCodeAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends OtpCodeAggregateArgs>(args: Subset<T, OtpCodeAggregateArgs>): Prisma.PrismaPromise<GetOtpCodeAggregateType<T>>
+
+    /**
+     * Group by OtpCode.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OtpCodeGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends OtpCodeGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: OtpCodeGroupByArgs['orderBy'] }
+        : { orderBy?: OtpCodeGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, OtpCodeGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetOtpCodeGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the OtpCode model
+   */
+  readonly fields: OtpCodeFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for OtpCode.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__OtpCodeClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the OtpCode model
+   */
+  interface OtpCodeFieldRefs {
+    readonly id: FieldRef<"OtpCode", 'String'>
+    readonly channel: FieldRef<"OtpCode", 'String'>
+    readonly destination: FieldRef<"OtpCode", 'String'>
+    readonly purpose: FieldRef<"OtpCode", 'String'>
+    readonly codeHash: FieldRef<"OtpCode", 'String'>
+    readonly context: FieldRef<"OtpCode", 'Json'>
+    readonly attempts: FieldRef<"OtpCode", 'Int'>
+    readonly expiresAt: FieldRef<"OtpCode", 'DateTime'>
+    readonly consumedAt: FieldRef<"OtpCode", 'DateTime'>
+    readonly createdAt: FieldRef<"OtpCode", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * OtpCode findUnique
+   */
+  export type OtpCodeFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OtpCode
+     */
+    select?: OtpCodeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OtpCode
+     */
+    omit?: OtpCodeOmit<ExtArgs> | null
+    /**
+     * Filter, which OtpCode to fetch.
+     */
+    where: OtpCodeWhereUniqueInput
+  }
+
+  /**
+   * OtpCode findUniqueOrThrow
+   */
+  export type OtpCodeFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OtpCode
+     */
+    select?: OtpCodeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OtpCode
+     */
+    omit?: OtpCodeOmit<ExtArgs> | null
+    /**
+     * Filter, which OtpCode to fetch.
+     */
+    where: OtpCodeWhereUniqueInput
+  }
+
+  /**
+   * OtpCode findFirst
+   */
+  export type OtpCodeFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OtpCode
+     */
+    select?: OtpCodeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OtpCode
+     */
+    omit?: OtpCodeOmit<ExtArgs> | null
+    /**
+     * Filter, which OtpCode to fetch.
+     */
+    where?: OtpCodeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OtpCodes to fetch.
+     */
+    orderBy?: OtpCodeOrderByWithRelationInput | OtpCodeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OtpCodes.
+     */
+    cursor?: OtpCodeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OtpCodes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OtpCodes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OtpCodes.
+     */
+    distinct?: OtpCodeScalarFieldEnum | OtpCodeScalarFieldEnum[]
+  }
+
+  /**
+   * OtpCode findFirstOrThrow
+   */
+  export type OtpCodeFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OtpCode
+     */
+    select?: OtpCodeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OtpCode
+     */
+    omit?: OtpCodeOmit<ExtArgs> | null
+    /**
+     * Filter, which OtpCode to fetch.
+     */
+    where?: OtpCodeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OtpCodes to fetch.
+     */
+    orderBy?: OtpCodeOrderByWithRelationInput | OtpCodeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OtpCodes.
+     */
+    cursor?: OtpCodeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OtpCodes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OtpCodes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OtpCodes.
+     */
+    distinct?: OtpCodeScalarFieldEnum | OtpCodeScalarFieldEnum[]
+  }
+
+  /**
+   * OtpCode findMany
+   */
+  export type OtpCodeFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OtpCode
+     */
+    select?: OtpCodeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OtpCode
+     */
+    omit?: OtpCodeOmit<ExtArgs> | null
+    /**
+     * Filter, which OtpCodes to fetch.
+     */
+    where?: OtpCodeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OtpCodes to fetch.
+     */
+    orderBy?: OtpCodeOrderByWithRelationInput | OtpCodeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing OtpCodes.
+     */
+    cursor?: OtpCodeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OtpCodes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OtpCodes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OtpCodes.
+     */
+    distinct?: OtpCodeScalarFieldEnum | OtpCodeScalarFieldEnum[]
+  }
+
+  /**
+   * OtpCode create
+   */
+  export type OtpCodeCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OtpCode
+     */
+    select?: OtpCodeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OtpCode
+     */
+    omit?: OtpCodeOmit<ExtArgs> | null
+    /**
+     * The data needed to create a OtpCode.
+     */
+    data: XOR<OtpCodeCreateInput, OtpCodeUncheckedCreateInput>
+  }
+
+  /**
+   * OtpCode createMany
+   */
+  export type OtpCodeCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many OtpCodes.
+     */
+    data: OtpCodeCreateManyInput | OtpCodeCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * OtpCode createManyAndReturn
+   */
+  export type OtpCodeCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OtpCode
+     */
+    select?: OtpCodeSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the OtpCode
+     */
+    omit?: OtpCodeOmit<ExtArgs> | null
+    /**
+     * The data used to create many OtpCodes.
+     */
+    data: OtpCodeCreateManyInput | OtpCodeCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * OtpCode update
+   */
+  export type OtpCodeUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OtpCode
+     */
+    select?: OtpCodeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OtpCode
+     */
+    omit?: OtpCodeOmit<ExtArgs> | null
+    /**
+     * The data needed to update a OtpCode.
+     */
+    data: XOR<OtpCodeUpdateInput, OtpCodeUncheckedUpdateInput>
+    /**
+     * Choose, which OtpCode to update.
+     */
+    where: OtpCodeWhereUniqueInput
+  }
+
+  /**
+   * OtpCode updateMany
+   */
+  export type OtpCodeUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update OtpCodes.
+     */
+    data: XOR<OtpCodeUpdateManyMutationInput, OtpCodeUncheckedUpdateManyInput>
+    /**
+     * Filter which OtpCodes to update
+     */
+    where?: OtpCodeWhereInput
+    /**
+     * Limit how many OtpCodes to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * OtpCode updateManyAndReturn
+   */
+  export type OtpCodeUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OtpCode
+     */
+    select?: OtpCodeSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the OtpCode
+     */
+    omit?: OtpCodeOmit<ExtArgs> | null
+    /**
+     * The data used to update OtpCodes.
+     */
+    data: XOR<OtpCodeUpdateManyMutationInput, OtpCodeUncheckedUpdateManyInput>
+    /**
+     * Filter which OtpCodes to update
+     */
+    where?: OtpCodeWhereInput
+    /**
+     * Limit how many OtpCodes to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * OtpCode upsert
+   */
+  export type OtpCodeUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OtpCode
+     */
+    select?: OtpCodeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OtpCode
+     */
+    omit?: OtpCodeOmit<ExtArgs> | null
+    /**
+     * The filter to search for the OtpCode to update in case it exists.
+     */
+    where: OtpCodeWhereUniqueInput
+    /**
+     * In case the OtpCode found by the `where` argument doesn't exist, create a new OtpCode with this data.
+     */
+    create: XOR<OtpCodeCreateInput, OtpCodeUncheckedCreateInput>
+    /**
+     * In case the OtpCode was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<OtpCodeUpdateInput, OtpCodeUncheckedUpdateInput>
+  }
+
+  /**
+   * OtpCode delete
+   */
+  export type OtpCodeDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OtpCode
+     */
+    select?: OtpCodeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OtpCode
+     */
+    omit?: OtpCodeOmit<ExtArgs> | null
+    /**
+     * Filter which OtpCode to delete.
+     */
+    where: OtpCodeWhereUniqueInput
+  }
+
+  /**
+   * OtpCode deleteMany
+   */
+  export type OtpCodeDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OtpCodes to delete
+     */
+    where?: OtpCodeWhereInput
+    /**
+     * Limit how many OtpCodes to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * OtpCode without action
+   */
+  export type OtpCodeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OtpCode
+     */
+    select?: OtpCodeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OtpCode
+     */
+    omit?: OtpCodeOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model UserSession
+   */
+
+  export type AggregateUserSession = {
+    _count: UserSessionCountAggregateOutputType | null
+    _min: UserSessionMinAggregateOutputType | null
+    _max: UserSessionMaxAggregateOutputType | null
+  }
+
+  export type UserSessionMinAggregateOutputType = {
+    id: string | null
+    accountId: string | null
+    token: string | null
+    expiresAt: Date | null
+    createdAt: Date | null
+  }
+
+  export type UserSessionMaxAggregateOutputType = {
+    id: string | null
+    accountId: string | null
+    token: string | null
+    expiresAt: Date | null
+    createdAt: Date | null
+  }
+
+  export type UserSessionCountAggregateOutputType = {
+    id: number
+    accountId: number
+    token: number
+    expiresAt: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type UserSessionMinAggregateInputType = {
+    id?: true
+    accountId?: true
+    token?: true
+    expiresAt?: true
+    createdAt?: true
+  }
+
+  export type UserSessionMaxAggregateInputType = {
+    id?: true
+    accountId?: true
+    token?: true
+    expiresAt?: true
+    createdAt?: true
+  }
+
+  export type UserSessionCountAggregateInputType = {
+    id?: true
+    accountId?: true
+    token?: true
+    expiresAt?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type UserSessionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which UserSession to aggregate.
+     */
+    where?: UserSessionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserSessions to fetch.
+     */
+    orderBy?: UserSessionOrderByWithRelationInput | UserSessionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: UserSessionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserSessions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserSessions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned UserSessions
+    **/
+    _count?: true | UserSessionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: UserSessionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: UserSessionMaxAggregateInputType
+  }
+
+  export type GetUserSessionAggregateType<T extends UserSessionAggregateArgs> = {
+        [P in keyof T & keyof AggregateUserSession]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateUserSession[P]>
+      : GetScalarType<T[P], AggregateUserSession[P]>
+  }
+
+
+
+
+  export type UserSessionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserSessionWhereInput
+    orderBy?: UserSessionOrderByWithAggregationInput | UserSessionOrderByWithAggregationInput[]
+    by: UserSessionScalarFieldEnum[] | UserSessionScalarFieldEnum
+    having?: UserSessionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: UserSessionCountAggregateInputType | true
+    _min?: UserSessionMinAggregateInputType
+    _max?: UserSessionMaxAggregateInputType
+  }
+
+  export type UserSessionGroupByOutputType = {
+    id: string
+    accountId: string
+    token: string
+    expiresAt: Date
+    createdAt: Date
+    _count: UserSessionCountAggregateOutputType | null
+    _min: UserSessionMinAggregateOutputType | null
+    _max: UserSessionMaxAggregateOutputType | null
+  }
+
+  type GetUserSessionGroupByPayload<T extends UserSessionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<UserSessionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof UserSessionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], UserSessionGroupByOutputType[P]>
+            : GetScalarType<T[P], UserSessionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type UserSessionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    accountId?: boolean
+    token?: boolean
+    expiresAt?: boolean
+    createdAt?: boolean
+    account?: boolean | AccountDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["userSession"]>
+
+  export type UserSessionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    accountId?: boolean
+    token?: boolean
+    expiresAt?: boolean
+    createdAt?: boolean
+    account?: boolean | AccountDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["userSession"]>
+
+  export type UserSessionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    accountId?: boolean
+    token?: boolean
+    expiresAt?: boolean
+    createdAt?: boolean
+    account?: boolean | AccountDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["userSession"]>
+
+  export type UserSessionSelectScalar = {
+    id?: boolean
+    accountId?: boolean
+    token?: boolean
+    expiresAt?: boolean
+    createdAt?: boolean
+  }
+
+  export type UserSessionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "accountId" | "token" | "expiresAt" | "createdAt", ExtArgs["result"]["userSession"]>
+  export type UserSessionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    account?: boolean | AccountDefaultArgs<ExtArgs>
+  }
+  export type UserSessionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    account?: boolean | AccountDefaultArgs<ExtArgs>
+  }
+  export type UserSessionIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    account?: boolean | AccountDefaultArgs<ExtArgs>
+  }
+
+  export type $UserSessionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "UserSession"
+    objects: {
+      account: Prisma.$AccountPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      accountId: string
+      token: string
+      expiresAt: Date
+      createdAt: Date
+    }, ExtArgs["result"]["userSession"]>
+    composites: {}
+  }
+
+  type UserSessionGetPayload<S extends boolean | null | undefined | UserSessionDefaultArgs> = $Result.GetResult<Prisma.$UserSessionPayload, S>
+
+  type UserSessionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<UserSessionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: UserSessionCountAggregateInputType | true
+    }
+
+  export interface UserSessionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['UserSession'], meta: { name: 'UserSession' } }
+    /**
+     * Find zero or one UserSession that matches the filter.
+     * @param {UserSessionFindUniqueArgs} args - Arguments to find a UserSession
+     * @example
+     * // Get one UserSession
+     * const userSession = await prisma.userSession.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends UserSessionFindUniqueArgs>(args: SelectSubset<T, UserSessionFindUniqueArgs<ExtArgs>>): Prisma__UserSessionClient<$Result.GetResult<Prisma.$UserSessionPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one UserSession that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {UserSessionFindUniqueOrThrowArgs} args - Arguments to find a UserSession
+     * @example
+     * // Get one UserSession
+     * const userSession = await prisma.userSession.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends UserSessionFindUniqueOrThrowArgs>(args: SelectSubset<T, UserSessionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__UserSessionClient<$Result.GetResult<Prisma.$UserSessionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first UserSession that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserSessionFindFirstArgs} args - Arguments to find a UserSession
+     * @example
+     * // Get one UserSession
+     * const userSession = await prisma.userSession.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends UserSessionFindFirstArgs>(args?: SelectSubset<T, UserSessionFindFirstArgs<ExtArgs>>): Prisma__UserSessionClient<$Result.GetResult<Prisma.$UserSessionPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first UserSession that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserSessionFindFirstOrThrowArgs} args - Arguments to find a UserSession
+     * @example
+     * // Get one UserSession
+     * const userSession = await prisma.userSession.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends UserSessionFindFirstOrThrowArgs>(args?: SelectSubset<T, UserSessionFindFirstOrThrowArgs<ExtArgs>>): Prisma__UserSessionClient<$Result.GetResult<Prisma.$UserSessionPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more UserSessions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserSessionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all UserSessions
+     * const userSessions = await prisma.userSession.findMany()
+     * 
+     * // Get first 10 UserSessions
+     * const userSessions = await prisma.userSession.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const userSessionWithIdOnly = await prisma.userSession.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends UserSessionFindManyArgs>(args?: SelectSubset<T, UserSessionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a UserSession.
+     * @param {UserSessionCreateArgs} args - Arguments to create a UserSession.
+     * @example
+     * // Create one UserSession
+     * const UserSession = await prisma.userSession.create({
+     *   data: {
+     *     // ... data to create a UserSession
+     *   }
+     * })
+     * 
+     */
+    create<T extends UserSessionCreateArgs>(args: SelectSubset<T, UserSessionCreateArgs<ExtArgs>>): Prisma__UserSessionClient<$Result.GetResult<Prisma.$UserSessionPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many UserSessions.
+     * @param {UserSessionCreateManyArgs} args - Arguments to create many UserSessions.
+     * @example
+     * // Create many UserSessions
+     * const userSession = await prisma.userSession.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends UserSessionCreateManyArgs>(args?: SelectSubset<T, UserSessionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many UserSessions and returns the data saved in the database.
+     * @param {UserSessionCreateManyAndReturnArgs} args - Arguments to create many UserSessions.
+     * @example
+     * // Create many UserSessions
+     * const userSession = await prisma.userSession.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many UserSessions and only return the `id`
+     * const userSessionWithIdOnly = await prisma.userSession.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends UserSessionCreateManyAndReturnArgs>(args?: SelectSubset<T, UserSessionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserSessionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a UserSession.
+     * @param {UserSessionDeleteArgs} args - Arguments to delete one UserSession.
+     * @example
+     * // Delete one UserSession
+     * const UserSession = await prisma.userSession.delete({
+     *   where: {
+     *     // ... filter to delete one UserSession
+     *   }
+     * })
+     * 
+     */
+    delete<T extends UserSessionDeleteArgs>(args: SelectSubset<T, UserSessionDeleteArgs<ExtArgs>>): Prisma__UserSessionClient<$Result.GetResult<Prisma.$UserSessionPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one UserSession.
+     * @param {UserSessionUpdateArgs} args - Arguments to update one UserSession.
+     * @example
+     * // Update one UserSession
+     * const userSession = await prisma.userSession.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends UserSessionUpdateArgs>(args: SelectSubset<T, UserSessionUpdateArgs<ExtArgs>>): Prisma__UserSessionClient<$Result.GetResult<Prisma.$UserSessionPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more UserSessions.
+     * @param {UserSessionDeleteManyArgs} args - Arguments to filter UserSessions to delete.
+     * @example
+     * // Delete a few UserSessions
+     * const { count } = await prisma.userSession.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends UserSessionDeleteManyArgs>(args?: SelectSubset<T, UserSessionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more UserSessions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserSessionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many UserSessions
+     * const userSession = await prisma.userSession.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends UserSessionUpdateManyArgs>(args: SelectSubset<T, UserSessionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more UserSessions and returns the data updated in the database.
+     * @param {UserSessionUpdateManyAndReturnArgs} args - Arguments to update many UserSessions.
+     * @example
+     * // Update many UserSessions
+     * const userSession = await prisma.userSession.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more UserSessions and only return the `id`
+     * const userSessionWithIdOnly = await prisma.userSession.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends UserSessionUpdateManyAndReturnArgs>(args: SelectSubset<T, UserSessionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserSessionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one UserSession.
+     * @param {UserSessionUpsertArgs} args - Arguments to update or create a UserSession.
+     * @example
+     * // Update or create a UserSession
+     * const userSession = await prisma.userSession.upsert({
+     *   create: {
+     *     // ... data to create a UserSession
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the UserSession we want to update
+     *   }
+     * })
+     */
+    upsert<T extends UserSessionUpsertArgs>(args: SelectSubset<T, UserSessionUpsertArgs<ExtArgs>>): Prisma__UserSessionClient<$Result.GetResult<Prisma.$UserSessionPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of UserSessions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserSessionCountArgs} args - Arguments to filter UserSessions to count.
+     * @example
+     * // Count the number of UserSessions
+     * const count = await prisma.userSession.count({
+     *   where: {
+     *     // ... the filter for the UserSessions we want to count
+     *   }
+     * })
+    **/
+    count<T extends UserSessionCountArgs>(
+      args?: Subset<T, UserSessionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], UserSessionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a UserSession.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserSessionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends UserSessionAggregateArgs>(args: Subset<T, UserSessionAggregateArgs>): Prisma.PrismaPromise<GetUserSessionAggregateType<T>>
+
+    /**
+     * Group by UserSession.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserSessionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends UserSessionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: UserSessionGroupByArgs['orderBy'] }
+        : { orderBy?: UserSessionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, UserSessionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetUserSessionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the UserSession model
+   */
+  readonly fields: UserSessionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for UserSession.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__UserSessionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    account<T extends AccountDefaultArgs<ExtArgs> = {}>(args?: Subset<T, AccountDefaultArgs<ExtArgs>>): Prisma__AccountClient<$Result.GetResult<Prisma.$AccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the UserSession model
+   */
+  interface UserSessionFieldRefs {
+    readonly id: FieldRef<"UserSession", 'String'>
+    readonly accountId: FieldRef<"UserSession", 'String'>
+    readonly token: FieldRef<"UserSession", 'String'>
+    readonly expiresAt: FieldRef<"UserSession", 'DateTime'>
+    readonly createdAt: FieldRef<"UserSession", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * UserSession findUnique
+   */
+  export type UserSessionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserSession
+     */
+    select?: UserSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserSession
+     */
+    omit?: UserSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserSessionInclude<ExtArgs> | null
+    /**
+     * Filter, which UserSession to fetch.
+     */
+    where: UserSessionWhereUniqueInput
+  }
+
+  /**
+   * UserSession findUniqueOrThrow
+   */
+  export type UserSessionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserSession
+     */
+    select?: UserSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserSession
+     */
+    omit?: UserSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserSessionInclude<ExtArgs> | null
+    /**
+     * Filter, which UserSession to fetch.
+     */
+    where: UserSessionWhereUniqueInput
+  }
+
+  /**
+   * UserSession findFirst
+   */
+  export type UserSessionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserSession
+     */
+    select?: UserSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserSession
+     */
+    omit?: UserSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserSessionInclude<ExtArgs> | null
+    /**
+     * Filter, which UserSession to fetch.
+     */
+    where?: UserSessionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserSessions to fetch.
+     */
+    orderBy?: UserSessionOrderByWithRelationInput | UserSessionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for UserSessions.
+     */
+    cursor?: UserSessionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserSessions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserSessions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UserSessions.
+     */
+    distinct?: UserSessionScalarFieldEnum | UserSessionScalarFieldEnum[]
+  }
+
+  /**
+   * UserSession findFirstOrThrow
+   */
+  export type UserSessionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserSession
+     */
+    select?: UserSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserSession
+     */
+    omit?: UserSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserSessionInclude<ExtArgs> | null
+    /**
+     * Filter, which UserSession to fetch.
+     */
+    where?: UserSessionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserSessions to fetch.
+     */
+    orderBy?: UserSessionOrderByWithRelationInput | UserSessionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for UserSessions.
+     */
+    cursor?: UserSessionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserSessions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserSessions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UserSessions.
+     */
+    distinct?: UserSessionScalarFieldEnum | UserSessionScalarFieldEnum[]
+  }
+
+  /**
+   * UserSession findMany
+   */
+  export type UserSessionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserSession
+     */
+    select?: UserSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserSession
+     */
+    omit?: UserSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserSessionInclude<ExtArgs> | null
+    /**
+     * Filter, which UserSessions to fetch.
+     */
+    where?: UserSessionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserSessions to fetch.
+     */
+    orderBy?: UserSessionOrderByWithRelationInput | UserSessionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing UserSessions.
+     */
+    cursor?: UserSessionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserSessions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserSessions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UserSessions.
+     */
+    distinct?: UserSessionScalarFieldEnum | UserSessionScalarFieldEnum[]
+  }
+
+  /**
+   * UserSession create
+   */
+  export type UserSessionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserSession
+     */
+    select?: UserSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserSession
+     */
+    omit?: UserSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserSessionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a UserSession.
+     */
+    data: XOR<UserSessionCreateInput, UserSessionUncheckedCreateInput>
+  }
+
+  /**
+   * UserSession createMany
+   */
+  export type UserSessionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many UserSessions.
+     */
+    data: UserSessionCreateManyInput | UserSessionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * UserSession createManyAndReturn
+   */
+  export type UserSessionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserSession
+     */
+    select?: UserSessionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserSession
+     */
+    omit?: UserSessionOmit<ExtArgs> | null
+    /**
+     * The data used to create many UserSessions.
+     */
+    data: UserSessionCreateManyInput | UserSessionCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserSessionIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * UserSession update
+   */
+  export type UserSessionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserSession
+     */
+    select?: UserSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserSession
+     */
+    omit?: UserSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserSessionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a UserSession.
+     */
+    data: XOR<UserSessionUpdateInput, UserSessionUncheckedUpdateInput>
+    /**
+     * Choose, which UserSession to update.
+     */
+    where: UserSessionWhereUniqueInput
+  }
+
+  /**
+   * UserSession updateMany
+   */
+  export type UserSessionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update UserSessions.
+     */
+    data: XOR<UserSessionUpdateManyMutationInput, UserSessionUncheckedUpdateManyInput>
+    /**
+     * Filter which UserSessions to update
+     */
+    where?: UserSessionWhereInput
+    /**
+     * Limit how many UserSessions to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * UserSession updateManyAndReturn
+   */
+  export type UserSessionUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserSession
+     */
+    select?: UserSessionSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserSession
+     */
+    omit?: UserSessionOmit<ExtArgs> | null
+    /**
+     * The data used to update UserSessions.
+     */
+    data: XOR<UserSessionUpdateManyMutationInput, UserSessionUncheckedUpdateManyInput>
+    /**
+     * Filter which UserSessions to update
+     */
+    where?: UserSessionWhereInput
+    /**
+     * Limit how many UserSessions to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserSessionIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * UserSession upsert
+   */
+  export type UserSessionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserSession
+     */
+    select?: UserSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserSession
+     */
+    omit?: UserSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserSessionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the UserSession to update in case it exists.
+     */
+    where: UserSessionWhereUniqueInput
+    /**
+     * In case the UserSession found by the `where` argument doesn't exist, create a new UserSession with this data.
+     */
+    create: XOR<UserSessionCreateInput, UserSessionUncheckedCreateInput>
+    /**
+     * In case the UserSession was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<UserSessionUpdateInput, UserSessionUncheckedUpdateInput>
+  }
+
+  /**
+   * UserSession delete
+   */
+  export type UserSessionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserSession
+     */
+    select?: UserSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserSession
+     */
+    omit?: UserSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserSessionInclude<ExtArgs> | null
+    /**
+     * Filter which UserSession to delete.
+     */
+    where: UserSessionWhereUniqueInput
+  }
+
+  /**
+   * UserSession deleteMany
+   */
+  export type UserSessionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which UserSessions to delete
+     */
+    where?: UserSessionWhereInput
+    /**
+     * Limit how many UserSessions to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * UserSession without action
+   */
+  export type UserSessionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserSession
+     */
+    select?: UserSessionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserSession
+     */
+    omit?: UserSessionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserSessionInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model GalleryPhoto
+   */
+
+  export type AggregateGalleryPhoto = {
+    _count: GalleryPhotoCountAggregateOutputType | null
+    _avg: GalleryPhotoAvgAggregateOutputType | null
+    _sum: GalleryPhotoSumAggregateOutputType | null
+    _min: GalleryPhotoMinAggregateOutputType | null
+    _max: GalleryPhotoMaxAggregateOutputType | null
+  }
+
+  export type GalleryPhotoAvgAggregateOutputType = {
+    eventYear: number | null
+    width: number | null
+    height: number | null
+    sortOrder: number | null
+  }
+
+  export type GalleryPhotoSumAggregateOutputType = {
+    eventYear: number | null
+    width: number | null
+    height: number | null
+    sortOrder: number | null
+  }
+
+  export type GalleryPhotoMinAggregateOutputType = {
+    id: string | null
+    eventYear: number | null
+    album: string | null
+    publicId: string | null
+    width: number | null
+    height: number | null
+    caption: string | null
+    sortOrder: number | null
+    isPublished: boolean | null
+    createdAt: Date | null
+  }
+
+  export type GalleryPhotoMaxAggregateOutputType = {
+    id: string | null
+    eventYear: number | null
+    album: string | null
+    publicId: string | null
+    width: number | null
+    height: number | null
+    caption: string | null
+    sortOrder: number | null
+    isPublished: boolean | null
+    createdAt: Date | null
+  }
+
+  export type GalleryPhotoCountAggregateOutputType = {
+    id: number
+    eventYear: number
+    album: number
+    publicId: number
+    width: number
+    height: number
+    caption: number
+    sortOrder: number
+    isPublished: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type GalleryPhotoAvgAggregateInputType = {
+    eventYear?: true
+    width?: true
+    height?: true
+    sortOrder?: true
+  }
+
+  export type GalleryPhotoSumAggregateInputType = {
+    eventYear?: true
+    width?: true
+    height?: true
+    sortOrder?: true
+  }
+
+  export type GalleryPhotoMinAggregateInputType = {
+    id?: true
+    eventYear?: true
+    album?: true
+    publicId?: true
+    width?: true
+    height?: true
+    caption?: true
+    sortOrder?: true
+    isPublished?: true
+    createdAt?: true
+  }
+
+  export type GalleryPhotoMaxAggregateInputType = {
+    id?: true
+    eventYear?: true
+    album?: true
+    publicId?: true
+    width?: true
+    height?: true
+    caption?: true
+    sortOrder?: true
+    isPublished?: true
+    createdAt?: true
+  }
+
+  export type GalleryPhotoCountAggregateInputType = {
+    id?: true
+    eventYear?: true
+    album?: true
+    publicId?: true
+    width?: true
+    height?: true
+    caption?: true
+    sortOrder?: true
+    isPublished?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type GalleryPhotoAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which GalleryPhoto to aggregate.
+     */
+    where?: GalleryPhotoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of GalleryPhotos to fetch.
+     */
+    orderBy?: GalleryPhotoOrderByWithRelationInput | GalleryPhotoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: GalleryPhotoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` GalleryPhotos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` GalleryPhotos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned GalleryPhotos
+    **/
+    _count?: true | GalleryPhotoCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: GalleryPhotoAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: GalleryPhotoSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: GalleryPhotoMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: GalleryPhotoMaxAggregateInputType
+  }
+
+  export type GetGalleryPhotoAggregateType<T extends GalleryPhotoAggregateArgs> = {
+        [P in keyof T & keyof AggregateGalleryPhoto]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateGalleryPhoto[P]>
+      : GetScalarType<T[P], AggregateGalleryPhoto[P]>
+  }
+
+
+
+
+  export type GalleryPhotoGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: GalleryPhotoWhereInput
+    orderBy?: GalleryPhotoOrderByWithAggregationInput | GalleryPhotoOrderByWithAggregationInput[]
+    by: GalleryPhotoScalarFieldEnum[] | GalleryPhotoScalarFieldEnum
+    having?: GalleryPhotoScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: GalleryPhotoCountAggregateInputType | true
+    _avg?: GalleryPhotoAvgAggregateInputType
+    _sum?: GalleryPhotoSumAggregateInputType
+    _min?: GalleryPhotoMinAggregateInputType
+    _max?: GalleryPhotoMaxAggregateInputType
+  }
+
+  export type GalleryPhotoGroupByOutputType = {
+    id: string
+    eventYear: number
+    album: string
+    publicId: string
+    width: number
+    height: number
+    caption: string | null
+    sortOrder: number
+    isPublished: boolean
+    createdAt: Date
+    _count: GalleryPhotoCountAggregateOutputType | null
+    _avg: GalleryPhotoAvgAggregateOutputType | null
+    _sum: GalleryPhotoSumAggregateOutputType | null
+    _min: GalleryPhotoMinAggregateOutputType | null
+    _max: GalleryPhotoMaxAggregateOutputType | null
+  }
+
+  type GetGalleryPhotoGroupByPayload<T extends GalleryPhotoGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<GalleryPhotoGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof GalleryPhotoGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], GalleryPhotoGroupByOutputType[P]>
+            : GetScalarType<T[P], GalleryPhotoGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type GalleryPhotoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    eventYear?: boolean
+    album?: boolean
+    publicId?: boolean
+    width?: boolean
+    height?: boolean
+    caption?: boolean
+    sortOrder?: boolean
+    isPublished?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["galleryPhoto"]>
+
+  export type GalleryPhotoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    eventYear?: boolean
+    album?: boolean
+    publicId?: boolean
+    width?: boolean
+    height?: boolean
+    caption?: boolean
+    sortOrder?: boolean
+    isPublished?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["galleryPhoto"]>
+
+  export type GalleryPhotoSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    eventYear?: boolean
+    album?: boolean
+    publicId?: boolean
+    width?: boolean
+    height?: boolean
+    caption?: boolean
+    sortOrder?: boolean
+    isPublished?: boolean
+    createdAt?: boolean
+  }, ExtArgs["result"]["galleryPhoto"]>
+
+  export type GalleryPhotoSelectScalar = {
+    id?: boolean
+    eventYear?: boolean
+    album?: boolean
+    publicId?: boolean
+    width?: boolean
+    height?: boolean
+    caption?: boolean
+    sortOrder?: boolean
+    isPublished?: boolean
+    createdAt?: boolean
+  }
+
+  export type GalleryPhotoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "eventYear" | "album" | "publicId" | "width" | "height" | "caption" | "sortOrder" | "isPublished" | "createdAt", ExtArgs["result"]["galleryPhoto"]>
+
+  export type $GalleryPhotoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "GalleryPhoto"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      eventYear: number
+      album: string
+      publicId: string
+      width: number
+      height: number
+      caption: string | null
+      sortOrder: number
+      isPublished: boolean
+      createdAt: Date
+    }, ExtArgs["result"]["galleryPhoto"]>
+    composites: {}
+  }
+
+  type GalleryPhotoGetPayload<S extends boolean | null | undefined | GalleryPhotoDefaultArgs> = $Result.GetResult<Prisma.$GalleryPhotoPayload, S>
+
+  type GalleryPhotoCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<GalleryPhotoFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: GalleryPhotoCountAggregateInputType | true
+    }
+
+  export interface GalleryPhotoDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['GalleryPhoto'], meta: { name: 'GalleryPhoto' } }
+    /**
+     * Find zero or one GalleryPhoto that matches the filter.
+     * @param {GalleryPhotoFindUniqueArgs} args - Arguments to find a GalleryPhoto
+     * @example
+     * // Get one GalleryPhoto
+     * const galleryPhoto = await prisma.galleryPhoto.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends GalleryPhotoFindUniqueArgs>(args: SelectSubset<T, GalleryPhotoFindUniqueArgs<ExtArgs>>): Prisma__GalleryPhotoClient<$Result.GetResult<Prisma.$GalleryPhotoPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one GalleryPhoto that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {GalleryPhotoFindUniqueOrThrowArgs} args - Arguments to find a GalleryPhoto
+     * @example
+     * // Get one GalleryPhoto
+     * const galleryPhoto = await prisma.galleryPhoto.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends GalleryPhotoFindUniqueOrThrowArgs>(args: SelectSubset<T, GalleryPhotoFindUniqueOrThrowArgs<ExtArgs>>): Prisma__GalleryPhotoClient<$Result.GetResult<Prisma.$GalleryPhotoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first GalleryPhoto that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {GalleryPhotoFindFirstArgs} args - Arguments to find a GalleryPhoto
+     * @example
+     * // Get one GalleryPhoto
+     * const galleryPhoto = await prisma.galleryPhoto.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends GalleryPhotoFindFirstArgs>(args?: SelectSubset<T, GalleryPhotoFindFirstArgs<ExtArgs>>): Prisma__GalleryPhotoClient<$Result.GetResult<Prisma.$GalleryPhotoPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first GalleryPhoto that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {GalleryPhotoFindFirstOrThrowArgs} args - Arguments to find a GalleryPhoto
+     * @example
+     * // Get one GalleryPhoto
+     * const galleryPhoto = await prisma.galleryPhoto.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends GalleryPhotoFindFirstOrThrowArgs>(args?: SelectSubset<T, GalleryPhotoFindFirstOrThrowArgs<ExtArgs>>): Prisma__GalleryPhotoClient<$Result.GetResult<Prisma.$GalleryPhotoPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more GalleryPhotos that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {GalleryPhotoFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all GalleryPhotos
+     * const galleryPhotos = await prisma.galleryPhoto.findMany()
+     * 
+     * // Get first 10 GalleryPhotos
+     * const galleryPhotos = await prisma.galleryPhoto.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const galleryPhotoWithIdOnly = await prisma.galleryPhoto.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends GalleryPhotoFindManyArgs>(args?: SelectSubset<T, GalleryPhotoFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GalleryPhotoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a GalleryPhoto.
+     * @param {GalleryPhotoCreateArgs} args - Arguments to create a GalleryPhoto.
+     * @example
+     * // Create one GalleryPhoto
+     * const GalleryPhoto = await prisma.galleryPhoto.create({
+     *   data: {
+     *     // ... data to create a GalleryPhoto
+     *   }
+     * })
+     * 
+     */
+    create<T extends GalleryPhotoCreateArgs>(args: SelectSubset<T, GalleryPhotoCreateArgs<ExtArgs>>): Prisma__GalleryPhotoClient<$Result.GetResult<Prisma.$GalleryPhotoPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many GalleryPhotos.
+     * @param {GalleryPhotoCreateManyArgs} args - Arguments to create many GalleryPhotos.
+     * @example
+     * // Create many GalleryPhotos
+     * const galleryPhoto = await prisma.galleryPhoto.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends GalleryPhotoCreateManyArgs>(args?: SelectSubset<T, GalleryPhotoCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many GalleryPhotos and returns the data saved in the database.
+     * @param {GalleryPhotoCreateManyAndReturnArgs} args - Arguments to create many GalleryPhotos.
+     * @example
+     * // Create many GalleryPhotos
+     * const galleryPhoto = await prisma.galleryPhoto.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many GalleryPhotos and only return the `id`
+     * const galleryPhotoWithIdOnly = await prisma.galleryPhoto.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends GalleryPhotoCreateManyAndReturnArgs>(args?: SelectSubset<T, GalleryPhotoCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GalleryPhotoPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a GalleryPhoto.
+     * @param {GalleryPhotoDeleteArgs} args - Arguments to delete one GalleryPhoto.
+     * @example
+     * // Delete one GalleryPhoto
+     * const GalleryPhoto = await prisma.galleryPhoto.delete({
+     *   where: {
+     *     // ... filter to delete one GalleryPhoto
+     *   }
+     * })
+     * 
+     */
+    delete<T extends GalleryPhotoDeleteArgs>(args: SelectSubset<T, GalleryPhotoDeleteArgs<ExtArgs>>): Prisma__GalleryPhotoClient<$Result.GetResult<Prisma.$GalleryPhotoPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one GalleryPhoto.
+     * @param {GalleryPhotoUpdateArgs} args - Arguments to update one GalleryPhoto.
+     * @example
+     * // Update one GalleryPhoto
+     * const galleryPhoto = await prisma.galleryPhoto.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends GalleryPhotoUpdateArgs>(args: SelectSubset<T, GalleryPhotoUpdateArgs<ExtArgs>>): Prisma__GalleryPhotoClient<$Result.GetResult<Prisma.$GalleryPhotoPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more GalleryPhotos.
+     * @param {GalleryPhotoDeleteManyArgs} args - Arguments to filter GalleryPhotos to delete.
+     * @example
+     * // Delete a few GalleryPhotos
+     * const { count } = await prisma.galleryPhoto.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends GalleryPhotoDeleteManyArgs>(args?: SelectSubset<T, GalleryPhotoDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more GalleryPhotos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {GalleryPhotoUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many GalleryPhotos
+     * const galleryPhoto = await prisma.galleryPhoto.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends GalleryPhotoUpdateManyArgs>(args: SelectSubset<T, GalleryPhotoUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more GalleryPhotos and returns the data updated in the database.
+     * @param {GalleryPhotoUpdateManyAndReturnArgs} args - Arguments to update many GalleryPhotos.
+     * @example
+     * // Update many GalleryPhotos
+     * const galleryPhoto = await prisma.galleryPhoto.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more GalleryPhotos and only return the `id`
+     * const galleryPhotoWithIdOnly = await prisma.galleryPhoto.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends GalleryPhotoUpdateManyAndReturnArgs>(args: SelectSubset<T, GalleryPhotoUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GalleryPhotoPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one GalleryPhoto.
+     * @param {GalleryPhotoUpsertArgs} args - Arguments to update or create a GalleryPhoto.
+     * @example
+     * // Update or create a GalleryPhoto
+     * const galleryPhoto = await prisma.galleryPhoto.upsert({
+     *   create: {
+     *     // ... data to create a GalleryPhoto
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the GalleryPhoto we want to update
+     *   }
+     * })
+     */
+    upsert<T extends GalleryPhotoUpsertArgs>(args: SelectSubset<T, GalleryPhotoUpsertArgs<ExtArgs>>): Prisma__GalleryPhotoClient<$Result.GetResult<Prisma.$GalleryPhotoPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of GalleryPhotos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {GalleryPhotoCountArgs} args - Arguments to filter GalleryPhotos to count.
+     * @example
+     * // Count the number of GalleryPhotos
+     * const count = await prisma.galleryPhoto.count({
+     *   where: {
+     *     // ... the filter for the GalleryPhotos we want to count
+     *   }
+     * })
+    **/
+    count<T extends GalleryPhotoCountArgs>(
+      args?: Subset<T, GalleryPhotoCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], GalleryPhotoCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a GalleryPhoto.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {GalleryPhotoAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends GalleryPhotoAggregateArgs>(args: Subset<T, GalleryPhotoAggregateArgs>): Prisma.PrismaPromise<GetGalleryPhotoAggregateType<T>>
+
+    /**
+     * Group by GalleryPhoto.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {GalleryPhotoGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends GalleryPhotoGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: GalleryPhotoGroupByArgs['orderBy'] }
+        : { orderBy?: GalleryPhotoGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, GalleryPhotoGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetGalleryPhotoGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the GalleryPhoto model
+   */
+  readonly fields: GalleryPhotoFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for GalleryPhoto.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__GalleryPhotoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the GalleryPhoto model
+   */
+  interface GalleryPhotoFieldRefs {
+    readonly id: FieldRef<"GalleryPhoto", 'String'>
+    readonly eventYear: FieldRef<"GalleryPhoto", 'Int'>
+    readonly album: FieldRef<"GalleryPhoto", 'String'>
+    readonly publicId: FieldRef<"GalleryPhoto", 'String'>
+    readonly width: FieldRef<"GalleryPhoto", 'Int'>
+    readonly height: FieldRef<"GalleryPhoto", 'Int'>
+    readonly caption: FieldRef<"GalleryPhoto", 'String'>
+    readonly sortOrder: FieldRef<"GalleryPhoto", 'Int'>
+    readonly isPublished: FieldRef<"GalleryPhoto", 'Boolean'>
+    readonly createdAt: FieldRef<"GalleryPhoto", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * GalleryPhoto findUnique
+   */
+  export type GalleryPhotoFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GalleryPhoto
+     */
+    select?: GalleryPhotoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GalleryPhoto
+     */
+    omit?: GalleryPhotoOmit<ExtArgs> | null
+    /**
+     * Filter, which GalleryPhoto to fetch.
+     */
+    where: GalleryPhotoWhereUniqueInput
+  }
+
+  /**
+   * GalleryPhoto findUniqueOrThrow
+   */
+  export type GalleryPhotoFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GalleryPhoto
+     */
+    select?: GalleryPhotoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GalleryPhoto
+     */
+    omit?: GalleryPhotoOmit<ExtArgs> | null
+    /**
+     * Filter, which GalleryPhoto to fetch.
+     */
+    where: GalleryPhotoWhereUniqueInput
+  }
+
+  /**
+   * GalleryPhoto findFirst
+   */
+  export type GalleryPhotoFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GalleryPhoto
+     */
+    select?: GalleryPhotoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GalleryPhoto
+     */
+    omit?: GalleryPhotoOmit<ExtArgs> | null
+    /**
+     * Filter, which GalleryPhoto to fetch.
+     */
+    where?: GalleryPhotoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of GalleryPhotos to fetch.
+     */
+    orderBy?: GalleryPhotoOrderByWithRelationInput | GalleryPhotoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for GalleryPhotos.
+     */
+    cursor?: GalleryPhotoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` GalleryPhotos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` GalleryPhotos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of GalleryPhotos.
+     */
+    distinct?: GalleryPhotoScalarFieldEnum | GalleryPhotoScalarFieldEnum[]
+  }
+
+  /**
+   * GalleryPhoto findFirstOrThrow
+   */
+  export type GalleryPhotoFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GalleryPhoto
+     */
+    select?: GalleryPhotoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GalleryPhoto
+     */
+    omit?: GalleryPhotoOmit<ExtArgs> | null
+    /**
+     * Filter, which GalleryPhoto to fetch.
+     */
+    where?: GalleryPhotoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of GalleryPhotos to fetch.
+     */
+    orderBy?: GalleryPhotoOrderByWithRelationInput | GalleryPhotoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for GalleryPhotos.
+     */
+    cursor?: GalleryPhotoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` GalleryPhotos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` GalleryPhotos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of GalleryPhotos.
+     */
+    distinct?: GalleryPhotoScalarFieldEnum | GalleryPhotoScalarFieldEnum[]
+  }
+
+  /**
+   * GalleryPhoto findMany
+   */
+  export type GalleryPhotoFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GalleryPhoto
+     */
+    select?: GalleryPhotoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GalleryPhoto
+     */
+    omit?: GalleryPhotoOmit<ExtArgs> | null
+    /**
+     * Filter, which GalleryPhotos to fetch.
+     */
+    where?: GalleryPhotoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of GalleryPhotos to fetch.
+     */
+    orderBy?: GalleryPhotoOrderByWithRelationInput | GalleryPhotoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing GalleryPhotos.
+     */
+    cursor?: GalleryPhotoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` GalleryPhotos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` GalleryPhotos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of GalleryPhotos.
+     */
+    distinct?: GalleryPhotoScalarFieldEnum | GalleryPhotoScalarFieldEnum[]
+  }
+
+  /**
+   * GalleryPhoto create
+   */
+  export type GalleryPhotoCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GalleryPhoto
+     */
+    select?: GalleryPhotoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GalleryPhoto
+     */
+    omit?: GalleryPhotoOmit<ExtArgs> | null
+    /**
+     * The data needed to create a GalleryPhoto.
+     */
+    data: XOR<GalleryPhotoCreateInput, GalleryPhotoUncheckedCreateInput>
+  }
+
+  /**
+   * GalleryPhoto createMany
+   */
+  export type GalleryPhotoCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many GalleryPhotos.
+     */
+    data: GalleryPhotoCreateManyInput | GalleryPhotoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * GalleryPhoto createManyAndReturn
+   */
+  export type GalleryPhotoCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GalleryPhoto
+     */
+    select?: GalleryPhotoSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the GalleryPhoto
+     */
+    omit?: GalleryPhotoOmit<ExtArgs> | null
+    /**
+     * The data used to create many GalleryPhotos.
+     */
+    data: GalleryPhotoCreateManyInput | GalleryPhotoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * GalleryPhoto update
+   */
+  export type GalleryPhotoUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GalleryPhoto
+     */
+    select?: GalleryPhotoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GalleryPhoto
+     */
+    omit?: GalleryPhotoOmit<ExtArgs> | null
+    /**
+     * The data needed to update a GalleryPhoto.
+     */
+    data: XOR<GalleryPhotoUpdateInput, GalleryPhotoUncheckedUpdateInput>
+    /**
+     * Choose, which GalleryPhoto to update.
+     */
+    where: GalleryPhotoWhereUniqueInput
+  }
+
+  /**
+   * GalleryPhoto updateMany
+   */
+  export type GalleryPhotoUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update GalleryPhotos.
+     */
+    data: XOR<GalleryPhotoUpdateManyMutationInput, GalleryPhotoUncheckedUpdateManyInput>
+    /**
+     * Filter which GalleryPhotos to update
+     */
+    where?: GalleryPhotoWhereInput
+    /**
+     * Limit how many GalleryPhotos to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * GalleryPhoto updateManyAndReturn
+   */
+  export type GalleryPhotoUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GalleryPhoto
+     */
+    select?: GalleryPhotoSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the GalleryPhoto
+     */
+    omit?: GalleryPhotoOmit<ExtArgs> | null
+    /**
+     * The data used to update GalleryPhotos.
+     */
+    data: XOR<GalleryPhotoUpdateManyMutationInput, GalleryPhotoUncheckedUpdateManyInput>
+    /**
+     * Filter which GalleryPhotos to update
+     */
+    where?: GalleryPhotoWhereInput
+    /**
+     * Limit how many GalleryPhotos to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * GalleryPhoto upsert
+   */
+  export type GalleryPhotoUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GalleryPhoto
+     */
+    select?: GalleryPhotoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GalleryPhoto
+     */
+    omit?: GalleryPhotoOmit<ExtArgs> | null
+    /**
+     * The filter to search for the GalleryPhoto to update in case it exists.
+     */
+    where: GalleryPhotoWhereUniqueInput
+    /**
+     * In case the GalleryPhoto found by the `where` argument doesn't exist, create a new GalleryPhoto with this data.
+     */
+    create: XOR<GalleryPhotoCreateInput, GalleryPhotoUncheckedCreateInput>
+    /**
+     * In case the GalleryPhoto was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<GalleryPhotoUpdateInput, GalleryPhotoUncheckedUpdateInput>
+  }
+
+  /**
+   * GalleryPhoto delete
+   */
+  export type GalleryPhotoDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GalleryPhoto
+     */
+    select?: GalleryPhotoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GalleryPhoto
+     */
+    omit?: GalleryPhotoOmit<ExtArgs> | null
+    /**
+     * Filter which GalleryPhoto to delete.
+     */
+    where: GalleryPhotoWhereUniqueInput
+  }
+
+  /**
+   * GalleryPhoto deleteMany
+   */
+  export type GalleryPhotoDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which GalleryPhotos to delete
+     */
+    where?: GalleryPhotoWhereInput
+    /**
+     * Limit how many GalleryPhotos to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * GalleryPhoto without action
+   */
+  export type GalleryPhotoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GalleryPhoto
+     */
+    select?: GalleryPhotoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GalleryPhoto
+     */
+    omit?: GalleryPhotoOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -17654,7 +23113,11 @@ export namespace Prisma {
     rank: 'rank',
     service: 'service',
     serviceNumber: 'serviceNumber',
-    unit: 'unit'
+    unit: 'unit',
+    bibNumber: 'bibNumber',
+    eventYear: 'eventYear',
+    accountId: 'accountId',
+    participantAccountId: 'participantAccountId'
   };
 
   export type RegistrationScalarFieldEnum = (typeof RegistrationScalarFieldEnum)[keyof typeof RegistrationScalarFieldEnum]
@@ -17701,7 +23164,8 @@ export namespace Prisma {
     transactionDate: 'transactionDate',
     mnoReference: 'mnoReference',
     cbsReference: 'cbsReference',
-    paymentDetails: 'paymentDetails'
+    paymentDetails: 'paymentDetails',
+    bikeHireId: 'bikeHireId'
   };
 
   export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeof PaymentScalarFieldEnum]
@@ -17755,7 +23219,10 @@ export namespace Prisma {
     failureReason: 'failureReason',
     mpesaCode: 'mpesaCode',
     paymentDetails: 'paymentDetails',
-    referralCode: 'referralCode'
+    referralCode: 'referralCode',
+    ticketNumber: 'ticketNumber',
+    eventYear: 'eventYear',
+    accountId: 'accountId'
   };
 
   export type RaffleTicketScalarFieldEnum = (typeof RaffleTicketScalarFieldEnum)[keyof typeof RaffleTicketScalarFieldEnum]
@@ -17788,7 +23255,9 @@ export namespace Prisma {
     updatedAt: 'updatedAt',
     failureReason: 'failureReason',
     mpesaCode: 'mpesaCode',
-    paymentDetails: 'paymentDetails'
+    paymentDetails: 'paymentDetails',
+    eventYear: 'eventYear',
+    accountId: 'accountId'
   };
 
   export type DonationScalarFieldEnum = (typeof DonationScalarFieldEnum)[keyof typeof DonationScalarFieldEnum]
@@ -17824,7 +23293,10 @@ export namespace Prisma {
     status: 'status',
     amount: 'amount',
     createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
+    updatedAt: 'updatedAt',
+    checkoutRequestId: 'checkoutRequestId',
+    eventYear: 'eventYear',
+    accountId: 'accountId'
   };
 
   export type BikeHireScalarFieldEnum = (typeof BikeHireScalarFieldEnum)[keyof typeof BikeHireScalarFieldEnum]
@@ -17844,12 +23316,71 @@ export namespace Prisma {
     id: 'id',
     role: 'role',
     rating: 'rating',
+    firstName: 'firstName',
+    lastName: 'lastName',
     highlights: 'highlights',
     improvements: 'improvements',
     createdAt: 'createdAt'
   };
 
   export type EventFeedbackScalarFieldEnum = (typeof EventFeedbackScalarFieldEnum)[keyof typeof EventFeedbackScalarFieldEnum]
+
+
+  export const AccountScalarFieldEnum: {
+    id: 'id',
+    firstName: 'firstName',
+    lastName: 'lastName',
+    email: 'email',
+    phone: 'phone',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    lastLoginAt: 'lastLoginAt'
+  };
+
+  export type AccountScalarFieldEnum = (typeof AccountScalarFieldEnum)[keyof typeof AccountScalarFieldEnum]
+
+
+  export const OtpCodeScalarFieldEnum: {
+    id: 'id',
+    channel: 'channel',
+    destination: 'destination',
+    purpose: 'purpose',
+    codeHash: 'codeHash',
+    context: 'context',
+    attempts: 'attempts',
+    expiresAt: 'expiresAt',
+    consumedAt: 'consumedAt',
+    createdAt: 'createdAt'
+  };
+
+  export type OtpCodeScalarFieldEnum = (typeof OtpCodeScalarFieldEnum)[keyof typeof OtpCodeScalarFieldEnum]
+
+
+  export const UserSessionScalarFieldEnum: {
+    id: 'id',
+    accountId: 'accountId',
+    token: 'token',
+    expiresAt: 'expiresAt',
+    createdAt: 'createdAt'
+  };
+
+  export type UserSessionScalarFieldEnum = (typeof UserSessionScalarFieldEnum)[keyof typeof UserSessionScalarFieldEnum]
+
+
+  export const GalleryPhotoScalarFieldEnum: {
+    id: 'id',
+    eventYear: 'eventYear',
+    album: 'album',
+    publicId: 'publicId',
+    width: 'width',
+    height: 'height',
+    caption: 'caption',
+    sortOrder: 'sortOrder',
+    isPublished: 'isPublished',
+    createdAt: 'createdAt'
+  };
+
+  export type GalleryPhotoScalarFieldEnum = (typeof GalleryPhotoScalarFieldEnum)[keyof typeof GalleryPhotoScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -18028,7 +23559,13 @@ export namespace Prisma {
     service?: StringNullableFilter<"Registration"> | string | null
     serviceNumber?: StringNullableFilter<"Registration"> | string | null
     unit?: StringNullableFilter<"Registration"> | string | null
+    bibNumber?: StringNullableFilter<"Registration"> | string | null
+    eventYear?: IntFilter<"Registration"> | number
+    accountId?: StringNullableFilter<"Registration"> | string | null
+    participantAccountId?: StringNullableFilter<"Registration"> | string | null
     bikeHire?: XOR<BikeHireNullableScalarRelationFilter, BikeHireWhereInput> | null
+    account?: XOR<AccountNullableScalarRelationFilter, AccountWhereInput> | null
+    participantAccount?: XOR<AccountNullableScalarRelationFilter, AccountWhereInput> | null
   }
 
   export type RegistrationOrderByWithRelationInput = {
@@ -18064,11 +23601,18 @@ export namespace Prisma {
     service?: SortOrderInput | SortOrder
     serviceNumber?: SortOrderInput | SortOrder
     unit?: SortOrderInput | SortOrder
+    bibNumber?: SortOrderInput | SortOrder
+    eventYear?: SortOrder
+    accountId?: SortOrderInput | SortOrder
+    participantAccountId?: SortOrderInput | SortOrder
     bikeHire?: BikeHireOrderByWithRelationInput
+    account?: AccountOrderByWithRelationInput
+    participantAccount?: AccountOrderByWithRelationInput
   }
 
   export type RegistrationWhereUniqueInput = Prisma.AtLeast<{
     id?: string
+    bibNumber?: string
     AND?: RegistrationWhereInput | RegistrationWhereInput[]
     OR?: RegistrationWhereInput[]
     NOT?: RegistrationWhereInput | RegistrationWhereInput[]
@@ -18103,8 +23647,13 @@ export namespace Prisma {
     service?: StringNullableFilter<"Registration"> | string | null
     serviceNumber?: StringNullableFilter<"Registration"> | string | null
     unit?: StringNullableFilter<"Registration"> | string | null
+    eventYear?: IntFilter<"Registration"> | number
+    accountId?: StringNullableFilter<"Registration"> | string | null
+    participantAccountId?: StringNullableFilter<"Registration"> | string | null
     bikeHire?: XOR<BikeHireNullableScalarRelationFilter, BikeHireWhereInput> | null
-  }, "id">
+    account?: XOR<AccountNullableScalarRelationFilter, AccountWhereInput> | null
+    participantAccount?: XOR<AccountNullableScalarRelationFilter, AccountWhereInput> | null
+  }, "id" | "bibNumber">
 
   export type RegistrationOrderByWithAggregationInput = {
     id?: SortOrder
@@ -18139,6 +23688,10 @@ export namespace Prisma {
     service?: SortOrderInput | SortOrder
     serviceNumber?: SortOrderInput | SortOrder
     unit?: SortOrderInput | SortOrder
+    bibNumber?: SortOrderInput | SortOrder
+    eventYear?: SortOrder
+    accountId?: SortOrderInput | SortOrder
+    participantAccountId?: SortOrderInput | SortOrder
     _count?: RegistrationCountOrderByAggregateInput
     _avg?: RegistrationAvgOrderByAggregateInput
     _max?: RegistrationMaxOrderByAggregateInput
@@ -18182,6 +23735,10 @@ export namespace Prisma {
     service?: StringNullableWithAggregatesFilter<"Registration"> | string | null
     serviceNumber?: StringNullableWithAggregatesFilter<"Registration"> | string | null
     unit?: StringNullableWithAggregatesFilter<"Registration"> | string | null
+    bibNumber?: StringNullableWithAggregatesFilter<"Registration"> | string | null
+    eventYear?: IntWithAggregatesFilter<"Registration"> | number
+    accountId?: StringNullableWithAggregatesFilter<"Registration"> | string | null
+    participantAccountId?: StringNullableWithAggregatesFilter<"Registration"> | string | null
   }
 
   export type AdminWhereInput = {
@@ -18325,6 +23882,7 @@ export namespace Prisma {
     mnoReference?: StringNullableFilter<"Payment"> | string | null
     cbsReference?: StringNullableFilter<"Payment"> | string | null
     paymentDetails?: JsonNullableFilter<"Payment">
+    bikeHireId?: StringNullableFilter<"Payment"> | string | null
   }
 
   export type PaymentOrderByWithRelationInput = {
@@ -18345,6 +23903,7 @@ export namespace Prisma {
     mnoReference?: SortOrderInput | SortOrder
     cbsReference?: SortOrderInput | SortOrder
     paymentDetails?: SortOrderInput | SortOrder
+    bikeHireId?: SortOrderInput | SortOrder
   }
 
   export type PaymentWhereUniqueInput = Prisma.AtLeast<{
@@ -18368,6 +23927,7 @@ export namespace Prisma {
     mnoReference?: StringNullableFilter<"Payment"> | string | null
     cbsReference?: StringNullableFilter<"Payment"> | string | null
     paymentDetails?: JsonNullableFilter<"Payment">
+    bikeHireId?: StringNullableFilter<"Payment"> | string | null
   }, "id" | "checkoutRequestId">
 
   export type PaymentOrderByWithAggregationInput = {
@@ -18388,6 +23948,7 @@ export namespace Prisma {
     mnoReference?: SortOrderInput | SortOrder
     cbsReference?: SortOrderInput | SortOrder
     paymentDetails?: SortOrderInput | SortOrder
+    bikeHireId?: SortOrderInput | SortOrder
     _count?: PaymentCountOrderByAggregateInput
     _avg?: PaymentAvgOrderByAggregateInput
     _max?: PaymentMaxOrderByAggregateInput
@@ -18416,6 +23977,7 @@ export namespace Prisma {
     mnoReference?: StringNullableWithAggregatesFilter<"Payment"> | string | null
     cbsReference?: StringNullableWithAggregatesFilter<"Payment"> | string | null
     paymentDetails?: JsonNullableWithAggregatesFilter<"Payment">
+    bikeHireId?: StringNullableWithAggregatesFilter<"Payment"> | string | null
   }
 
   export type PricingCategoryWhereInput = {
@@ -18595,6 +24157,10 @@ export namespace Prisma {
     mpesaCode?: StringNullableFilter<"RaffleTicket"> | string | null
     paymentDetails?: JsonNullableFilter<"RaffleTicket">
     referralCode?: StringNullableFilter<"RaffleTicket"> | string | null
+    ticketNumber?: StringNullableFilter<"RaffleTicket"> | string | null
+    eventYear?: IntFilter<"RaffleTicket"> | number
+    accountId?: StringNullableFilter<"RaffleTicket"> | string | null
+    account?: XOR<AccountNullableScalarRelationFilter, AccountWhereInput> | null
   }
 
   export type RaffleTicketOrderByWithRelationInput = {
@@ -18614,10 +24180,15 @@ export namespace Prisma {
     mpesaCode?: SortOrderInput | SortOrder
     paymentDetails?: SortOrderInput | SortOrder
     referralCode?: SortOrderInput | SortOrder
+    ticketNumber?: SortOrderInput | SortOrder
+    eventYear?: SortOrder
+    accountId?: SortOrderInput | SortOrder
+    account?: AccountOrderByWithRelationInput
   }
 
   export type RaffleTicketWhereUniqueInput = Prisma.AtLeast<{
     id?: string
+    ticketNumber?: string
     AND?: RaffleTicketWhereInput | RaffleTicketWhereInput[]
     OR?: RaffleTicketWhereInput[]
     NOT?: RaffleTicketWhereInput | RaffleTicketWhereInput[]
@@ -18636,7 +24207,10 @@ export namespace Prisma {
     mpesaCode?: StringNullableFilter<"RaffleTicket"> | string | null
     paymentDetails?: JsonNullableFilter<"RaffleTicket">
     referralCode?: StringNullableFilter<"RaffleTicket"> | string | null
-  }, "id">
+    eventYear?: IntFilter<"RaffleTicket"> | number
+    accountId?: StringNullableFilter<"RaffleTicket"> | string | null
+    account?: XOR<AccountNullableScalarRelationFilter, AccountWhereInput> | null
+  }, "id" | "ticketNumber">
 
   export type RaffleTicketOrderByWithAggregationInput = {
     id?: SortOrder
@@ -18655,9 +24229,14 @@ export namespace Prisma {
     mpesaCode?: SortOrderInput | SortOrder
     paymentDetails?: SortOrderInput | SortOrder
     referralCode?: SortOrderInput | SortOrder
+    ticketNumber?: SortOrderInput | SortOrder
+    eventYear?: SortOrder
+    accountId?: SortOrderInput | SortOrder
     _count?: RaffleTicketCountOrderByAggregateInput
+    _avg?: RaffleTicketAvgOrderByAggregateInput
     _max?: RaffleTicketMaxOrderByAggregateInput
     _min?: RaffleTicketMinOrderByAggregateInput
+    _sum?: RaffleTicketSumOrderByAggregateInput
   }
 
   export type RaffleTicketScalarWhereWithAggregatesInput = {
@@ -18680,6 +24259,9 @@ export namespace Prisma {
     mpesaCode?: StringNullableWithAggregatesFilter<"RaffleTicket"> | string | null
     paymentDetails?: JsonNullableWithAggregatesFilter<"RaffleTicket">
     referralCode?: StringNullableWithAggregatesFilter<"RaffleTicket"> | string | null
+    ticketNumber?: StringNullableWithAggregatesFilter<"RaffleTicket"> | string | null
+    eventYear?: IntWithAggregatesFilter<"RaffleTicket"> | number
+    accountId?: StringNullableWithAggregatesFilter<"RaffleTicket"> | string | null
   }
 
   export type ReferralWhereInput = {
@@ -18772,6 +24354,9 @@ export namespace Prisma {
     failureReason?: StringNullableFilter<"Donation"> | string | null
     mpesaCode?: StringNullableFilter<"Donation"> | string | null
     paymentDetails?: JsonNullableFilter<"Donation">
+    eventYear?: IntFilter<"Donation"> | number
+    accountId?: StringNullableFilter<"Donation"> | string | null
+    account?: XOR<AccountNullableScalarRelationFilter, AccountWhereInput> | null
   }
 
   export type DonationOrderByWithRelationInput = {
@@ -18787,6 +24372,9 @@ export namespace Prisma {
     failureReason?: SortOrderInput | SortOrder
     mpesaCode?: SortOrderInput | SortOrder
     paymentDetails?: SortOrderInput | SortOrder
+    eventYear?: SortOrder
+    accountId?: SortOrderInput | SortOrder
+    account?: AccountOrderByWithRelationInput
   }
 
   export type DonationWhereUniqueInput = Prisma.AtLeast<{
@@ -18805,6 +24393,9 @@ export namespace Prisma {
     failureReason?: StringNullableFilter<"Donation"> | string | null
     mpesaCode?: StringNullableFilter<"Donation"> | string | null
     paymentDetails?: JsonNullableFilter<"Donation">
+    eventYear?: IntFilter<"Donation"> | number
+    accountId?: StringNullableFilter<"Donation"> | string | null
+    account?: XOR<AccountNullableScalarRelationFilter, AccountWhereInput> | null
   }, "id" | "checkoutRequestId">
 
   export type DonationOrderByWithAggregationInput = {
@@ -18820,6 +24411,8 @@ export namespace Prisma {
     failureReason?: SortOrderInput | SortOrder
     mpesaCode?: SortOrderInput | SortOrder
     paymentDetails?: SortOrderInput | SortOrder
+    eventYear?: SortOrder
+    accountId?: SortOrderInput | SortOrder
     _count?: DonationCountOrderByAggregateInput
     _avg?: DonationAvgOrderByAggregateInput
     _max?: DonationMaxOrderByAggregateInput
@@ -18843,6 +24436,8 @@ export namespace Prisma {
     failureReason?: StringNullableWithAggregatesFilter<"Donation"> | string | null
     mpesaCode?: StringNullableWithAggregatesFilter<"Donation"> | string | null
     paymentDetails?: JsonNullableWithAggregatesFilter<"Donation">
+    eventYear?: IntWithAggregatesFilter<"Donation"> | number
+    accountId?: StringNullableWithAggregatesFilter<"Donation"> | string | null
   }
 
   export type SmsLogWhereInput = {
@@ -18967,7 +24562,11 @@ export namespace Prisma {
     amount?: FloatFilter<"BikeHire"> | number
     createdAt?: DateTimeFilter<"BikeHire"> | Date | string
     updatedAt?: DateTimeFilter<"BikeHire"> | Date | string
+    checkoutRequestId?: StringNullableFilter<"BikeHire"> | string | null
+    eventYear?: IntFilter<"BikeHire"> | number
+    accountId?: StringNullableFilter<"BikeHire"> | string | null
     registration?: XOR<RegistrationScalarRelationFilter, RegistrationWhereInput>
+    account?: XOR<AccountNullableScalarRelationFilter, AccountWhereInput> | null
   }
 
   export type BikeHireOrderByWithRelationInput = {
@@ -18978,12 +24577,17 @@ export namespace Prisma {
     amount?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    checkoutRequestId?: SortOrderInput | SortOrder
+    eventYear?: SortOrder
+    accountId?: SortOrderInput | SortOrder
     registration?: RegistrationOrderByWithRelationInput
+    account?: AccountOrderByWithRelationInput
   }
 
   export type BikeHireWhereUniqueInput = Prisma.AtLeast<{
     id?: string
     registrationId?: string
+    checkoutRequestId?: string
     AND?: BikeHireWhereInput | BikeHireWhereInput[]
     OR?: BikeHireWhereInput[]
     NOT?: BikeHireWhereInput | BikeHireWhereInput[]
@@ -18992,8 +24596,11 @@ export namespace Prisma {
     amount?: FloatFilter<"BikeHire"> | number
     createdAt?: DateTimeFilter<"BikeHire"> | Date | string
     updatedAt?: DateTimeFilter<"BikeHire"> | Date | string
+    eventYear?: IntFilter<"BikeHire"> | number
+    accountId?: StringNullableFilter<"BikeHire"> | string | null
     registration?: XOR<RegistrationScalarRelationFilter, RegistrationWhereInput>
-  }, "id" | "registrationId">
+    account?: XOR<AccountNullableScalarRelationFilter, AccountWhereInput> | null
+  }, "id" | "registrationId" | "checkoutRequestId">
 
   export type BikeHireOrderByWithAggregationInput = {
     id?: SortOrder
@@ -19003,6 +24610,9 @@ export namespace Prisma {
     amount?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    checkoutRequestId?: SortOrderInput | SortOrder
+    eventYear?: SortOrder
+    accountId?: SortOrderInput | SortOrder
     _count?: BikeHireCountOrderByAggregateInput
     _avg?: BikeHireAvgOrderByAggregateInput
     _max?: BikeHireMaxOrderByAggregateInput
@@ -19021,6 +24631,9 @@ export namespace Prisma {
     amount?: FloatWithAggregatesFilter<"BikeHire"> | number
     createdAt?: DateTimeWithAggregatesFilter<"BikeHire"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"BikeHire"> | Date | string
+    checkoutRequestId?: StringNullableWithAggregatesFilter<"BikeHire"> | string | null
+    eventYear?: IntWithAggregatesFilter<"BikeHire"> | number
+    accountId?: StringNullableWithAggregatesFilter<"BikeHire"> | string | null
   }
 
   export type NotifyInterestWhereInput = {
@@ -19077,6 +24690,8 @@ export namespace Prisma {
     id?: StringFilter<"EventFeedback"> | string
     role?: StringFilter<"EventFeedback"> | string
     rating?: IntFilter<"EventFeedback"> | number
+    firstName?: StringNullableFilter<"EventFeedback"> | string | null
+    lastName?: StringNullableFilter<"EventFeedback"> | string | null
     highlights?: StringNullableFilter<"EventFeedback"> | string | null
     improvements?: StringNullableFilter<"EventFeedback"> | string | null
     createdAt?: DateTimeFilter<"EventFeedback"> | Date | string
@@ -19086,6 +24701,8 @@ export namespace Prisma {
     id?: SortOrder
     role?: SortOrder
     rating?: SortOrder
+    firstName?: SortOrderInput | SortOrder
+    lastName?: SortOrderInput | SortOrder
     highlights?: SortOrderInput | SortOrder
     improvements?: SortOrderInput | SortOrder
     createdAt?: SortOrder
@@ -19098,6 +24715,8 @@ export namespace Prisma {
     NOT?: EventFeedbackWhereInput | EventFeedbackWhereInput[]
     role?: StringFilter<"EventFeedback"> | string
     rating?: IntFilter<"EventFeedback"> | number
+    firstName?: StringNullableFilter<"EventFeedback"> | string | null
+    lastName?: StringNullableFilter<"EventFeedback"> | string | null
     highlights?: StringNullableFilter<"EventFeedback"> | string | null
     improvements?: StringNullableFilter<"EventFeedback"> | string | null
     createdAt?: DateTimeFilter<"EventFeedback"> | Date | string
@@ -19107,6 +24726,8 @@ export namespace Prisma {
     id?: SortOrder
     role?: SortOrder
     rating?: SortOrder
+    firstName?: SortOrderInput | SortOrder
+    lastName?: SortOrderInput | SortOrder
     highlights?: SortOrderInput | SortOrder
     improvements?: SortOrderInput | SortOrder
     createdAt?: SortOrder
@@ -19124,9 +24745,309 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"EventFeedback"> | string
     role?: StringWithAggregatesFilter<"EventFeedback"> | string
     rating?: IntWithAggregatesFilter<"EventFeedback"> | number
+    firstName?: StringNullableWithAggregatesFilter<"EventFeedback"> | string | null
+    lastName?: StringNullableWithAggregatesFilter<"EventFeedback"> | string | null
     highlights?: StringNullableWithAggregatesFilter<"EventFeedback"> | string | null
     improvements?: StringNullableWithAggregatesFilter<"EventFeedback"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"EventFeedback"> | Date | string
+  }
+
+  export type AccountWhereInput = {
+    AND?: AccountWhereInput | AccountWhereInput[]
+    OR?: AccountWhereInput[]
+    NOT?: AccountWhereInput | AccountWhereInput[]
+    id?: StringFilter<"Account"> | string
+    firstName?: StringFilter<"Account"> | string
+    lastName?: StringFilter<"Account"> | string
+    email?: StringNullableFilter<"Account"> | string | null
+    phone?: StringNullableFilter<"Account"> | string | null
+    createdAt?: DateTimeFilter<"Account"> | Date | string
+    updatedAt?: DateTimeFilter<"Account"> | Date | string
+    lastLoginAt?: DateTimeNullableFilter<"Account"> | Date | string | null
+    sessions?: UserSessionListRelationFilter
+    registrations?: RegistrationListRelationFilter
+    participations?: RegistrationListRelationFilter
+    raffleTickets?: RaffleTicketListRelationFilter
+    donations?: DonationListRelationFilter
+    bikeHires?: BikeHireListRelationFilter
+  }
+
+  export type AccountOrderByWithRelationInput = {
+    id?: SortOrder
+    firstName?: SortOrder
+    lastName?: SortOrder
+    email?: SortOrderInput | SortOrder
+    phone?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    lastLoginAt?: SortOrderInput | SortOrder
+    sessions?: UserSessionOrderByRelationAggregateInput
+    registrations?: RegistrationOrderByRelationAggregateInput
+    participations?: RegistrationOrderByRelationAggregateInput
+    raffleTickets?: RaffleTicketOrderByRelationAggregateInput
+    donations?: DonationOrderByRelationAggregateInput
+    bikeHires?: BikeHireOrderByRelationAggregateInput
+  }
+
+  export type AccountWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    email?: string
+    phone?: string
+    AND?: AccountWhereInput | AccountWhereInput[]
+    OR?: AccountWhereInput[]
+    NOT?: AccountWhereInput | AccountWhereInput[]
+    firstName?: StringFilter<"Account"> | string
+    lastName?: StringFilter<"Account"> | string
+    createdAt?: DateTimeFilter<"Account"> | Date | string
+    updatedAt?: DateTimeFilter<"Account"> | Date | string
+    lastLoginAt?: DateTimeNullableFilter<"Account"> | Date | string | null
+    sessions?: UserSessionListRelationFilter
+    registrations?: RegistrationListRelationFilter
+    participations?: RegistrationListRelationFilter
+    raffleTickets?: RaffleTicketListRelationFilter
+    donations?: DonationListRelationFilter
+    bikeHires?: BikeHireListRelationFilter
+  }, "id" | "email" | "phone">
+
+  export type AccountOrderByWithAggregationInput = {
+    id?: SortOrder
+    firstName?: SortOrder
+    lastName?: SortOrder
+    email?: SortOrderInput | SortOrder
+    phone?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    lastLoginAt?: SortOrderInput | SortOrder
+    _count?: AccountCountOrderByAggregateInput
+    _max?: AccountMaxOrderByAggregateInput
+    _min?: AccountMinOrderByAggregateInput
+  }
+
+  export type AccountScalarWhereWithAggregatesInput = {
+    AND?: AccountScalarWhereWithAggregatesInput | AccountScalarWhereWithAggregatesInput[]
+    OR?: AccountScalarWhereWithAggregatesInput[]
+    NOT?: AccountScalarWhereWithAggregatesInput | AccountScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Account"> | string
+    firstName?: StringWithAggregatesFilter<"Account"> | string
+    lastName?: StringWithAggregatesFilter<"Account"> | string
+    email?: StringNullableWithAggregatesFilter<"Account"> | string | null
+    phone?: StringNullableWithAggregatesFilter<"Account"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"Account"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Account"> | Date | string
+    lastLoginAt?: DateTimeNullableWithAggregatesFilter<"Account"> | Date | string | null
+  }
+
+  export type OtpCodeWhereInput = {
+    AND?: OtpCodeWhereInput | OtpCodeWhereInput[]
+    OR?: OtpCodeWhereInput[]
+    NOT?: OtpCodeWhereInput | OtpCodeWhereInput[]
+    id?: StringFilter<"OtpCode"> | string
+    channel?: StringFilter<"OtpCode"> | string
+    destination?: StringFilter<"OtpCode"> | string
+    purpose?: StringFilter<"OtpCode"> | string
+    codeHash?: StringFilter<"OtpCode"> | string
+    context?: JsonNullableFilter<"OtpCode">
+    attempts?: IntFilter<"OtpCode"> | number
+    expiresAt?: DateTimeFilter<"OtpCode"> | Date | string
+    consumedAt?: DateTimeNullableFilter<"OtpCode"> | Date | string | null
+    createdAt?: DateTimeFilter<"OtpCode"> | Date | string
+  }
+
+  export type OtpCodeOrderByWithRelationInput = {
+    id?: SortOrder
+    channel?: SortOrder
+    destination?: SortOrder
+    purpose?: SortOrder
+    codeHash?: SortOrder
+    context?: SortOrderInput | SortOrder
+    attempts?: SortOrder
+    expiresAt?: SortOrder
+    consumedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type OtpCodeWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: OtpCodeWhereInput | OtpCodeWhereInput[]
+    OR?: OtpCodeWhereInput[]
+    NOT?: OtpCodeWhereInput | OtpCodeWhereInput[]
+    channel?: StringFilter<"OtpCode"> | string
+    destination?: StringFilter<"OtpCode"> | string
+    purpose?: StringFilter<"OtpCode"> | string
+    codeHash?: StringFilter<"OtpCode"> | string
+    context?: JsonNullableFilter<"OtpCode">
+    attempts?: IntFilter<"OtpCode"> | number
+    expiresAt?: DateTimeFilter<"OtpCode"> | Date | string
+    consumedAt?: DateTimeNullableFilter<"OtpCode"> | Date | string | null
+    createdAt?: DateTimeFilter<"OtpCode"> | Date | string
+  }, "id">
+
+  export type OtpCodeOrderByWithAggregationInput = {
+    id?: SortOrder
+    channel?: SortOrder
+    destination?: SortOrder
+    purpose?: SortOrder
+    codeHash?: SortOrder
+    context?: SortOrderInput | SortOrder
+    attempts?: SortOrder
+    expiresAt?: SortOrder
+    consumedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: OtpCodeCountOrderByAggregateInput
+    _avg?: OtpCodeAvgOrderByAggregateInput
+    _max?: OtpCodeMaxOrderByAggregateInput
+    _min?: OtpCodeMinOrderByAggregateInput
+    _sum?: OtpCodeSumOrderByAggregateInput
+  }
+
+  export type OtpCodeScalarWhereWithAggregatesInput = {
+    AND?: OtpCodeScalarWhereWithAggregatesInput | OtpCodeScalarWhereWithAggregatesInput[]
+    OR?: OtpCodeScalarWhereWithAggregatesInput[]
+    NOT?: OtpCodeScalarWhereWithAggregatesInput | OtpCodeScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"OtpCode"> | string
+    channel?: StringWithAggregatesFilter<"OtpCode"> | string
+    destination?: StringWithAggregatesFilter<"OtpCode"> | string
+    purpose?: StringWithAggregatesFilter<"OtpCode"> | string
+    codeHash?: StringWithAggregatesFilter<"OtpCode"> | string
+    context?: JsonNullableWithAggregatesFilter<"OtpCode">
+    attempts?: IntWithAggregatesFilter<"OtpCode"> | number
+    expiresAt?: DateTimeWithAggregatesFilter<"OtpCode"> | Date | string
+    consumedAt?: DateTimeNullableWithAggregatesFilter<"OtpCode"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"OtpCode"> | Date | string
+  }
+
+  export type UserSessionWhereInput = {
+    AND?: UserSessionWhereInput | UserSessionWhereInput[]
+    OR?: UserSessionWhereInput[]
+    NOT?: UserSessionWhereInput | UserSessionWhereInput[]
+    id?: StringFilter<"UserSession"> | string
+    accountId?: StringFilter<"UserSession"> | string
+    token?: StringFilter<"UserSession"> | string
+    expiresAt?: DateTimeFilter<"UserSession"> | Date | string
+    createdAt?: DateTimeFilter<"UserSession"> | Date | string
+    account?: XOR<AccountScalarRelationFilter, AccountWhereInput>
+  }
+
+  export type UserSessionOrderByWithRelationInput = {
+    id?: SortOrder
+    accountId?: SortOrder
+    token?: SortOrder
+    expiresAt?: SortOrder
+    createdAt?: SortOrder
+    account?: AccountOrderByWithRelationInput
+  }
+
+  export type UserSessionWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    token?: string
+    AND?: UserSessionWhereInput | UserSessionWhereInput[]
+    OR?: UserSessionWhereInput[]
+    NOT?: UserSessionWhereInput | UserSessionWhereInput[]
+    accountId?: StringFilter<"UserSession"> | string
+    expiresAt?: DateTimeFilter<"UserSession"> | Date | string
+    createdAt?: DateTimeFilter<"UserSession"> | Date | string
+    account?: XOR<AccountScalarRelationFilter, AccountWhereInput>
+  }, "id" | "token">
+
+  export type UserSessionOrderByWithAggregationInput = {
+    id?: SortOrder
+    accountId?: SortOrder
+    token?: SortOrder
+    expiresAt?: SortOrder
+    createdAt?: SortOrder
+    _count?: UserSessionCountOrderByAggregateInput
+    _max?: UserSessionMaxOrderByAggregateInput
+    _min?: UserSessionMinOrderByAggregateInput
+  }
+
+  export type UserSessionScalarWhereWithAggregatesInput = {
+    AND?: UserSessionScalarWhereWithAggregatesInput | UserSessionScalarWhereWithAggregatesInput[]
+    OR?: UserSessionScalarWhereWithAggregatesInput[]
+    NOT?: UserSessionScalarWhereWithAggregatesInput | UserSessionScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"UserSession"> | string
+    accountId?: StringWithAggregatesFilter<"UserSession"> | string
+    token?: StringWithAggregatesFilter<"UserSession"> | string
+    expiresAt?: DateTimeWithAggregatesFilter<"UserSession"> | Date | string
+    createdAt?: DateTimeWithAggregatesFilter<"UserSession"> | Date | string
+  }
+
+  export type GalleryPhotoWhereInput = {
+    AND?: GalleryPhotoWhereInput | GalleryPhotoWhereInput[]
+    OR?: GalleryPhotoWhereInput[]
+    NOT?: GalleryPhotoWhereInput | GalleryPhotoWhereInput[]
+    id?: StringFilter<"GalleryPhoto"> | string
+    eventYear?: IntFilter<"GalleryPhoto"> | number
+    album?: StringFilter<"GalleryPhoto"> | string
+    publicId?: StringFilter<"GalleryPhoto"> | string
+    width?: IntFilter<"GalleryPhoto"> | number
+    height?: IntFilter<"GalleryPhoto"> | number
+    caption?: StringNullableFilter<"GalleryPhoto"> | string | null
+    sortOrder?: IntFilter<"GalleryPhoto"> | number
+    isPublished?: BoolFilter<"GalleryPhoto"> | boolean
+    createdAt?: DateTimeFilter<"GalleryPhoto"> | Date | string
+  }
+
+  export type GalleryPhotoOrderByWithRelationInput = {
+    id?: SortOrder
+    eventYear?: SortOrder
+    album?: SortOrder
+    publicId?: SortOrder
+    width?: SortOrder
+    height?: SortOrder
+    caption?: SortOrderInput | SortOrder
+    sortOrder?: SortOrder
+    isPublished?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type GalleryPhotoWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    publicId?: string
+    AND?: GalleryPhotoWhereInput | GalleryPhotoWhereInput[]
+    OR?: GalleryPhotoWhereInput[]
+    NOT?: GalleryPhotoWhereInput | GalleryPhotoWhereInput[]
+    eventYear?: IntFilter<"GalleryPhoto"> | number
+    album?: StringFilter<"GalleryPhoto"> | string
+    width?: IntFilter<"GalleryPhoto"> | number
+    height?: IntFilter<"GalleryPhoto"> | number
+    caption?: StringNullableFilter<"GalleryPhoto"> | string | null
+    sortOrder?: IntFilter<"GalleryPhoto"> | number
+    isPublished?: BoolFilter<"GalleryPhoto"> | boolean
+    createdAt?: DateTimeFilter<"GalleryPhoto"> | Date | string
+  }, "id" | "publicId">
+
+  export type GalleryPhotoOrderByWithAggregationInput = {
+    id?: SortOrder
+    eventYear?: SortOrder
+    album?: SortOrder
+    publicId?: SortOrder
+    width?: SortOrder
+    height?: SortOrder
+    caption?: SortOrderInput | SortOrder
+    sortOrder?: SortOrder
+    isPublished?: SortOrder
+    createdAt?: SortOrder
+    _count?: GalleryPhotoCountOrderByAggregateInput
+    _avg?: GalleryPhotoAvgOrderByAggregateInput
+    _max?: GalleryPhotoMaxOrderByAggregateInput
+    _min?: GalleryPhotoMinOrderByAggregateInput
+    _sum?: GalleryPhotoSumOrderByAggregateInput
+  }
+
+  export type GalleryPhotoScalarWhereWithAggregatesInput = {
+    AND?: GalleryPhotoScalarWhereWithAggregatesInput | GalleryPhotoScalarWhereWithAggregatesInput[]
+    OR?: GalleryPhotoScalarWhereWithAggregatesInput[]
+    NOT?: GalleryPhotoScalarWhereWithAggregatesInput | GalleryPhotoScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"GalleryPhoto"> | string
+    eventYear?: IntWithAggregatesFilter<"GalleryPhoto"> | number
+    album?: StringWithAggregatesFilter<"GalleryPhoto"> | string
+    publicId?: StringWithAggregatesFilter<"GalleryPhoto"> | string
+    width?: IntWithAggregatesFilter<"GalleryPhoto"> | number
+    height?: IntWithAggregatesFilter<"GalleryPhoto"> | number
+    caption?: StringNullableWithAggregatesFilter<"GalleryPhoto"> | string | null
+    sortOrder?: IntWithAggregatesFilter<"GalleryPhoto"> | number
+    isPublished?: BoolWithAggregatesFilter<"GalleryPhoto"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"GalleryPhoto"> | Date | string
   }
 
   export type RegistrationCreateInput = {
@@ -19162,7 +25083,11 @@ export namespace Prisma {
     service?: string | null
     serviceNumber?: string | null
     unit?: string | null
+    bibNumber?: string | null
+    eventYear?: number
     bikeHire?: BikeHireCreateNestedOneWithoutRegistrationInput
+    account?: AccountCreateNestedOneWithoutRegistrationsInput
+    participantAccount?: AccountCreateNestedOneWithoutParticipationsInput
   }
 
   export type RegistrationUncheckedCreateInput = {
@@ -19198,6 +25123,10 @@ export namespace Prisma {
     service?: string | null
     serviceNumber?: string | null
     unit?: string | null
+    bibNumber?: string | null
+    eventYear?: number
+    accountId?: string | null
+    participantAccountId?: string | null
     bikeHire?: BikeHireUncheckedCreateNestedOneWithoutRegistrationInput
   }
 
@@ -19234,7 +25163,11 @@ export namespace Prisma {
     service?: NullableStringFieldUpdateOperationsInput | string | null
     serviceNumber?: NullableStringFieldUpdateOperationsInput | string | null
     unit?: NullableStringFieldUpdateOperationsInput | string | null
+    bibNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
     bikeHire?: BikeHireUpdateOneWithoutRegistrationNestedInput
+    account?: AccountUpdateOneWithoutRegistrationsNestedInput
+    participantAccount?: AccountUpdateOneWithoutParticipationsNestedInput
   }
 
   export type RegistrationUncheckedUpdateInput = {
@@ -19270,6 +25203,10 @@ export namespace Prisma {
     service?: NullableStringFieldUpdateOperationsInput | string | null
     serviceNumber?: NullableStringFieldUpdateOperationsInput | string | null
     unit?: NullableStringFieldUpdateOperationsInput | string | null
+    bibNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
+    accountId?: NullableStringFieldUpdateOperationsInput | string | null
+    participantAccountId?: NullableStringFieldUpdateOperationsInput | string | null
     bikeHire?: BikeHireUncheckedUpdateOneWithoutRegistrationNestedInput
   }
 
@@ -19306,6 +25243,10 @@ export namespace Prisma {
     service?: string | null
     serviceNumber?: string | null
     unit?: string | null
+    bibNumber?: string | null
+    eventYear?: number
+    accountId?: string | null
+    participantAccountId?: string | null
   }
 
   export type RegistrationUpdateManyMutationInput = {
@@ -19341,6 +25282,8 @@ export namespace Prisma {
     service?: NullableStringFieldUpdateOperationsInput | string | null
     serviceNumber?: NullableStringFieldUpdateOperationsInput | string | null
     unit?: NullableStringFieldUpdateOperationsInput | string | null
+    bibNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
   }
 
   export type RegistrationUncheckedUpdateManyInput = {
@@ -19376,6 +25319,10 @@ export namespace Prisma {
     service?: NullableStringFieldUpdateOperationsInput | string | null
     serviceNumber?: NullableStringFieldUpdateOperationsInput | string | null
     unit?: NullableStringFieldUpdateOperationsInput | string | null
+    bibNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
+    accountId?: NullableStringFieldUpdateOperationsInput | string | null
+    participantAccountId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type AdminCreateInput = {
@@ -19525,6 +25472,7 @@ export namespace Prisma {
     mnoReference?: string | null
     cbsReference?: string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
+    bikeHireId?: string | null
   }
 
   export type PaymentUncheckedCreateInput = {
@@ -19545,6 +25493,7 @@ export namespace Prisma {
     mnoReference?: string | null
     cbsReference?: string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
+    bikeHireId?: string | null
   }
 
   export type PaymentUpdateInput = {
@@ -19565,6 +25514,7 @@ export namespace Prisma {
     mnoReference?: NullableStringFieldUpdateOperationsInput | string | null
     cbsReference?: NullableStringFieldUpdateOperationsInput | string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
+    bikeHireId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type PaymentUncheckedUpdateInput = {
@@ -19585,6 +25535,7 @@ export namespace Prisma {
     mnoReference?: NullableStringFieldUpdateOperationsInput | string | null
     cbsReference?: NullableStringFieldUpdateOperationsInput | string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
+    bikeHireId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type PaymentCreateManyInput = {
@@ -19605,6 +25556,7 @@ export namespace Prisma {
     mnoReference?: string | null
     cbsReference?: string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
+    bikeHireId?: string | null
   }
 
   export type PaymentUpdateManyMutationInput = {
@@ -19625,6 +25577,7 @@ export namespace Prisma {
     mnoReference?: NullableStringFieldUpdateOperationsInput | string | null
     cbsReference?: NullableStringFieldUpdateOperationsInput | string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
+    bikeHireId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type PaymentUncheckedUpdateManyInput = {
@@ -19645,6 +25598,7 @@ export namespace Prisma {
     mnoReference?: NullableStringFieldUpdateOperationsInput | string | null
     cbsReference?: NullableStringFieldUpdateOperationsInput | string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
+    bikeHireId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type PricingCategoryCreateInput = {
@@ -19846,6 +25800,9 @@ export namespace Prisma {
     mpesaCode?: string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
     referralCode?: string | null
+    ticketNumber?: string | null
+    eventYear?: number
+    account?: AccountCreateNestedOneWithoutRaffleTicketsInput
   }
 
   export type RaffleTicketUncheckedCreateInput = {
@@ -19865,6 +25822,9 @@ export namespace Prisma {
     mpesaCode?: string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
     referralCode?: string | null
+    ticketNumber?: string | null
+    eventYear?: number
+    accountId?: string | null
   }
 
   export type RaffleTicketUpdateInput = {
@@ -19884,6 +25844,9 @@ export namespace Prisma {
     mpesaCode?: NullableStringFieldUpdateOperationsInput | string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
     referralCode?: NullableStringFieldUpdateOperationsInput | string | null
+    ticketNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
+    account?: AccountUpdateOneWithoutRaffleTicketsNestedInput
   }
 
   export type RaffleTicketUncheckedUpdateInput = {
@@ -19903,6 +25866,9 @@ export namespace Prisma {
     mpesaCode?: NullableStringFieldUpdateOperationsInput | string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
     referralCode?: NullableStringFieldUpdateOperationsInput | string | null
+    ticketNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
+    accountId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type RaffleTicketCreateManyInput = {
@@ -19922,6 +25888,9 @@ export namespace Prisma {
     mpesaCode?: string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
     referralCode?: string | null
+    ticketNumber?: string | null
+    eventYear?: number
+    accountId?: string | null
   }
 
   export type RaffleTicketUpdateManyMutationInput = {
@@ -19941,6 +25910,8 @@ export namespace Prisma {
     mpesaCode?: NullableStringFieldUpdateOperationsInput | string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
     referralCode?: NullableStringFieldUpdateOperationsInput | string | null
+    ticketNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
   }
 
   export type RaffleTicketUncheckedUpdateManyInput = {
@@ -19960,6 +25931,9 @@ export namespace Prisma {
     mpesaCode?: NullableStringFieldUpdateOperationsInput | string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
     referralCode?: NullableStringFieldUpdateOperationsInput | string | null
+    ticketNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
+    accountId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ReferralCreateInput = {
@@ -20059,6 +26033,8 @@ export namespace Prisma {
     failureReason?: string | null
     mpesaCode?: string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
+    eventYear?: number
+    account?: AccountCreateNestedOneWithoutDonationsInput
   }
 
   export type DonationUncheckedCreateInput = {
@@ -20074,6 +26050,8 @@ export namespace Prisma {
     failureReason?: string | null
     mpesaCode?: string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
+    eventYear?: number
+    accountId?: string | null
   }
 
   export type DonationUpdateInput = {
@@ -20089,6 +26067,8 @@ export namespace Prisma {
     failureReason?: NullableStringFieldUpdateOperationsInput | string | null
     mpesaCode?: NullableStringFieldUpdateOperationsInput | string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
+    eventYear?: IntFieldUpdateOperationsInput | number
+    account?: AccountUpdateOneWithoutDonationsNestedInput
   }
 
   export type DonationUncheckedUpdateInput = {
@@ -20104,6 +26084,8 @@ export namespace Prisma {
     failureReason?: NullableStringFieldUpdateOperationsInput | string | null
     mpesaCode?: NullableStringFieldUpdateOperationsInput | string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
+    eventYear?: IntFieldUpdateOperationsInput | number
+    accountId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type DonationCreateManyInput = {
@@ -20119,6 +26101,8 @@ export namespace Prisma {
     failureReason?: string | null
     mpesaCode?: string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
+    eventYear?: number
+    accountId?: string | null
   }
 
   export type DonationUpdateManyMutationInput = {
@@ -20134,6 +26118,7 @@ export namespace Prisma {
     failureReason?: NullableStringFieldUpdateOperationsInput | string | null
     mpesaCode?: NullableStringFieldUpdateOperationsInput | string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
+    eventYear?: IntFieldUpdateOperationsInput | number
   }
 
   export type DonationUncheckedUpdateManyInput = {
@@ -20149,6 +26134,8 @@ export namespace Prisma {
     failureReason?: NullableStringFieldUpdateOperationsInput | string | null
     mpesaCode?: NullableStringFieldUpdateOperationsInput | string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
+    eventYear?: IntFieldUpdateOperationsInput | number
+    accountId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type SmsLogCreateInput = {
@@ -20277,7 +26264,10 @@ export namespace Prisma {
     amount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
+    checkoutRequestId?: string | null
+    eventYear?: number
     registration: RegistrationCreateNestedOneWithoutBikeHireInput
+    account?: AccountCreateNestedOneWithoutBikeHiresInput
   }
 
   export type BikeHireUncheckedCreateInput = {
@@ -20288,6 +26278,9 @@ export namespace Prisma {
     amount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
+    checkoutRequestId?: string | null
+    eventYear?: number
+    accountId?: string | null
   }
 
   export type BikeHireUpdateInput = {
@@ -20297,7 +26290,10 @@ export namespace Prisma {
     amount?: FloatFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkoutRequestId?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
     registration?: RegistrationUpdateOneRequiredWithoutBikeHireNestedInput
+    account?: AccountUpdateOneWithoutBikeHiresNestedInput
   }
 
   export type BikeHireUncheckedUpdateInput = {
@@ -20308,6 +26304,9 @@ export namespace Prisma {
     amount?: FloatFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkoutRequestId?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
+    accountId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type BikeHireCreateManyInput = {
@@ -20318,6 +26317,9 @@ export namespace Prisma {
     amount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
+    checkoutRequestId?: string | null
+    eventYear?: number
+    accountId?: string | null
   }
 
   export type BikeHireUpdateManyMutationInput = {
@@ -20327,6 +26329,8 @@ export namespace Prisma {
     amount?: FloatFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkoutRequestId?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
   }
 
   export type BikeHireUncheckedUpdateManyInput = {
@@ -20337,6 +26341,9 @@ export namespace Prisma {
     amount?: FloatFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkoutRequestId?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
+    accountId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type NotifyInterestCreateInput = {
@@ -20392,6 +26399,8 @@ export namespace Prisma {
     id?: string
     role: string
     rating: number
+    firstName?: string | null
+    lastName?: string | null
     highlights?: string | null
     improvements?: string | null
     createdAt?: Date | string
@@ -20401,6 +26410,8 @@ export namespace Prisma {
     id?: string
     role: string
     rating: number
+    firstName?: string | null
+    lastName?: string | null
     highlights?: string | null
     improvements?: string | null
     createdAt?: Date | string
@@ -20410,6 +26421,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     rating?: IntFieldUpdateOperationsInput | number
+    firstName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: NullableStringFieldUpdateOperationsInput | string | null
     highlights?: NullableStringFieldUpdateOperationsInput | string | null
     improvements?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -20419,6 +26432,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     rating?: IntFieldUpdateOperationsInput | number
+    firstName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: NullableStringFieldUpdateOperationsInput | string | null
     highlights?: NullableStringFieldUpdateOperationsInput | string | null
     improvements?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -20428,6 +26443,8 @@ export namespace Prisma {
     id?: string
     role: string
     rating: number
+    firstName?: string | null
+    lastName?: string | null
     highlights?: string | null
     improvements?: string | null
     createdAt?: Date | string
@@ -20437,6 +26454,8 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     rating?: IntFieldUpdateOperationsInput | number
+    firstName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: NullableStringFieldUpdateOperationsInput | string | null
     highlights?: NullableStringFieldUpdateOperationsInput | string | null
     improvements?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -20446,8 +26465,348 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
     rating?: IntFieldUpdateOperationsInput | number
+    firstName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: NullableStringFieldUpdateOperationsInput | string | null
     highlights?: NullableStringFieldUpdateOperationsInput | string | null
     improvements?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AccountCreateInput = {
+    id?: string
+    firstName: string
+    lastName: string
+    email?: string | null
+    phone?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    sessions?: UserSessionCreateNestedManyWithoutAccountInput
+    registrations?: RegistrationCreateNestedManyWithoutAccountInput
+    participations?: RegistrationCreateNestedManyWithoutParticipantAccountInput
+    raffleTickets?: RaffleTicketCreateNestedManyWithoutAccountInput
+    donations?: DonationCreateNestedManyWithoutAccountInput
+    bikeHires?: BikeHireCreateNestedManyWithoutAccountInput
+  }
+
+  export type AccountUncheckedCreateInput = {
+    id?: string
+    firstName: string
+    lastName: string
+    email?: string | null
+    phone?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    sessions?: UserSessionUncheckedCreateNestedManyWithoutAccountInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutAccountInput
+    participations?: RegistrationUncheckedCreateNestedManyWithoutParticipantAccountInput
+    raffleTickets?: RaffleTicketUncheckedCreateNestedManyWithoutAccountInput
+    donations?: DonationUncheckedCreateNestedManyWithoutAccountInput
+    bikeHires?: BikeHireUncheckedCreateNestedManyWithoutAccountInput
+  }
+
+  export type AccountUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessions?: UserSessionUpdateManyWithoutAccountNestedInput
+    registrations?: RegistrationUpdateManyWithoutAccountNestedInput
+    participations?: RegistrationUpdateManyWithoutParticipantAccountNestedInput
+    raffleTickets?: RaffleTicketUpdateManyWithoutAccountNestedInput
+    donations?: DonationUpdateManyWithoutAccountNestedInput
+    bikeHires?: BikeHireUpdateManyWithoutAccountNestedInput
+  }
+
+  export type AccountUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessions?: UserSessionUncheckedUpdateManyWithoutAccountNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutAccountNestedInput
+    participations?: RegistrationUncheckedUpdateManyWithoutParticipantAccountNestedInput
+    raffleTickets?: RaffleTicketUncheckedUpdateManyWithoutAccountNestedInput
+    donations?: DonationUncheckedUpdateManyWithoutAccountNestedInput
+    bikeHires?: BikeHireUncheckedUpdateManyWithoutAccountNestedInput
+  }
+
+  export type AccountCreateManyInput = {
+    id?: string
+    firstName: string
+    lastName: string
+    email?: string | null
+    phone?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+  }
+
+  export type AccountUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type AccountUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type OtpCodeCreateInput = {
+    id?: string
+    channel: string
+    destination: string
+    purpose: string
+    codeHash: string
+    context?: NullableJsonNullValueInput | InputJsonValue
+    attempts?: number
+    expiresAt: Date | string
+    consumedAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type OtpCodeUncheckedCreateInput = {
+    id?: string
+    channel: string
+    destination: string
+    purpose: string
+    codeHash: string
+    context?: NullableJsonNullValueInput | InputJsonValue
+    attempts?: number
+    expiresAt: Date | string
+    consumedAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type OtpCodeUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    channel?: StringFieldUpdateOperationsInput | string
+    destination?: StringFieldUpdateOperationsInput | string
+    purpose?: StringFieldUpdateOperationsInput | string
+    codeHash?: StringFieldUpdateOperationsInput | string
+    context?: NullableJsonNullValueInput | InputJsonValue
+    attempts?: IntFieldUpdateOperationsInput | number
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consumedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OtpCodeUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    channel?: StringFieldUpdateOperationsInput | string
+    destination?: StringFieldUpdateOperationsInput | string
+    purpose?: StringFieldUpdateOperationsInput | string
+    codeHash?: StringFieldUpdateOperationsInput | string
+    context?: NullableJsonNullValueInput | InputJsonValue
+    attempts?: IntFieldUpdateOperationsInput | number
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consumedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OtpCodeCreateManyInput = {
+    id?: string
+    channel: string
+    destination: string
+    purpose: string
+    codeHash: string
+    context?: NullableJsonNullValueInput | InputJsonValue
+    attempts?: number
+    expiresAt: Date | string
+    consumedAt?: Date | string | null
+    createdAt?: Date | string
+  }
+
+  export type OtpCodeUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    channel?: StringFieldUpdateOperationsInput | string
+    destination?: StringFieldUpdateOperationsInput | string
+    purpose?: StringFieldUpdateOperationsInput | string
+    codeHash?: StringFieldUpdateOperationsInput | string
+    context?: NullableJsonNullValueInput | InputJsonValue
+    attempts?: IntFieldUpdateOperationsInput | number
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consumedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OtpCodeUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    channel?: StringFieldUpdateOperationsInput | string
+    destination?: StringFieldUpdateOperationsInput | string
+    purpose?: StringFieldUpdateOperationsInput | string
+    codeHash?: StringFieldUpdateOperationsInput | string
+    context?: NullableJsonNullValueInput | InputJsonValue
+    attempts?: IntFieldUpdateOperationsInput | number
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consumedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserSessionCreateInput = {
+    id?: string
+    token: string
+    expiresAt: Date | string
+    createdAt?: Date | string
+    account: AccountCreateNestedOneWithoutSessionsInput
+  }
+
+  export type UserSessionUncheckedCreateInput = {
+    id?: string
+    accountId: string
+    token: string
+    expiresAt: Date | string
+    createdAt?: Date | string
+  }
+
+  export type UserSessionUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    account?: AccountUpdateOneRequiredWithoutSessionsNestedInput
+  }
+
+  export type UserSessionUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    accountId?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserSessionCreateManyInput = {
+    id?: string
+    accountId: string
+    token: string
+    expiresAt: Date | string
+    createdAt?: Date | string
+  }
+
+  export type UserSessionUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserSessionUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    accountId?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type GalleryPhotoCreateInput = {
+    id?: string
+    eventYear: number
+    album: string
+    publicId: string
+    width: number
+    height: number
+    caption?: string | null
+    sortOrder?: number
+    isPublished?: boolean
+    createdAt?: Date | string
+  }
+
+  export type GalleryPhotoUncheckedCreateInput = {
+    id?: string
+    eventYear: number
+    album: string
+    publicId: string
+    width: number
+    height: number
+    caption?: string | null
+    sortOrder?: number
+    isPublished?: boolean
+    createdAt?: Date | string
+  }
+
+  export type GalleryPhotoUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    eventYear?: IntFieldUpdateOperationsInput | number
+    album?: StringFieldUpdateOperationsInput | string
+    publicId?: StringFieldUpdateOperationsInput | string
+    width?: IntFieldUpdateOperationsInput | number
+    height?: IntFieldUpdateOperationsInput | number
+    caption?: NullableStringFieldUpdateOperationsInput | string | null
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    isPublished?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type GalleryPhotoUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    eventYear?: IntFieldUpdateOperationsInput | number
+    album?: StringFieldUpdateOperationsInput | string
+    publicId?: StringFieldUpdateOperationsInput | string
+    width?: IntFieldUpdateOperationsInput | number
+    height?: IntFieldUpdateOperationsInput | number
+    caption?: NullableStringFieldUpdateOperationsInput | string | null
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    isPublished?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type GalleryPhotoCreateManyInput = {
+    id?: string
+    eventYear: number
+    album: string
+    publicId: string
+    width: number
+    height: number
+    caption?: string | null
+    sortOrder?: number
+    isPublished?: boolean
+    createdAt?: Date | string
+  }
+
+  export type GalleryPhotoUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    eventYear?: IntFieldUpdateOperationsInput | number
+    album?: StringFieldUpdateOperationsInput | string
+    publicId?: StringFieldUpdateOperationsInput | string
+    width?: IntFieldUpdateOperationsInput | number
+    height?: IntFieldUpdateOperationsInput | number
+    caption?: NullableStringFieldUpdateOperationsInput | string | null
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    isPublished?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type GalleryPhotoUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    eventYear?: IntFieldUpdateOperationsInput | number
+    album?: StringFieldUpdateOperationsInput | string
+    publicId?: StringFieldUpdateOperationsInput | string
+    width?: IntFieldUpdateOperationsInput | number
+    height?: IntFieldUpdateOperationsInput | number
+    caption?: NullableStringFieldUpdateOperationsInput | string | null
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    isPublished?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -20538,9 +26897,25 @@ export namespace Prisma {
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
+  export type IntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntFilter<$PrismaModel> | number
+  }
+
   export type BikeHireNullableScalarRelationFilter = {
     is?: BikeHireWhereInput | null
     isNot?: BikeHireWhereInput | null
+  }
+
+  export type AccountNullableScalarRelationFilter = {
+    is?: AccountWhereInput | null
+    isNot?: AccountWhereInput | null
   }
 
   export type SortOrderInput = {
@@ -20581,10 +26956,15 @@ export namespace Prisma {
     service?: SortOrder
     serviceNumber?: SortOrder
     unit?: SortOrder
+    bibNumber?: SortOrder
+    eventYear?: SortOrder
+    accountId?: SortOrder
+    participantAccountId?: SortOrder
   }
 
   export type RegistrationAvgOrderByAggregateInput = {
     totalAmount?: SortOrder
+    eventYear?: SortOrder
   }
 
   export type RegistrationMaxOrderByAggregateInput = {
@@ -20617,6 +26997,10 @@ export namespace Prisma {
     service?: SortOrder
     serviceNumber?: SortOrder
     unit?: SortOrder
+    bibNumber?: SortOrder
+    eventYear?: SortOrder
+    accountId?: SortOrder
+    participantAccountId?: SortOrder
   }
 
   export type RegistrationMinOrderByAggregateInput = {
@@ -20649,10 +27033,15 @@ export namespace Prisma {
     service?: SortOrder
     serviceNumber?: SortOrder
     unit?: SortOrder
+    bibNumber?: SortOrder
+    eventYear?: SortOrder
+    accountId?: SortOrder
+    participantAccountId?: SortOrder
   }
 
   export type RegistrationSumOrderByAggregateInput = {
     totalAmount?: SortOrder
+    eventYear?: SortOrder
   }
 
   export type StringWithAggregatesFilter<$PrismaModel = never> = {
@@ -20763,6 +27152,22 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedJsonNullableFilter<$PrismaModel>
     _max?: NestedJsonNullableFilter<$PrismaModel>
+  }
+
+  export type IntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
   }
 
   export type DateTimeNullableFilter<$PrismaModel = never> = {
@@ -20885,6 +27290,7 @@ export namespace Prisma {
     mnoReference?: SortOrder
     cbsReference?: SortOrder
     paymentDetails?: SortOrder
+    bikeHireId?: SortOrder
   }
 
   export type PaymentAvgOrderByAggregateInput = {
@@ -20907,6 +27313,7 @@ export namespace Prisma {
     transactionDate?: SortOrder
     mnoReference?: SortOrder
     cbsReference?: SortOrder
+    bikeHireId?: SortOrder
   }
 
   export type PaymentMinOrderByAggregateInput = {
@@ -20925,6 +27332,7 @@ export namespace Prisma {
     transactionDate?: SortOrder
     mnoReference?: SortOrder
     cbsReference?: SortOrder
+    bikeHireId?: SortOrder
   }
 
   export type PaymentSumOrderByAggregateInput = {
@@ -21072,6 +27480,13 @@ export namespace Prisma {
     mpesaCode?: SortOrder
     paymentDetails?: SortOrder
     referralCode?: SortOrder
+    ticketNumber?: SortOrder
+    eventYear?: SortOrder
+    accountId?: SortOrder
+  }
+
+  export type RaffleTicketAvgOrderByAggregateInput = {
+    eventYear?: SortOrder
   }
 
   export type RaffleTicketMaxOrderByAggregateInput = {
@@ -21090,6 +27505,9 @@ export namespace Prisma {
     failureReason?: SortOrder
     mpesaCode?: SortOrder
     referralCode?: SortOrder
+    ticketNumber?: SortOrder
+    eventYear?: SortOrder
+    accountId?: SortOrder
   }
 
   export type RaffleTicketMinOrderByAggregateInput = {
@@ -21108,17 +27526,13 @@ export namespace Prisma {
     failureReason?: SortOrder
     mpesaCode?: SortOrder
     referralCode?: SortOrder
+    ticketNumber?: SortOrder
+    eventYear?: SortOrder
+    accountId?: SortOrder
   }
 
-  export type IntFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel>
-    in?: number[] | ListIntFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntFilter<$PrismaModel> | number
+  export type RaffleTicketSumOrderByAggregateInput = {
+    eventYear?: SortOrder
   }
 
   export type ReferralCountOrderByAggregateInput = {
@@ -21165,22 +27579,6 @@ export namespace Prisma {
     clicks?: SortOrder
   }
 
-  export type IntWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel>
-    in?: number[] | ListIntFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
-    _count?: NestedIntFilter<$PrismaModel>
-    _avg?: NestedFloatFilter<$PrismaModel>
-    _sum?: NestedIntFilter<$PrismaModel>
-    _min?: NestedIntFilter<$PrismaModel>
-    _max?: NestedIntFilter<$PrismaModel>
-  }
-
   export type DonationCountOrderByAggregateInput = {
     id?: SortOrder
     amount?: SortOrder
@@ -21194,10 +27592,13 @@ export namespace Prisma {
     failureReason?: SortOrder
     mpesaCode?: SortOrder
     paymentDetails?: SortOrder
+    eventYear?: SortOrder
+    accountId?: SortOrder
   }
 
   export type DonationAvgOrderByAggregateInput = {
     amount?: SortOrder
+    eventYear?: SortOrder
   }
 
   export type DonationMaxOrderByAggregateInput = {
@@ -21212,6 +27613,8 @@ export namespace Prisma {
     updatedAt?: SortOrder
     failureReason?: SortOrder
     mpesaCode?: SortOrder
+    eventYear?: SortOrder
+    accountId?: SortOrder
   }
 
   export type DonationMinOrderByAggregateInput = {
@@ -21226,10 +27629,13 @@ export namespace Prisma {
     updatedAt?: SortOrder
     failureReason?: SortOrder
     mpesaCode?: SortOrder
+    eventYear?: SortOrder
+    accountId?: SortOrder
   }
 
   export type DonationSumOrderByAggregateInput = {
     amount?: SortOrder
+    eventYear?: SortOrder
   }
 
   export type SmsLogCountOrderByAggregateInput = {
@@ -21304,10 +27710,14 @@ export namespace Prisma {
     amount?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    checkoutRequestId?: SortOrder
+    eventYear?: SortOrder
+    accountId?: SortOrder
   }
 
   export type BikeHireAvgOrderByAggregateInput = {
     amount?: SortOrder
+    eventYear?: SortOrder
   }
 
   export type BikeHireMaxOrderByAggregateInput = {
@@ -21318,6 +27728,9 @@ export namespace Prisma {
     amount?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    checkoutRequestId?: SortOrder
+    eventYear?: SortOrder
+    accountId?: SortOrder
   }
 
   export type BikeHireMinOrderByAggregateInput = {
@@ -21328,10 +27741,14 @@ export namespace Prisma {
     amount?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    checkoutRequestId?: SortOrder
+    eventYear?: SortOrder
+    accountId?: SortOrder
   }
 
   export type BikeHireSumOrderByAggregateInput = {
     amount?: SortOrder
+    eventYear?: SortOrder
   }
 
   export type NotifyInterestCountOrderByAggregateInput = {
@@ -21359,6 +27776,8 @@ export namespace Prisma {
     id?: SortOrder
     role?: SortOrder
     rating?: SortOrder
+    firstName?: SortOrder
+    lastName?: SortOrder
     highlights?: SortOrder
     improvements?: SortOrder
     createdAt?: SortOrder
@@ -21372,6 +27791,8 @@ export namespace Prisma {
     id?: SortOrder
     role?: SortOrder
     rating?: SortOrder
+    firstName?: SortOrder
+    lastName?: SortOrder
     highlights?: SortOrder
     improvements?: SortOrder
     createdAt?: SortOrder
@@ -21381,6 +27802,8 @@ export namespace Prisma {
     id?: SortOrder
     role?: SortOrder
     rating?: SortOrder
+    firstName?: SortOrder
+    lastName?: SortOrder
     highlights?: SortOrder
     improvements?: SortOrder
     createdAt?: SortOrder
@@ -21390,10 +27813,232 @@ export namespace Prisma {
     rating?: SortOrder
   }
 
+  export type UserSessionListRelationFilter = {
+    every?: UserSessionWhereInput
+    some?: UserSessionWhereInput
+    none?: UserSessionWhereInput
+  }
+
+  export type RegistrationListRelationFilter = {
+    every?: RegistrationWhereInput
+    some?: RegistrationWhereInput
+    none?: RegistrationWhereInput
+  }
+
+  export type RaffleTicketListRelationFilter = {
+    every?: RaffleTicketWhereInput
+    some?: RaffleTicketWhereInput
+    none?: RaffleTicketWhereInput
+  }
+
+  export type DonationListRelationFilter = {
+    every?: DonationWhereInput
+    some?: DonationWhereInput
+    none?: DonationWhereInput
+  }
+
+  export type BikeHireListRelationFilter = {
+    every?: BikeHireWhereInput
+    some?: BikeHireWhereInput
+    none?: BikeHireWhereInput
+  }
+
+  export type UserSessionOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type RegistrationOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type RaffleTicketOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type DonationOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type BikeHireOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type AccountCountOrderByAggregateInput = {
+    id?: SortOrder
+    firstName?: SortOrder
+    lastName?: SortOrder
+    email?: SortOrder
+    phone?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    lastLoginAt?: SortOrder
+  }
+
+  export type AccountMaxOrderByAggregateInput = {
+    id?: SortOrder
+    firstName?: SortOrder
+    lastName?: SortOrder
+    email?: SortOrder
+    phone?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    lastLoginAt?: SortOrder
+  }
+
+  export type AccountMinOrderByAggregateInput = {
+    id?: SortOrder
+    firstName?: SortOrder
+    lastName?: SortOrder
+    email?: SortOrder
+    phone?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    lastLoginAt?: SortOrder
+  }
+
+  export type OtpCodeCountOrderByAggregateInput = {
+    id?: SortOrder
+    channel?: SortOrder
+    destination?: SortOrder
+    purpose?: SortOrder
+    codeHash?: SortOrder
+    context?: SortOrder
+    attempts?: SortOrder
+    expiresAt?: SortOrder
+    consumedAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type OtpCodeAvgOrderByAggregateInput = {
+    attempts?: SortOrder
+  }
+
+  export type OtpCodeMaxOrderByAggregateInput = {
+    id?: SortOrder
+    channel?: SortOrder
+    destination?: SortOrder
+    purpose?: SortOrder
+    codeHash?: SortOrder
+    attempts?: SortOrder
+    expiresAt?: SortOrder
+    consumedAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type OtpCodeMinOrderByAggregateInput = {
+    id?: SortOrder
+    channel?: SortOrder
+    destination?: SortOrder
+    purpose?: SortOrder
+    codeHash?: SortOrder
+    attempts?: SortOrder
+    expiresAt?: SortOrder
+    consumedAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type OtpCodeSumOrderByAggregateInput = {
+    attempts?: SortOrder
+  }
+
+  export type AccountScalarRelationFilter = {
+    is?: AccountWhereInput
+    isNot?: AccountWhereInput
+  }
+
+  export type UserSessionCountOrderByAggregateInput = {
+    id?: SortOrder
+    accountId?: SortOrder
+    token?: SortOrder
+    expiresAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type UserSessionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    accountId?: SortOrder
+    token?: SortOrder
+    expiresAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type UserSessionMinOrderByAggregateInput = {
+    id?: SortOrder
+    accountId?: SortOrder
+    token?: SortOrder
+    expiresAt?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type GalleryPhotoCountOrderByAggregateInput = {
+    id?: SortOrder
+    eventYear?: SortOrder
+    album?: SortOrder
+    publicId?: SortOrder
+    width?: SortOrder
+    height?: SortOrder
+    caption?: SortOrder
+    sortOrder?: SortOrder
+    isPublished?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type GalleryPhotoAvgOrderByAggregateInput = {
+    eventYear?: SortOrder
+    width?: SortOrder
+    height?: SortOrder
+    sortOrder?: SortOrder
+  }
+
+  export type GalleryPhotoMaxOrderByAggregateInput = {
+    id?: SortOrder
+    eventYear?: SortOrder
+    album?: SortOrder
+    publicId?: SortOrder
+    width?: SortOrder
+    height?: SortOrder
+    caption?: SortOrder
+    sortOrder?: SortOrder
+    isPublished?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type GalleryPhotoMinOrderByAggregateInput = {
+    id?: SortOrder
+    eventYear?: SortOrder
+    album?: SortOrder
+    publicId?: SortOrder
+    width?: SortOrder
+    height?: SortOrder
+    caption?: SortOrder
+    sortOrder?: SortOrder
+    isPublished?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type GalleryPhotoSumOrderByAggregateInput = {
+    eventYear?: SortOrder
+    width?: SortOrder
+    height?: SortOrder
+    sortOrder?: SortOrder
+  }
+
   export type BikeHireCreateNestedOneWithoutRegistrationInput = {
     create?: XOR<BikeHireCreateWithoutRegistrationInput, BikeHireUncheckedCreateWithoutRegistrationInput>
     connectOrCreate?: BikeHireCreateOrConnectWithoutRegistrationInput
     connect?: BikeHireWhereUniqueInput
+  }
+
+  export type AccountCreateNestedOneWithoutRegistrationsInput = {
+    create?: XOR<AccountCreateWithoutRegistrationsInput, AccountUncheckedCreateWithoutRegistrationsInput>
+    connectOrCreate?: AccountCreateOrConnectWithoutRegistrationsInput
+    connect?: AccountWhereUniqueInput
+  }
+
+  export type AccountCreateNestedOneWithoutParticipationsInput = {
+    create?: XOR<AccountCreateWithoutParticipationsInput, AccountUncheckedCreateWithoutParticipationsInput>
+    connectOrCreate?: AccountCreateOrConnectWithoutParticipationsInput
+    connect?: AccountWhereUniqueInput
   }
 
   export type BikeHireUncheckedCreateNestedOneWithoutRegistrationInput = {
@@ -21430,6 +28075,14 @@ export namespace Prisma {
     divide?: number
   }
 
+  export type IntFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
   export type BikeHireUpdateOneWithoutRegistrationNestedInput = {
     create?: XOR<BikeHireCreateWithoutRegistrationInput, BikeHireUncheckedCreateWithoutRegistrationInput>
     connectOrCreate?: BikeHireCreateOrConnectWithoutRegistrationInput
@@ -21438,6 +28091,26 @@ export namespace Prisma {
     delete?: BikeHireWhereInput | boolean
     connect?: BikeHireWhereUniqueInput
     update?: XOR<XOR<BikeHireUpdateToOneWithWhereWithoutRegistrationInput, BikeHireUpdateWithoutRegistrationInput>, BikeHireUncheckedUpdateWithoutRegistrationInput>
+  }
+
+  export type AccountUpdateOneWithoutRegistrationsNestedInput = {
+    create?: XOR<AccountCreateWithoutRegistrationsInput, AccountUncheckedCreateWithoutRegistrationsInput>
+    connectOrCreate?: AccountCreateOrConnectWithoutRegistrationsInput
+    upsert?: AccountUpsertWithoutRegistrationsInput
+    disconnect?: AccountWhereInput | boolean
+    delete?: AccountWhereInput | boolean
+    connect?: AccountWhereUniqueInput
+    update?: XOR<XOR<AccountUpdateToOneWithWhereWithoutRegistrationsInput, AccountUpdateWithoutRegistrationsInput>, AccountUncheckedUpdateWithoutRegistrationsInput>
+  }
+
+  export type AccountUpdateOneWithoutParticipationsNestedInput = {
+    create?: XOR<AccountCreateWithoutParticipationsInput, AccountUncheckedCreateWithoutParticipationsInput>
+    connectOrCreate?: AccountCreateOrConnectWithoutParticipationsInput
+    upsert?: AccountUpsertWithoutParticipationsInput
+    disconnect?: AccountWhereInput | boolean
+    delete?: AccountWhereInput | boolean
+    connect?: AccountWhereUniqueInput
+    update?: XOR<XOR<AccountUpdateToOneWithWhereWithoutParticipationsInput, AccountUpdateWithoutParticipationsInput>, AccountUncheckedUpdateWithoutParticipationsInput>
   }
 
   export type BikeHireUncheckedUpdateOneWithoutRegistrationNestedInput = {
@@ -21527,12 +28200,36 @@ export namespace Prisma {
     divide?: number
   }
 
-  export type IntFieldUpdateOperationsInput = {
-    set?: number
-    increment?: number
-    decrement?: number
-    multiply?: number
-    divide?: number
+  export type AccountCreateNestedOneWithoutRaffleTicketsInput = {
+    create?: XOR<AccountCreateWithoutRaffleTicketsInput, AccountUncheckedCreateWithoutRaffleTicketsInput>
+    connectOrCreate?: AccountCreateOrConnectWithoutRaffleTicketsInput
+    connect?: AccountWhereUniqueInput
+  }
+
+  export type AccountUpdateOneWithoutRaffleTicketsNestedInput = {
+    create?: XOR<AccountCreateWithoutRaffleTicketsInput, AccountUncheckedCreateWithoutRaffleTicketsInput>
+    connectOrCreate?: AccountCreateOrConnectWithoutRaffleTicketsInput
+    upsert?: AccountUpsertWithoutRaffleTicketsInput
+    disconnect?: AccountWhereInput | boolean
+    delete?: AccountWhereInput | boolean
+    connect?: AccountWhereUniqueInput
+    update?: XOR<XOR<AccountUpdateToOneWithWhereWithoutRaffleTicketsInput, AccountUpdateWithoutRaffleTicketsInput>, AccountUncheckedUpdateWithoutRaffleTicketsInput>
+  }
+
+  export type AccountCreateNestedOneWithoutDonationsInput = {
+    create?: XOR<AccountCreateWithoutDonationsInput, AccountUncheckedCreateWithoutDonationsInput>
+    connectOrCreate?: AccountCreateOrConnectWithoutDonationsInput
+    connect?: AccountWhereUniqueInput
+  }
+
+  export type AccountUpdateOneWithoutDonationsNestedInput = {
+    create?: XOR<AccountCreateWithoutDonationsInput, AccountUncheckedCreateWithoutDonationsInput>
+    connectOrCreate?: AccountCreateOrConnectWithoutDonationsInput
+    upsert?: AccountUpsertWithoutDonationsInput
+    disconnect?: AccountWhereInput | boolean
+    delete?: AccountWhereInput | boolean
+    connect?: AccountWhereUniqueInput
+    update?: XOR<XOR<AccountUpdateToOneWithWhereWithoutDonationsInput, AccountUpdateWithoutDonationsInput>, AccountUncheckedUpdateWithoutDonationsInput>
   }
 
   export type RegistrationCreateNestedOneWithoutBikeHireInput = {
@@ -21541,12 +28238,294 @@ export namespace Prisma {
     connect?: RegistrationWhereUniqueInput
   }
 
+  export type AccountCreateNestedOneWithoutBikeHiresInput = {
+    create?: XOR<AccountCreateWithoutBikeHiresInput, AccountUncheckedCreateWithoutBikeHiresInput>
+    connectOrCreate?: AccountCreateOrConnectWithoutBikeHiresInput
+    connect?: AccountWhereUniqueInput
+  }
+
   export type RegistrationUpdateOneRequiredWithoutBikeHireNestedInput = {
     create?: XOR<RegistrationCreateWithoutBikeHireInput, RegistrationUncheckedCreateWithoutBikeHireInput>
     connectOrCreate?: RegistrationCreateOrConnectWithoutBikeHireInput
     upsert?: RegistrationUpsertWithoutBikeHireInput
     connect?: RegistrationWhereUniqueInput
     update?: XOR<XOR<RegistrationUpdateToOneWithWhereWithoutBikeHireInput, RegistrationUpdateWithoutBikeHireInput>, RegistrationUncheckedUpdateWithoutBikeHireInput>
+  }
+
+  export type AccountUpdateOneWithoutBikeHiresNestedInput = {
+    create?: XOR<AccountCreateWithoutBikeHiresInput, AccountUncheckedCreateWithoutBikeHiresInput>
+    connectOrCreate?: AccountCreateOrConnectWithoutBikeHiresInput
+    upsert?: AccountUpsertWithoutBikeHiresInput
+    disconnect?: AccountWhereInput | boolean
+    delete?: AccountWhereInput | boolean
+    connect?: AccountWhereUniqueInput
+    update?: XOR<XOR<AccountUpdateToOneWithWhereWithoutBikeHiresInput, AccountUpdateWithoutBikeHiresInput>, AccountUncheckedUpdateWithoutBikeHiresInput>
+  }
+
+  export type UserSessionCreateNestedManyWithoutAccountInput = {
+    create?: XOR<UserSessionCreateWithoutAccountInput, UserSessionUncheckedCreateWithoutAccountInput> | UserSessionCreateWithoutAccountInput[] | UserSessionUncheckedCreateWithoutAccountInput[]
+    connectOrCreate?: UserSessionCreateOrConnectWithoutAccountInput | UserSessionCreateOrConnectWithoutAccountInput[]
+    createMany?: UserSessionCreateManyAccountInputEnvelope
+    connect?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
+  }
+
+  export type RegistrationCreateNestedManyWithoutAccountInput = {
+    create?: XOR<RegistrationCreateWithoutAccountInput, RegistrationUncheckedCreateWithoutAccountInput> | RegistrationCreateWithoutAccountInput[] | RegistrationUncheckedCreateWithoutAccountInput[]
+    connectOrCreate?: RegistrationCreateOrConnectWithoutAccountInput | RegistrationCreateOrConnectWithoutAccountInput[]
+    createMany?: RegistrationCreateManyAccountInputEnvelope
+    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+  }
+
+  export type RegistrationCreateNestedManyWithoutParticipantAccountInput = {
+    create?: XOR<RegistrationCreateWithoutParticipantAccountInput, RegistrationUncheckedCreateWithoutParticipantAccountInput> | RegistrationCreateWithoutParticipantAccountInput[] | RegistrationUncheckedCreateWithoutParticipantAccountInput[]
+    connectOrCreate?: RegistrationCreateOrConnectWithoutParticipantAccountInput | RegistrationCreateOrConnectWithoutParticipantAccountInput[]
+    createMany?: RegistrationCreateManyParticipantAccountInputEnvelope
+    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+  }
+
+  export type RaffleTicketCreateNestedManyWithoutAccountInput = {
+    create?: XOR<RaffleTicketCreateWithoutAccountInput, RaffleTicketUncheckedCreateWithoutAccountInput> | RaffleTicketCreateWithoutAccountInput[] | RaffleTicketUncheckedCreateWithoutAccountInput[]
+    connectOrCreate?: RaffleTicketCreateOrConnectWithoutAccountInput | RaffleTicketCreateOrConnectWithoutAccountInput[]
+    createMany?: RaffleTicketCreateManyAccountInputEnvelope
+    connect?: RaffleTicketWhereUniqueInput | RaffleTicketWhereUniqueInput[]
+  }
+
+  export type DonationCreateNestedManyWithoutAccountInput = {
+    create?: XOR<DonationCreateWithoutAccountInput, DonationUncheckedCreateWithoutAccountInput> | DonationCreateWithoutAccountInput[] | DonationUncheckedCreateWithoutAccountInput[]
+    connectOrCreate?: DonationCreateOrConnectWithoutAccountInput | DonationCreateOrConnectWithoutAccountInput[]
+    createMany?: DonationCreateManyAccountInputEnvelope
+    connect?: DonationWhereUniqueInput | DonationWhereUniqueInput[]
+  }
+
+  export type BikeHireCreateNestedManyWithoutAccountInput = {
+    create?: XOR<BikeHireCreateWithoutAccountInput, BikeHireUncheckedCreateWithoutAccountInput> | BikeHireCreateWithoutAccountInput[] | BikeHireUncheckedCreateWithoutAccountInput[]
+    connectOrCreate?: BikeHireCreateOrConnectWithoutAccountInput | BikeHireCreateOrConnectWithoutAccountInput[]
+    createMany?: BikeHireCreateManyAccountInputEnvelope
+    connect?: BikeHireWhereUniqueInput | BikeHireWhereUniqueInput[]
+  }
+
+  export type UserSessionUncheckedCreateNestedManyWithoutAccountInput = {
+    create?: XOR<UserSessionCreateWithoutAccountInput, UserSessionUncheckedCreateWithoutAccountInput> | UserSessionCreateWithoutAccountInput[] | UserSessionUncheckedCreateWithoutAccountInput[]
+    connectOrCreate?: UserSessionCreateOrConnectWithoutAccountInput | UserSessionCreateOrConnectWithoutAccountInput[]
+    createMany?: UserSessionCreateManyAccountInputEnvelope
+    connect?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
+  }
+
+  export type RegistrationUncheckedCreateNestedManyWithoutAccountInput = {
+    create?: XOR<RegistrationCreateWithoutAccountInput, RegistrationUncheckedCreateWithoutAccountInput> | RegistrationCreateWithoutAccountInput[] | RegistrationUncheckedCreateWithoutAccountInput[]
+    connectOrCreate?: RegistrationCreateOrConnectWithoutAccountInput | RegistrationCreateOrConnectWithoutAccountInput[]
+    createMany?: RegistrationCreateManyAccountInputEnvelope
+    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+  }
+
+  export type RegistrationUncheckedCreateNestedManyWithoutParticipantAccountInput = {
+    create?: XOR<RegistrationCreateWithoutParticipantAccountInput, RegistrationUncheckedCreateWithoutParticipantAccountInput> | RegistrationCreateWithoutParticipantAccountInput[] | RegistrationUncheckedCreateWithoutParticipantAccountInput[]
+    connectOrCreate?: RegistrationCreateOrConnectWithoutParticipantAccountInput | RegistrationCreateOrConnectWithoutParticipantAccountInput[]
+    createMany?: RegistrationCreateManyParticipantAccountInputEnvelope
+    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+  }
+
+  export type RaffleTicketUncheckedCreateNestedManyWithoutAccountInput = {
+    create?: XOR<RaffleTicketCreateWithoutAccountInput, RaffleTicketUncheckedCreateWithoutAccountInput> | RaffleTicketCreateWithoutAccountInput[] | RaffleTicketUncheckedCreateWithoutAccountInput[]
+    connectOrCreate?: RaffleTicketCreateOrConnectWithoutAccountInput | RaffleTicketCreateOrConnectWithoutAccountInput[]
+    createMany?: RaffleTicketCreateManyAccountInputEnvelope
+    connect?: RaffleTicketWhereUniqueInput | RaffleTicketWhereUniqueInput[]
+  }
+
+  export type DonationUncheckedCreateNestedManyWithoutAccountInput = {
+    create?: XOR<DonationCreateWithoutAccountInput, DonationUncheckedCreateWithoutAccountInput> | DonationCreateWithoutAccountInput[] | DonationUncheckedCreateWithoutAccountInput[]
+    connectOrCreate?: DonationCreateOrConnectWithoutAccountInput | DonationCreateOrConnectWithoutAccountInput[]
+    createMany?: DonationCreateManyAccountInputEnvelope
+    connect?: DonationWhereUniqueInput | DonationWhereUniqueInput[]
+  }
+
+  export type BikeHireUncheckedCreateNestedManyWithoutAccountInput = {
+    create?: XOR<BikeHireCreateWithoutAccountInput, BikeHireUncheckedCreateWithoutAccountInput> | BikeHireCreateWithoutAccountInput[] | BikeHireUncheckedCreateWithoutAccountInput[]
+    connectOrCreate?: BikeHireCreateOrConnectWithoutAccountInput | BikeHireCreateOrConnectWithoutAccountInput[]
+    createMany?: BikeHireCreateManyAccountInputEnvelope
+    connect?: BikeHireWhereUniqueInput | BikeHireWhereUniqueInput[]
+  }
+
+  export type UserSessionUpdateManyWithoutAccountNestedInput = {
+    create?: XOR<UserSessionCreateWithoutAccountInput, UserSessionUncheckedCreateWithoutAccountInput> | UserSessionCreateWithoutAccountInput[] | UserSessionUncheckedCreateWithoutAccountInput[]
+    connectOrCreate?: UserSessionCreateOrConnectWithoutAccountInput | UserSessionCreateOrConnectWithoutAccountInput[]
+    upsert?: UserSessionUpsertWithWhereUniqueWithoutAccountInput | UserSessionUpsertWithWhereUniqueWithoutAccountInput[]
+    createMany?: UserSessionCreateManyAccountInputEnvelope
+    set?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
+    disconnect?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
+    delete?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
+    connect?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
+    update?: UserSessionUpdateWithWhereUniqueWithoutAccountInput | UserSessionUpdateWithWhereUniqueWithoutAccountInput[]
+    updateMany?: UserSessionUpdateManyWithWhereWithoutAccountInput | UserSessionUpdateManyWithWhereWithoutAccountInput[]
+    deleteMany?: UserSessionScalarWhereInput | UserSessionScalarWhereInput[]
+  }
+
+  export type RegistrationUpdateManyWithoutAccountNestedInput = {
+    create?: XOR<RegistrationCreateWithoutAccountInput, RegistrationUncheckedCreateWithoutAccountInput> | RegistrationCreateWithoutAccountInput[] | RegistrationUncheckedCreateWithoutAccountInput[]
+    connectOrCreate?: RegistrationCreateOrConnectWithoutAccountInput | RegistrationCreateOrConnectWithoutAccountInput[]
+    upsert?: RegistrationUpsertWithWhereUniqueWithoutAccountInput | RegistrationUpsertWithWhereUniqueWithoutAccountInput[]
+    createMany?: RegistrationCreateManyAccountInputEnvelope
+    set?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    disconnect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    delete?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    update?: RegistrationUpdateWithWhereUniqueWithoutAccountInput | RegistrationUpdateWithWhereUniqueWithoutAccountInput[]
+    updateMany?: RegistrationUpdateManyWithWhereWithoutAccountInput | RegistrationUpdateManyWithWhereWithoutAccountInput[]
+    deleteMany?: RegistrationScalarWhereInput | RegistrationScalarWhereInput[]
+  }
+
+  export type RegistrationUpdateManyWithoutParticipantAccountNestedInput = {
+    create?: XOR<RegistrationCreateWithoutParticipantAccountInput, RegistrationUncheckedCreateWithoutParticipantAccountInput> | RegistrationCreateWithoutParticipantAccountInput[] | RegistrationUncheckedCreateWithoutParticipantAccountInput[]
+    connectOrCreate?: RegistrationCreateOrConnectWithoutParticipantAccountInput | RegistrationCreateOrConnectWithoutParticipantAccountInput[]
+    upsert?: RegistrationUpsertWithWhereUniqueWithoutParticipantAccountInput | RegistrationUpsertWithWhereUniqueWithoutParticipantAccountInput[]
+    createMany?: RegistrationCreateManyParticipantAccountInputEnvelope
+    set?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    disconnect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    delete?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    update?: RegistrationUpdateWithWhereUniqueWithoutParticipantAccountInput | RegistrationUpdateWithWhereUniqueWithoutParticipantAccountInput[]
+    updateMany?: RegistrationUpdateManyWithWhereWithoutParticipantAccountInput | RegistrationUpdateManyWithWhereWithoutParticipantAccountInput[]
+    deleteMany?: RegistrationScalarWhereInput | RegistrationScalarWhereInput[]
+  }
+
+  export type RaffleTicketUpdateManyWithoutAccountNestedInput = {
+    create?: XOR<RaffleTicketCreateWithoutAccountInput, RaffleTicketUncheckedCreateWithoutAccountInput> | RaffleTicketCreateWithoutAccountInput[] | RaffleTicketUncheckedCreateWithoutAccountInput[]
+    connectOrCreate?: RaffleTicketCreateOrConnectWithoutAccountInput | RaffleTicketCreateOrConnectWithoutAccountInput[]
+    upsert?: RaffleTicketUpsertWithWhereUniqueWithoutAccountInput | RaffleTicketUpsertWithWhereUniqueWithoutAccountInput[]
+    createMany?: RaffleTicketCreateManyAccountInputEnvelope
+    set?: RaffleTicketWhereUniqueInput | RaffleTicketWhereUniqueInput[]
+    disconnect?: RaffleTicketWhereUniqueInput | RaffleTicketWhereUniqueInput[]
+    delete?: RaffleTicketWhereUniqueInput | RaffleTicketWhereUniqueInput[]
+    connect?: RaffleTicketWhereUniqueInput | RaffleTicketWhereUniqueInput[]
+    update?: RaffleTicketUpdateWithWhereUniqueWithoutAccountInput | RaffleTicketUpdateWithWhereUniqueWithoutAccountInput[]
+    updateMany?: RaffleTicketUpdateManyWithWhereWithoutAccountInput | RaffleTicketUpdateManyWithWhereWithoutAccountInput[]
+    deleteMany?: RaffleTicketScalarWhereInput | RaffleTicketScalarWhereInput[]
+  }
+
+  export type DonationUpdateManyWithoutAccountNestedInput = {
+    create?: XOR<DonationCreateWithoutAccountInput, DonationUncheckedCreateWithoutAccountInput> | DonationCreateWithoutAccountInput[] | DonationUncheckedCreateWithoutAccountInput[]
+    connectOrCreate?: DonationCreateOrConnectWithoutAccountInput | DonationCreateOrConnectWithoutAccountInput[]
+    upsert?: DonationUpsertWithWhereUniqueWithoutAccountInput | DonationUpsertWithWhereUniqueWithoutAccountInput[]
+    createMany?: DonationCreateManyAccountInputEnvelope
+    set?: DonationWhereUniqueInput | DonationWhereUniqueInput[]
+    disconnect?: DonationWhereUniqueInput | DonationWhereUniqueInput[]
+    delete?: DonationWhereUniqueInput | DonationWhereUniqueInput[]
+    connect?: DonationWhereUniqueInput | DonationWhereUniqueInput[]
+    update?: DonationUpdateWithWhereUniqueWithoutAccountInput | DonationUpdateWithWhereUniqueWithoutAccountInput[]
+    updateMany?: DonationUpdateManyWithWhereWithoutAccountInput | DonationUpdateManyWithWhereWithoutAccountInput[]
+    deleteMany?: DonationScalarWhereInput | DonationScalarWhereInput[]
+  }
+
+  export type BikeHireUpdateManyWithoutAccountNestedInput = {
+    create?: XOR<BikeHireCreateWithoutAccountInput, BikeHireUncheckedCreateWithoutAccountInput> | BikeHireCreateWithoutAccountInput[] | BikeHireUncheckedCreateWithoutAccountInput[]
+    connectOrCreate?: BikeHireCreateOrConnectWithoutAccountInput | BikeHireCreateOrConnectWithoutAccountInput[]
+    upsert?: BikeHireUpsertWithWhereUniqueWithoutAccountInput | BikeHireUpsertWithWhereUniqueWithoutAccountInput[]
+    createMany?: BikeHireCreateManyAccountInputEnvelope
+    set?: BikeHireWhereUniqueInput | BikeHireWhereUniqueInput[]
+    disconnect?: BikeHireWhereUniqueInput | BikeHireWhereUniqueInput[]
+    delete?: BikeHireWhereUniqueInput | BikeHireWhereUniqueInput[]
+    connect?: BikeHireWhereUniqueInput | BikeHireWhereUniqueInput[]
+    update?: BikeHireUpdateWithWhereUniqueWithoutAccountInput | BikeHireUpdateWithWhereUniqueWithoutAccountInput[]
+    updateMany?: BikeHireUpdateManyWithWhereWithoutAccountInput | BikeHireUpdateManyWithWhereWithoutAccountInput[]
+    deleteMany?: BikeHireScalarWhereInput | BikeHireScalarWhereInput[]
+  }
+
+  export type UserSessionUncheckedUpdateManyWithoutAccountNestedInput = {
+    create?: XOR<UserSessionCreateWithoutAccountInput, UserSessionUncheckedCreateWithoutAccountInput> | UserSessionCreateWithoutAccountInput[] | UserSessionUncheckedCreateWithoutAccountInput[]
+    connectOrCreate?: UserSessionCreateOrConnectWithoutAccountInput | UserSessionCreateOrConnectWithoutAccountInput[]
+    upsert?: UserSessionUpsertWithWhereUniqueWithoutAccountInput | UserSessionUpsertWithWhereUniqueWithoutAccountInput[]
+    createMany?: UserSessionCreateManyAccountInputEnvelope
+    set?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
+    disconnect?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
+    delete?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
+    connect?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
+    update?: UserSessionUpdateWithWhereUniqueWithoutAccountInput | UserSessionUpdateWithWhereUniqueWithoutAccountInput[]
+    updateMany?: UserSessionUpdateManyWithWhereWithoutAccountInput | UserSessionUpdateManyWithWhereWithoutAccountInput[]
+    deleteMany?: UserSessionScalarWhereInput | UserSessionScalarWhereInput[]
+  }
+
+  export type RegistrationUncheckedUpdateManyWithoutAccountNestedInput = {
+    create?: XOR<RegistrationCreateWithoutAccountInput, RegistrationUncheckedCreateWithoutAccountInput> | RegistrationCreateWithoutAccountInput[] | RegistrationUncheckedCreateWithoutAccountInput[]
+    connectOrCreate?: RegistrationCreateOrConnectWithoutAccountInput | RegistrationCreateOrConnectWithoutAccountInput[]
+    upsert?: RegistrationUpsertWithWhereUniqueWithoutAccountInput | RegistrationUpsertWithWhereUniqueWithoutAccountInput[]
+    createMany?: RegistrationCreateManyAccountInputEnvelope
+    set?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    disconnect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    delete?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    update?: RegistrationUpdateWithWhereUniqueWithoutAccountInput | RegistrationUpdateWithWhereUniqueWithoutAccountInput[]
+    updateMany?: RegistrationUpdateManyWithWhereWithoutAccountInput | RegistrationUpdateManyWithWhereWithoutAccountInput[]
+    deleteMany?: RegistrationScalarWhereInput | RegistrationScalarWhereInput[]
+  }
+
+  export type RegistrationUncheckedUpdateManyWithoutParticipantAccountNestedInput = {
+    create?: XOR<RegistrationCreateWithoutParticipantAccountInput, RegistrationUncheckedCreateWithoutParticipantAccountInput> | RegistrationCreateWithoutParticipantAccountInput[] | RegistrationUncheckedCreateWithoutParticipantAccountInput[]
+    connectOrCreate?: RegistrationCreateOrConnectWithoutParticipantAccountInput | RegistrationCreateOrConnectWithoutParticipantAccountInput[]
+    upsert?: RegistrationUpsertWithWhereUniqueWithoutParticipantAccountInput | RegistrationUpsertWithWhereUniqueWithoutParticipantAccountInput[]
+    createMany?: RegistrationCreateManyParticipantAccountInputEnvelope
+    set?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    disconnect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    delete?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    connect?: RegistrationWhereUniqueInput | RegistrationWhereUniqueInput[]
+    update?: RegistrationUpdateWithWhereUniqueWithoutParticipantAccountInput | RegistrationUpdateWithWhereUniqueWithoutParticipantAccountInput[]
+    updateMany?: RegistrationUpdateManyWithWhereWithoutParticipantAccountInput | RegistrationUpdateManyWithWhereWithoutParticipantAccountInput[]
+    deleteMany?: RegistrationScalarWhereInput | RegistrationScalarWhereInput[]
+  }
+
+  export type RaffleTicketUncheckedUpdateManyWithoutAccountNestedInput = {
+    create?: XOR<RaffleTicketCreateWithoutAccountInput, RaffleTicketUncheckedCreateWithoutAccountInput> | RaffleTicketCreateWithoutAccountInput[] | RaffleTicketUncheckedCreateWithoutAccountInput[]
+    connectOrCreate?: RaffleTicketCreateOrConnectWithoutAccountInput | RaffleTicketCreateOrConnectWithoutAccountInput[]
+    upsert?: RaffleTicketUpsertWithWhereUniqueWithoutAccountInput | RaffleTicketUpsertWithWhereUniqueWithoutAccountInput[]
+    createMany?: RaffleTicketCreateManyAccountInputEnvelope
+    set?: RaffleTicketWhereUniqueInput | RaffleTicketWhereUniqueInput[]
+    disconnect?: RaffleTicketWhereUniqueInput | RaffleTicketWhereUniqueInput[]
+    delete?: RaffleTicketWhereUniqueInput | RaffleTicketWhereUniqueInput[]
+    connect?: RaffleTicketWhereUniqueInput | RaffleTicketWhereUniqueInput[]
+    update?: RaffleTicketUpdateWithWhereUniqueWithoutAccountInput | RaffleTicketUpdateWithWhereUniqueWithoutAccountInput[]
+    updateMany?: RaffleTicketUpdateManyWithWhereWithoutAccountInput | RaffleTicketUpdateManyWithWhereWithoutAccountInput[]
+    deleteMany?: RaffleTicketScalarWhereInput | RaffleTicketScalarWhereInput[]
+  }
+
+  export type DonationUncheckedUpdateManyWithoutAccountNestedInput = {
+    create?: XOR<DonationCreateWithoutAccountInput, DonationUncheckedCreateWithoutAccountInput> | DonationCreateWithoutAccountInput[] | DonationUncheckedCreateWithoutAccountInput[]
+    connectOrCreate?: DonationCreateOrConnectWithoutAccountInput | DonationCreateOrConnectWithoutAccountInput[]
+    upsert?: DonationUpsertWithWhereUniqueWithoutAccountInput | DonationUpsertWithWhereUniqueWithoutAccountInput[]
+    createMany?: DonationCreateManyAccountInputEnvelope
+    set?: DonationWhereUniqueInput | DonationWhereUniqueInput[]
+    disconnect?: DonationWhereUniqueInput | DonationWhereUniqueInput[]
+    delete?: DonationWhereUniqueInput | DonationWhereUniqueInput[]
+    connect?: DonationWhereUniqueInput | DonationWhereUniqueInput[]
+    update?: DonationUpdateWithWhereUniqueWithoutAccountInput | DonationUpdateWithWhereUniqueWithoutAccountInput[]
+    updateMany?: DonationUpdateManyWithWhereWithoutAccountInput | DonationUpdateManyWithWhereWithoutAccountInput[]
+    deleteMany?: DonationScalarWhereInput | DonationScalarWhereInput[]
+  }
+
+  export type BikeHireUncheckedUpdateManyWithoutAccountNestedInput = {
+    create?: XOR<BikeHireCreateWithoutAccountInput, BikeHireUncheckedCreateWithoutAccountInput> | BikeHireCreateWithoutAccountInput[] | BikeHireUncheckedCreateWithoutAccountInput[]
+    connectOrCreate?: BikeHireCreateOrConnectWithoutAccountInput | BikeHireCreateOrConnectWithoutAccountInput[]
+    upsert?: BikeHireUpsertWithWhereUniqueWithoutAccountInput | BikeHireUpsertWithWhereUniqueWithoutAccountInput[]
+    createMany?: BikeHireCreateManyAccountInputEnvelope
+    set?: BikeHireWhereUniqueInput | BikeHireWhereUniqueInput[]
+    disconnect?: BikeHireWhereUniqueInput | BikeHireWhereUniqueInput[]
+    delete?: BikeHireWhereUniqueInput | BikeHireWhereUniqueInput[]
+    connect?: BikeHireWhereUniqueInput | BikeHireWhereUniqueInput[]
+    update?: BikeHireUpdateWithWhereUniqueWithoutAccountInput | BikeHireUpdateWithWhereUniqueWithoutAccountInput[]
+    updateMany?: BikeHireUpdateManyWithWhereWithoutAccountInput | BikeHireUpdateManyWithWhereWithoutAccountInput[]
+    deleteMany?: BikeHireScalarWhereInput | BikeHireScalarWhereInput[]
+  }
+
+  export type AccountCreateNestedOneWithoutSessionsInput = {
+    create?: XOR<AccountCreateWithoutSessionsInput, AccountUncheckedCreateWithoutSessionsInput>
+    connectOrCreate?: AccountCreateOrConnectWithoutSessionsInput
+    connect?: AccountWhereUniqueInput
+  }
+
+  export type AccountUpdateOneRequiredWithoutSessionsNestedInput = {
+    create?: XOR<AccountCreateWithoutSessionsInput, AccountUncheckedCreateWithoutSessionsInput>
+    connectOrCreate?: AccountCreateOrConnectWithoutSessionsInput
+    upsert?: AccountUpsertWithoutSessionsInput
+    connect?: AccountWhereUniqueInput
+    update?: XOR<XOR<AccountUpdateToOneWithWhereWithoutSessionsInput, AccountUpdateWithoutSessionsInput>, AccountUncheckedUpdateWithoutSessionsInput>
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -21611,6 +28590,17 @@ export namespace Prisma {
     not?: NestedFloatFilter<$PrismaModel> | number
   }
 
+  export type NestedIntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntFilter<$PrismaModel> | number
+  }
+
   export type NestedStringWithAggregatesFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -21626,17 +28616,6 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedStringFilter<$PrismaModel>
     _max?: NestedStringFilter<$PrismaModel>
-  }
-
-  export type NestedIntFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel>
-    in?: number[] | ListIntFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntFilter<$PrismaModel> | number
   }
 
   export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
@@ -21738,6 +28717,22 @@ export namespace Prisma {
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
+  export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
   export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
@@ -21790,22 +28785,6 @@ export namespace Prisma {
     not?: NestedFloatNullableFilter<$PrismaModel> | number | null
   }
 
-  export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel>
-    in?: number[] | ListIntFieldRefInput<$PrismaModel>
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
-    _count?: NestedIntFilter<$PrismaModel>
-    _avg?: NestedFloatFilter<$PrismaModel>
-    _sum?: NestedIntFilter<$PrismaModel>
-    _min?: NestedIntFilter<$PrismaModel>
-    _max?: NestedIntFilter<$PrismaModel>
-  }
-
   export type BikeHireCreateWithoutRegistrationInput = {
     id?: string
     bikeType?: string
@@ -21813,6 +28792,9 @@ export namespace Prisma {
     amount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
+    checkoutRequestId?: string | null
+    eventYear?: number
+    account?: AccountCreateNestedOneWithoutBikeHiresInput
   }
 
   export type BikeHireUncheckedCreateWithoutRegistrationInput = {
@@ -21822,11 +28804,88 @@ export namespace Prisma {
     amount?: number
     createdAt?: Date | string
     updatedAt?: Date | string
+    checkoutRequestId?: string | null
+    eventYear?: number
+    accountId?: string | null
   }
 
   export type BikeHireCreateOrConnectWithoutRegistrationInput = {
     where: BikeHireWhereUniqueInput
     create: XOR<BikeHireCreateWithoutRegistrationInput, BikeHireUncheckedCreateWithoutRegistrationInput>
+  }
+
+  export type AccountCreateWithoutRegistrationsInput = {
+    id?: string
+    firstName: string
+    lastName: string
+    email?: string | null
+    phone?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    sessions?: UserSessionCreateNestedManyWithoutAccountInput
+    participations?: RegistrationCreateNestedManyWithoutParticipantAccountInput
+    raffleTickets?: RaffleTicketCreateNestedManyWithoutAccountInput
+    donations?: DonationCreateNestedManyWithoutAccountInput
+    bikeHires?: BikeHireCreateNestedManyWithoutAccountInput
+  }
+
+  export type AccountUncheckedCreateWithoutRegistrationsInput = {
+    id?: string
+    firstName: string
+    lastName: string
+    email?: string | null
+    phone?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    sessions?: UserSessionUncheckedCreateNestedManyWithoutAccountInput
+    participations?: RegistrationUncheckedCreateNestedManyWithoutParticipantAccountInput
+    raffleTickets?: RaffleTicketUncheckedCreateNestedManyWithoutAccountInput
+    donations?: DonationUncheckedCreateNestedManyWithoutAccountInput
+    bikeHires?: BikeHireUncheckedCreateNestedManyWithoutAccountInput
+  }
+
+  export type AccountCreateOrConnectWithoutRegistrationsInput = {
+    where: AccountWhereUniqueInput
+    create: XOR<AccountCreateWithoutRegistrationsInput, AccountUncheckedCreateWithoutRegistrationsInput>
+  }
+
+  export type AccountCreateWithoutParticipationsInput = {
+    id?: string
+    firstName: string
+    lastName: string
+    email?: string | null
+    phone?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    sessions?: UserSessionCreateNestedManyWithoutAccountInput
+    registrations?: RegistrationCreateNestedManyWithoutAccountInput
+    raffleTickets?: RaffleTicketCreateNestedManyWithoutAccountInput
+    donations?: DonationCreateNestedManyWithoutAccountInput
+    bikeHires?: BikeHireCreateNestedManyWithoutAccountInput
+  }
+
+  export type AccountUncheckedCreateWithoutParticipationsInput = {
+    id?: string
+    firstName: string
+    lastName: string
+    email?: string | null
+    phone?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    sessions?: UserSessionUncheckedCreateNestedManyWithoutAccountInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutAccountInput
+    raffleTickets?: RaffleTicketUncheckedCreateNestedManyWithoutAccountInput
+    donations?: DonationUncheckedCreateNestedManyWithoutAccountInput
+    bikeHires?: BikeHireUncheckedCreateNestedManyWithoutAccountInput
+  }
+
+  export type AccountCreateOrConnectWithoutParticipationsInput = {
+    where: AccountWhereUniqueInput
+    create: XOR<AccountCreateWithoutParticipationsInput, AccountUncheckedCreateWithoutParticipationsInput>
   }
 
   export type BikeHireUpsertWithoutRegistrationInput = {
@@ -21847,6 +28906,9 @@ export namespace Prisma {
     amount?: FloatFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkoutRequestId?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
+    account?: AccountUpdateOneWithoutBikeHiresNestedInput
   }
 
   export type BikeHireUncheckedUpdateWithoutRegistrationInput = {
@@ -21856,6 +28918,95 @@ export namespace Prisma {
     amount?: FloatFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkoutRequestId?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
+    accountId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type AccountUpsertWithoutRegistrationsInput = {
+    update: XOR<AccountUpdateWithoutRegistrationsInput, AccountUncheckedUpdateWithoutRegistrationsInput>
+    create: XOR<AccountCreateWithoutRegistrationsInput, AccountUncheckedCreateWithoutRegistrationsInput>
+    where?: AccountWhereInput
+  }
+
+  export type AccountUpdateToOneWithWhereWithoutRegistrationsInput = {
+    where?: AccountWhereInput
+    data: XOR<AccountUpdateWithoutRegistrationsInput, AccountUncheckedUpdateWithoutRegistrationsInput>
+  }
+
+  export type AccountUpdateWithoutRegistrationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessions?: UserSessionUpdateManyWithoutAccountNestedInput
+    participations?: RegistrationUpdateManyWithoutParticipantAccountNestedInput
+    raffleTickets?: RaffleTicketUpdateManyWithoutAccountNestedInput
+    donations?: DonationUpdateManyWithoutAccountNestedInput
+    bikeHires?: BikeHireUpdateManyWithoutAccountNestedInput
+  }
+
+  export type AccountUncheckedUpdateWithoutRegistrationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessions?: UserSessionUncheckedUpdateManyWithoutAccountNestedInput
+    participations?: RegistrationUncheckedUpdateManyWithoutParticipantAccountNestedInput
+    raffleTickets?: RaffleTicketUncheckedUpdateManyWithoutAccountNestedInput
+    donations?: DonationUncheckedUpdateManyWithoutAccountNestedInput
+    bikeHires?: BikeHireUncheckedUpdateManyWithoutAccountNestedInput
+  }
+
+  export type AccountUpsertWithoutParticipationsInput = {
+    update: XOR<AccountUpdateWithoutParticipationsInput, AccountUncheckedUpdateWithoutParticipationsInput>
+    create: XOR<AccountCreateWithoutParticipationsInput, AccountUncheckedCreateWithoutParticipationsInput>
+    where?: AccountWhereInput
+  }
+
+  export type AccountUpdateToOneWithWhereWithoutParticipationsInput = {
+    where?: AccountWhereInput
+    data: XOR<AccountUpdateWithoutParticipationsInput, AccountUncheckedUpdateWithoutParticipationsInput>
+  }
+
+  export type AccountUpdateWithoutParticipationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessions?: UserSessionUpdateManyWithoutAccountNestedInput
+    registrations?: RegistrationUpdateManyWithoutAccountNestedInput
+    raffleTickets?: RaffleTicketUpdateManyWithoutAccountNestedInput
+    donations?: DonationUpdateManyWithoutAccountNestedInput
+    bikeHires?: BikeHireUpdateManyWithoutAccountNestedInput
+  }
+
+  export type AccountUncheckedUpdateWithoutParticipationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessions?: UserSessionUncheckedUpdateManyWithoutAccountNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutAccountNestedInput
+    raffleTickets?: RaffleTicketUncheckedUpdateManyWithoutAccountNestedInput
+    donations?: DonationUncheckedUpdateManyWithoutAccountNestedInput
+    bikeHires?: BikeHireUncheckedUpdateManyWithoutAccountNestedInput
   }
 
   export type AdminSessionCreateWithoutAdminInput = {
@@ -21965,6 +29116,166 @@ export namespace Prisma {
     lastLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
+  export type AccountCreateWithoutRaffleTicketsInput = {
+    id?: string
+    firstName: string
+    lastName: string
+    email?: string | null
+    phone?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    sessions?: UserSessionCreateNestedManyWithoutAccountInput
+    registrations?: RegistrationCreateNestedManyWithoutAccountInput
+    participations?: RegistrationCreateNestedManyWithoutParticipantAccountInput
+    donations?: DonationCreateNestedManyWithoutAccountInput
+    bikeHires?: BikeHireCreateNestedManyWithoutAccountInput
+  }
+
+  export type AccountUncheckedCreateWithoutRaffleTicketsInput = {
+    id?: string
+    firstName: string
+    lastName: string
+    email?: string | null
+    phone?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    sessions?: UserSessionUncheckedCreateNestedManyWithoutAccountInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutAccountInput
+    participations?: RegistrationUncheckedCreateNestedManyWithoutParticipantAccountInput
+    donations?: DonationUncheckedCreateNestedManyWithoutAccountInput
+    bikeHires?: BikeHireUncheckedCreateNestedManyWithoutAccountInput
+  }
+
+  export type AccountCreateOrConnectWithoutRaffleTicketsInput = {
+    where: AccountWhereUniqueInput
+    create: XOR<AccountCreateWithoutRaffleTicketsInput, AccountUncheckedCreateWithoutRaffleTicketsInput>
+  }
+
+  export type AccountUpsertWithoutRaffleTicketsInput = {
+    update: XOR<AccountUpdateWithoutRaffleTicketsInput, AccountUncheckedUpdateWithoutRaffleTicketsInput>
+    create: XOR<AccountCreateWithoutRaffleTicketsInput, AccountUncheckedCreateWithoutRaffleTicketsInput>
+    where?: AccountWhereInput
+  }
+
+  export type AccountUpdateToOneWithWhereWithoutRaffleTicketsInput = {
+    where?: AccountWhereInput
+    data: XOR<AccountUpdateWithoutRaffleTicketsInput, AccountUncheckedUpdateWithoutRaffleTicketsInput>
+  }
+
+  export type AccountUpdateWithoutRaffleTicketsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessions?: UserSessionUpdateManyWithoutAccountNestedInput
+    registrations?: RegistrationUpdateManyWithoutAccountNestedInput
+    participations?: RegistrationUpdateManyWithoutParticipantAccountNestedInput
+    donations?: DonationUpdateManyWithoutAccountNestedInput
+    bikeHires?: BikeHireUpdateManyWithoutAccountNestedInput
+  }
+
+  export type AccountUncheckedUpdateWithoutRaffleTicketsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessions?: UserSessionUncheckedUpdateManyWithoutAccountNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutAccountNestedInput
+    participations?: RegistrationUncheckedUpdateManyWithoutParticipantAccountNestedInput
+    donations?: DonationUncheckedUpdateManyWithoutAccountNestedInput
+    bikeHires?: BikeHireUncheckedUpdateManyWithoutAccountNestedInput
+  }
+
+  export type AccountCreateWithoutDonationsInput = {
+    id?: string
+    firstName: string
+    lastName: string
+    email?: string | null
+    phone?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    sessions?: UserSessionCreateNestedManyWithoutAccountInput
+    registrations?: RegistrationCreateNestedManyWithoutAccountInput
+    participations?: RegistrationCreateNestedManyWithoutParticipantAccountInput
+    raffleTickets?: RaffleTicketCreateNestedManyWithoutAccountInput
+    bikeHires?: BikeHireCreateNestedManyWithoutAccountInput
+  }
+
+  export type AccountUncheckedCreateWithoutDonationsInput = {
+    id?: string
+    firstName: string
+    lastName: string
+    email?: string | null
+    phone?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    sessions?: UserSessionUncheckedCreateNestedManyWithoutAccountInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutAccountInput
+    participations?: RegistrationUncheckedCreateNestedManyWithoutParticipantAccountInput
+    raffleTickets?: RaffleTicketUncheckedCreateNestedManyWithoutAccountInput
+    bikeHires?: BikeHireUncheckedCreateNestedManyWithoutAccountInput
+  }
+
+  export type AccountCreateOrConnectWithoutDonationsInput = {
+    where: AccountWhereUniqueInput
+    create: XOR<AccountCreateWithoutDonationsInput, AccountUncheckedCreateWithoutDonationsInput>
+  }
+
+  export type AccountUpsertWithoutDonationsInput = {
+    update: XOR<AccountUpdateWithoutDonationsInput, AccountUncheckedUpdateWithoutDonationsInput>
+    create: XOR<AccountCreateWithoutDonationsInput, AccountUncheckedCreateWithoutDonationsInput>
+    where?: AccountWhereInput
+  }
+
+  export type AccountUpdateToOneWithWhereWithoutDonationsInput = {
+    where?: AccountWhereInput
+    data: XOR<AccountUpdateWithoutDonationsInput, AccountUncheckedUpdateWithoutDonationsInput>
+  }
+
+  export type AccountUpdateWithoutDonationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessions?: UserSessionUpdateManyWithoutAccountNestedInput
+    registrations?: RegistrationUpdateManyWithoutAccountNestedInput
+    participations?: RegistrationUpdateManyWithoutParticipantAccountNestedInput
+    raffleTickets?: RaffleTicketUpdateManyWithoutAccountNestedInput
+    bikeHires?: BikeHireUpdateManyWithoutAccountNestedInput
+  }
+
+  export type AccountUncheckedUpdateWithoutDonationsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessions?: UserSessionUncheckedUpdateManyWithoutAccountNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutAccountNestedInput
+    participations?: RegistrationUncheckedUpdateManyWithoutParticipantAccountNestedInput
+    raffleTickets?: RaffleTicketUncheckedUpdateManyWithoutAccountNestedInput
+    bikeHires?: BikeHireUncheckedUpdateManyWithoutAccountNestedInput
+  }
+
   export type RegistrationCreateWithoutBikeHireInput = {
     id: string
     createdAt?: Date | string
@@ -21998,6 +29309,10 @@ export namespace Prisma {
     service?: string | null
     serviceNumber?: string | null
     unit?: string | null
+    bibNumber?: string | null
+    eventYear?: number
+    account?: AccountCreateNestedOneWithoutRegistrationsInput
+    participantAccount?: AccountCreateNestedOneWithoutParticipationsInput
   }
 
   export type RegistrationUncheckedCreateWithoutBikeHireInput = {
@@ -22033,11 +29348,52 @@ export namespace Prisma {
     service?: string | null
     serviceNumber?: string | null
     unit?: string | null
+    bibNumber?: string | null
+    eventYear?: number
+    accountId?: string | null
+    participantAccountId?: string | null
   }
 
   export type RegistrationCreateOrConnectWithoutBikeHireInput = {
     where: RegistrationWhereUniqueInput
     create: XOR<RegistrationCreateWithoutBikeHireInput, RegistrationUncheckedCreateWithoutBikeHireInput>
+  }
+
+  export type AccountCreateWithoutBikeHiresInput = {
+    id?: string
+    firstName: string
+    lastName: string
+    email?: string | null
+    phone?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    sessions?: UserSessionCreateNestedManyWithoutAccountInput
+    registrations?: RegistrationCreateNestedManyWithoutAccountInput
+    participations?: RegistrationCreateNestedManyWithoutParticipantAccountInput
+    raffleTickets?: RaffleTicketCreateNestedManyWithoutAccountInput
+    donations?: DonationCreateNestedManyWithoutAccountInput
+  }
+
+  export type AccountUncheckedCreateWithoutBikeHiresInput = {
+    id?: string
+    firstName: string
+    lastName: string
+    email?: string | null
+    phone?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    sessions?: UserSessionUncheckedCreateNestedManyWithoutAccountInput
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutAccountInput
+    participations?: RegistrationUncheckedCreateNestedManyWithoutParticipantAccountInput
+    raffleTickets?: RaffleTicketUncheckedCreateNestedManyWithoutAccountInput
+    donations?: DonationUncheckedCreateNestedManyWithoutAccountInput
+  }
+
+  export type AccountCreateOrConnectWithoutBikeHiresInput = {
+    where: AccountWhereUniqueInput
+    create: XOR<AccountCreateWithoutBikeHiresInput, AccountUncheckedCreateWithoutBikeHiresInput>
   }
 
   export type RegistrationUpsertWithoutBikeHireInput = {
@@ -22084,6 +29440,10 @@ export namespace Prisma {
     service?: NullableStringFieldUpdateOperationsInput | string | null
     serviceNumber?: NullableStringFieldUpdateOperationsInput | string | null
     unit?: NullableStringFieldUpdateOperationsInput | string | null
+    bibNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
+    account?: AccountUpdateOneWithoutRegistrationsNestedInput
+    participantAccount?: AccountUpdateOneWithoutParticipationsNestedInput
   }
 
   export type RegistrationUncheckedUpdateWithoutBikeHireInput = {
@@ -22119,6 +29479,671 @@ export namespace Prisma {
     service?: NullableStringFieldUpdateOperationsInput | string | null
     serviceNumber?: NullableStringFieldUpdateOperationsInput | string | null
     unit?: NullableStringFieldUpdateOperationsInput | string | null
+    bibNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
+    accountId?: NullableStringFieldUpdateOperationsInput | string | null
+    participantAccountId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type AccountUpsertWithoutBikeHiresInput = {
+    update: XOR<AccountUpdateWithoutBikeHiresInput, AccountUncheckedUpdateWithoutBikeHiresInput>
+    create: XOR<AccountCreateWithoutBikeHiresInput, AccountUncheckedCreateWithoutBikeHiresInput>
+    where?: AccountWhereInput
+  }
+
+  export type AccountUpdateToOneWithWhereWithoutBikeHiresInput = {
+    where?: AccountWhereInput
+    data: XOR<AccountUpdateWithoutBikeHiresInput, AccountUncheckedUpdateWithoutBikeHiresInput>
+  }
+
+  export type AccountUpdateWithoutBikeHiresInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessions?: UserSessionUpdateManyWithoutAccountNestedInput
+    registrations?: RegistrationUpdateManyWithoutAccountNestedInput
+    participations?: RegistrationUpdateManyWithoutParticipantAccountNestedInput
+    raffleTickets?: RaffleTicketUpdateManyWithoutAccountNestedInput
+    donations?: DonationUpdateManyWithoutAccountNestedInput
+  }
+
+  export type AccountUncheckedUpdateWithoutBikeHiresInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sessions?: UserSessionUncheckedUpdateManyWithoutAccountNestedInput
+    registrations?: RegistrationUncheckedUpdateManyWithoutAccountNestedInput
+    participations?: RegistrationUncheckedUpdateManyWithoutParticipantAccountNestedInput
+    raffleTickets?: RaffleTicketUncheckedUpdateManyWithoutAccountNestedInput
+    donations?: DonationUncheckedUpdateManyWithoutAccountNestedInput
+  }
+
+  export type UserSessionCreateWithoutAccountInput = {
+    id?: string
+    token: string
+    expiresAt: Date | string
+    createdAt?: Date | string
+  }
+
+  export type UserSessionUncheckedCreateWithoutAccountInput = {
+    id?: string
+    token: string
+    expiresAt: Date | string
+    createdAt?: Date | string
+  }
+
+  export type UserSessionCreateOrConnectWithoutAccountInput = {
+    where: UserSessionWhereUniqueInput
+    create: XOR<UserSessionCreateWithoutAccountInput, UserSessionUncheckedCreateWithoutAccountInput>
+  }
+
+  export type UserSessionCreateManyAccountInputEnvelope = {
+    data: UserSessionCreateManyAccountInput | UserSessionCreateManyAccountInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type RegistrationCreateWithoutAccountInput = {
+    id: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    circuitId: string
+    type: string
+    status?: $Enums.RegistrationStatus
+    firstName: string
+    lastName: string
+    email?: string | null
+    phoneNumber?: string | null
+    idNumber?: string | null
+    dob?: string | null
+    gender?: string | null
+    groupId?: string | null
+    teamName?: string | null
+    isCaptain?: boolean
+    guardianName?: string | null
+    emergencyPhone?: string | null
+    relationship?: string | null
+    category?: string | null
+    totalAmount?: number
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    pricing?: NullableJsonNullValueInput | InputJsonValue
+    classifications?: NullableJsonNullValueInput | InputJsonValue
+    emergencyContactName?: string | null
+    tshirtSize?: string | null
+    mpesaCode?: string | null
+    isMilitary?: boolean
+    rank?: string | null
+    service?: string | null
+    serviceNumber?: string | null
+    unit?: string | null
+    bibNumber?: string | null
+    eventYear?: number
+    bikeHire?: BikeHireCreateNestedOneWithoutRegistrationInput
+    participantAccount?: AccountCreateNestedOneWithoutParticipationsInput
+  }
+
+  export type RegistrationUncheckedCreateWithoutAccountInput = {
+    id: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    circuitId: string
+    type: string
+    status?: $Enums.RegistrationStatus
+    firstName: string
+    lastName: string
+    email?: string | null
+    phoneNumber?: string | null
+    idNumber?: string | null
+    dob?: string | null
+    gender?: string | null
+    groupId?: string | null
+    teamName?: string | null
+    isCaptain?: boolean
+    guardianName?: string | null
+    emergencyPhone?: string | null
+    relationship?: string | null
+    category?: string | null
+    totalAmount?: number
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    pricing?: NullableJsonNullValueInput | InputJsonValue
+    classifications?: NullableJsonNullValueInput | InputJsonValue
+    emergencyContactName?: string | null
+    tshirtSize?: string | null
+    mpesaCode?: string | null
+    isMilitary?: boolean
+    rank?: string | null
+    service?: string | null
+    serviceNumber?: string | null
+    unit?: string | null
+    bibNumber?: string | null
+    eventYear?: number
+    participantAccountId?: string | null
+    bikeHire?: BikeHireUncheckedCreateNestedOneWithoutRegistrationInput
+  }
+
+  export type RegistrationCreateOrConnectWithoutAccountInput = {
+    where: RegistrationWhereUniqueInput
+    create: XOR<RegistrationCreateWithoutAccountInput, RegistrationUncheckedCreateWithoutAccountInput>
+  }
+
+  export type RegistrationCreateManyAccountInputEnvelope = {
+    data: RegistrationCreateManyAccountInput | RegistrationCreateManyAccountInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type RegistrationCreateWithoutParticipantAccountInput = {
+    id: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    circuitId: string
+    type: string
+    status?: $Enums.RegistrationStatus
+    firstName: string
+    lastName: string
+    email?: string | null
+    phoneNumber?: string | null
+    idNumber?: string | null
+    dob?: string | null
+    gender?: string | null
+    groupId?: string | null
+    teamName?: string | null
+    isCaptain?: boolean
+    guardianName?: string | null
+    emergencyPhone?: string | null
+    relationship?: string | null
+    category?: string | null
+    totalAmount?: number
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    pricing?: NullableJsonNullValueInput | InputJsonValue
+    classifications?: NullableJsonNullValueInput | InputJsonValue
+    emergencyContactName?: string | null
+    tshirtSize?: string | null
+    mpesaCode?: string | null
+    isMilitary?: boolean
+    rank?: string | null
+    service?: string | null
+    serviceNumber?: string | null
+    unit?: string | null
+    bibNumber?: string | null
+    eventYear?: number
+    bikeHire?: BikeHireCreateNestedOneWithoutRegistrationInput
+    account?: AccountCreateNestedOneWithoutRegistrationsInput
+  }
+
+  export type RegistrationUncheckedCreateWithoutParticipantAccountInput = {
+    id: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    circuitId: string
+    type: string
+    status?: $Enums.RegistrationStatus
+    firstName: string
+    lastName: string
+    email?: string | null
+    phoneNumber?: string | null
+    idNumber?: string | null
+    dob?: string | null
+    gender?: string | null
+    groupId?: string | null
+    teamName?: string | null
+    isCaptain?: boolean
+    guardianName?: string | null
+    emergencyPhone?: string | null
+    relationship?: string | null
+    category?: string | null
+    totalAmount?: number
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    pricing?: NullableJsonNullValueInput | InputJsonValue
+    classifications?: NullableJsonNullValueInput | InputJsonValue
+    emergencyContactName?: string | null
+    tshirtSize?: string | null
+    mpesaCode?: string | null
+    isMilitary?: boolean
+    rank?: string | null
+    service?: string | null
+    serviceNumber?: string | null
+    unit?: string | null
+    bibNumber?: string | null
+    eventYear?: number
+    accountId?: string | null
+    bikeHire?: BikeHireUncheckedCreateNestedOneWithoutRegistrationInput
+  }
+
+  export type RegistrationCreateOrConnectWithoutParticipantAccountInput = {
+    where: RegistrationWhereUniqueInput
+    create: XOR<RegistrationCreateWithoutParticipantAccountInput, RegistrationUncheckedCreateWithoutParticipantAccountInput>
+  }
+
+  export type RegistrationCreateManyParticipantAccountInputEnvelope = {
+    data: RegistrationCreateManyParticipantAccountInput | RegistrationCreateManyParticipantAccountInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type RaffleTicketCreateWithoutAccountInput = {
+    id: string
+    firstName: string
+    lastName: string
+    email: string
+    phoneNumber?: string | null
+    status?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    checkoutRequestId?: string | null
+    paymentFailed?: boolean
+    gender?: string | null
+    idNumber?: string | null
+    failureReason?: string | null
+    mpesaCode?: string | null
+    paymentDetails?: NullableJsonNullValueInput | InputJsonValue
+    referralCode?: string | null
+    ticketNumber?: string | null
+    eventYear?: number
+  }
+
+  export type RaffleTicketUncheckedCreateWithoutAccountInput = {
+    id: string
+    firstName: string
+    lastName: string
+    email: string
+    phoneNumber?: string | null
+    status?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    checkoutRequestId?: string | null
+    paymentFailed?: boolean
+    gender?: string | null
+    idNumber?: string | null
+    failureReason?: string | null
+    mpesaCode?: string | null
+    paymentDetails?: NullableJsonNullValueInput | InputJsonValue
+    referralCode?: string | null
+    ticketNumber?: string | null
+    eventYear?: number
+  }
+
+  export type RaffleTicketCreateOrConnectWithoutAccountInput = {
+    where: RaffleTicketWhereUniqueInput
+    create: XOR<RaffleTicketCreateWithoutAccountInput, RaffleTicketUncheckedCreateWithoutAccountInput>
+  }
+
+  export type RaffleTicketCreateManyAccountInputEnvelope = {
+    data: RaffleTicketCreateManyAccountInput | RaffleTicketCreateManyAccountInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type DonationCreateWithoutAccountInput = {
+    id?: string
+    amount: number
+    name?: string | null
+    email?: string | null
+    phone?: string | null
+    status?: string
+    checkoutRequestId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    failureReason?: string | null
+    mpesaCode?: string | null
+    paymentDetails?: NullableJsonNullValueInput | InputJsonValue
+    eventYear?: number
+  }
+
+  export type DonationUncheckedCreateWithoutAccountInput = {
+    id?: string
+    amount: number
+    name?: string | null
+    email?: string | null
+    phone?: string | null
+    status?: string
+    checkoutRequestId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    failureReason?: string | null
+    mpesaCode?: string | null
+    paymentDetails?: NullableJsonNullValueInput | InputJsonValue
+    eventYear?: number
+  }
+
+  export type DonationCreateOrConnectWithoutAccountInput = {
+    where: DonationWhereUniqueInput
+    create: XOR<DonationCreateWithoutAccountInput, DonationUncheckedCreateWithoutAccountInput>
+  }
+
+  export type DonationCreateManyAccountInputEnvelope = {
+    data: DonationCreateManyAccountInput | DonationCreateManyAccountInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type BikeHireCreateWithoutAccountInput = {
+    id?: string
+    bikeType?: string
+    status?: string
+    amount?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    checkoutRequestId?: string | null
+    eventYear?: number
+    registration: RegistrationCreateNestedOneWithoutBikeHireInput
+  }
+
+  export type BikeHireUncheckedCreateWithoutAccountInput = {
+    id?: string
+    registrationId: string
+    bikeType?: string
+    status?: string
+    amount?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    checkoutRequestId?: string | null
+    eventYear?: number
+  }
+
+  export type BikeHireCreateOrConnectWithoutAccountInput = {
+    where: BikeHireWhereUniqueInput
+    create: XOR<BikeHireCreateWithoutAccountInput, BikeHireUncheckedCreateWithoutAccountInput>
+  }
+
+  export type BikeHireCreateManyAccountInputEnvelope = {
+    data: BikeHireCreateManyAccountInput | BikeHireCreateManyAccountInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type UserSessionUpsertWithWhereUniqueWithoutAccountInput = {
+    where: UserSessionWhereUniqueInput
+    update: XOR<UserSessionUpdateWithoutAccountInput, UserSessionUncheckedUpdateWithoutAccountInput>
+    create: XOR<UserSessionCreateWithoutAccountInput, UserSessionUncheckedCreateWithoutAccountInput>
+  }
+
+  export type UserSessionUpdateWithWhereUniqueWithoutAccountInput = {
+    where: UserSessionWhereUniqueInput
+    data: XOR<UserSessionUpdateWithoutAccountInput, UserSessionUncheckedUpdateWithoutAccountInput>
+  }
+
+  export type UserSessionUpdateManyWithWhereWithoutAccountInput = {
+    where: UserSessionScalarWhereInput
+    data: XOR<UserSessionUpdateManyMutationInput, UserSessionUncheckedUpdateManyWithoutAccountInput>
+  }
+
+  export type UserSessionScalarWhereInput = {
+    AND?: UserSessionScalarWhereInput | UserSessionScalarWhereInput[]
+    OR?: UserSessionScalarWhereInput[]
+    NOT?: UserSessionScalarWhereInput | UserSessionScalarWhereInput[]
+    id?: StringFilter<"UserSession"> | string
+    accountId?: StringFilter<"UserSession"> | string
+    token?: StringFilter<"UserSession"> | string
+    expiresAt?: DateTimeFilter<"UserSession"> | Date | string
+    createdAt?: DateTimeFilter<"UserSession"> | Date | string
+  }
+
+  export type RegistrationUpsertWithWhereUniqueWithoutAccountInput = {
+    where: RegistrationWhereUniqueInput
+    update: XOR<RegistrationUpdateWithoutAccountInput, RegistrationUncheckedUpdateWithoutAccountInput>
+    create: XOR<RegistrationCreateWithoutAccountInput, RegistrationUncheckedCreateWithoutAccountInput>
+  }
+
+  export type RegistrationUpdateWithWhereUniqueWithoutAccountInput = {
+    where: RegistrationWhereUniqueInput
+    data: XOR<RegistrationUpdateWithoutAccountInput, RegistrationUncheckedUpdateWithoutAccountInput>
+  }
+
+  export type RegistrationUpdateManyWithWhereWithoutAccountInput = {
+    where: RegistrationScalarWhereInput
+    data: XOR<RegistrationUpdateManyMutationInput, RegistrationUncheckedUpdateManyWithoutAccountInput>
+  }
+
+  export type RegistrationScalarWhereInput = {
+    AND?: RegistrationScalarWhereInput | RegistrationScalarWhereInput[]
+    OR?: RegistrationScalarWhereInput[]
+    NOT?: RegistrationScalarWhereInput | RegistrationScalarWhereInput[]
+    id?: StringFilter<"Registration"> | string
+    createdAt?: DateTimeFilter<"Registration"> | Date | string
+    updatedAt?: DateTimeFilter<"Registration"> | Date | string
+    circuitId?: StringFilter<"Registration"> | string
+    type?: StringFilter<"Registration"> | string
+    status?: EnumRegistrationStatusFilter<"Registration"> | $Enums.RegistrationStatus
+    firstName?: StringFilter<"Registration"> | string
+    lastName?: StringFilter<"Registration"> | string
+    email?: StringNullableFilter<"Registration"> | string | null
+    phoneNumber?: StringNullableFilter<"Registration"> | string | null
+    idNumber?: StringNullableFilter<"Registration"> | string | null
+    dob?: StringNullableFilter<"Registration"> | string | null
+    gender?: StringNullableFilter<"Registration"> | string | null
+    groupId?: StringNullableFilter<"Registration"> | string | null
+    teamName?: StringNullableFilter<"Registration"> | string | null
+    isCaptain?: BoolFilter<"Registration"> | boolean
+    guardianName?: StringNullableFilter<"Registration"> | string | null
+    emergencyPhone?: StringNullableFilter<"Registration"> | string | null
+    relationship?: StringNullableFilter<"Registration"> | string | null
+    category?: StringNullableFilter<"Registration"> | string | null
+    totalAmount?: FloatFilter<"Registration"> | number
+    payload?: JsonNullableFilter<"Registration">
+    pricing?: JsonNullableFilter<"Registration">
+    classifications?: JsonNullableFilter<"Registration">
+    emergencyContactName?: StringNullableFilter<"Registration"> | string | null
+    tshirtSize?: StringNullableFilter<"Registration"> | string | null
+    mpesaCode?: StringNullableFilter<"Registration"> | string | null
+    isMilitary?: BoolFilter<"Registration"> | boolean
+    rank?: StringNullableFilter<"Registration"> | string | null
+    service?: StringNullableFilter<"Registration"> | string | null
+    serviceNumber?: StringNullableFilter<"Registration"> | string | null
+    unit?: StringNullableFilter<"Registration"> | string | null
+    bibNumber?: StringNullableFilter<"Registration"> | string | null
+    eventYear?: IntFilter<"Registration"> | number
+    accountId?: StringNullableFilter<"Registration"> | string | null
+    participantAccountId?: StringNullableFilter<"Registration"> | string | null
+  }
+
+  export type RegistrationUpsertWithWhereUniqueWithoutParticipantAccountInput = {
+    where: RegistrationWhereUniqueInput
+    update: XOR<RegistrationUpdateWithoutParticipantAccountInput, RegistrationUncheckedUpdateWithoutParticipantAccountInput>
+    create: XOR<RegistrationCreateWithoutParticipantAccountInput, RegistrationUncheckedCreateWithoutParticipantAccountInput>
+  }
+
+  export type RegistrationUpdateWithWhereUniqueWithoutParticipantAccountInput = {
+    where: RegistrationWhereUniqueInput
+    data: XOR<RegistrationUpdateWithoutParticipantAccountInput, RegistrationUncheckedUpdateWithoutParticipantAccountInput>
+  }
+
+  export type RegistrationUpdateManyWithWhereWithoutParticipantAccountInput = {
+    where: RegistrationScalarWhereInput
+    data: XOR<RegistrationUpdateManyMutationInput, RegistrationUncheckedUpdateManyWithoutParticipantAccountInput>
+  }
+
+  export type RaffleTicketUpsertWithWhereUniqueWithoutAccountInput = {
+    where: RaffleTicketWhereUniqueInput
+    update: XOR<RaffleTicketUpdateWithoutAccountInput, RaffleTicketUncheckedUpdateWithoutAccountInput>
+    create: XOR<RaffleTicketCreateWithoutAccountInput, RaffleTicketUncheckedCreateWithoutAccountInput>
+  }
+
+  export type RaffleTicketUpdateWithWhereUniqueWithoutAccountInput = {
+    where: RaffleTicketWhereUniqueInput
+    data: XOR<RaffleTicketUpdateWithoutAccountInput, RaffleTicketUncheckedUpdateWithoutAccountInput>
+  }
+
+  export type RaffleTicketUpdateManyWithWhereWithoutAccountInput = {
+    where: RaffleTicketScalarWhereInput
+    data: XOR<RaffleTicketUpdateManyMutationInput, RaffleTicketUncheckedUpdateManyWithoutAccountInput>
+  }
+
+  export type RaffleTicketScalarWhereInput = {
+    AND?: RaffleTicketScalarWhereInput | RaffleTicketScalarWhereInput[]
+    OR?: RaffleTicketScalarWhereInput[]
+    NOT?: RaffleTicketScalarWhereInput | RaffleTicketScalarWhereInput[]
+    id?: StringFilter<"RaffleTicket"> | string
+    firstName?: StringFilter<"RaffleTicket"> | string
+    lastName?: StringFilter<"RaffleTicket"> | string
+    email?: StringFilter<"RaffleTicket"> | string
+    phoneNumber?: StringNullableFilter<"RaffleTicket"> | string | null
+    status?: StringFilter<"RaffleTicket"> | string
+    createdAt?: DateTimeFilter<"RaffleTicket"> | Date | string
+    updatedAt?: DateTimeFilter<"RaffleTicket"> | Date | string
+    checkoutRequestId?: StringNullableFilter<"RaffleTicket"> | string | null
+    paymentFailed?: BoolFilter<"RaffleTicket"> | boolean
+    gender?: StringNullableFilter<"RaffleTicket"> | string | null
+    idNumber?: StringNullableFilter<"RaffleTicket"> | string | null
+    failureReason?: StringNullableFilter<"RaffleTicket"> | string | null
+    mpesaCode?: StringNullableFilter<"RaffleTicket"> | string | null
+    paymentDetails?: JsonNullableFilter<"RaffleTicket">
+    referralCode?: StringNullableFilter<"RaffleTicket"> | string | null
+    ticketNumber?: StringNullableFilter<"RaffleTicket"> | string | null
+    eventYear?: IntFilter<"RaffleTicket"> | number
+    accountId?: StringNullableFilter<"RaffleTicket"> | string | null
+  }
+
+  export type DonationUpsertWithWhereUniqueWithoutAccountInput = {
+    where: DonationWhereUniqueInput
+    update: XOR<DonationUpdateWithoutAccountInput, DonationUncheckedUpdateWithoutAccountInput>
+    create: XOR<DonationCreateWithoutAccountInput, DonationUncheckedCreateWithoutAccountInput>
+  }
+
+  export type DonationUpdateWithWhereUniqueWithoutAccountInput = {
+    where: DonationWhereUniqueInput
+    data: XOR<DonationUpdateWithoutAccountInput, DonationUncheckedUpdateWithoutAccountInput>
+  }
+
+  export type DonationUpdateManyWithWhereWithoutAccountInput = {
+    where: DonationScalarWhereInput
+    data: XOR<DonationUpdateManyMutationInput, DonationUncheckedUpdateManyWithoutAccountInput>
+  }
+
+  export type DonationScalarWhereInput = {
+    AND?: DonationScalarWhereInput | DonationScalarWhereInput[]
+    OR?: DonationScalarWhereInput[]
+    NOT?: DonationScalarWhereInput | DonationScalarWhereInput[]
+    id?: StringFilter<"Donation"> | string
+    amount?: FloatFilter<"Donation"> | number
+    name?: StringNullableFilter<"Donation"> | string | null
+    email?: StringNullableFilter<"Donation"> | string | null
+    phone?: StringNullableFilter<"Donation"> | string | null
+    status?: StringFilter<"Donation"> | string
+    checkoutRequestId?: StringNullableFilter<"Donation"> | string | null
+    createdAt?: DateTimeFilter<"Donation"> | Date | string
+    updatedAt?: DateTimeFilter<"Donation"> | Date | string
+    failureReason?: StringNullableFilter<"Donation"> | string | null
+    mpesaCode?: StringNullableFilter<"Donation"> | string | null
+    paymentDetails?: JsonNullableFilter<"Donation">
+    eventYear?: IntFilter<"Donation"> | number
+    accountId?: StringNullableFilter<"Donation"> | string | null
+  }
+
+  export type BikeHireUpsertWithWhereUniqueWithoutAccountInput = {
+    where: BikeHireWhereUniqueInput
+    update: XOR<BikeHireUpdateWithoutAccountInput, BikeHireUncheckedUpdateWithoutAccountInput>
+    create: XOR<BikeHireCreateWithoutAccountInput, BikeHireUncheckedCreateWithoutAccountInput>
+  }
+
+  export type BikeHireUpdateWithWhereUniqueWithoutAccountInput = {
+    where: BikeHireWhereUniqueInput
+    data: XOR<BikeHireUpdateWithoutAccountInput, BikeHireUncheckedUpdateWithoutAccountInput>
+  }
+
+  export type BikeHireUpdateManyWithWhereWithoutAccountInput = {
+    where: BikeHireScalarWhereInput
+    data: XOR<BikeHireUpdateManyMutationInput, BikeHireUncheckedUpdateManyWithoutAccountInput>
+  }
+
+  export type BikeHireScalarWhereInput = {
+    AND?: BikeHireScalarWhereInput | BikeHireScalarWhereInput[]
+    OR?: BikeHireScalarWhereInput[]
+    NOT?: BikeHireScalarWhereInput | BikeHireScalarWhereInput[]
+    id?: StringFilter<"BikeHire"> | string
+    registrationId?: StringFilter<"BikeHire"> | string
+    bikeType?: StringFilter<"BikeHire"> | string
+    status?: StringFilter<"BikeHire"> | string
+    amount?: FloatFilter<"BikeHire"> | number
+    createdAt?: DateTimeFilter<"BikeHire"> | Date | string
+    updatedAt?: DateTimeFilter<"BikeHire"> | Date | string
+    checkoutRequestId?: StringNullableFilter<"BikeHire"> | string | null
+    eventYear?: IntFilter<"BikeHire"> | number
+    accountId?: StringNullableFilter<"BikeHire"> | string | null
+  }
+
+  export type AccountCreateWithoutSessionsInput = {
+    id?: string
+    firstName: string
+    lastName: string
+    email?: string | null
+    phone?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    registrations?: RegistrationCreateNestedManyWithoutAccountInput
+    participations?: RegistrationCreateNestedManyWithoutParticipantAccountInput
+    raffleTickets?: RaffleTicketCreateNestedManyWithoutAccountInput
+    donations?: DonationCreateNestedManyWithoutAccountInput
+    bikeHires?: BikeHireCreateNestedManyWithoutAccountInput
+  }
+
+  export type AccountUncheckedCreateWithoutSessionsInput = {
+    id?: string
+    firstName: string
+    lastName: string
+    email?: string | null
+    phone?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lastLoginAt?: Date | string | null
+    registrations?: RegistrationUncheckedCreateNestedManyWithoutAccountInput
+    participations?: RegistrationUncheckedCreateNestedManyWithoutParticipantAccountInput
+    raffleTickets?: RaffleTicketUncheckedCreateNestedManyWithoutAccountInput
+    donations?: DonationUncheckedCreateNestedManyWithoutAccountInput
+    bikeHires?: BikeHireUncheckedCreateNestedManyWithoutAccountInput
+  }
+
+  export type AccountCreateOrConnectWithoutSessionsInput = {
+    where: AccountWhereUniqueInput
+    create: XOR<AccountCreateWithoutSessionsInput, AccountUncheckedCreateWithoutSessionsInput>
+  }
+
+  export type AccountUpsertWithoutSessionsInput = {
+    update: XOR<AccountUpdateWithoutSessionsInput, AccountUncheckedUpdateWithoutSessionsInput>
+    create: XOR<AccountCreateWithoutSessionsInput, AccountUncheckedCreateWithoutSessionsInput>
+    where?: AccountWhereInput
+  }
+
+  export type AccountUpdateToOneWithWhereWithoutSessionsInput = {
+    where?: AccountWhereInput
+    data: XOR<AccountUpdateWithoutSessionsInput, AccountUncheckedUpdateWithoutSessionsInput>
+  }
+
+  export type AccountUpdateWithoutSessionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    registrations?: RegistrationUpdateManyWithoutAccountNestedInput
+    participations?: RegistrationUpdateManyWithoutParticipantAccountNestedInput
+    raffleTickets?: RaffleTicketUpdateManyWithoutAccountNestedInput
+    donations?: DonationUpdateManyWithoutAccountNestedInput
+    bikeHires?: BikeHireUpdateManyWithoutAccountNestedInput
+  }
+
+  export type AccountUncheckedUpdateWithoutSessionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    registrations?: RegistrationUncheckedUpdateManyWithoutAccountNestedInput
+    participations?: RegistrationUncheckedUpdateManyWithoutParticipantAccountNestedInput
+    raffleTickets?: RaffleTicketUncheckedUpdateManyWithoutAccountNestedInput
+    donations?: DonationUncheckedUpdateManyWithoutAccountNestedInput
+    bikeHires?: BikeHireUncheckedUpdateManyWithoutAccountNestedInput
   }
 
   export type AdminSessionCreateManyAdminInput = {
@@ -22147,6 +30172,538 @@ export namespace Prisma {
     token?: StringFieldUpdateOperationsInput | string
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserSessionCreateManyAccountInput = {
+    id?: string
+    token: string
+    expiresAt: Date | string
+    createdAt?: Date | string
+  }
+
+  export type RegistrationCreateManyAccountInput = {
+    id: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    circuitId: string
+    type: string
+    status?: $Enums.RegistrationStatus
+    firstName: string
+    lastName: string
+    email?: string | null
+    phoneNumber?: string | null
+    idNumber?: string | null
+    dob?: string | null
+    gender?: string | null
+    groupId?: string | null
+    teamName?: string | null
+    isCaptain?: boolean
+    guardianName?: string | null
+    emergencyPhone?: string | null
+    relationship?: string | null
+    category?: string | null
+    totalAmount?: number
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    pricing?: NullableJsonNullValueInput | InputJsonValue
+    classifications?: NullableJsonNullValueInput | InputJsonValue
+    emergencyContactName?: string | null
+    tshirtSize?: string | null
+    mpesaCode?: string | null
+    isMilitary?: boolean
+    rank?: string | null
+    service?: string | null
+    serviceNumber?: string | null
+    unit?: string | null
+    bibNumber?: string | null
+    eventYear?: number
+    participantAccountId?: string | null
+  }
+
+  export type RegistrationCreateManyParticipantAccountInput = {
+    id: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    circuitId: string
+    type: string
+    status?: $Enums.RegistrationStatus
+    firstName: string
+    lastName: string
+    email?: string | null
+    phoneNumber?: string | null
+    idNumber?: string | null
+    dob?: string | null
+    gender?: string | null
+    groupId?: string | null
+    teamName?: string | null
+    isCaptain?: boolean
+    guardianName?: string | null
+    emergencyPhone?: string | null
+    relationship?: string | null
+    category?: string | null
+    totalAmount?: number
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    pricing?: NullableJsonNullValueInput | InputJsonValue
+    classifications?: NullableJsonNullValueInput | InputJsonValue
+    emergencyContactName?: string | null
+    tshirtSize?: string | null
+    mpesaCode?: string | null
+    isMilitary?: boolean
+    rank?: string | null
+    service?: string | null
+    serviceNumber?: string | null
+    unit?: string | null
+    bibNumber?: string | null
+    eventYear?: number
+    accountId?: string | null
+  }
+
+  export type RaffleTicketCreateManyAccountInput = {
+    id: string
+    firstName: string
+    lastName: string
+    email: string
+    phoneNumber?: string | null
+    status?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    checkoutRequestId?: string | null
+    paymentFailed?: boolean
+    gender?: string | null
+    idNumber?: string | null
+    failureReason?: string | null
+    mpesaCode?: string | null
+    paymentDetails?: NullableJsonNullValueInput | InputJsonValue
+    referralCode?: string | null
+    ticketNumber?: string | null
+    eventYear?: number
+  }
+
+  export type DonationCreateManyAccountInput = {
+    id?: string
+    amount: number
+    name?: string | null
+    email?: string | null
+    phone?: string | null
+    status?: string
+    checkoutRequestId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    failureReason?: string | null
+    mpesaCode?: string | null
+    paymentDetails?: NullableJsonNullValueInput | InputJsonValue
+    eventYear?: number
+  }
+
+  export type BikeHireCreateManyAccountInput = {
+    id?: string
+    registrationId: string
+    bikeType?: string
+    status?: string
+    amount?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    checkoutRequestId?: string | null
+    eventYear?: number
+  }
+
+  export type UserSessionUpdateWithoutAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserSessionUncheckedUpdateWithoutAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserSessionUncheckedUpdateManyWithoutAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    token?: StringFieldUpdateOperationsInput | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RegistrationUpdateWithoutAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    circuitId?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    status?: EnumRegistrationStatusFieldUpdateOperationsInput | $Enums.RegistrationStatus
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    idNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    dob?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    groupId?: NullableStringFieldUpdateOperationsInput | string | null
+    teamName?: NullableStringFieldUpdateOperationsInput | string | null
+    isCaptain?: BoolFieldUpdateOperationsInput | boolean
+    guardianName?: NullableStringFieldUpdateOperationsInput | string | null
+    emergencyPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    relationship?: NullableStringFieldUpdateOperationsInput | string | null
+    category?: NullableStringFieldUpdateOperationsInput | string | null
+    totalAmount?: FloatFieldUpdateOperationsInput | number
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    pricing?: NullableJsonNullValueInput | InputJsonValue
+    classifications?: NullableJsonNullValueInput | InputJsonValue
+    emergencyContactName?: NullableStringFieldUpdateOperationsInput | string | null
+    tshirtSize?: NullableStringFieldUpdateOperationsInput | string | null
+    mpesaCode?: NullableStringFieldUpdateOperationsInput | string | null
+    isMilitary?: BoolFieldUpdateOperationsInput | boolean
+    rank?: NullableStringFieldUpdateOperationsInput | string | null
+    service?: NullableStringFieldUpdateOperationsInput | string | null
+    serviceNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    unit?: NullableStringFieldUpdateOperationsInput | string | null
+    bibNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
+    bikeHire?: BikeHireUpdateOneWithoutRegistrationNestedInput
+    participantAccount?: AccountUpdateOneWithoutParticipationsNestedInput
+  }
+
+  export type RegistrationUncheckedUpdateWithoutAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    circuitId?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    status?: EnumRegistrationStatusFieldUpdateOperationsInput | $Enums.RegistrationStatus
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    idNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    dob?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    groupId?: NullableStringFieldUpdateOperationsInput | string | null
+    teamName?: NullableStringFieldUpdateOperationsInput | string | null
+    isCaptain?: BoolFieldUpdateOperationsInput | boolean
+    guardianName?: NullableStringFieldUpdateOperationsInput | string | null
+    emergencyPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    relationship?: NullableStringFieldUpdateOperationsInput | string | null
+    category?: NullableStringFieldUpdateOperationsInput | string | null
+    totalAmount?: FloatFieldUpdateOperationsInput | number
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    pricing?: NullableJsonNullValueInput | InputJsonValue
+    classifications?: NullableJsonNullValueInput | InputJsonValue
+    emergencyContactName?: NullableStringFieldUpdateOperationsInput | string | null
+    tshirtSize?: NullableStringFieldUpdateOperationsInput | string | null
+    mpesaCode?: NullableStringFieldUpdateOperationsInput | string | null
+    isMilitary?: BoolFieldUpdateOperationsInput | boolean
+    rank?: NullableStringFieldUpdateOperationsInput | string | null
+    service?: NullableStringFieldUpdateOperationsInput | string | null
+    serviceNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    unit?: NullableStringFieldUpdateOperationsInput | string | null
+    bibNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
+    participantAccountId?: NullableStringFieldUpdateOperationsInput | string | null
+    bikeHire?: BikeHireUncheckedUpdateOneWithoutRegistrationNestedInput
+  }
+
+  export type RegistrationUncheckedUpdateManyWithoutAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    circuitId?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    status?: EnumRegistrationStatusFieldUpdateOperationsInput | $Enums.RegistrationStatus
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    idNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    dob?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    groupId?: NullableStringFieldUpdateOperationsInput | string | null
+    teamName?: NullableStringFieldUpdateOperationsInput | string | null
+    isCaptain?: BoolFieldUpdateOperationsInput | boolean
+    guardianName?: NullableStringFieldUpdateOperationsInput | string | null
+    emergencyPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    relationship?: NullableStringFieldUpdateOperationsInput | string | null
+    category?: NullableStringFieldUpdateOperationsInput | string | null
+    totalAmount?: FloatFieldUpdateOperationsInput | number
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    pricing?: NullableJsonNullValueInput | InputJsonValue
+    classifications?: NullableJsonNullValueInput | InputJsonValue
+    emergencyContactName?: NullableStringFieldUpdateOperationsInput | string | null
+    tshirtSize?: NullableStringFieldUpdateOperationsInput | string | null
+    mpesaCode?: NullableStringFieldUpdateOperationsInput | string | null
+    isMilitary?: BoolFieldUpdateOperationsInput | boolean
+    rank?: NullableStringFieldUpdateOperationsInput | string | null
+    service?: NullableStringFieldUpdateOperationsInput | string | null
+    serviceNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    unit?: NullableStringFieldUpdateOperationsInput | string | null
+    bibNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
+    participantAccountId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type RegistrationUpdateWithoutParticipantAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    circuitId?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    status?: EnumRegistrationStatusFieldUpdateOperationsInput | $Enums.RegistrationStatus
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    idNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    dob?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    groupId?: NullableStringFieldUpdateOperationsInput | string | null
+    teamName?: NullableStringFieldUpdateOperationsInput | string | null
+    isCaptain?: BoolFieldUpdateOperationsInput | boolean
+    guardianName?: NullableStringFieldUpdateOperationsInput | string | null
+    emergencyPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    relationship?: NullableStringFieldUpdateOperationsInput | string | null
+    category?: NullableStringFieldUpdateOperationsInput | string | null
+    totalAmount?: FloatFieldUpdateOperationsInput | number
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    pricing?: NullableJsonNullValueInput | InputJsonValue
+    classifications?: NullableJsonNullValueInput | InputJsonValue
+    emergencyContactName?: NullableStringFieldUpdateOperationsInput | string | null
+    tshirtSize?: NullableStringFieldUpdateOperationsInput | string | null
+    mpesaCode?: NullableStringFieldUpdateOperationsInput | string | null
+    isMilitary?: BoolFieldUpdateOperationsInput | boolean
+    rank?: NullableStringFieldUpdateOperationsInput | string | null
+    service?: NullableStringFieldUpdateOperationsInput | string | null
+    serviceNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    unit?: NullableStringFieldUpdateOperationsInput | string | null
+    bibNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
+    bikeHire?: BikeHireUpdateOneWithoutRegistrationNestedInput
+    account?: AccountUpdateOneWithoutRegistrationsNestedInput
+  }
+
+  export type RegistrationUncheckedUpdateWithoutParticipantAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    circuitId?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    status?: EnumRegistrationStatusFieldUpdateOperationsInput | $Enums.RegistrationStatus
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    idNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    dob?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    groupId?: NullableStringFieldUpdateOperationsInput | string | null
+    teamName?: NullableStringFieldUpdateOperationsInput | string | null
+    isCaptain?: BoolFieldUpdateOperationsInput | boolean
+    guardianName?: NullableStringFieldUpdateOperationsInput | string | null
+    emergencyPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    relationship?: NullableStringFieldUpdateOperationsInput | string | null
+    category?: NullableStringFieldUpdateOperationsInput | string | null
+    totalAmount?: FloatFieldUpdateOperationsInput | number
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    pricing?: NullableJsonNullValueInput | InputJsonValue
+    classifications?: NullableJsonNullValueInput | InputJsonValue
+    emergencyContactName?: NullableStringFieldUpdateOperationsInput | string | null
+    tshirtSize?: NullableStringFieldUpdateOperationsInput | string | null
+    mpesaCode?: NullableStringFieldUpdateOperationsInput | string | null
+    isMilitary?: BoolFieldUpdateOperationsInput | boolean
+    rank?: NullableStringFieldUpdateOperationsInput | string | null
+    service?: NullableStringFieldUpdateOperationsInput | string | null
+    serviceNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    unit?: NullableStringFieldUpdateOperationsInput | string | null
+    bibNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
+    accountId?: NullableStringFieldUpdateOperationsInput | string | null
+    bikeHire?: BikeHireUncheckedUpdateOneWithoutRegistrationNestedInput
+  }
+
+  export type RegistrationUncheckedUpdateManyWithoutParticipantAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    circuitId?: StringFieldUpdateOperationsInput | string
+    type?: StringFieldUpdateOperationsInput | string
+    status?: EnumRegistrationStatusFieldUpdateOperationsInput | $Enums.RegistrationStatus
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    idNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    dob?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    groupId?: NullableStringFieldUpdateOperationsInput | string | null
+    teamName?: NullableStringFieldUpdateOperationsInput | string | null
+    isCaptain?: BoolFieldUpdateOperationsInput | boolean
+    guardianName?: NullableStringFieldUpdateOperationsInput | string | null
+    emergencyPhone?: NullableStringFieldUpdateOperationsInput | string | null
+    relationship?: NullableStringFieldUpdateOperationsInput | string | null
+    category?: NullableStringFieldUpdateOperationsInput | string | null
+    totalAmount?: FloatFieldUpdateOperationsInput | number
+    payload?: NullableJsonNullValueInput | InputJsonValue
+    pricing?: NullableJsonNullValueInput | InputJsonValue
+    classifications?: NullableJsonNullValueInput | InputJsonValue
+    emergencyContactName?: NullableStringFieldUpdateOperationsInput | string | null
+    tshirtSize?: NullableStringFieldUpdateOperationsInput | string | null
+    mpesaCode?: NullableStringFieldUpdateOperationsInput | string | null
+    isMilitary?: BoolFieldUpdateOperationsInput | boolean
+    rank?: NullableStringFieldUpdateOperationsInput | string | null
+    service?: NullableStringFieldUpdateOperationsInput | string | null
+    serviceNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    unit?: NullableStringFieldUpdateOperationsInput | string | null
+    bibNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
+    accountId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type RaffleTicketUpdateWithoutAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkoutRequestId?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentFailed?: BoolFieldUpdateOperationsInput | boolean
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    idNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    failureReason?: NullableStringFieldUpdateOperationsInput | string | null
+    mpesaCode?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentDetails?: NullableJsonNullValueInput | InputJsonValue
+    referralCode?: NullableStringFieldUpdateOperationsInput | string | null
+    ticketNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type RaffleTicketUncheckedUpdateWithoutAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkoutRequestId?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentFailed?: BoolFieldUpdateOperationsInput | boolean
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    idNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    failureReason?: NullableStringFieldUpdateOperationsInput | string | null
+    mpesaCode?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentDetails?: NullableJsonNullValueInput | InputJsonValue
+    referralCode?: NullableStringFieldUpdateOperationsInput | string | null
+    ticketNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type RaffleTicketUncheckedUpdateManyWithoutAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    lastName?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    phoneNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkoutRequestId?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentFailed?: BoolFieldUpdateOperationsInput | boolean
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    idNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    failureReason?: NullableStringFieldUpdateOperationsInput | string | null
+    mpesaCode?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentDetails?: NullableJsonNullValueInput | InputJsonValue
+    referralCode?: NullableStringFieldUpdateOperationsInput | string | null
+    ticketNumber?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type DonationUpdateWithoutAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amount?: FloatFieldUpdateOperationsInput | number
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    checkoutRequestId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    failureReason?: NullableStringFieldUpdateOperationsInput | string | null
+    mpesaCode?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentDetails?: NullableJsonNullValueInput | InputJsonValue
+    eventYear?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type DonationUncheckedUpdateWithoutAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amount?: FloatFieldUpdateOperationsInput | number
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    checkoutRequestId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    failureReason?: NullableStringFieldUpdateOperationsInput | string | null
+    mpesaCode?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentDetails?: NullableJsonNullValueInput | InputJsonValue
+    eventYear?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type DonationUncheckedUpdateManyWithoutAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amount?: FloatFieldUpdateOperationsInput | number
+    name?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: StringFieldUpdateOperationsInput | string
+    checkoutRequestId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    failureReason?: NullableStringFieldUpdateOperationsInput | string | null
+    mpesaCode?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentDetails?: NullableJsonNullValueInput | InputJsonValue
+    eventYear?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type BikeHireUpdateWithoutAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    bikeType?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    amount?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkoutRequestId?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
+    registration?: RegistrationUpdateOneRequiredWithoutBikeHireNestedInput
+  }
+
+  export type BikeHireUncheckedUpdateWithoutAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    registrationId?: StringFieldUpdateOperationsInput | string
+    bikeType?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    amount?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkoutRequestId?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
+  }
+
+  export type BikeHireUncheckedUpdateManyWithoutAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    registrationId?: StringFieldUpdateOperationsInput | string
+    bikeType?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    amount?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    checkoutRequestId?: NullableStringFieldUpdateOperationsInput | string | null
+    eventYear?: IntFieldUpdateOperationsInput | number
   }
 
 

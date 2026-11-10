@@ -1,4 +1,5 @@
 import cron from 'node-cron';
+import { messagingDisabled } from '../utils/messaging.js';
 import { prisma } from '../storage/prisma.js';
 import { sendEmail, EmailType, sendRaffleEmail } from './emailService.js';
 import { smsService } from './smsService.js';
@@ -65,10 +66,9 @@ async function processPaymentReminders() {
 
         // Every 3 days (Day 3, 6, 9...)
         if (daysSinceRegistration > 0 && daysSinceRegistration % 3 === 0) {
-            const bib = getNumericId(reg.id);
             if (reg.phoneNumber) {
                 const link = await createShortLink(getLinkForEntity('cyclist', reg.id));
-                smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, your cycling registration (BIB: ${bib}) for RWTW is pending payment. Pay here: ${link}`);
+                smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, your cycling registration for RWTW is pending payment. Your BIB number is assigned once you pay. Pay here: ${link}`);
             }
             await sendEmail(reg.id, 'payment_reminder_periodic', {
                 id: reg.id,
@@ -212,7 +212,7 @@ async function processEventReminders() {
 
         if (reg.phoneNumber) {
             const times = getEventTime(reg.circuitId);
-            const bib = getNumericId(reg.id);
+            const bib = getNumericId(reg.bibNumber ?? reg.id);
             const isFamily = (reg.circuitId?.toLowerCase() || '') === 'family';
             const timeInfo = isFamily
                 ? `starts from ${times.flagOff}`
@@ -224,6 +224,7 @@ async function processEventReminders() {
 
         await sendEmail(reg.id, emailType, {
             id: reg.id,
+            bibNumber: reg.bibNumber,
             firstName: reg.firstName,
             lastName: reg.lastName,
             email: reg.email,
@@ -261,6 +262,10 @@ export async function runScheduledTasks() {
 
 // Initialize cron jobs
 export function initializeScheduler() {
+    if (messagingDisabled()) {
+        console.log('[Scheduler] MESSAGING_DISABLED: reminder cron jobs not started');
+        return;
+    }
     console.log('[Scheduler] Initializing cron jobs...');
 
     // Main job: payment reminders + 7d/1d event reminders at 8:00 AM daily
