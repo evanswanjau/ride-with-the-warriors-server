@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../../storage/prisma.js';
-import { requireAdmin, AuthenticatedRequest } from '../../middleware/auth.js';
+import { requireAdmin } from '../../middleware/auth.js';
 import { updateRegistration } from '../../storage/memoryRegistrations.js';
 
 export const adminRegistrationsRouter = Router();

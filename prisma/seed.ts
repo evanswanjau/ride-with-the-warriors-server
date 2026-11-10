@@ -1,14 +1,19 @@
-import { PrismaClient } from '@prisma/client';
+/**
+ * Base data every environment needs: an admin login and pricing categories.
+ * Safe to re-run. Local: `npm run db:seed` (uses .env.stack).
+ *
+ * Admin login (override with SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD):
+ *   admin@ridewithwarriors.com / Password@123
+ */
 import bcrypt from 'bcrypt';
-
-const prisma = new PrismaClient();
+import { prisma } from '../src/storage/prisma.js';
 
 async function main() {
     console.log('🌱 Starting database seeding...');
 
     // 1. Seed Admin User
-    const adminEmail = 'admin@ridewithwarriors.com';
-    const adminPassword = 'Password@123';
+    const adminEmail = process.env.SEED_ADMIN_EMAIL || 'admin@ridewithwarriors.com';
+    const adminPassword = process.env.SEED_ADMIN_PASSWORD || 'Password@123';
     const adminName = 'System Admin';
 
     const existingAdmin = await prisma.admin.findUnique({

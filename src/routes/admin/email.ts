@@ -530,7 +530,7 @@ emailRouter.post('/bulk-send', async (req, res) => {
                 });
             }
         } else {
-            let whereClause: any = {};
+            const whereClause: any = {};
             if (targetStatus === 'paid') whereClause.status = 'PAID';
             else if (targetStatus === 'unpaid') whereClause.status = 'UNPAID';
 
@@ -569,7 +569,7 @@ emailRouter.post('/bulk-send', async (req, res) => {
             }
         }
 
-        let validRecipients = finalRecipients.filter(r => {
+        const validRecipients = finalRecipients.filter(r => {
             if (mode === 'sms') return Boolean(r.phone);
             if (mode === 'email') return Boolean(r.email);
             if (mode === 'both') return Boolean(r.phone) || Boolean(r.email);

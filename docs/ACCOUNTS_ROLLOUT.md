@@ -73,9 +73,7 @@ the others log in by email). Safe to re-run.
 
 ## Testing locally
 
-```bash
-# Throwaway Postgres with the schema and pricing data, then:
-DATABASE_URL=postgresql://postgres:<pw>@localhost:54329/rwtw_test npx vitest run
-```
+See docs/LOCAL_DEV.md (`npm run setup`, then `npm run test:db`).
 Database tests refuse to run unless `DATABASE_URL` points at localhost (they delete data).
 Without `DATABASE_URL` they are skipped.
+

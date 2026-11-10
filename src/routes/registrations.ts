@@ -4,7 +4,7 @@ import { ZodError } from 'zod';
 import { quoteRequestSchema, riderDetailsSchema, teamDetailsSchema, familyDetailsSchema } from '../validation/registrationSchemas.js';
 import { zodToApiError } from '../validation/zodError.js';
 import { buildQuote, getPricingCategories } from '../services/pricing.js';
-import { createRegistration, getRegistration, getAllRegistrations, updateRegistration, findExistingRegistrationsByEmails, findExistingRegistrationsByIdNumbers, RegistrationRecord } from '../storage/memoryRegistrations.js';
+import { createRegistration, getRegistration, updateRegistration, findExistingRegistrationsByEmails, findExistingRegistrationsByIdNumbers } from '../storage/memoryRegistrations.js';
 import { dtbService } from '../services/dtbService.js';
 
 import { prisma } from '../storage/prisma.js';

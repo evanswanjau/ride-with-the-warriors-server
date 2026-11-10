@@ -913,9 +913,6 @@ export async function sendEmail(
     case 'reminder_day':
       emailContent = getEventReminderEmail(data, 0);
       break;
-    case 'payment_reminder_periodic':
-      emailContent = getPaymentReminderEmail(data, "Your registration is still pending payment. Complete it to secure your spot.");
-      break;
     default:
       console.error(`[Email] Unknown email type: ${type}`);
       return false;

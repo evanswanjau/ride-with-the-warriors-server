@@ -1,5 +1,5 @@
 import { prisma } from '../storage/prisma.js';
-// @ts-ignore - shorturly doesn't have types
+// @ts-expect-error - shorturly doesn't have types
 import Shurly from 'shorturly';
 
 const shurly = new Shurly();
