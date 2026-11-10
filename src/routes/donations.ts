@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../storage/prisma.js';
-import { dtbService } from '../services/dtbService.js';
+import { paymentGateway } from '../services/paymentGateway.js';
 import { optionalUser, UserRequest } from '../middleware/userAuth.js';
 
 
@@ -73,7 +73,7 @@ donationsRouter.post('/pay/stk-push', async (req, res) => {
         }
         // ─────────────────────────────────────────────────────────────────────────────
 
-        const result = await dtbService.initiateStkPush({
+        const result = await paymentGateway.initiateStkPush({
             registrationId: donationId, 
             amount: donation.amount,
             phoneNumber,

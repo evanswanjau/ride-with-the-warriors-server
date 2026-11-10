@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { randomUUID } from 'crypto';
 import { prisma } from '../storage/prisma.js';
-import { dtbService } from '../services/dtbService.js';
+import { paymentGateway } from '../services/paymentGateway.js';
 import { raffleRateLimiter } from '../middleware/rateLimit.js';
 import { assignTicketNumbers } from '../services/numbering.js';
 import { requireUser, UserRequest } from '../middleware/userAuth.js';
@@ -131,7 +131,7 @@ raffleRouter.post('/pay/stk-push', requireUser, async (req: UserRequest, res) =>
   // ─────────────────────────────────────────────────────────────────────────────
 
   try {
-    const result = await dtbService.initiateStkPush({
+    const result = await paymentGateway.initiateStkPush({
       registrationId: ticketIds[0],
       amount: totalAmount,
       phoneNumber,

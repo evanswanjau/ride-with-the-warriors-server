@@ -396,4 +396,53 @@ describe.skipIf(!hasDb)('Payment flows (STK push → callback)', () => {
             expect((await prisma.bikeHire.findUnique({ where: { id: bikeHireId } }))?.status).toBe('PAID');
         });
     });
+
+    // ── Daraja sandbox callback shape (PAYMENT_PROVIDER=sandbox) ─────────────
+
+    describe('Daraja sandbox callback', () => {
+        function darajaCallback(ref: string, resultCode: number, receipt?: string) {
+            const stkCallback: Record<string, unknown> = {
+                MerchantRequestID: 'm-1', CheckoutRequestID: ref, ResultCode: resultCode,
+                ResultDesc: resultCode === 0 ? 'The service request is processed successfully.' : 'Request cancelled by user',
+            };
+            if (receipt) stkCallback.CallbackMetadata = { Item: [{ Name: 'Amount', Value: 1 }, { Name: 'MpesaReceiptNumber', Value: receipt }, { Name: 'PhoneNumber', Value: 254708374149 }] };
+            return request.post(`/api/dtb/stkpush?key=${encodeURIComponent(SECRET)}`).send({ Body: { stkCallback } });
+        }
+
+        async function pushRegistration() {
+            const { token, accountId } = await login('daraja@example.com');
+            const regId = await unpaidRegistration(accountId);
+            const push = await request.post('/api/v1/registrations/pay/stk-push').set(auth(token)).send({ registrationId: regId, phoneNumber: PHONE });
+            return { regId, ref: push.body.transactionReference as string };
+        }
+
+        it('ResultCode 0 marks the registration paid and stores the M-Pesa receipt', async () => {
+            const { regId, ref } = await pushRegistration();
+            const res = await darajaCallback(ref, 0, 'SBX123ABC');
+            expect(res.status).toBe(200);
+            expect((await prisma.registration.findUnique({ where: { id: regId } }))?.status).toBe('PAID');
+            const payment = await prisma.payment.findFirst({ where: { checkoutRequestId: ref } });
+            expect(payment?.status).toBe('PAID');
+            expect(payment?.mpesaReceiptNumber).toBe('SBX123ABC');
+        });
+
+        it('a non-zero ResultCode leaves the registration unpaid', async () => {
+            const { regId, ref } = await pushRegistration();
+            await darajaCallback(ref, 1032);
+            expect((await prisma.registration.findUnique({ where: { id: regId } }))?.status).toBe('UNPAID');
+            const payment = await prisma.payment.findFirst({ where: { checkoutRequestId: ref } });
+            expect(payment?.status).toBe('FAILED');
+            expect(payment?.failureReason).toBe('Request cancelled by user');
+        });
+
+        it('a Daraja success pays a donation', async () => {
+            const created = await request.post('/api/v1/donations').send({ name: 'Sandbox Donor', email: 'donor@example.com', phone: PHONE, amount: 500 });
+            const donationId = created.body.donationId as string;
+            const push = await request.post('/api/v1/donations/pay/stk-push').send({ donationId, phoneNumber: PHONE });
+            await darajaCallback(push.body.transactionReference, 0, 'SBX999');
+            const d = await prisma.donation.findUnique({ where: { id: donationId } });
+            expect(d?.status).toBe('PAID');
+            expect(d?.mpesaCode).toBe('SBX999');
+        });
+    });
 });

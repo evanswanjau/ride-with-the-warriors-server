@@ -29,7 +29,7 @@ from an AI agent; run it yourself.
 
 ```bash
 npm run stack:up       # Postgres + Mailpit (if not already running)
-npm run dev:stack      # API on :4000 + mock DTB on :4010
+npm run dev:stack      # API on :4000 (M-Pesa sandbox) + mock DTB on :4010
 ```
 
 and in `../client`:
@@ -56,10 +56,36 @@ Demo accounts (from `prisma/seed-demo.ts`, all 2026 data):
 | `legacy@test.local` | no account yet; the 2026 entry is claimed on first login |
 | Admin: `admin@ridewithwarriors.com` / `Password@123` | `/admin` |
 
-## Payments (mock DTB)
+## Payments
 
-`PAYMENT_MODE=live` locally, but DTB is the mock on :4010, which calls our callback the way
-the real gateway does. On its dashboard you choose what happens to the next prompt:
+| Where | `PAYMENT_PROVIDER` | Prompts go to |
+|---|---|---|
+| Local (`npm run dev:stack`) | `sandbox` | Safaricom Daraja sandbox: a real prompt on your phone |
+| Local offline (`npm run dev:stack:mock`) | `dtb` | the mock DTB on :4010 |
+| E2E and tests | `dtb` | the mock DTB / a test double |
+| UAT | `sandbox` | Daraja sandbox, callback to the UAT `APP_URL` |
+| Production | `dtb` (or unset) | DTB. The server refuses to start with `sandbox`. |
+
+### Daraja sandbox (default locally)
+
+1. Create an app at https://developer.safaricom.co.ke (My Apps, with M-Pesa Express Sandbox).
+2. Put its keys in `.env.stack.local` (gitignored):
+   ```
+   DARAJA_CONSUMER_KEY=...
+   DARAJA_CONSUMER_SECRET=...
+   ```
+3. `npm run dev:stack`, then pay with your own Safaricom number. Enter your PIN on the prompt.
+
+Shortcode and passkey default to Safaricom's public sandbox values (174379). Each prompt
+charges KES 1 unless `SANDBOX_STK_AMOUNT` says otherwise (`actual` = the real amount); the
+registration still records the real amount. Locally `DARAJA_POLL=true` asks Daraja for the
+result every 5 s for up to 2 minutes, and feeds it to `/api/dtb/stkpush`, so no tunnel is
+needed. Sandbox results carry no M-Pesa receipt when they come from polling.
+
+### Mock DTB (offline, and in E2E)
+
+`npm run dev:stack:mock` pays through the mock on :4010, which calls our callback the way
+DTB does. On its dashboard you choose what happens to the next prompt:
 
 | Mode | Effect |
 |---|---|

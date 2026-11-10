@@ -5,7 +5,7 @@ import { quoteRequestSchema, riderDetailsSchema, teamDetailsSchema, familyDetail
 import { zodToApiError } from '../validation/zodError.js';
 import { buildQuote, getPricingCategories } from '../services/pricing.js';
 import { createRegistration, getRegistration, updateRegistration, findExistingRegistrationsByEmails, findExistingRegistrationsByIdNumbers } from '../storage/memoryRegistrations.js';
-import { dtbService } from '../services/dtbService.js';
+import { paymentGateway } from '../services/paymentGateway.js';
 
 import { prisma } from '../storage/prisma.js';
 import { requireUser, UserRequest } from '../middleware/userAuth.js';
@@ -188,7 +188,7 @@ registrationsRouter.post('/pay/stk-push', requireUser, async (req: UserRequest, 
   // ─────────────────────────────────────────────────────────────────────────────
 
   try {
-    const result = await dtbService.initiateStkPush({
+    const result = await paymentGateway.initiateStkPush({
       registrationId,
       amount,
       phoneNumber,
