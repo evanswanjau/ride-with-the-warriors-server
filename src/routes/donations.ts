@@ -2,6 +2,10 @@ import { Router } from 'express';
 import { prisma } from '../storage/prisma.js';
 import { paymentGateway } from '../services/paymentGateway.js';
 import { optionalUser, UserRequest } from '../middleware/userAuth.js';
+import { beginAttempt, recordAttempt } from '../services/payments.js';
+
+const MIN_DONATION = 10;
+const MAX_DONATION = 1_000_000;
 
 
 export const donationsRouter = Router();
@@ -19,8 +23,9 @@ donationsRouter.post('/', optionalUser, async (req: UserRequest, res) => {
             phone = account?.phone ?? undefined,
         } = req.body;
 
-        if (!amount || isNaN(amount)) {
-            return res.status(400).json({ error: { code: 'VALIDATION', message: 'Valid amount is required' } });
+        const value = Number(amount);
+        if (!Number.isFinite(value) || value < MIN_DONATION || value > MAX_DONATION) {
+            return res.status(400).json({ error: { code: 'VALIDATION', message: `Amount must be between KES ${MIN_DONATION} and KES ${MAX_DONATION.toLocaleString()}.` } });
         }
 
         if (!name || !email) {
@@ -29,7 +34,7 @@ donationsRouter.post('/', optionalUser, async (req: UserRequest, res) => {
 
         const donation = await prisma.donation.create({
             data: {
-                amount: parseFloat(amount),
+                amount: Math.round(value),
                 name: name || null,
                 email: email || null,
                 phone: phone || null,
@@ -59,6 +64,9 @@ donationsRouter.post('/pay/stk-push', async (req, res) => {
         if (!donation) {
             return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Donation record not found' } });
         }
+        if (donation.status === 'PAID') {
+            return res.status(400).json({ error: { code: 'ALREADY_PAID', message: 'This donation is already paid. Thank you!' } });
+        }
 
         // ── SIMULATION MODE ──────────────────────────────────────────────────────────
         if (process.env.PAYMENT_MODE === 'simulate') {
@@ -73,23 +81,21 @@ donationsRouter.post('/pay/stk-push', async (req, res) => {
         }
         // ─────────────────────────────────────────────────────────────────────────────
 
+        const target = { purpose: 'DONATION' as const, donationId };
+        if (await beginAttempt(target) === 'busy') {
+            return res.status(409).json({ error: { code: 'PAYMENT_IN_PROGRESS', message: 'An M-Pesa prompt was just sent. Complete it on your phone, or wait a minute and try again.' } });
+        }
+
         const result = await paymentGateway.initiateStkPush({
-            registrationId: donationId, 
+            registrationId: donationId,
             amount: donation.amount,
             phoneNumber,
             callbackUrl: `${process.env.APP_URL || process.env.BASE_URL}/api/dtb/stkpush`,
         });
 
-
-
-        if (result.success) {
-            // externalReference from DTB IS the donationId we sent as TransactionRef
-            // Store it in checkoutRequestId for callback matching
-            const ref = result.transactionReference || donationId;
-            await prisma.donation.update({
-                where: { id: donationId },
-                data: { checkoutRequestId: ref },
-            });
+        if (result.success && result.transactionReference) {
+            const ref = result.transactionReference;
+            await recordAttempt(target, ref, donation.amount, phoneNumber);
             return res.json({
                 success: true,
                 transactionReference: ref,
@@ -116,7 +122,9 @@ donationsRouter.get('/:id', async (req, res) => {
         if (!donation) {
             return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Donation not found' } });
         }
-        return res.json({ donation });
+        // Public endpoint (anyone with the id): status only, no contact details.
+        const { id, status, amount, failureReason } = donation;
+        return res.json({ donation: { id, status, amount, failureReason } });
     } catch (err) {
         console.error('[Donation] Fetch error:', err);
         return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to fetch donation status' } });

@@ -179,6 +179,7 @@ exports.Prisma.AdminSessionScalarFieldEnum = {
 
 exports.Prisma.PaymentScalarFieldEnum = {
   id: 'id',
+  purpose: 'purpose',
   registrationId: 'registrationId',
   raffleTicketIds: 'raffleTicketIds',
   donationId: 'donationId',

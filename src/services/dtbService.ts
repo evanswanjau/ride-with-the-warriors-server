@@ -1,5 +1,6 @@
 
 import { randomUUID } from 'crypto';
+import { Agent, fetch as undiciFetch } from 'undici';
 
 /**
  * Appends DTB_CALLBACK_SECRET as a `key` query param so the callback route can
@@ -18,9 +19,16 @@ function withCallbackKey(url: string): string {
  * This service handles interactions with the DTB API via the Fiorano platform.
  */
 
-// Handle SSL verification for UAT environments (Equivalent to curl -k)
-if (process.env.DTB_INSECURE === 'true') {
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+// DTB UAT has served a certificate Node does not trust. DTB_INSECURE=true skips the
+// certificate check for requests to DTB only (never the whole process). config.ts
+// refuses it in production.
+const insecureAgent = process.env.DTB_INSECURE === 'true'
+    ? new Agent({ connect: { rejectUnauthorized: false } })
+    : null;
+
+function dtbFetch(url: string, init: RequestInit): Promise<Response> {
+    if (!insecureAgent) return fetch(url, init);
+    return undiciFetch(url, { ...(init as object), dispatcher: insecureAgent } as never) as unknown as Promise<Response>;
 }
 
 
@@ -77,7 +85,7 @@ export const dtbService = {
             params.append('username', process.env.DTB_USERNAME || '');
             params.append('password', process.env.DTB_PASSWORD || '');
 
-            const response = await fetch(DTB_CONFIG.authUrl, {
+            const response = await dtbFetch(DTB_CONFIG.authUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -142,7 +150,7 @@ export const dtbService = {
                 UserCallback: withCallbackKey(details.callbackUrl || `${process.env.APP_URL || process.env.BASE_URL}/api/dtb/stkpush`),
             };
 
-            const response = await fetch(DTB_CONFIG.stkPushUrl, {
+            const response = await dtbFetch(DTB_CONFIG.stkPushUrl, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,

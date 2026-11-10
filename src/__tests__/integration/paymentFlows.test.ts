@@ -5,9 +5,8 @@
  * Every outcome DTB can produce is covered: success, failure, no callback
  * (timeout), a repeated success, and a late failure after a success.
  *
- * Tests marked `it.fails` pin KNOWN BUGS from the code review. They pass today
- * because the bug is present. When Phase 3 fixes a bug, its test starts failing:
- * change `it.fails` to `it` in the same PR.
+ * The rules these tests hold are written down in src/services/payments.ts.
+ * A bug found later gets an `it.fails('KNOWN BUG: …')` test until it is fixed.
  *
  * Needs DATABASE_URL (npm run test:db). Skipped otherwise.
  */
@@ -206,27 +205,27 @@ describe.skipIf(!hasDb)('Payment flows (STK push → callback)', () => {
             expect((await prisma.registration.findUnique({ where: { id: regId } }))?.bibNumber).toBe(bib);
         });
 
-        it.fails('KNOWN BUG: sends exactly one confirmation email per rider', async () => {
+        it('sends exactly one confirmation email per rider', async () => {
             const { ref } = await startPayment();
             await callback(ref, 'success');
             expect(sendConfirmationEmail).toHaveBeenCalledTimes(1);
         });
 
-        it.fails('KNOWN BUG: a repeated success does not text the rider again', async () => {
+        it('a repeated success does not text the rider again', async () => {
             const { ref } = await startPayment();
             await callback(ref, 'success');
             await callback(ref, 'success');
             expect(smsSpy).toHaveBeenCalledTimes(1);
         });
 
-        it.fails('KNOWN BUG: a late failure after a success leaves it PAID', async () => {
+        it('a late failure after a success leaves it PAID', async () => {
             const { regId, ref } = await startPayment();
             await callback(ref, 'success');
             await callback(ref, 'fail');
             expect((await prisma.registration.findUnique({ where: { id: regId } }))?.status).toBe('PAID');
         });
 
-        it.fails('KNOWN BUG: a new prompt after a failed one is not reported as failed', async () => {
+        it('a new prompt after a failed one is not reported as failed', async () => {
             const { token, regId, ref } = await startPayment();
             await callback(ref, 'fail');
             await request.post('/api/v1/registrations/pay/stk-push').set(auth(token)).send({ registrationId: regId, phoneNumber: PHONE });
@@ -235,7 +234,7 @@ describe.skipIf(!hasDb)('Payment flows (STK push → callback)', () => {
             expect(res.body.registration.payload.paymentFailed).not.toBe(true);
         });
 
-        it.fails('KNOWN BUG: refuses a second prompt while one is still pending', async () => {
+        it('refuses a second prompt while one is still pending', async () => {
             const { token, regId } = await startPayment();
             const second = await request.post('/api/v1/registrations/pay/stk-push').set(auth(token)).send({ registrationId: regId, phoneNumber: PHONE });
             expect(second.status).toBe(409);
@@ -281,14 +280,14 @@ describe.skipIf(!hasDb)('Payment flows (STK push → callback)', () => {
             expect(push.status).toBe(404);
         });
 
-        it.fails('KNOWN BUG: paying the first prompt after a retry still marks the tickets PAID', async () => {
+        it('paying the first prompt after a retry still marks the tickets PAID', async () => {
             const { token, ticketIds, ref: firstRef } = await buyTickets(1);
             await request.post('/api/v1/raffle/pay/stk-push').set(auth(token)).send({ ticketIds, phoneNumber: PHONE });
             await callback(firstRef, 'success');
             expect((await prisma.raffleTicket.findUnique({ where: { id: ticketIds[0] } }))?.status).toBe('PAID');
         });
 
-        it.fails('KNOWN BUG: a late failure after a success leaves the tickets PAID', async () => {
+        it('a late failure after a success leaves the tickets PAID', async () => {
             const { ticketIds, ref } = await buyTickets(1);
             await callback(ref, 'success');
             await callback(ref, 'fail');
@@ -321,26 +320,26 @@ describe.skipIf(!hasDb)('Payment flows (STK push → callback)', () => {
             expect((await prisma.donation.findUnique({ where: { id: donationId } }))?.status).toBe('FAILED');
         });
 
-        it.fails('KNOWN BUG: rejects a zero or negative amount', async () => {
+        it('rejects a zero or negative amount', async () => {
             const res = await request.post('/api/v1/donations').send({ amount: -100, name: 'Bad', email: 'bad@example.com' });
             expect(res.status).toBe(400);
         });
 
-        it.fails('KNOWN BUG: paying the first prompt after a retry still marks it PAID', async () => {
+        it('paying the first prompt after a retry still marks it PAID', async () => {
             const { donationId, ref: firstRef } = await donate();
             await request.post('/api/v1/donations/pay/stk-push').send({ donationId, phoneNumber: PHONE });
             await callback(firstRef, 'success');
             expect((await prisma.donation.findUnique({ where: { id: donationId } }))?.status).toBe('PAID');
         });
 
-        it.fails('KNOWN BUG: refuses a new prompt for a donation that is already paid', async () => {
+        it('refuses a new prompt for a donation that is already paid', async () => {
             const { donationId, ref } = await donate();
             await callback(ref, 'success');
             const again = await request.post('/api/v1/donations/pay/stk-push').send({ donationId, phoneNumber: PHONE });
             expect(again.status).toBe(400);
         });
 
-        it.fails('KNOWN BUG: the public status endpoint does not expose contact details', async () => {
+        it('the public status endpoint does not expose contact details', async () => {
             const { donationId } = await donate();
             const res = await request.get(`/api/v1/donations/${donationId}`);
             expect(res.body.donation.email).toBeUndefined();
@@ -389,11 +388,134 @@ describe.skipIf(!hasDb)('Payment flows (STK push → callback)', () => {
             expect((await prisma.bikeHire.findFirst({ where: { registrationId: regId } }))?.status).toBe('PAID');
         });
 
-        it.fails('KNOWN BUG: a late failure after a success leaves the bike hire PAID', async () => {
+        it('a late failure after a success leaves the bike hire PAID', async () => {
             const { bikeHireId, ref } = await paidRegistrationWithBike();
             await callback(ref, 'success');
             await callback(ref, 'fail');
             expect((await prisma.bikeHire.findUnique({ where: { id: bikeHireId } }))?.status).toBe('PAID');
+        });
+    });
+
+    // ── Ledger rules (src/services/payments.ts) ──────────────────────────────
+
+    describe('ledger rules', () => {
+        const ago = (ms: number) => new Date(Date.now() - ms);
+
+        async function pushRegistration(token: string, regId: string) {
+            return request.post('/api/v1/registrations/pay/stk-push').set(auth(token)).send({ registrationId: regId, phoneNumber: PHONE });
+        }
+
+        it('records every prompt in the ledger with its purpose', async () => {
+            const { token, accountId } = await login('ledger@example.com');
+            const regId = await unpaidRegistration(accountId);
+            const push = await pushRegistration(token, regId);
+            const created = await request.post('/api/v1/donations').send({ amount: 500, name: 'Ledger Donor', email: 'ld@example.com' });
+            const don = await request.post('/api/v1/donations/pay/stk-push').send({ donationId: created.body.donationId, phoneNumber: PHONE });
+            const purposes = await prisma.payment.findMany({ where: { checkoutRequestId: { in: [push.body.transactionReference, don.body.transactionReference] } } });
+            expect(purposes.map(p => p.purpose).sort()).toEqual(['DONATION', 'REGISTRATION']);
+            expect(purposes.every(p => p.status === 'PENDING')).toBe(true);
+        });
+
+        it('a prompt older than 90 s no longer blocks a new one and is marked EXPIRED', async () => {
+            const { token, accountId } = await login('ledger@example.com');
+            const regId = await unpaidRegistration(accountId);
+            const first = await pushRegistration(token, regId);
+            await prisma.payment.updateMany({ where: { checkoutRequestId: first.body.transactionReference }, data: { createdAt: ago(120_000) } });
+            const second = await pushRegistration(token, regId);
+            expect(second.status).toBe(200);
+            expect((await prisma.payment.findUnique({ where: { checkoutRequestId: first.body.transactionReference } }))?.status).toBe('EXPIRED');
+        });
+
+        it('a late success for an expired prompt still pays (the money was taken)', async () => {
+            const { token, accountId } = await login('ledger@example.com');
+            const regId = await unpaidRegistration(accountId);
+            const first = await pushRegistration(token, regId);
+            await prisma.payment.updateMany({ where: { checkoutRequestId: first.body.transactionReference }, data: { createdAt: ago(120_000) } });
+            await pushRegistration(token, regId);
+            await callback(first.body.transactionReference, 'success');
+            expect((await prisma.registration.findUnique({ where: { id: regId } }))?.status).toBe('PAID');
+            expect(sendConfirmationEmail).toHaveBeenCalledTimes(1);
+        });
+
+        it('a late failure of an old prompt does not mark the newer prompt failed', async () => {
+            const { token, accountId } = await login('ledger@example.com');
+            const regId = await unpaidRegistration(accountId);
+            const first = await pushRegistration(token, regId);
+            await prisma.payment.updateMany({ where: { checkoutRequestId: first.body.transactionReference }, data: { createdAt: ago(120_000) } });
+            await pushRegistration(token, regId);
+            // The old prompt is EXPIRED, so its failure is ignored; even a PENDING old one would not flag.
+            await callback(first.body.transactionReference, 'fail');
+            const reg = await prisma.registration.findUnique({ where: { id: regId } });
+            expect((reg?.payload as Record<string, unknown>)?.paymentFailed).not.toBe(true);
+        });
+
+        it('a failure for the newest prompt flags it; the next prompt clears the flag', async () => {
+            const { token, accountId } = await login('ledger@example.com');
+            const regId = await unpaidRegistration(accountId);
+            const first = await pushRegistration(token, regId);
+            await callback(first.body.transactionReference, 'fail');
+            expect(((await prisma.registration.findUnique({ where: { id: regId } }))?.payload as Record<string, unknown>).paymentFailed).toBe(true);
+            const second = await pushRegistration(token, regId);
+            expect(second.status).toBe(200);
+            expect(((await prisma.registration.findUnique({ where: { id: regId } }))?.payload as Record<string, unknown>).paymentFailed).toBe(false);
+            await callback(second.body.transactionReference, 'success');
+            expect((await prisma.registration.findUnique({ where: { id: regId } }))?.status).toBe('PAID');
+        });
+
+        it.each([
+            ['raffle', async (token: string) => {
+                const created = await request.post('/api/v1/raffle').set(auth(token)).send({ idNumber: '27777777', phoneNumber: PHONE, quantity: 1 });
+                return () => request.post('/api/v1/raffle/pay/stk-push').set(auth(token)).send({ ticketIds: created.body.ticketIds, phoneNumber: PHONE });
+            }],
+            ['donation', async () => {
+                const created = await request.post('/api/v1/donations').send({ amount: 500, name: 'Twice', email: 'twice@example.com' });
+                return () => request.post('/api/v1/donations/pay/stk-push').send({ donationId: created.body.donationId, phoneNumber: PHONE });
+            }],
+        ])('%s: refuses a second prompt while one is pending', async (_name, setup) => {
+            const { token } = await login('ledger@example.com');
+            const push = await setup(token);
+            expect((await push()).status).toBe(200);
+            expect((await push()).status).toBe(409);
+        });
+
+        it('a failed donation can be paid again and goes back to PENDING', async () => {
+            const created = await request.post('/api/v1/donations').send({ amount: 500, name: 'Retry Donor', email: 'rd@example.com' });
+            const donationId = created.body.donationId as string;
+            const first = await request.post('/api/v1/donations/pay/stk-push').send({ donationId, phoneNumber: PHONE });
+            await callback(first.body.transactionReference, 'fail');
+            expect((await request.get(`/api/v1/donations/${donationId}`)).body.donation.status).toBe('FAILED');
+            const second = await request.post('/api/v1/donations/pay/stk-push').send({ donationId, phoneNumber: PHONE });
+            expect(second.status).toBe(200);
+            expect((await request.get(`/api/v1/donations/${donationId}`)).body.donation).toEqual({ id: donationId, status: 'PENDING', amount: 500, failureReason: null });
+        });
+
+        it('settles a raffle prompt sent before the ledger existed (no Payment row)', async () => {
+            const { accountId } = await login('legacy-raffle@example.com');
+            const ref = randomUUID();
+            const id = randomUUID();
+            await prisma.raffleTicket.create({ data: { id, firstName: 'Old', lastName: 'Prompt', email: 'lr@example.com', phoneNumber: PHONE, status: 'UNPAID', checkoutRequestId: ref, accountId } });
+            await callback(ref, 'success');
+            expect((await prisma.raffleTicket.findUnique({ where: { id } }))?.status).toBe('PAID');
+            const payment = await prisma.payment.findUnique({ where: { checkoutRequestId: ref } });
+            expect(payment).toMatchObject({ purpose: 'RAFFLE', status: 'PAID', amount: 1000 });
+        });
+
+        it('expires prompts nobody answered after 30 minutes', async () => {
+            const { expireStalePayments } = await import('../../services/payments.js');
+            const { token, accountId } = await login('ledger@example.com');
+            const regId = await unpaidRegistration(accountId);
+            const push = await pushRegistration(token, regId);
+            expect(await expireStalePayments()).toBe(0);
+            await prisma.payment.updateMany({ where: { checkoutRequestId: push.body.transactionReference }, data: { createdAt: ago(31 * 60_000) } });
+            expect(await expireStalePayments()).toBe(1);
+            expect((await prisma.payment.findUnique({ where: { checkoutRequestId: push.body.transactionReference } }))?.status).toBe('EXPIRED');
+        });
+
+        it('the expiry cron endpoint needs CRON_SECRET', async () => {
+            expect((await request.get('/api/cron/expire-payments')).status).toBe(401);
+            const ok = await request.get('/api/cron/expire-payments').set('Authorization', `Bearer ${process.env.CRON_SECRET}`);
+            expect(ok.status).toBe(200);
+            expect(ok.body).toHaveProperty('expired');
         });
     });
 

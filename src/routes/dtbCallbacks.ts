@@ -1,10 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { timingSafeEqual } from 'crypto';
-import { prisma } from '../storage/prisma.js';
-import { updateRegistration, getRegistration } from '../storage/memoryRegistrations.js';
-import { sendConfirmationEmail, sendRaffleConfirmationEmail } from '../services/emailService.js';
-import { smsService } from '../services/smsService.js';
-import { assignTicketNumbers } from '../services/numbering.js';
+import { settlePayment } from '../services/payments.js';
 
 export const dtbCallbacksRouter = Router();
 
@@ -91,237 +87,22 @@ dtbCallbacksRouter.post('/stkpush', verifyCallbackKey, async (req, res) => {
     }
 
     try {
-        // ── 1. Try Donation ──────────────────────────────────────────────────
-        const donation = await prisma.donation.findFirst({
-            where: {
-                checkoutRequestId: externalReference,
-            },
+        const result = await settlePayment({
+            ref: String(externalReference),
+            success: isSuccess,
+            reason: isSuccess ? null : (resultDesc ?? null),
+            receipt: mnoRef || null,
+            mnoReference: mnoRef || null,
+            cbsReference: cbsRef || null,
+            details: callbackData,
         });
-
-        if (donation) {
-            await prisma.donation.update({
-                where: { id: donation.id },
-                data: {
-                    status: isSuccess ? 'PAID' : 'FAILED',
-                    checkoutRequestId: externalReference,
-                    failureReason: isSuccess ? null : resultDesc,
-                    mpesaCode: mnoRef || null,
-                    paymentDetails: callbackData as any,
-                },
-            });
-
-            // Create/Update Payment audit record
-            await (prisma.payment as any).upsert({
-                where: { checkoutRequestId: externalReference },
-                create: {
-                    donationId: donation.id,
-                    checkoutRequestId: externalReference,
-                    phone: donation.phone,
-                    amount: donation.amount,
-                    status: isSuccess ? 'PAID' : 'FAILED',
-                    failureReason: isSuccess ? null : resultDesc,
-                    mpesaReceiptNumber: mnoRef || null,
-                    mnoReference: mnoRef || null,
-                    cbsReference: cbsRef || null,
-                    paymentDetails: callbackData as any,
-                },
-                update: {
-                    status: isSuccess ? 'PAID' : 'FAILED',
-                    failureReason: isSuccess ? null : resultDesc,
-                    mpesaReceiptNumber: mnoRef || null,
-                    mnoReference: mnoRef || null,
-                    cbsReference: cbsRef || null,
-                    paymentDetails: callbackData as any,
-                }
-            });
-
-            console.log(`[DTB Callback] Updated Donation ${donation.id} → ${isSuccess ? 'PAID' : 'FAILED'}`);
-            if (isSuccess && donation.phone) {
-                const nameStr = donation.name ? `Hi ${donation.name.split(' ')[0]}, t` : `T`;
-                smsService.sendSMS([donation.phone], `${nameStr}hank you for your donation of KES ${donation.amount} to Ride With The Warriors. Your support is deeply appreciated!`);
-            }
-            return res.json({ received: true });
+        if (result === 'unknown') {
+            console.warn(`[DTB Callback] No payment found for externalReference: ${externalReference}`);
+            return res.json({ received: true, message: 'No record associated with this externalReference' });
         }
-
-        // ── 2. Try Raffle Ticket ─────────────────────────────────────────────
-        const tickets = await (prisma.raffleTicket as any).findMany({
-            where: {
-                checkoutRequestId: externalReference,
-            },
-        });
-
-        if (tickets.length > 0) {
-            await (prisma.raffleTicket as any).updateMany({
-                where: {
-                    checkoutRequestId: externalReference,
-                },
-                data: {
-                    status: isSuccess ? 'PAID' : 'UNPAID',
-                    paymentFailed: !isSuccess,
-                    checkoutRequestId: externalReference,
-                    failureReason: isSuccess ? null : resultDesc,
-                    mpesaCode: mnoRef || null,
-                    paymentDetails: callbackData as any,
-                },
-            });
-
-            // Create/Update Payment audit record for Raffle
-            await (prisma.payment as any).upsert({
-                where: { checkoutRequestId: externalReference },
-                create: {
-                    raffleTicketIds: tickets.map((t: any) => t.id),
-                    checkoutRequestId: externalReference,
-                    phone: tickets[0].phoneNumber,
-                    amount: 1000 * tickets.length,
-                    status: isSuccess ? 'PAID' : 'FAILED',
-                    failureReason: isSuccess ? null : resultDesc,
-                    mpesaReceiptNumber: mnoRef || null,
-                    mnoReference: mnoRef || null,
-                    cbsReference: cbsRef || null,
-                    paymentDetails: callbackData as any,
-                },
-                update: {
-                    status: isSuccess ? 'PAID' : 'FAILED',
-                    failureReason: isSuccess ? null : resultDesc,
-                    mpesaReceiptNumber: mnoRef || null,
-                    mnoReference: mnoRef || null,
-                    cbsReference: cbsRef || null,
-                    paymentDetails: callbackData as any,
-                }
-            });
-
-            console.log(`[DTB Callback] Updated ${tickets.length} Raffle Ticket(s) → ${isSuccess ? 'PAID' : 'FAILED'}`);
-
-            if (isSuccess) {
-                // Ticket numbers are only handed out once paid.
-                const numbered = await assignTicketNumbers(tickets.map((t: any) => t.id));
-                const numbers = numbered.map(t => t.ticketNumber ?? t.id);
-                const first = tickets[0];
-                if (first?.phoneNumber) {
-                    const tids = numbers.join(', ');
-                    smsService.sendSMS([first.phoneNumber], `Hi ${first.firstName}, payment received for your ${tickets.length} raffle ticket(s) (Nos: ${tids}). Thank you for supporting Ride With The Warriors!`);
-                }
-                if (first?.email) {
-                    sendRaffleConfirmationEmail({
-                        id: numbers[0],
-                        ids: numbers,
-                        firstName: first.firstName,
-                        lastName: first.lastName,
-                        email: first.email,
-                        phoneNumber: first.phoneNumber,
-                        quantity: tickets.length,
-                        totalAmount: 1000 * tickets.length,
-                    }).catch((err: any) => {
-                        console.error(`[DTB Callback] Failed to send raffle confirmation email for ${first.id}:`, err);
-                    });
-                }
-            }
-
-            return res.json({ received: true });
-        }
-
-        // ── 3. Try Bike Hire (bike added after the registration was paid) ────
-        const bikeHire = await prisma.bikeHire.findUnique({
-            where: { checkoutRequestId: externalReference },
-            include: { registration: true },
-        });
-        if (bikeHire) {
-            await prisma.bikeHire.update({ where: { id: bikeHire.id }, data: { status: isSuccess ? 'PAID' : 'PENDING' } });
-            await prisma.payment.updateMany({
-                where: { checkoutRequestId: externalReference },
-                data: {
-                    status: isSuccess ? 'PAID' : 'FAILED',
-                    failureReason: isSuccess ? null : resultDesc,
-                    mpesaReceiptNumber: mnoRef || null,
-                    mnoReference: mnoRef || null,
-                    cbsReference: cbsRef || null,
-                    paymentDetails: callbackData as any,
-                },
-            });
-            console.log(`[DTB Callback] Updated BikeHire ${bikeHire.id} → ${isSuccess ? 'PAID' : 'FAILED'}`);
-            if (isSuccess && bikeHire.registration.phoneNumber) {
-                smsService.sendSMS([bikeHire.registration.phoneNumber], `Hi ${bikeHire.registration.firstName}, your bike hire payment of KES ${bikeHire.amount} for Ride With The Warriors is confirmed. Thank you!`);
-            }
-            return res.json({ received: true });
-        }
-
-        // ── 4. Try Registration (via Payment audit table) ────────────────────
-        const paymentAudit = await prisma.payment.findFirst({
-            where: {
-                checkoutRequestId: externalReference,
-            },
-        });
-
-        if (paymentAudit) {
-            await prisma.payment.update({
-                where: { id: paymentAudit.id },
-                data: {
-                    status: isSuccess ? 'PAID' : 'FAILED',
-                    checkoutRequestId: externalReference,
-                    failureReason: isSuccess ? null : resultDesc,
-                    mpesaReceiptNumber: mnoRef || null,
-                    mnoReference: mnoRef || null,
-                    cbsReference: cbsRef || null,
-                    paymentDetails: callbackData as any,
-                },
-            });
-
-            const registrationId = paymentAudit.registrationId;
-            if (registrationId) {
-                const existing = await getRegistration(registrationId);
-
-                if (existing) {
-                    await updateRegistration(registrationId, {
-                        status: isSuccess ? 'PAID' : 'UNPAID',
-                        payload: {
-                            ...existing.payload,
-                            paymentFailed: !isSuccess,
-                            paymentFailureReason: isSuccess ? null : resultDesc,
-                            mnoReference: mnoRef,
-                            cbsReference: cbsRef,
-                        },
-                    });
-                    console.log(`[DTB Callback] Updated Registration ${registrationId} → ${isSuccess ? 'PAID' : 'FAILED'}`);
-
-                    if (isSuccess) {
-                        const reg = await prisma.registration.findUnique({ where: { id: registrationId } });
-                        if (reg?.phoneNumber) {
-                            smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, your payment of KES ${reg.totalAmount} for Ride With The Warriors cycling registration (BIB: ${reg.bibNumber ?? 'pending'}) is confirmed. Thank you!`);
-                        }
-                        if (reg?.email) {
-                            sendConfirmationEmail({
-                                id: reg.id,
-                                bibNumber: reg.bibNumber,
-                                firstName: reg.firstName,
-                                lastName: reg.lastName,
-                                email: reg.email,
-                                circuitId: reg.circuitId,
-                                totalAmount: reg.totalAmount,
-                                status: 'PAID',
-                                category: reg.category || undefined,
-                                gender: reg.gender,
-                                dob: reg.dob,
-                                idNumber: reg.idNumber,
-                                tshirtSize: reg.tshirtSize,
-                                emergencyContactName: reg.emergencyContactName,
-                                emergencyPhone: reg.emergencyPhone,
-                                teamName: reg.teamName || undefined,
-                            }).catch(emailErr => {
-                                console.error(`[DTB Callback] Failed to send confirmation email for ${registrationId}:`, emailErr);
-                            });
-                        }
-                    }
-                }
-            }
-            return res.json({ received: true });
-        }
-
-        console.warn(`[DTB Callback] No matching record found for externalReference: ${externalReference}`);
-        return res.json({ received: true, message: 'No record associated with this externalReference' });
-
+        return res.json({ received: true });
     } catch (err) {
         console.error('[DTB Callback] Processing Error:', err);
         return res.status(500).json({ error: 'Internal server error processing callback' });
     }
-
 });

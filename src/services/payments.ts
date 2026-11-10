@@ -1,0 +1,304 @@
+/**
+ * The payment ledger: one Payment row per M-Pesa prompt, settled by callbacks.
+ *
+ * Rules
+ * - Every prompt (registration, raffle, donation, bike hire) creates a PENDING Payment row
+ *   with its `purpose`. Callbacks are matched on Payment.checkoutRequestId only.
+ * - A success settles any payment that is not PAID yet (money was taken, even if the
+ *   attempt was already marked FAILED or EXPIRED). A failure only settles a PENDING one.
+ *   Both use a conditional update, so a repeated or late callback changes nothing and
+ *   confirmations go out exactly once.
+ * - Only one prompt per item may be in flight: a new prompt is refused while a PENDING
+ *   attempt is younger than IN_FLIGHT_MS. Older PENDING attempts are marked EXPIRED
+ *   when a new prompt starts (a late success still pays them).
+ * - A failure only flags the item ("Payment failed" on the payment page) when it belongs
+ *   to the newest attempt, so an old prompt cannot fail a newer one.
+ */
+import type { Payment, Prisma } from '../generated/client/index.js';
+import { prisma } from '../storage/prisma.js';
+import { getRegistration, updateRegistration } from '../storage/memoryRegistrations.js';
+import { assignTicketNumbers } from './numbering.js';
+import { smsService } from './smsService.js';
+import { sendRaffleConfirmationEmail } from './emailService.js';
+
+export type PaymentPurpose = 'REGISTRATION' | 'RAFFLE' | 'DONATION' | 'BIKE_HIRE';
+
+export const IN_FLIGHT_MS = 90_000;
+export const EXPIRE_AFTER_MS = 30 * 60_000;
+export const RAFFLE_TICKET_PRICE = 1000;
+
+/** Which item(s) a payment is for; used to find other attempts for the same item. */
+export type PaymentTarget =
+    | { purpose: 'REGISTRATION'; registrationId: string }
+    | { purpose: 'RAFFLE'; raffleTicketIds: string[] }
+    | { purpose: 'DONATION'; donationId: string }
+    | { purpose: 'BIKE_HIRE'; bikeHireId: string; registrationId: string };
+
+function attemptsWhere(target: PaymentTarget): Prisma.PaymentWhereInput {
+    switch (target.purpose) {
+        case 'REGISTRATION': return { registrationId: target.registrationId, bikeHireId: null, donationId: null };
+        case 'RAFFLE': return { raffleTicketIds: { hasSome: target.raffleTicketIds } };
+        case 'DONATION': return { donationId: target.donationId };
+        case 'BIKE_HIRE': return { bikeHireId: target.bikeHireId };
+    }
+}
+
+/**
+ * Call before sending a prompt. Returns 'busy' when another prompt for this item is still
+ * in flight; otherwise expires stale PENDING attempts and clears the item's failure flag.
+ */
+export async function beginAttempt(target: PaymentTarget, now = new Date()): Promise<'ok' | 'busy'> {
+    const where = attemptsWhere(target);
+    const recent = await prisma.payment.findFirst({
+        where: { ...where, status: 'PENDING', createdAt: { gt: new Date(now.getTime() - IN_FLIGHT_MS) } },
+    });
+    if (recent) return 'busy';
+
+    await prisma.payment.updateMany({
+        where: { ...where, status: 'PENDING' },
+        data: { status: 'EXPIRED', failureReason: 'Superseded by a new prompt' },
+    });
+    await clearFailure(target);
+    return 'ok';
+}
+
+/** A new prompt is on its way: the payment page must not show the previous failure. */
+async function clearFailure(target: PaymentTarget) {
+    switch (target.purpose) {
+        case 'REGISTRATION': {
+            const reg = await getRegistration(target.registrationId);
+            const payload = (reg?.payload ?? {}) as Record<string, unknown>;
+            if (reg && (payload.paymentFailed || payload.paymentFailureReason)) {
+                await prisma.registration.update({
+                    where: { id: reg.id },
+                    data: { payload: { ...payload, paymentFailed: false, paymentFailureReason: null } as Prisma.InputJsonValue },
+                });
+            }
+            return;
+        }
+        case 'RAFFLE':
+            await prisma.raffleTicket.updateMany({
+                where: { id: { in: target.raffleTicketIds }, status: 'UNPAID' },
+                data: { paymentFailed: false, failureReason: null },
+            });
+            return;
+        case 'DONATION':
+            await prisma.donation.updateMany({
+                where: { id: target.donationId, status: 'FAILED' },
+                data: { status: 'PENDING', failureReason: null },
+            });
+            return;
+        case 'BIKE_HIRE':
+            return;
+    }
+}
+
+/** Records the PENDING ledger row for a prompt the gateway accepted. */
+export function recordAttempt(target: PaymentTarget, ref: string, amount: number, phone: string) {
+    return prisma.payment.create({
+        data: {
+            purpose: target.purpose,
+            checkoutRequestId: ref,
+            amount,
+            phone,
+            status: 'PENDING',
+            registrationId: 'registrationId' in target ? target.registrationId : null,
+            raffleTicketIds: target.purpose === 'RAFFLE' ? target.raffleTicketIds : [],
+            donationId: target.purpose === 'DONATION' ? target.donationId : null,
+            bikeHireId: target.purpose === 'BIKE_HIRE' ? target.bikeHireId : null,
+        },
+    });
+}
+
+export type PaymentOutcome = {
+    ref: string;
+    success: boolean;
+    reason?: string | null;
+    receipt?: string | null;
+    mnoReference?: string | null;
+    cbsReference?: string | null;
+    details?: unknown;
+};
+
+export type SettleResult = 'settled' | 'ignored' | 'unknown';
+
+function purposeOf(p: Payment): PaymentPurpose | null {
+    if (p.purpose) return p.purpose as PaymentPurpose;
+    if (p.bikeHireId) return 'BIKE_HIRE';
+    if (p.donationId) return 'DONATION';
+    if (p.raffleTicketIds.length > 0) return 'RAFFLE';
+    if (p.registrationId) return 'REGISTRATION';
+    return null;
+}
+
+/**
+ * Prompts started before the ledger existed have no Payment row for raffle tickets or
+ * donations; create one from the item that carries the reference.
+ */
+async function legacyPayment(ref: string): Promise<Payment | null> {
+    const tickets = await prisma.raffleTicket.findMany({ where: { checkoutRequestId: ref } });
+    if (tickets.length > 0) {
+        return prisma.payment.create({
+            data: {
+                purpose: 'RAFFLE', checkoutRequestId: ref, raffleTicketIds: tickets.map(t => t.id),
+                phone: tickets[0].phoneNumber, amount: RAFFLE_TICKET_PRICE * tickets.length, status: 'PENDING',
+            },
+        });
+    }
+    const donation = await prisma.donation.findFirst({ where: { checkoutRequestId: ref } });
+    if (donation) {
+        return prisma.payment.create({
+            data: { purpose: 'DONATION', checkoutRequestId: ref, donationId: donation.id, phone: donation.phone, amount: donation.amount, status: 'PENDING' },
+        });
+    }
+    return null;
+}
+
+/** Is this the newest attempt for its item? Only the newest may flag the item as failed. */
+async function isNewestAttempt(p: Payment, purpose: PaymentPurpose): Promise<boolean> {
+    const target: PaymentTarget | null =
+        purpose === 'REGISTRATION' && p.registrationId ? { purpose, registrationId: p.registrationId }
+            : purpose === 'RAFFLE' ? { purpose, raffleTicketIds: p.raffleTicketIds }
+                : purpose === 'DONATION' && p.donationId ? { purpose, donationId: p.donationId }
+                    : purpose === 'BIKE_HIRE' && p.bikeHireId && p.registrationId ? { purpose, bikeHireId: p.bikeHireId, registrationId: p.registrationId }
+                        : null;
+    if (!target) return true;
+    const newer = await prisma.payment.count({ where: { ...attemptsWhere(target), id: { not: p.id }, createdAt: { gt: p.createdAt } } });
+    return newer === 0;
+}
+
+/** Applies a gateway callback (DTB or Daraja) to the ledger and the item it pays for. */
+export async function settlePayment(o: PaymentOutcome): Promise<SettleResult> {
+    const payment = (await prisma.payment.findUnique({ where: { checkoutRequestId: o.ref } })) ?? (await legacyPayment(o.ref));
+    if (!payment) return 'unknown';
+    const purpose = purposeOf(payment);
+
+    const receipt = o.receipt || o.mnoReference || null;
+    const moved = await prisma.payment.updateMany({
+        where: o.success ? { id: payment.id, status: { not: 'PAID' } } : { id: payment.id, status: 'PENDING' },
+        data: {
+            status: o.success ? 'PAID' : 'FAILED',
+            failureReason: o.success ? null : (o.reason ?? 'Payment was not completed.'),
+            mpesaReceiptNumber: receipt,
+            mnoReference: o.mnoReference || receipt,
+            cbsReference: o.cbsReference || null,
+            paymentDetails: (o.details ?? undefined) as Prisma.InputJsonValue | undefined,
+            ...(purpose && !payment.purpose ? { purpose } : {}),
+        },
+    });
+    if (moved.count === 0) {
+        console.log(`[Payments] ${o.ref}: already ${payment.status}; ${o.success ? 'success' : 'failure'} callback ignored`);
+        return 'ignored';
+    }
+
+    if (o.success) await applySuccess(payment, purpose, receipt);
+    else if (purpose && await isNewestAttempt(payment, purpose)) await applyFailure(payment, purpose, o.reason ?? 'Payment was not completed.');
+    return 'settled';
+}
+
+async function applySuccess(p: Payment, purpose: PaymentPurpose | null, receipt: string | null) {
+    switch (purpose) {
+        case 'REGISTRATION': {
+            const reg = p.registrationId ? await getRegistration(p.registrationId) : null;
+            if (!reg) return;
+            if (reg.status !== 'UNPAID') {
+                console.warn(`[Payments] ${p.checkoutRequestId} paid registration ${reg.id}, which is already ${reg.status}. Check for a double charge.`);
+                return;
+            }
+            // updateRegistration assigns bibs, emails every rider and marks a bundled bike hire PAID.
+            await updateRegistration(reg.id, {
+                status: 'PAID',
+                mpesaCode: receipt ?? undefined,
+                payload: { ...(reg.payload as object), paymentFailed: false, paymentFailureReason: null, mnoReference: receipt } as never,
+            });
+            const fresh = await prisma.registration.findUnique({ where: { id: reg.id } });
+            if (fresh?.phoneNumber) {
+                smsService.sendSMS([fresh.phoneNumber], `Hi ${fresh.firstName}, your payment of KES ${fresh.totalAmount} for Ride With The Warriors cycling registration (BIB: ${fresh.bibNumber ?? 'pending'}) is confirmed. Thank you!`);
+            }
+            return;
+        }
+        case 'RAFFLE': {
+            const ids = p.raffleTicketIds;
+            const paid = await prisma.raffleTicket.updateMany({
+                where: { id: { in: ids }, status: 'UNPAID' },
+                data: { status: 'PAID', paymentFailed: false, failureReason: null, mpesaCode: receipt, checkoutRequestId: p.checkoutRequestId },
+            });
+            if (paid.count === 0) return;
+            const numbered = await assignTicketNumbers(ids);
+            const numbers = numbered.map(t => t.ticketNumber ?? t.id);
+            const first = await prisma.raffleTicket.findUnique({ where: { id: ids[0] } });
+            if (first?.phoneNumber) {
+                smsService.sendSMS([first.phoneNumber], `Hi ${first.firstName}, payment received for your ${ids.length} raffle ticket(s) (Nos: ${numbers.join(', ')}). Thank you for supporting Ride With The Warriors!`);
+            }
+            if (first?.email) {
+                sendRaffleConfirmationEmail({
+                    id: numbers[0], ids: numbers, firstName: first.firstName, lastName: first.lastName,
+                    email: first.email, phoneNumber: first.phoneNumber, quantity: ids.length, totalAmount: p.amount,
+                }).catch(err => console.error(`[Payments] Raffle confirmation email failed for ${first.id}:`, err));
+            }
+            return;
+        }
+        case 'DONATION': {
+            if (!p.donationId) return;
+            const paid = await prisma.donation.updateMany({
+                where: { id: p.donationId, status: { not: 'PAID' } },
+                data: { status: 'PAID', failureReason: null, mpesaCode: receipt, checkoutRequestId: p.checkoutRequestId },
+            });
+            if (paid.count === 0) return;
+            const d = await prisma.donation.findUnique({ where: { id: p.donationId } });
+            if (d?.phone) {
+                const hi = d.name ? `Hi ${d.name.split(' ')[0]}, t` : 'T';
+                smsService.sendSMS([d.phone], `${hi}hank you for your donation of KES ${d.amount} to Ride With The Warriors. Your support is deeply appreciated!`);
+            }
+            return;
+        }
+        case 'BIKE_HIRE': {
+            if (!p.bikeHireId) return;
+            const paid = await prisma.bikeHire.updateMany({ where: { id: p.bikeHireId, status: 'PENDING' }, data: { status: 'PAID' } });
+            if (paid.count === 0) return;
+            const hire = await prisma.bikeHire.findUnique({ where: { id: p.bikeHireId }, include: { registration: true } });
+            if (hire?.registration.phoneNumber) {
+                smsService.sendSMS([hire.registration.phoneNumber], `Hi ${hire.registration.firstName}, your bike hire payment of KES ${hire.amount} for Ride With The Warriors is confirmed. Thank you!`);
+            }
+            return;
+        }
+        default:
+            console.warn(`[Payments] ${p.checkoutRequestId} has no purpose; nothing to mark paid.`);
+    }
+}
+
+async function applyFailure(p: Payment, purpose: PaymentPurpose, reason: string) {
+    switch (purpose) {
+        case 'REGISTRATION': {
+            const reg = p.registrationId ? await getRegistration(p.registrationId) : null;
+            if (!reg || reg.status !== 'UNPAID') return;
+            await prisma.registration.update({
+                where: { id: reg.id },
+                data: { payload: { ...(reg.payload as object), paymentFailed: true, paymentFailureReason: reason } as Prisma.InputJsonValue },
+            });
+            return;
+        }
+        case 'RAFFLE':
+            await prisma.raffleTicket.updateMany({
+                where: { id: { in: p.raffleTicketIds }, status: 'UNPAID' },
+                data: { paymentFailed: true, failureReason: reason },
+            });
+            return;
+        case 'DONATION':
+            if (p.donationId) {
+                await prisma.donation.updateMany({ where: { id: p.donationId, status: { not: 'PAID' } }, data: { status: 'FAILED', failureReason: reason } });
+            }
+            return;
+        case 'BIKE_HIRE':
+            return; // the bike hire stays PENDING and can be paid again
+    }
+}
+
+/** Marks prompts nobody answered as EXPIRED. A late success still pays them. */
+export async function expireStalePayments(now = new Date()): Promise<number> {
+    const { count } = await prisma.payment.updateMany({
+        where: { status: 'PENDING', createdAt: { lt: new Date(now.getTime() - EXPIRE_AFTER_MS) } },
+        data: { status: 'EXPIRED', failureReason: 'No answer from M-Pesa' },
+    });
+    return count;
+}

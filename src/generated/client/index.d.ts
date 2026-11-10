@@ -6286,6 +6286,7 @@ export namespace Prisma {
 
   export type PaymentMinAggregateOutputType = {
     id: string | null
+    purpose: string | null
     registrationId: string | null
     donationId: string | null
     checkoutRequestId: string | null
@@ -6305,6 +6306,7 @@ export namespace Prisma {
 
   export type PaymentMaxAggregateOutputType = {
     id: string | null
+    purpose: string | null
     registrationId: string | null
     donationId: string | null
     checkoutRequestId: string | null
@@ -6324,6 +6326,7 @@ export namespace Prisma {
 
   export type PaymentCountAggregateOutputType = {
     id: number
+    purpose: number
     registrationId: number
     raffleTicketIds: number
     donationId: number
@@ -6355,6 +6358,7 @@ export namespace Prisma {
 
   export type PaymentMinAggregateInputType = {
     id?: true
+    purpose?: true
     registrationId?: true
     donationId?: true
     checkoutRequestId?: true
@@ -6374,6 +6378,7 @@ export namespace Prisma {
 
   export type PaymentMaxAggregateInputType = {
     id?: true
+    purpose?: true
     registrationId?: true
     donationId?: true
     checkoutRequestId?: true
@@ -6393,6 +6398,7 @@ export namespace Prisma {
 
   export type PaymentCountAggregateInputType = {
     id?: true
+    purpose?: true
     registrationId?: true
     raffleTicketIds?: true
     donationId?: true
@@ -6501,6 +6507,7 @@ export namespace Prisma {
 
   export type PaymentGroupByOutputType = {
     id: string
+    purpose: string | null
     registrationId: string | null
     raffleTicketIds: string[]
     donationId: string | null
@@ -6541,6 +6548,7 @@ export namespace Prisma {
 
   export type PaymentSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
+    purpose?: boolean
     registrationId?: boolean
     raffleTicketIds?: boolean
     donationId?: boolean
@@ -6562,6 +6570,7 @@ export namespace Prisma {
 
   export type PaymentSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
+    purpose?: boolean
     registrationId?: boolean
     raffleTicketIds?: boolean
     donationId?: boolean
@@ -6583,6 +6592,7 @@ export namespace Prisma {
 
   export type PaymentSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
+    purpose?: boolean
     registrationId?: boolean
     raffleTicketIds?: boolean
     donationId?: boolean
@@ -6604,6 +6614,7 @@ export namespace Prisma {
 
   export type PaymentSelectScalar = {
     id?: boolean
+    purpose?: boolean
     registrationId?: boolean
     raffleTicketIds?: boolean
     donationId?: boolean
@@ -6623,13 +6634,14 @@ export namespace Prisma {
     bikeHireId?: boolean
   }
 
-  export type PaymentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "registrationId" | "raffleTicketIds" | "donationId" | "checkoutRequestId" | "merchantRequestId" | "phone" | "amount" | "status" | "failureReason" | "createdAt" | "updatedAt" | "mpesaReceiptNumber" | "transactionDate" | "mnoReference" | "cbsReference" | "paymentDetails" | "bikeHireId", ExtArgs["result"]["payment"]>
+  export type PaymentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "purpose" | "registrationId" | "raffleTicketIds" | "donationId" | "checkoutRequestId" | "merchantRequestId" | "phone" | "amount" | "status" | "failureReason" | "createdAt" | "updatedAt" | "mpesaReceiptNumber" | "transactionDate" | "mnoReference" | "cbsReference" | "paymentDetails" | "bikeHireId", ExtArgs["result"]["payment"]>
 
   export type $PaymentPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Payment"
     objects: {}
     scalars: $Extensions.GetPayloadResult<{
       id: string
+      purpose: string | null
       registrationId: string | null
       raffleTicketIds: string[]
       donationId: string | null
@@ -7071,6 +7083,7 @@ export namespace Prisma {
    */
   interface PaymentFieldRefs {
     readonly id: FieldRef<"Payment", 'String'>
+    readonly purpose: FieldRef<"Payment", 'String'>
     readonly registrationId: FieldRef<"Payment", 'String'>
     readonly raffleTicketIds: FieldRef<"Payment", 'String[]'>
     readonly donationId: FieldRef<"Payment", 'String'>
@@ -23149,6 +23162,7 @@ export namespace Prisma {
 
   export const PaymentScalarFieldEnum: {
     id: 'id',
+    purpose: 'purpose',
     registrationId: 'registrationId',
     raffleTicketIds: 'raffleTicketIds',
     donationId: 'donationId',
@@ -23866,6 +23880,7 @@ export namespace Prisma {
     OR?: PaymentWhereInput[]
     NOT?: PaymentWhereInput | PaymentWhereInput[]
     id?: StringFilter<"Payment"> | string
+    purpose?: StringNullableFilter<"Payment"> | string | null
     registrationId?: StringNullableFilter<"Payment"> | string | null
     raffleTicketIds?: StringNullableListFilter<"Payment">
     donationId?: StringNullableFilter<"Payment"> | string | null
@@ -23887,6 +23902,7 @@ export namespace Prisma {
 
   export type PaymentOrderByWithRelationInput = {
     id?: SortOrder
+    purpose?: SortOrderInput | SortOrder
     registrationId?: SortOrderInput | SortOrder
     raffleTicketIds?: SortOrder
     donationId?: SortOrderInput | SortOrder
@@ -23912,6 +23928,7 @@ export namespace Prisma {
     AND?: PaymentWhereInput | PaymentWhereInput[]
     OR?: PaymentWhereInput[]
     NOT?: PaymentWhereInput | PaymentWhereInput[]
+    purpose?: StringNullableFilter<"Payment"> | string | null
     registrationId?: StringNullableFilter<"Payment"> | string | null
     raffleTicketIds?: StringNullableListFilter<"Payment">
     donationId?: StringNullableFilter<"Payment"> | string | null
@@ -23932,6 +23949,7 @@ export namespace Prisma {
 
   export type PaymentOrderByWithAggregationInput = {
     id?: SortOrder
+    purpose?: SortOrderInput | SortOrder
     registrationId?: SortOrderInput | SortOrder
     raffleTicketIds?: SortOrder
     donationId?: SortOrderInput | SortOrder
@@ -23961,6 +23979,7 @@ export namespace Prisma {
     OR?: PaymentScalarWhereWithAggregatesInput[]
     NOT?: PaymentScalarWhereWithAggregatesInput | PaymentScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"Payment"> | string
+    purpose?: StringNullableWithAggregatesFilter<"Payment"> | string | null
     registrationId?: StringNullableWithAggregatesFilter<"Payment"> | string | null
     raffleTicketIds?: StringNullableListFilter<"Payment">
     donationId?: StringNullableWithAggregatesFilter<"Payment"> | string | null
@@ -25456,6 +25475,7 @@ export namespace Prisma {
 
   export type PaymentCreateInput = {
     id?: string
+    purpose?: string | null
     registrationId?: string | null
     raffleTicketIds?: PaymentCreateraffleTicketIdsInput | string[]
     donationId?: string | null
@@ -25477,6 +25497,7 @@ export namespace Prisma {
 
   export type PaymentUncheckedCreateInput = {
     id?: string
+    purpose?: string | null
     registrationId?: string | null
     raffleTicketIds?: PaymentCreateraffleTicketIdsInput | string[]
     donationId?: string | null
@@ -25498,6 +25519,7 @@ export namespace Prisma {
 
   export type PaymentUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
+    purpose?: NullableStringFieldUpdateOperationsInput | string | null
     registrationId?: NullableStringFieldUpdateOperationsInput | string | null
     raffleTicketIds?: PaymentUpdateraffleTicketIdsInput | string[]
     donationId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -25519,6 +25541,7 @@ export namespace Prisma {
 
   export type PaymentUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
+    purpose?: NullableStringFieldUpdateOperationsInput | string | null
     registrationId?: NullableStringFieldUpdateOperationsInput | string | null
     raffleTicketIds?: PaymentUpdateraffleTicketIdsInput | string[]
     donationId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -25540,6 +25563,7 @@ export namespace Prisma {
 
   export type PaymentCreateManyInput = {
     id?: string
+    purpose?: string | null
     registrationId?: string | null
     raffleTicketIds?: PaymentCreateraffleTicketIdsInput | string[]
     donationId?: string | null
@@ -25561,6 +25585,7 @@ export namespace Prisma {
 
   export type PaymentUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
+    purpose?: NullableStringFieldUpdateOperationsInput | string | null
     registrationId?: NullableStringFieldUpdateOperationsInput | string | null
     raffleTicketIds?: PaymentUpdateraffleTicketIdsInput | string[]
     donationId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -25582,6 +25607,7 @@ export namespace Prisma {
 
   export type PaymentUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
+    purpose?: NullableStringFieldUpdateOperationsInput | string | null
     registrationId?: NullableStringFieldUpdateOperationsInput | string | null
     raffleTicketIds?: PaymentUpdateraffleTicketIdsInput | string[]
     donationId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -27274,6 +27300,7 @@ export namespace Prisma {
 
   export type PaymentCountOrderByAggregateInput = {
     id?: SortOrder
+    purpose?: SortOrder
     registrationId?: SortOrder
     raffleTicketIds?: SortOrder
     donationId?: SortOrder
@@ -27299,6 +27326,7 @@ export namespace Prisma {
 
   export type PaymentMaxOrderByAggregateInput = {
     id?: SortOrder
+    purpose?: SortOrder
     registrationId?: SortOrder
     donationId?: SortOrder
     checkoutRequestId?: SortOrder
@@ -27318,6 +27346,7 @@ export namespace Prisma {
 
   export type PaymentMinOrderByAggregateInput = {
     id?: SortOrder
+    purpose?: SortOrder
     registrationId?: SortOrder
     donationId?: SortOrder
     checkoutRequestId?: SortOrder
