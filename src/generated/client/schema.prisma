@@ -71,12 +71,17 @@ model Admin {
   sessions     AdminSession[]
 }
 
-// One row per admin change (every successful non-GET admin request, plus data repair scripts).
-// adminEmail is copied so the row stays readable if the admin is deleted.
+// One row per admin change (every successful non-GET admin request, plus data repair scripts),
+// and per participant change to their own account or riders (actorType "account").
+// adminEmail is copied so the row stays readable if the admin is deleted; for account rows it
+// holds the account's email or phone at the time.
 model AdminAuditLog {
   id         String   @id @default(uuid())
   createdAt  DateTime @default(now())
+  // admin | account
+  actorType  String   @default("admin")
   adminId    String?
+  accountId  String?
   adminEmail String
   action     String // e.g. "PATCH /api/v1/admin/registrations/:id" or "script:repair-paid-registrations"
   entityId   String?
@@ -86,6 +91,7 @@ model AdminAuditLog {
 
   @@index([createdAt])
   @@index([adminId])
+  @@index([accountId])
   @@index([entityId])
 }
 
@@ -322,7 +328,7 @@ model OtpCode {
   id          String    @id @default(uuid())
   channel     String // EMAIL | SMS
   destination String // normalised email or phone
-  purpose     String // LOGIN | SIGNUP | ADD_CONTACT
+  purpose     String // LOGIN | SIGNUP | ADD_CONTACT | CHANGE_CONTACT
   codeHash    String
   // Signup details or the account adding a contact, carried until verification.
   context     Json?

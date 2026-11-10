@@ -5315,7 +5315,9 @@ export namespace Prisma {
   export type AdminAuditLogMinAggregateOutputType = {
     id: string | null
     createdAt: Date | null
+    actorType: string | null
     adminId: string | null
+    accountId: string | null
     adminEmail: string | null
     action: string | null
     entityId: string | null
@@ -5326,7 +5328,9 @@ export namespace Prisma {
   export type AdminAuditLogMaxAggregateOutputType = {
     id: string | null
     createdAt: Date | null
+    actorType: string | null
     adminId: string | null
+    accountId: string | null
     adminEmail: string | null
     action: string | null
     entityId: string | null
@@ -5337,7 +5341,9 @@ export namespace Prisma {
   export type AdminAuditLogCountAggregateOutputType = {
     id: number
     createdAt: number
+    actorType: number
     adminId: number
+    accountId: number
     adminEmail: number
     action: number
     entityId: number
@@ -5359,7 +5365,9 @@ export namespace Prisma {
   export type AdminAuditLogMinAggregateInputType = {
     id?: true
     createdAt?: true
+    actorType?: true
     adminId?: true
+    accountId?: true
     adminEmail?: true
     action?: true
     entityId?: true
@@ -5370,7 +5378,9 @@ export namespace Prisma {
   export type AdminAuditLogMaxAggregateInputType = {
     id?: true
     createdAt?: true
+    actorType?: true
     adminId?: true
+    accountId?: true
     adminEmail?: true
     action?: true
     entityId?: true
@@ -5381,7 +5391,9 @@ export namespace Prisma {
   export type AdminAuditLogCountAggregateInputType = {
     id?: true
     createdAt?: true
+    actorType?: true
     adminId?: true
+    accountId?: true
     adminEmail?: true
     action?: true
     entityId?: true
@@ -5480,7 +5492,9 @@ export namespace Prisma {
   export type AdminAuditLogGroupByOutputType = {
     id: string
     createdAt: Date
+    actorType: string
     adminId: string | null
+    accountId: string | null
     adminEmail: string
     action: string
     entityId: string | null
@@ -5511,7 +5525,9 @@ export namespace Prisma {
   export type AdminAuditLogSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     createdAt?: boolean
+    actorType?: boolean
     adminId?: boolean
+    accountId?: boolean
     adminEmail?: boolean
     action?: boolean
     entityId?: boolean
@@ -5523,7 +5539,9 @@ export namespace Prisma {
   export type AdminAuditLogSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     createdAt?: boolean
+    actorType?: boolean
     adminId?: boolean
+    accountId?: boolean
     adminEmail?: boolean
     action?: boolean
     entityId?: boolean
@@ -5535,7 +5553,9 @@ export namespace Prisma {
   export type AdminAuditLogSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     createdAt?: boolean
+    actorType?: boolean
     adminId?: boolean
+    accountId?: boolean
     adminEmail?: boolean
     action?: boolean
     entityId?: boolean
@@ -5547,7 +5567,9 @@ export namespace Prisma {
   export type AdminAuditLogSelectScalar = {
     id?: boolean
     createdAt?: boolean
+    actorType?: boolean
     adminId?: boolean
+    accountId?: boolean
     adminEmail?: boolean
     action?: boolean
     entityId?: boolean
@@ -5556,7 +5578,7 @@ export namespace Prisma {
     details?: boolean
   }
 
-  export type AdminAuditLogOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "createdAt" | "adminId" | "adminEmail" | "action" | "entityId" | "status" | "ip" | "details", ExtArgs["result"]["adminAuditLog"]>
+  export type AdminAuditLogOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "createdAt" | "actorType" | "adminId" | "accountId" | "adminEmail" | "action" | "entityId" | "status" | "ip" | "details", ExtArgs["result"]["adminAuditLog"]>
 
   export type $AdminAuditLogPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "AdminAuditLog"
@@ -5564,7 +5586,9 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: string
       createdAt: Date
+      actorType: string
       adminId: string | null
+      accountId: string | null
       adminEmail: string
       action: string
       entityId: string | null
@@ -5996,7 +6020,9 @@ export namespace Prisma {
   interface AdminAuditLogFieldRefs {
     readonly id: FieldRef<"AdminAuditLog", 'String'>
     readonly createdAt: FieldRef<"AdminAuditLog", 'DateTime'>
+    readonly actorType: FieldRef<"AdminAuditLog", 'String'>
     readonly adminId: FieldRef<"AdminAuditLog", 'String'>
+    readonly accountId: FieldRef<"AdminAuditLog", 'String'>
     readonly adminEmail: FieldRef<"AdminAuditLog", 'String'>
     readonly action: FieldRef<"AdminAuditLog", 'String'>
     readonly entityId: FieldRef<"AdminAuditLog", 'String'>
@@ -24325,7 +24351,9 @@ export namespace Prisma {
   export const AdminAuditLogScalarFieldEnum: {
     id: 'id',
     createdAt: 'createdAt',
+    actorType: 'actorType',
     adminId: 'adminId',
+    accountId: 'accountId',
     adminEmail: 'adminEmail',
     action: 'action',
     entityId: 'entityId',
@@ -25014,7 +25042,9 @@ export namespace Prisma {
     NOT?: AdminAuditLogWhereInput | AdminAuditLogWhereInput[]
     id?: StringFilter<"AdminAuditLog"> | string
     createdAt?: DateTimeFilter<"AdminAuditLog"> | Date | string
+    actorType?: StringFilter<"AdminAuditLog"> | string
     adminId?: StringNullableFilter<"AdminAuditLog"> | string | null
+    accountId?: StringNullableFilter<"AdminAuditLog"> | string | null
     adminEmail?: StringFilter<"AdminAuditLog"> | string
     action?: StringFilter<"AdminAuditLog"> | string
     entityId?: StringNullableFilter<"AdminAuditLog"> | string | null
@@ -25026,7 +25056,9 @@ export namespace Prisma {
   export type AdminAuditLogOrderByWithRelationInput = {
     id?: SortOrder
     createdAt?: SortOrder
+    actorType?: SortOrder
     adminId?: SortOrderInput | SortOrder
+    accountId?: SortOrderInput | SortOrder
     adminEmail?: SortOrder
     action?: SortOrder
     entityId?: SortOrderInput | SortOrder
@@ -25041,7 +25073,9 @@ export namespace Prisma {
     OR?: AdminAuditLogWhereInput[]
     NOT?: AdminAuditLogWhereInput | AdminAuditLogWhereInput[]
     createdAt?: DateTimeFilter<"AdminAuditLog"> | Date | string
+    actorType?: StringFilter<"AdminAuditLog"> | string
     adminId?: StringNullableFilter<"AdminAuditLog"> | string | null
+    accountId?: StringNullableFilter<"AdminAuditLog"> | string | null
     adminEmail?: StringFilter<"AdminAuditLog"> | string
     action?: StringFilter<"AdminAuditLog"> | string
     entityId?: StringNullableFilter<"AdminAuditLog"> | string | null
@@ -25053,7 +25087,9 @@ export namespace Prisma {
   export type AdminAuditLogOrderByWithAggregationInput = {
     id?: SortOrder
     createdAt?: SortOrder
+    actorType?: SortOrder
     adminId?: SortOrderInput | SortOrder
+    accountId?: SortOrderInput | SortOrder
     adminEmail?: SortOrder
     action?: SortOrder
     entityId?: SortOrderInput | SortOrder
@@ -25073,7 +25109,9 @@ export namespace Prisma {
     NOT?: AdminAuditLogScalarWhereWithAggregatesInput | AdminAuditLogScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"AdminAuditLog"> | string
     createdAt?: DateTimeWithAggregatesFilter<"AdminAuditLog"> | Date | string
+    actorType?: StringWithAggregatesFilter<"AdminAuditLog"> | string
     adminId?: StringNullableWithAggregatesFilter<"AdminAuditLog"> | string | null
+    accountId?: StringNullableWithAggregatesFilter<"AdminAuditLog"> | string | null
     adminEmail?: StringWithAggregatesFilter<"AdminAuditLog"> | string
     action?: StringWithAggregatesFilter<"AdminAuditLog"> | string
     entityId?: StringNullableWithAggregatesFilter<"AdminAuditLog"> | string | null
@@ -26683,7 +26721,9 @@ export namespace Prisma {
   export type AdminAuditLogCreateInput = {
     id?: string
     createdAt?: Date | string
+    actorType?: string
     adminId?: string | null
+    accountId?: string | null
     adminEmail: string
     action: string
     entityId?: string | null
@@ -26695,7 +26735,9 @@ export namespace Prisma {
   export type AdminAuditLogUncheckedCreateInput = {
     id?: string
     createdAt?: Date | string
+    actorType?: string
     adminId?: string | null
+    accountId?: string | null
     adminEmail: string
     action: string
     entityId?: string | null
@@ -26707,7 +26749,9 @@ export namespace Prisma {
   export type AdminAuditLogUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    actorType?: StringFieldUpdateOperationsInput | string
     adminId?: NullableStringFieldUpdateOperationsInput | string | null
+    accountId?: NullableStringFieldUpdateOperationsInput | string | null
     adminEmail?: StringFieldUpdateOperationsInput | string
     action?: StringFieldUpdateOperationsInput | string
     entityId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -26719,7 +26763,9 @@ export namespace Prisma {
   export type AdminAuditLogUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    actorType?: StringFieldUpdateOperationsInput | string
     adminId?: NullableStringFieldUpdateOperationsInput | string | null
+    accountId?: NullableStringFieldUpdateOperationsInput | string | null
     adminEmail?: StringFieldUpdateOperationsInput | string
     action?: StringFieldUpdateOperationsInput | string
     entityId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -26731,7 +26777,9 @@ export namespace Prisma {
   export type AdminAuditLogCreateManyInput = {
     id?: string
     createdAt?: Date | string
+    actorType?: string
     adminId?: string | null
+    accountId?: string | null
     adminEmail: string
     action: string
     entityId?: string | null
@@ -26743,7 +26791,9 @@ export namespace Prisma {
   export type AdminAuditLogUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    actorType?: StringFieldUpdateOperationsInput | string
     adminId?: NullableStringFieldUpdateOperationsInput | string | null
+    accountId?: NullableStringFieldUpdateOperationsInput | string | null
     adminEmail?: StringFieldUpdateOperationsInput | string
     action?: StringFieldUpdateOperationsInput | string
     entityId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -26755,7 +26805,9 @@ export namespace Prisma {
   export type AdminAuditLogUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    actorType?: StringFieldUpdateOperationsInput | string
     adminId?: NullableStringFieldUpdateOperationsInput | string | null
+    accountId?: NullableStringFieldUpdateOperationsInput | string | null
     adminEmail?: StringFieldUpdateOperationsInput | string
     action?: StringFieldUpdateOperationsInput | string
     entityId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -28621,7 +28673,9 @@ export namespace Prisma {
   export type AdminAuditLogCountOrderByAggregateInput = {
     id?: SortOrder
     createdAt?: SortOrder
+    actorType?: SortOrder
     adminId?: SortOrder
+    accountId?: SortOrder
     adminEmail?: SortOrder
     action?: SortOrder
     entityId?: SortOrder
@@ -28637,7 +28691,9 @@ export namespace Prisma {
   export type AdminAuditLogMaxOrderByAggregateInput = {
     id?: SortOrder
     createdAt?: SortOrder
+    actorType?: SortOrder
     adminId?: SortOrder
+    accountId?: SortOrder
     adminEmail?: SortOrder
     action?: SortOrder
     entityId?: SortOrder
@@ -28648,7 +28704,9 @@ export namespace Prisma {
   export type AdminAuditLogMinOrderByAggregateInput = {
     id?: SortOrder
     createdAt?: SortOrder
+    actorType?: SortOrder
     adminId?: SortOrder
+    accountId?: SortOrder
     adminEmail?: SortOrder
     action?: SortOrder
     entityId?: SortOrder

@@ -7,7 +7,9 @@
  *     - unknown, with name  → sends a SIGNUP code
  *   POST /verify  { identifier, code } → { token, expiresAt, account }
  *   GET  /me, POST /logout
- *   POST /contact/start, /contact/verify — add a second email or phone to your account
+ *   POST /contact/start, /contact/verify — add an email or phone to your account, or
+ *     change the one you have. The code goes to the new contact; on a change the
+ *     old contact is told.
  */
 import { Router } from 'express';
 import rateLimit from 'express-rate-limit';
@@ -18,6 +20,9 @@ import { maskEmail, maskPhone } from '../utils/masking.js';
 import { issueOtp, verifyOtp, OtpError } from '../services/otpService.js';
 import { createSession, publicAccount, claimUnlinkedRecords } from '../services/accountService.js';
 import { requireUser, UserRequest } from '../middleware/userAuth.js';
+import { writeAccountAudit } from '../middleware/adminAudit.js';
+import { sendContactChangedEmail } from '../services/emailService.js';
+import { smsService } from '../services/smsService.js';
 import { rateLimitsOff } from '../middleware/rateLimit.js';
 
 export const authRouter = Router();
@@ -28,6 +33,13 @@ const skipInTests = rateLimitsOff;
 const limitMessage = { error: { code: 'TOO_MANY_REQUESTS', message: 'Too many attempts. Please try again later.' } };
 const startLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false, message: limitMessage, skip: skipInTests });
 const verifyLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 30, standardHeaders: true, legacyHeaders: false, message: limitMessage, skip: skipInTests });
+// Contact changes: per account, on top of the per-IP and per-address limits.
+const contactLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, max: 5, standardHeaders: true, legacyHeaders: false, message: limitMessage, skip: skipInTests,
+    keyGenerator: (req) => `account:${(req as UserRequest).account?.id}`,
+});
+
+const CONTACT_PURPOSES = ['ADD_CONTACT', 'CHANGE_CONTACT'];
 
 const startSchema = z.object({
     identifier: z.string().min(3).max(200),
@@ -99,7 +111,7 @@ authRouter.post('/verify', verifyLimiter, async (req, res, next) => {
         } catch (err) {
             return otpFailure(res, err);
         }
-        if (result.purpose === 'ADD_CONTACT') {
+        if (CONTACT_PURPOSES.includes(result.purpose)) {
             return res.status(400).json({ error: { code: 'INVALID_CODE', message: 'That code is not valid for logging in.' } });
         }
 
@@ -142,23 +154,24 @@ authRouter.post('/logout', requireUser, async (req: UserRequest, res, next) => {
     }
 });
 
-// ─── Add a second contact (email or phone) to the logged-in account ──────────
+// ─── Add or change the logged-in account's email or phone ─────────────────────
 
-authRouter.post('/contact/start', requireUser, startLimiter, async (req: UserRequest, res, next) => {
+authRouter.post('/contact/start', requireUser, startLimiter, contactLimiter, async (req: UserRequest, res, next) => {
     try {
         const id = parseIdentifier(req.body?.identifier);
         if (!id) return badIdentifier(res);
         const current = id.kind === 'email' ? req.account!.email : req.account!.phone;
-        if (current) {
-            return res.status(400).json({ error: { code: 'ALREADY_SET', message: `Your account already has ${id.kind === 'email' ? 'an email address' : 'a phone number'}.` } });
+        if (current === id.value) {
+            return res.status(400).json({ error: { code: 'SAME_CONTACT', message: `That is already your ${id.kind === 'email' ? 'email address' : 'phone number'}.` } });
         }
         const owner = await findAccount(id);
         if (owner) {
             return res.status(409).json({ error: { code: 'IN_USE', message: `That ${id.kind === 'email' ? 'email' : 'phone number'} belongs to another account. Log in with it instead, or contact support to merge accounts.` } });
         }
         try {
-            const { devCode } = await issueOtp(id, 'ADD_CONTACT', { accountId: req.account!.id });
-            return res.json({ ok: true, sentTo: masked(id), ...(devCode ? { devCode } : {}) });
+            const purpose = current ? 'CHANGE_CONTACT' : 'ADD_CONTACT';
+            const { devCode } = await issueOtp(id, purpose, { accountId: req.account!.id });
+            return res.json({ ok: true, change: !!current, sentTo: masked(id), ...(devCode ? { devCode } : {}) });
         } catch (err) {
             return otpFailure(res, err);
         }
@@ -166,6 +179,19 @@ authRouter.post('/contact/start', requireUser, startLimiter, async (req: UserReq
         next(err);
     }
 });
+
+/** Tells the old email or phone that it was replaced. Never fails the request. */
+async function noticeToOldContact(kind: 'email' | 'phone', oldValue: string, newMasked: string) {
+    try {
+        if (kind === 'email') {
+            await sendContactChangedEmail(oldValue, 'email', newMasked);
+        } else {
+            await smsService.sendSMS([oldValue], `The phone number on your Ride With The Warriors account was changed to ${newMasked}. If this wasn't you, contact us straight away.`);
+        }
+    } catch (err) {
+        console.error('[Auth] Failed to notify old contact:', err instanceof Error ? err.message : err);
+    }
+}
 
 authRouter.post('/contact/verify', requireUser, verifyLimiter, async (req: UserRequest, res, next) => {
     try {
@@ -180,20 +206,32 @@ authRouter.post('/contact/verify', requireUser, verifyLimiter, async (req: UserR
         } catch (err) {
             return otpFailure(res, err);
         }
-        if (result.purpose !== 'ADD_CONTACT' || (result.context as any)?.accountId !== req.account!.id) {
+        if (!CONTACT_PURPOSES.includes(result.purpose) || (result.context as any)?.accountId !== req.account!.id) {
             return res.status(400).json({ error: { code: 'INVALID_CODE', message: 'That code is not valid.' } });
         }
 
+        const before = await prisma.account.findUniqueOrThrow({ where: { id: req.account!.id } });
+        const oldValue = id.kind === 'email' ? before.email : before.phone;
+        let account;
         try {
-            const account = await prisma.account.update({
-                where: { id: req.account!.id },
+            account = await prisma.account.update({
+                where: { id: before.id },
                 data: id.kind === 'email' ? { email: id.value } : { phone: id.value },
             });
-            await claimUnlinkedRecords(account.id);
-            return res.json({ account: publicAccount(account) });
         } catch {
             return res.status(409).json({ error: { code: 'IN_USE', message: 'That contact was just added to another account.' } });
         }
+
+        await writeAccountAudit({
+            account: before,
+            action: oldValue ? `account:change-${id.kind}` : `account:add-${id.kind}`,
+            entityId: account.id,
+            ip: req.ip ?? null,
+            details: { from: oldValue ? masked({ kind: id.kind, value: oldValue } as Identifier) : null, to: masked(id) },
+        });
+        if (oldValue && oldValue !== id.value) await noticeToOldContact(id.kind, oldValue, masked(id));
+        await claimUnlinkedRecords(account.id);
+        return res.json({ account: publicAccount(account) });
     } catch (err) {
         next(err);
     }

@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { prisma } from '../../storage/prisma.js';
-import { requireAdmin } from '../../middleware/auth.js';
+import { z } from 'zod';
+import { requireAdmin, AuthenticatedRequest } from '../../middleware/auth.js';
+import { writeAudit } from '../../middleware/adminAudit.js';
 import { updateRegistration } from '../../storage/memoryRegistrations.js';
 
 export const adminRegistrationsRouter = Router();
@@ -106,6 +108,64 @@ adminRegistrationsRouter.get('/', requireAdmin, async (req, res) => {
 });
 
 // Update registration status
+// Change a rider's ID/passport number. Riders can't change it themselves
+// (PATCH /me/riders/:id refuses it), so this is the only way, and it is audited
+// with the old and new value on top of the generic admin audit row.
+const idNumberSchema = z.object({
+    idNumber: z.string().trim().min(4, 'Enter the ID or passport number').max(30),
+    reason: z.string().trim().min(3, 'Give a reason for the change').max(500),
+});
+
+adminRegistrationsRouter.patch('/:id/id-number', requireAdmin, async (req: AuthenticatedRequest, res) => {
+    const body = idNumberSchema.safeParse(req.body ?? {});
+    if (!body.success) {
+        return res.status(400).json({ error: { code: 'VALIDATION', message: body.error.issues[0]?.message ?? 'Invalid details' } });
+    }
+    const { idNumber, reason } = body.data;
+    try {
+        const reg = await prisma.registration.findUnique({ where: { id: req.params.id } });
+        if (!reg) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Registration not found' } });
+        if (reg.idNumber === idNumber) return res.json({ registration: { id: reg.id, idNumber: reg.idNumber } });
+
+        const clash = await prisma.registration.findFirst({
+            where: { idNumber, eventYear: reg.eventYear, id: { not: reg.id }, status: { not: 'CANCELLED' } },
+            select: { id: true },
+        });
+        if (clash) {
+            return res.status(409).json({ error: { code: 'ID_IN_USE', message: `Another ${reg.eventYear} registration (${clash.id}) already uses that ID number.` } });
+        }
+
+        // Keep the original submission in step (individual rider / team member).
+        const payload = (reg.payload as any) ?? null;
+        let newPayload = payload;
+        if (payload?.riderDetails) {
+            newPayload = { ...payload, riderDetails: { ...payload.riderDetails, idNumber } };
+        } else if (payload?.teamDetails?.members && Number.isInteger(payload.memberIndex) && payload.teamDetails.members[payload.memberIndex]) {
+            const members = [...payload.teamDetails.members];
+            members[payload.memberIndex] = { ...members[payload.memberIndex], idNumber };
+            newPayload = { ...payload, teamDetails: { ...payload.teamDetails, members } };
+        }
+
+        const updated = await prisma.registration.update({
+            where: { id: reg.id },
+            data: { idNumber, ...(newPayload !== payload ? { payload: newPayload } : {}) },
+        });
+        await writeAudit({
+            adminId: req.admin!.id,
+            adminEmail: req.admin!.email,
+            action: 'registration:change-id-number',
+            entityId: reg.id,
+            status: 200,
+            ip: req.ip ?? null,
+            details: { from: reg.idNumber, to: idNumber, reason },
+        });
+        res.json({ registration: { id: updated.id, idNumber: updated.idNumber } });
+    } catch (error) {
+        console.error('[Admin] ID number change failed:', error);
+        res.status(500).json({ error: { code: 'INTERNAL', message: 'Could not change the ID number' } });
+    }
+});
+
 adminRegistrationsRouter.patch('/:id', requireAdmin, async (req, res) => {
     const { status } = req.body;
     const { id } = req.params;
