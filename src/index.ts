@@ -31,6 +31,7 @@ import { meRouter } from './routes/me.js';
 import { galleryRouter } from './routes/gallery.js';
 import { prisma } from './storage/prisma.js';
 import { auditAdminChanges } from './middleware/adminAudit.js';
+import { corsOptions, securityHeaders, errorHandler } from './middleware/security.js';
 
 
 // Refuse to start with unsafe settings (see src/config.ts).
@@ -41,15 +42,18 @@ const app = express();
 
 app.set('trust proxy', 1);
 
-app.use(cors());
+app.use(securityHeaders);
+app.use(cors(corsOptions()));
 app.use(express.json({ limit: '1mb' }));
 
 app.get('/health', async (_req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
     res.json({ ok: true, database: 'connected' });
-  } catch (err: any) {
-    res.status(503).json({ ok: false, database: 'disconnected', error: err.message });
+  } catch (err) {
+    // The reason goes to the logs only; it can contain host names.
+    console.error('[health] Database check failed:', err);
+    res.status(503).json({ ok: false, database: 'disconnected' });
   }
 });
 
@@ -90,20 +94,8 @@ app.use('/api/v1/admin/feedback', adminFeedbackRouter);
 // Reports unhandled errors to Sentry (no-op when SENTRY_DSN is not set).
 Sentry.setupExpressErrorHandler(app);
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error('[Global Error Handler]:', err);
-
-  // In production, we should be careful about what we expose, 
-  // but for now we need to see why it's failing.
-  res.status(err.status || 500).json({
-    error: {
-      code: err.code || 'INTERNAL',
-      message: err.message || 'Internal server error',
-      details: process.env.NODE_ENV !== 'production' ? err : { stack: err.stack, name: err.name }
-    }
-  });
-});
+// No stack traces or internal messages in UAT/production (see src/middleware/security.ts).
+app.use(errorHandler);
 
 const port = Number(process.env.PORT ?? 4000);
 // In Vercel, the app is exported and doesn't need to listen
