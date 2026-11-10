@@ -30,6 +30,7 @@ import { authRouter as userAuthRouter } from './routes/auth.js';
 import { meRouter } from './routes/me.js';
 import { galleryRouter } from './routes/gallery.js';
 import { prisma } from './storage/prisma.js';
+import { auditAdminChanges } from './middleware/adminAudit.js';
 
 
 // Refuse to start with unsafe settings (see src/config.ts).
@@ -71,7 +72,8 @@ app.use('/api/v1/me', meRouter);
 app.use('/api/v1/gallery', galleryRouter);
 
 
-// Admin Routes
+// Admin Routes. Every successful change is written to AdminAuditLog.
+app.use('/api/v1/admin', auditAdminChanges);
 app.use('/api/v1/admin/auth', authRouter);
 app.use('/api/v1/admin/registrations', adminRegistrationsRouter);
 app.use('/api/v1/admin/payments', adminPaymentsRouter);

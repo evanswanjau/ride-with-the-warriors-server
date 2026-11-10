@@ -64,10 +64,29 @@ model Admin {
   email        String         @unique
   passwordHash String
   name         String
+  // viewer (read only) | admin (read and change) | super_admin (also deletes and bulk messages).
   role         String         @default("admin")
   createdAt    DateTime       @default(now())
   lastLogin    DateTime?
   sessions     AdminSession[]
+}
+
+// One row per admin change (every successful non-GET admin request, plus data repair scripts).
+// adminEmail is copied so the row stays readable if the admin is deleted.
+model AdminAuditLog {
+  id         String   @id @default(uuid())
+  createdAt  DateTime @default(now())
+  adminId    String?
+  adminEmail String
+  action     String // e.g. "PATCH /api/v1/admin/registrations/:id" or "script:repair-paid-registrations"
+  entityId   String?
+  status     Int?
+  ip         String?
+  details    Json?
+
+  @@index([createdAt])
+  @@index([adminId])
+  @@index([entityId])
 }
 
 model AdminSession {
