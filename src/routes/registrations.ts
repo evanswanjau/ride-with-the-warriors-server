@@ -327,27 +327,14 @@ registrationsRouter.post('/', requireUser, async (req: UserRequest, res, next) =
     }
 
     // AUTO-CLEANUP: replace this account's own earlier UNPAID attempts. Never
-    // delete unpaid registrations that belong to someone else.
+    // delete unpaid registrations that belong to someone else. The old drafts are
+    // removed in the same transaction that saves the new one (see createRegistration),
+    // and never when they have a payment in progress or made.
     const myUnpaidDuplicates = unpaidDuplicates.filter(reg => reg.accountId === accountId);
-    if (myUnpaidDuplicates.length > 0) {
-      const unpaidDuplicates = myUnpaidDuplicates;
-      const groupIds = [...new Set(unpaidDuplicates.map(reg => (reg as any).groupId).filter(Boolean))];
-      console.log(`[Registration] Cleaning up ${unpaidDuplicates.length} UNPAID records in groups: ${groupIds.join(', ')}`);
-
-      const prisma = (await import('../storage/prisma.js')).prisma;
-      if (groupIds.length > 0) {
-        await (prisma.registration as any).deleteMany({
-          where: { groupId: { in: groupIds } }
-        });
-      }
-      // Also catch any orphan records without groupIds
-      const orphanIds = unpaidDuplicates.filter(reg => !(reg as any).groupId).map(reg => reg.id);
-      if (orphanIds.length > 0) {
-        await (prisma.registration as any).deleteMany({
-          where: { id: { in: orphanIds } }
-        });
-      }
-    }
+    const replace = myUnpaidDuplicates.length > 0 ? {
+      groupIds: [...new Set(myUnpaidDuplicates.map(reg => (reg as any).groupId).filter(Boolean))] as string[],
+      ids: myUnpaidDuplicates.filter(reg => !(reg as any).groupId).map(reg => reg.id),
+    } : undefined;
 
     const quote = await buildQuote({ circuitId: base.circuitId, type: base.type, payload });
 
@@ -362,7 +349,7 @@ registrationsRouter.post('/', requireUser, async (req: UserRequest, res, next) =
         pricing: quote.pricing,
         classifications: quote.classifications,
         accountId,
-      });
+      }, replace);
     } else {
       console.log(`[Registration] Creating new ${type} record`);
       rec = await createRegistration({
@@ -374,7 +361,7 @@ registrationsRouter.post('/', requireUser, async (req: UserRequest, res, next) =
         status: quote.pricing.totalAmount === 0 ? 'PAID' : 'UNPAID',
         mpesaCode: base.mpesaCode || null,
         accountId,
-      });
+      }, replace);
     }
     // Team members / adult riders who already have accounts see their own entry.
     await linkGroupParticipants(rec.id, accountId);

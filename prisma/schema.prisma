@@ -50,6 +50,9 @@ model Registration {
   // The rider's own account, when it differs from the owner (team members, adult family riders).
   participantAccountId String?
   participantAccount   Account?           @relation("RegistrationParticipant", fields: [participantAccountId], references: [id], onDelete: SetNull)
+  // Set when an admin cancels the registration (rows are kept, never deleted).
+  cancelledAt          DateTime?
+  cancelledBy          String?
 
   @@index([groupId])
   @@index([email])

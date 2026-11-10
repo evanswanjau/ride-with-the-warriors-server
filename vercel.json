@@ -12,7 +12,7 @@
     ],
     "crons": [
         {
-            "path": "/api/cron/expire-payments",
+            "path": "/api/cron/daily",
             "schedule": "0 3 * * *"
         }
     ]

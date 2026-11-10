@@ -97,6 +97,9 @@ export function checkConfig(env: NodeJS.ProcessEnv = process.env): ConfigReport 
     if (deployed && !env.TURNSTILE_SECRET_KEY) {
         warnings.push('TURNSTILE_SECRET_KEY is not set: the contact form has no bot check (rate limit only).');
     }
+    if (deployed && !env.SMS_CALLBACK_SECRET) {
+        warnings.push('SMS_CALLBACK_SECRET is not set: SMS delivery webhooks are not authenticated.');
+    }
     if (deployed && !env.CRON_SECRET) {
         warnings.push('CRON_SECRET is not set: scheduled jobs (/api/cron/*) will refuse every call.');
     }
