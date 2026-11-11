@@ -996,6 +996,37 @@ export async function sendOtpEmail(to: string, code: string): Promise<boolean> {
   }
 }
 
+/**
+ * Tells the old email address that the account's email or phone was changed.
+ * `newContact` must already be masked.
+ */
+export async function sendContactChangedEmail(to: string, kind: 'email' | 'phone', newContact: string): Promise<boolean> {
+  const what = kind === 'email' ? 'email address' : 'phone number';
+  const content = `
+    <h2 style="margin: 0 0 14px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
+      font-size: 26px; font-weight: 700; color: ${C.textMain};">Your ${what} was changed</h2>
+    <p style="margin: 0 0 18px; font-size: 15px; line-height: 1.6; color: ${C.textMuted};">
+      The ${what} on your Ride With The Warriors account was changed to ${newContact}.
+      ${kind === 'email' ? 'You will no longer be able to log in with this email address.' : ''}
+    </p>
+    <p style="margin: 18px 0 0; font-size: 13px; line-height: 1.6; color: ${C.textMuted};">
+      If you didn't make this change, contact us straight away by replying to this email.
+    </p>`;
+  try {
+    await transporter.sendMail({
+      from: EMAIL_FROM,
+      to,
+      subject: `Your Ride With The Warriors ${what} was changed`,
+      text: `The ${what} on your Ride With The Warriors account was changed to ${newContact}. If you didn't make this change, contact us straight away.`,
+      html: getEmailTemplate(content, `Your ${what} was changed`, `Your ${what} was changed`),
+    });
+    return true;
+  } catch (error) {
+    console.error('[Email] Failed to send contact change notice:', error instanceof Error ? error.message : error);
+    return false;
+  }
+}
+
 export async function verifyEmailConnection(): Promise<boolean> {
   try {
     await transporter.verify();

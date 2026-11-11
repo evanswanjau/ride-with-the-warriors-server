@@ -14,7 +14,7 @@ import { smsService } from './smsService.js';
 import { sendOtpEmail } from './emailService.js';
 import type { Identifier } from '../utils/identity.js';
 
-export type OtpPurpose = 'LOGIN' | 'SIGNUP' | 'ADD_CONTACT';
+export type OtpPurpose = 'LOGIN' | 'SIGNUP' | 'ADD_CONTACT' | 'CHANGE_CONTACT';
 
 const CODE_TTL_MS = 10 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
