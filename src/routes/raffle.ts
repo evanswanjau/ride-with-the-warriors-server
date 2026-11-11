@@ -46,7 +46,7 @@ raffleRouter.post('/', requireUser, raffleRateLimiter, async (req: UserRequest, 
     // Validate referral code if provided
     const validatedRefCode = referralCode ? referralCode.toUpperCase().trim() : null;
     if (validatedRefCode) {
-      const referral = await (prisma.referral as any).findUnique({ where: { code: validatedRefCode } });
+      const referral = await prisma.referral.findUnique({ where: { code: validatedRefCode } });
       if (!referral || !referral.isActive) {
         console.log(`[Raffle] Invalid referral code: ${validatedRefCode}`);
         // Don't block — just ignore the invalid code
@@ -122,7 +122,7 @@ raffleRouter.post('/pay/stk-push', requireUser, async (req: UserRequest, res) =>
     console.log(`[Raffle STK SIM] Simulating payment for ${ticketIds.length} ticket(s) — KES ${totalAmount}`);
     await new Promise(r => setTimeout(r, 800));
     const simRef = `SIM-${Date.now()}`;
-    await (prisma.raffleTicket as any).updateMany({
+    await prisma.raffleTicket.updateMany({
       where: { id: { in: ticketIds } },
       data: { status: 'PAID', checkoutRequestId: simRef, paymentFailed: false, mpesaCode: simRef },
     });
@@ -158,9 +158,9 @@ raffleRouter.post('/pay/stk-push', requireUser, async (req: UserRequest, res) =>
         error: { code: 'PAYMENT_FAILED', message: result.message || 'Failed to trigger M-Pesa prompt.' },
       });
     }
-  } catch (err: any) {
+  } catch (err) {
     console.error('[Raffle STK Push] Error:', err);
-    return res.status(500).json({ error: { code: 'INTERNAL', message: err.message || 'Payment initiation failed' } });
+    return res.status(500).json({ error: { code: 'INTERNAL', message: (err as Error).message || 'Payment initiation failed' } });
   }
 });
 

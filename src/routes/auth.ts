@@ -11,7 +11,7 @@
  *     change the one you have. The code goes to the new contact; on a change the
  *     old contact is told.
  */
-import { Router } from 'express';
+import { Router, type Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
 import { prisma } from '../storage/prisma.js';
@@ -51,11 +51,11 @@ const verifySchema = z.object({
     code: z.string().regex(/^\d{6}$/, 'Enter the 6-digit code'),
 });
 
-function badIdentifier(res: any) {
+function badIdentifier(res: Response) {
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'Enter a valid email address or Kenyan phone number.' } });
 }
 
-function otpFailure(res: any, err: unknown) {
+function otpFailure(res: Response, err: unknown) {
     if (err instanceof OtpError) {
         const status = err.code === 'TOO_MANY_CODES' || err.code === 'TOO_MANY_ATTEMPTS' ? 429 : err.code === 'SEND_FAILED' ? 502 : 400;
         return res.status(status).json({ error: { code: err.code, message: err.message } });
@@ -206,7 +206,7 @@ authRouter.post('/contact/verify', requireUser, verifyLimiter, async (req: UserR
         } catch (err) {
             return otpFailure(res, err);
         }
-        if (!CONTACT_PURPOSES.includes(result.purpose) || (result.context as any)?.accountId !== req.account!.id) {
+        if (!CONTACT_PURPOSES.includes(result.purpose) || result.context?.accountId !== req.account!.id) {
             return res.status(400).json({ error: { code: 'INVALID_CODE', message: 'That code is not valid.' } });
         }
 

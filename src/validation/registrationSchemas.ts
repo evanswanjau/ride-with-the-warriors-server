@@ -241,9 +241,16 @@ export type FamilyDetails = z.infer<typeof familyDetailsSchema>;
 export type RegistrationPayload = {
   riderDetails?: RiderDetails;
   teamDetails?: TeamDetails;
-  familyDetails?: FamilyDetails;
+  // Older rows may carry a guardian idNumber that the current schema strips.
+  familyDetails?: Omit<FamilyDetails, 'guardian'> & { guardian: FamilyDetails['guardian'] & { idNumber?: string } };
   groupId?: string;
   isPrimary?: boolean;
   memberIndex?: number;
   riderId?: string;
 };
+
+/** A payload that passed validation: exactly one of the three detail blocks. */
+export type ValidPayload =
+  | { riderDetails: RiderDetails }
+  | { teamDetails: TeamDetails }
+  | { familyDetails: FamilyDetails };

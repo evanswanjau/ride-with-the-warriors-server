@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import type { Prisma } from '../../generated/client/index.js';
 import { prisma } from '../../storage/prisma.js';
 import { requireAdmin } from '../../middleware/auth.js';
 
@@ -13,8 +14,8 @@ adminDonationsRouter.get('/', requireAdmin, async (req, res) => {
 
         const { status, search } = req.query;
 
-        const where: any = {};
-        if (status) where.status = String(status).toUpperCase();
+        const where: Prisma.DonationWhereInput = {};
+        if (status) where.status = String(status).toUpperCase() as Prisma.DonationWhereInput['status'];
         
         if (search) {
             const s = String(search).trim();

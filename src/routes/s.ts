@@ -17,7 +17,7 @@ router.get('/:id', async (req, res) => {
             prisma.shortLink.update({
                 where: { id },
                 data: { clicks: { increment: 1 } }
-            }).catch((e: any) => console.error('Error updating short link clicks:', e));
+            }).catch((e) => console.error('Error updating short link clicks:', e));
 
             return res.redirect(link.url);
         }

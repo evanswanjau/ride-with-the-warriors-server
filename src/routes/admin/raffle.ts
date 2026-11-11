@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import type { Prisma } from '../../generated/client/index.js';
 import { prisma } from '../../storage/prisma.js';
 import { requireAdmin } from '../../middleware/auth.js';
 
@@ -13,7 +14,7 @@ adminRaffleRouter.get('/', requireAdmin, async (req, res) => {
 
         const { status, search, referralCode } = req.query;
 
-        const where: any = {};
+        const where: Prisma.RaffleTicketWhereInput = {};
         if (status) where.status = String(status).toUpperCase();
         if (referralCode) where.referralCode = String(referralCode).toUpperCase();
         if (search) {
@@ -29,13 +30,13 @@ adminRaffleRouter.get('/', requireAdmin, async (req, res) => {
         }
 
         const [tickets, total] = await Promise.all([
-            (prisma.raffleTicket as any).findMany({
+            prisma.raffleTicket.findMany({
                 where,
                 skip,
                 take: limit,
                 orderBy: { createdAt: 'desc' },
             }),
-            (prisma.raffleTicket as any).count({ where }),
+            prisma.raffleTicket.count({ where }),
         ]);
 
         res.json({
@@ -63,7 +64,7 @@ adminRaffleRouter.patch('/:id', requireAdmin, async (req, res) => {
     }
 
     try {
-        const ticket = await (prisma.raffleTicket as any).update({
+        const ticket = await prisma.raffleTicket.update({
             where: { id },
             data: { status: String(status).toUpperCase() },
         });
@@ -77,7 +78,7 @@ adminRaffleRouter.patch('/:id', requireAdmin, async (req, res) => {
 adminRaffleRouter.delete('/:id', requireAdmin, async (req, res) => {
     const { id } = req.params;
     try {
-        await (prisma.raffleTicket as any).delete({ where: { id } });
+        await prisma.raffleTicket.delete({ where: { id } });
         res.json({ ok: true });
     } catch (error) {
         res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Raffle ticket not found' } });
