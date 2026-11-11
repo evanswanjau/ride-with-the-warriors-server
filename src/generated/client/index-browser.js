@@ -212,7 +212,10 @@ exports.Prisma.PaymentScalarFieldEnum = {
   mnoReference: 'mnoReference',
   cbsReference: 'cbsReference',
   paymentDetails: 'paymentDetails',
-  bikeHireId: 'bikeHireId'
+  bikeHireId: 'bikeHireId',
+  lastCheckedAt: 'lastCheckedAt',
+  checkCount: 'checkCount',
+  lastCheckResult: 'lastCheckResult'
 };
 
 exports.Prisma.PricingCategoryScalarFieldEnum = {
@@ -402,6 +405,20 @@ exports.Prisma.NotificationScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.ReconciliationRunScalarFieldEnum = {
+  id: 'id',
+  trigger: 'trigger',
+  startedAt: 'startedAt',
+  finishedAt: 'finishedAt',
+  checked: 'checked',
+  paid: 'paid',
+  failed: 'failed',
+  stillPending: 'stillPending',
+  errors: 'errors',
+  expired: 'expired',
+  details: 'details'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -459,7 +476,8 @@ exports.Prisma.ModelName = {
   OtpCode: 'OtpCode',
   UserSession: 'UserSession',
   GalleryPhoto: 'GalleryPhoto',
-  Notification: 'Notification'
+  Notification: 'Notification',
+  ReconciliationRun: 'ReconciliationRun'
 };
 
 /**

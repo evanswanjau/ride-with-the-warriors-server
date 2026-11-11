@@ -108,29 +108,34 @@ model AdminSession {
 }
 
 model Payment {
-  id                 String   @id @default(uuid())
+  id                 String    @id @default(uuid())
   // REGISTRATION | RAFFLE | DONATION | BIKE_HIRE. Every M-Pesa prompt is one row; callbacks
   // are matched on checkoutRequestId here, never on the item's own column.
   purpose            String?
   registrationId     String?
   raffleTicketIds    String[] // New: store array of ticket IDs for bulk payments
   donationId         String? // New: link to donation
-  checkoutRequestId  String?  @unique
+  checkoutRequestId  String?   @unique
   merchantRequestId  String?
   phone              String?
   amount             Float
   // PENDING -> PAID | FAILED | EXPIRED. A success also settles FAILED/EXPIRED (money was taken);
   // a failure only settles PENDING. See src/services/payments.ts.
-  status             String   @default("PENDING")
+  status             String    @default("PENDING")
   failureReason      String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
   mpesaReceiptNumber String?
   transactionDate    String?
   mnoReference       String? // New: generic bank reference
   cbsReference       String? // New: core banking system reference
   paymentDetails     Json? // New: store full callback payload
   bikeHireId         String? // Payment for a bike hire added after registration
+  // Reconciliation (src/services/reconciliation.ts): when the gateway was last asked about this
+  // payment, how often, and what it said (PAID | FAILED | PENDING | UNKNOWN | ERROR: ...).
+  lastCheckedAt      DateTime?
+  checkCount         Int       @default(0)
+  lastCheckResult    String?
 
   @@index([registrationId])
   @@index([checkoutRequestId])
@@ -400,4 +405,23 @@ model Notification {
   @@index([status, nextAttemptAt])
   @@index([createdAt])
   @@index([recipient])
+}
+
+// One row per reconciliation run (src/services/reconciliation.ts), shown to admins.
+model ReconciliationRun {
+  id           String    @id @default(uuid())
+  // cron | admin:<email> | script
+  trigger      String
+  startedAt    DateTime  @default(now())
+  finishedAt   DateTime?
+  checked      Int       @default(0)
+  paid         Int       @default(0)
+  failed       Int       @default(0)
+  stillPending Int       @default(0)
+  errors       Int       @default(0)
+  expired      Int       @default(0)
+  // Per payment: [{ paymentId, ref, result, settle, error? }]
+  details      Json?
+
+  @@index([startedAt])
 }
