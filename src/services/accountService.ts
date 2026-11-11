@@ -1,4 +1,5 @@
 import { randomBytes } from 'crypto';
+import type { RegistrationPayload } from '../validation/registrationSchemas.js';
 import { prisma } from '../storage/prisma.js';
 import { normalizeEmail, normalizePhone } from '../utils/identity.js';
 
@@ -42,7 +43,7 @@ export async function claimUnlinkedRecords(accountId: string) {
     });
     for (const r of candidates) {
         if (!matchesMe(r.email, r.phoneNumber)) continue;
-        const isPrimary = r.type === 'individual' || (r.payload as any)?.isPrimary === true;
+        const isPrimary = r.type === 'individual' || (r.payload as RegistrationPayload | null)?.isPrimary === true;
         if (isPrimary && r.groupId) {
             await prisma.registration.updateMany({ where: { groupId: r.groupId, accountId: null }, data: { accountId } });
         } else if (!r.accountId) {

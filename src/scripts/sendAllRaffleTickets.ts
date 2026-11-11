@@ -1,3 +1,4 @@
+import type { RaffleTicket } from '../generated/client/index.js';
 import { sendRaffleConfirmationEmail } from '../services/emailService.js';
 import { prisma } from '../storage/prisma.js';
 import dotenv from 'dotenv';
@@ -13,7 +14,7 @@ async function main() {
 
     console.log(`[BulkSend] Fetching all PAID raffle tickets...`);
 
-    const allPaidTickets = await (prisma.raffleTicket as any).findMany({
+    const allPaidTickets = await prisma.raffleTicket.findMany({
         where: { status: 'PAID' },
         orderBy: { createdAt: 'asc' }
     });
@@ -24,7 +25,7 @@ async function main() {
     }
 
     // Group tickets by email
-    const groups: Record<string, any[]> = {};
+    const groups: Record<string, RaffleTicket[]> = {};
     for (const ticket of allPaidTickets) {
         if (!groups[ticket.email]) groups[ticket.email] = [];
         groups[ticket.email].push(ticket);

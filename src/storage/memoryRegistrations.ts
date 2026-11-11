@@ -1,7 +1,10 @@
 import { randomUUID } from 'crypto';
+import type { Prisma } from '../generated/client/index.js';
 import { prisma } from './prisma.js';
 import { sendConfirmationEmail } from '../services/emailService.js';
 import { assignBibs } from '../services/numbering.js';
+import type { RegistrationPayload, JuniorRider, TeamMember, FamilyDetails } from '../validation/registrationSchemas.js';
+import type { PricingResult, Classification } from '../services/pricing.js';
 
 export type RegistrationStatus = 'UNPAID' | 'PAID' | 'CONFIRMED' | 'COMPLEMENTARY' | 'CANCELLED';
 
@@ -34,12 +37,19 @@ export type RegistrationRecord = {
   category?: string | null;
   totalAmount: number;
 
-  payload?: any;
-  pricing?: any;
-  classifications?: any;
+  payload?: RegistrationPayload | null;
+  pricing?: PricingResult | null;
+  classifications?: Classification[] | null;
   bibNumber?: string | null;
   accountId?: string | null;
   participantAccountId?: string | null;
+};
+
+/** A row as written by `createRegistration` (before it is read back from the DB). */
+type RegistrationRow = Omit<Prisma.RegistrationCreateManyInput, 'totalAmount' | 'status'> & {
+  id: string;
+  totalAmount: number;
+  status: RegistrationStatus;
 };
 
 /** Statuses that count as "paid" and therefore get a bib. */
@@ -74,7 +84,7 @@ function mergeReplace(a?: ReplaceTarget, b?: ReplaceTarget): ReplaceTarget | und
  * the earlier UNPAID drafts it names are deleted in the same transaction, so a
  * failure leaves the old draft in place instead of losing it.
  */
-async function persistRegistrationRows(rows: any[], replace?: ReplaceTarget) {
+async function persistRegistrationRows(rows: Prisma.RegistrationCreateManyInput[], replace?: ReplaceTarget) {
   await prisma.$transaction(async (tx) => {
     const groupIds = replace?.groupIds?.filter(Boolean) ?? [];
     const ids = replace?.ids?.filter(Boolean) ?? [];
@@ -97,14 +107,16 @@ async function persistRegistrationRows(rows: any[], replace?: ReplaceTarget) {
 // Rows get random UUID ids. Bib numbers are assigned only once the group is paid
 // (see services/numbering.ts).
 export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 'createdAt' | 'updatedAt' | 'firstName' | 'lastName' | 'isCaptain' | 'totalAmount'>, replace?: ReplaceTarget): Promise<RegistrationRecord> {
-  const payload = JSON.parse(JSON.stringify(input.payload)) as any;
-  const recordsToCreate: any[] = [];
+  const payload = JSON.parse(JSON.stringify(input.payload)) as RegistrationPayload;
+  const recordsToCreate: RegistrationRow[] = [];
+  const pricing = input.pricing as PricingResult;
+  const classifications = input.classifications as Classification[] | null | undefined;
   const groupId = Math.random().toString(36).substring(2, 11).toUpperCase();
 
   if (input.type === 'individual') {
-    const category = (input.classifications as any[])?.[0]?.category || 'Individual';
+    const category = classifications?.[0]?.category || 'Individual';
     const id = randomUUID();
-    const rider = payload.riderDetails;
+    const rider = payload.riderDetails!;
 
     recordsToCreate.push({
       id,
@@ -123,7 +135,7 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
       emergencyPhone: rider.emergencyPhone,
       groupId,
       category,
-      totalAmount: (input.pricing as any).totalAmount,
+      totalAmount: pricing.totalAmount,
       mpesaCode: input.mpesaCode || null,
       isMilitary: !!rider.isMilitary,
       serviceNumber: rider.serviceNumber || (rider.isMilitary ? rider.idNumber : null),
@@ -132,12 +144,13 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
       unit: rider.unit || null,
       payload: { ...payload, groupId },
       accountId: input.accountId ?? null,
-      pricing: input.pricing,
-      classifications: input.classifications,
+      pricing: pricing as unknown as Prisma.InputJsonValue,
+      classifications: classifications as unknown as Prisma.InputJsonValue,
     });
   } else if (input.type === 'team') {
-    const teamClass = (input.classifications as any[])?.[0]?.category || 'Blitz Team';
-    const members = payload.teamDetails.members;
+    const teamClass = classifications?.[0]?.category || 'Blitz Team';
+    const teamDetails = payload.teamDetails!;
+    const members: (TeamMember & { participantAccountId?: string | null })[] = teamDetails.members;
 
     const memberIds: string[] = members.map(() => randomUUID());
 
@@ -161,27 +174,29 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
         emergencyContactName: m.emergencyContactName,
         emergencyPhone: m.emergencyPhone,
         groupId,
-        teamName: payload.teamDetails.teamName,
+        teamName: teamDetails.teamName,
         isCaptain: !!m.isCaptain,
         category: teamClass,
-        totalAmount: i === 0 ? (input.pricing as any).totalAmount : 0,
-        isMilitary: !!payload.teamDetails.isMilitary,
-        serviceNumber: m.serviceNumber || (payload.teamDetails.isMilitary ? m.idNumber : null),
+        totalAmount: i === 0 ? pricing.totalAmount : 0,
+        isMilitary: !!teamDetails.isMilitary,
+        serviceNumber: m.serviceNumber || (teamDetails.isMilitary ? m.idNumber : null),
         rank: m.rank || null,
         service: m.service || null,
         unit: m.unit || null,
         payload: { ...payload, groupId, isPrimary: i === 0, memberIndex: i },
         accountId: input.accountId ?? null,
         participantAccountId: i === 0 ? null : (m.participantAccountId ?? null),
-        pricing: input.pricing,
-        classifications: input.classifications,
+        pricing: pricing as unknown as Prisma.InputJsonValue,
+        classifications: classifications as unknown as Prisma.InputJsonValue,
       });
     }
   } else if (input.type === 'family') {
-    const riders: any[] = [];
-    ['cubs', 'champs', 'tigers'].forEach(cat => {
-      if (payload.familyDetails.riders[cat]) {
-        payload.familyDetails.riders[cat].forEach((r: any) => {
+    const riders: (JuniorRider & { category: string; phoneNumber?: string })[] = [];
+    const familyDetails = payload.familyDetails!;
+    const guardian: FamilyDetails['guardian'] & { idNumber?: string } = familyDetails.guardian;
+    (['cubs', 'champs', 'tigers'] as const).forEach(cat => {
+      if (familyDetails.riders[cat]) {
+        familyDetails.riders[cat].forEach((r) => {
           riders.push({ ...r, category: cat });
         });
       }
@@ -191,12 +206,12 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
 
     // Build a per-category price map from the pricing line items
     const categoryPriceMap: Record<string, number> = {};
-    if ((input.pricing as any)?.lineItems) {
-      for (const item of (input.pricing as any).lineItems) {
+    if (pricing?.lineItems) {
+      for (const item of pricing.lineItems) {
         const cat = item.category?.toLowerCase();
-        if (cat === 'cubs') categoryPriceMap['cubs'] = item.count > 0 ? item.amount / item.count : 0;
-        else if (cat === 'champs') categoryPriceMap['champs'] = item.count > 0 ? item.amount / item.count : 0;
-        else if (cat === 'parent') categoryPriceMap['tigers'] = item.count > 0 ? item.amount / item.count : 0;
+        if (cat === 'cubs') categoryPriceMap['cubs'] = (item.count ?? 0) > 0 ? item.amount / item.count! : 0;
+        else if (cat === 'champs') categoryPriceMap['champs'] = (item.count ?? 0) > 0 ? item.amount / item.count! : 0;
+        else if (cat === 'parent') categoryPriceMap['tigers'] = (item.count ?? 0) > 0 ? item.amount / item.count! : 0;
       }
     }
 
@@ -217,23 +232,23 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
         gender: rider.gender,
         tshirtSize: rider.tshirtSize,
         groupId,
-        guardianName: payload.familyDetails.guardian.fullName,
-        emergencyContactName: rider.emergencyContactName || payload.familyDetails.guardian.emergencyContactName,
-        emergencyPhone: rider.emergencyPhone || payload.familyDetails.guardian.phoneNumber || payload.familyDetails.guardian.emergencyPhone,
-        relationship: payload.familyDetails.guardian.relationship,
-        email: i === 0 ? payload.familyDetails.guardian.email : null,
-        phoneNumber: rider.category === 'tigers' ? (rider.phoneNumber || payload.familyDetails.guardian.phoneNumber) : null,
+        guardianName: guardian.fullName,
+        emergencyContactName: rider.emergencyContactName || guardian.emergencyContactName,
+        emergencyPhone: rider.emergencyPhone || guardian.phoneNumber || guardian.emergencyPhone,
+        relationship: guardian.relationship,
+        email: i === 0 ? guardian.email : null,
+        phoneNumber: rider.category === 'tigers' ? (rider.phoneNumber || guardian.phoneNumber) : null,
         category: participantCategory,
         totalAmount: riderAmount,
-        isMilitary: !!payload.familyDetails.guardian.isMilitary,
-        serviceNumber: i === 0 ? (payload.familyDetails.guardian.serviceNumber || (payload.familyDetails.guardian.isMilitary ? payload.familyDetails.guardian.idNumber : null)) : null,
-        rank: i === 0 ? payload.familyDetails.guardian.rank : null,
-        service: i === 0 ? payload.familyDetails.guardian.service : null,
-        unit: i === 0 ? payload.familyDetails.guardian.unit : null,
+        isMilitary: !!guardian.isMilitary,
+        serviceNumber: i === 0 ? (guardian.serviceNumber || (guardian.isMilitary ? guardian.idNumber : null)) : null,
+        rank: i === 0 ? guardian.rank : null,
+        service: i === 0 ? guardian.service : null,
+        unit: i === 0 ? guardian.unit : null,
         payload: { ...payload, groupId, isPrimary: i === 0, riderId: rider.id },
         accountId: input.accountId ?? null,
-        pricing: input.pricing,
-        classifications: input.classifications,
+        pricing: pricing as unknown as Prisma.InputJsonValue,
+        classifications: classifications as unknown as Prisma.InputJsonValue,
       });
     }
   }
@@ -284,7 +299,7 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
   // After DB creation, create BikeHire records if needed
   try {
     for (const record of recordsToCreate) {
-      const p = record.payload as any;
+      const p = record.payload as RegistrationPayload | undefined;
       const shouldHire = p?.riderDetails?.hireBike || 
                          (p?.isPrimary && (p?.teamDetails?.hireBike || p?.familyDetails?.guardian?.hireBike));
       
@@ -306,59 +321,63 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
     console.error('[Storage] Failed to create BikeHire records:', err);
   }
 
-  return recordsToCreate[0] as RegistrationRecord;
+  return recordsToCreate[0] as unknown as RegistrationRecord;
 }
 
 export async function getRegistration(id: string): Promise<RegistrationRecord | null> {
   const rec = await prisma.registration.findUnique({ where: { id } });
-  return rec as any;
+  return rec as unknown as RegistrationRecord | null;
 }
 
 export async function getAllRegistrations(): Promise<RegistrationRecord[]> {
   const recs = await prisma.registration.findMany({ orderBy: { createdAt: 'desc' } });
-  return recs as any[];
+  return recs as unknown as RegistrationRecord[];
 }
 
 export async function updateRegistration(id: string, input: Partial<Omit<RegistrationRecord, 'id' | 'createdAt' | 'updatedAt'>>, replace?: ReplaceTarget): Promise<RegistrationRecord> {
   const existing = await prisma.registration.findUnique({ where: { id } });
   if (!existing) throw new Error('Registration not found');
 
-  const groupId = (existing as any).groupId;
+  const groupId = existing.groupId;
 
   // Only perform a full delete-and-recreate if we have a type and circuitId (e.g. from the quote/register flow)
   // and the registration is still UNPAID. Partial updates (like adding a checkoutRequestId) should be handled normally.
   // The old rows are removed in the same transaction that saves the new ones.
   if (existing.status === 'UNPAID' && input.payload && input.type && input.circuitId) {
     const own: ReplaceTarget = groupId ? { groupIds: [groupId] } : { ids: [id] };
-    return createRegistration(input as any, mergeReplace(own, replace));
+    return createRegistration(input as Parameters<typeof createRegistration>[0], mergeReplace(own, replace));
   }
 
   if (input.status && groupId) {
-    await (prisma.registration as any).updateMany({
+    await prisma.registration.updateMany({
       where: { groupId },
       data: { status: input.status }
     });
   }
 
-  const updateData: any = {
+  const payloadIn = input.payload as RegistrationPayload | null | undefined;
+  const classifications = input.classifications;
+  const militarySrc = [payloadIn?.riderDetails, payloadIn?.teamDetails, payloadIn?.familyDetails?.guardian];
+  const firstTruthy = (key: 'isMilitary' | 'serviceNumber' | 'rank' | 'service' | 'unit') =>
+    militarySrc.map((x) => (x as Record<string, unknown> | undefined)?.[key]).find(Boolean) || undefined;
+  const updateData: Prisma.RegistrationUncheckedUpdateInput = {
     circuitId: input.circuitId,
     type: input.type,
     status: input.status,
-    payload: input.payload as any,
-    pricing: input.pricing as any,
-    classifications: input.classifications as any,
+    payload: input.payload as Prisma.InputJsonValue | undefined,
+    pricing: input.pricing as unknown as Prisma.InputJsonValue | undefined,
+    classifications: input.classifications as unknown as Prisma.InputJsonValue | undefined,
     mpesaCode: input.mpesaCode || undefined,
-    isMilitary: (input.payload as any)?.riderDetails?.isMilitary || (input.payload as any)?.teamDetails?.isMilitary || (input.payload as any)?.familyDetails?.guardian?.isMilitary || undefined,
-    serviceNumber: (input.payload as any)?.riderDetails?.serviceNumber || (input.payload as any)?.teamDetails?.serviceNumber || (input.payload as any)?.familyDetails?.guardian?.serviceNumber || undefined,
-    rank: (input.payload as any)?.riderDetails?.rank || (input.payload as any)?.teamDetails?.rank || (input.payload as any)?.familyDetails?.guardian?.rank || undefined,
-    service: (input.payload as any)?.riderDetails?.service || (input.payload as any)?.teamDetails?.service || (input.payload as any)?.familyDetails?.guardian?.service || undefined,
-    unit: (input.payload as any)?.riderDetails?.unit || (input.payload as any)?.teamDetails?.unit || (input.payload as any)?.familyDetails?.guardian?.unit || undefined,
+    isMilitary: firstTruthy('isMilitary') as never,
+    serviceNumber: firstTruthy('serviceNumber') as never,
+    rank: firstTruthy('rank') as never,
+    service: firstTruthy('service') as never,
+    unit: firstTruthy('unit') as never,
   };
 
   // Sync flat columns for individual registrations
   if (input.type === 'individual' && input.payload) {
-    const p = input.payload as any;
-    const rider = p.riderDetails;
+    const rider = payloadIn?.riderDetails;
     if (rider) {
       updateData.firstName = rider.firstName;
       updateData.lastName = rider.lastName;
@@ -370,8 +389,8 @@ export async function updateRegistration(id: string, input: Partial<Omit<Registr
       updateData.tshirtSize = rider.tshirtSize;
       updateData.emergencyContactName = rider.emergencyContactName;
       updateData.emergencyPhone = rider.emergencyPhone;
-      updateData.totalAmount = (input.pricing as any)?.totalAmount;
-      updateData.category = (input.classifications as any[])?.[0]?.category || 'Individual';
+      updateData.totalAmount = input.pricing?.totalAmount;
+      updateData.category = classifications?.[0]?.category || 'Individual';
     }
   }
 
@@ -399,7 +418,7 @@ export async function updateRegistration(id: string, input: Partial<Omit<Registr
             status: reg.status,
             category: reg.category || undefined,
             payload: reg.payload,
-            teamName: (reg as any).teamName || undefined,
+            teamName: reg.teamName || undefined,
             gender: reg.gender,
             dob: reg.dob,
             idNumber: reg.idNumber,
@@ -426,12 +445,12 @@ export async function updateRegistration(id: string, input: Partial<Omit<Registr
     }
   }
 
-  return rec as any;
+  return rec as unknown as RegistrationRecord;
 }
 
 export async function findExistingRegistrationsByEmails(emails: string[], excludeGroupId?: string, excludeId?: string): Promise<RegistrationRecord[]> {
   const lowerEmails = emails.map(e => e.toLowerCase());
-  const matches = await (prisma.registration as any).findMany({
+  const matches = await prisma.registration.findMany({
     where: {
       email: { in: lowerEmails },
       status: { not: 'CANCELLED' },
@@ -442,11 +461,11 @@ export async function findExistingRegistrationsByEmails(emails: string[], exclud
     }
   });
 
-  return matches as any[];
+  return matches as unknown as RegistrationRecord[];
 }
 
 export async function findExistingRegistrationsByIdNumbers(idNumbers: string[], excludeGroupId?: string, excludeId?: string): Promise<RegistrationRecord[]> {
-  const matches = await (prisma.registration as any).findMany({
+  const matches = await prisma.registration.findMany({
     where: {
       idNumber: { in: idNumbers },
       status: { not: 'CANCELLED' },
@@ -457,5 +476,5 @@ export async function findExistingRegistrationsByIdNumbers(idNumbers: string[], 
     }
   });
 
-  return matches as any[];
+  return matches as unknown as RegistrationRecord[];
 }

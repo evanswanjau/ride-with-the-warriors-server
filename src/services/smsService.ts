@@ -1,9 +1,13 @@
 import nodemailer from 'nodemailer';
+import type { Prisma } from '../generated/client/index.js';
 import { prisma } from '../storage/prisma.js';
 import { messagingDisabled, logSuppressed, filterAllowedPhones } from '../utils/messaging.js';
 import { enqueue, sendNow, registerDeliverer } from './outbox.js';
 
 const BASE_URL = 'https://sms.textsms.co.ke/api/services';
+
+/** TextSMS send response: one entry per recipient, with hyphenated (and misspelt) keys. */
+type TextSmsResponse = { responses?: Record<string, unknown>[] };
 
 /**
  * Get credentials from environment
@@ -165,7 +169,7 @@ export const smsService = {
         try {
             let successCount = 0;
             let failedCount = 0;
-            const logsData: any[] = [];
+            const logsData: Prisma.SmsLogCreateManyInput[] = [];
 
             // If only one recipient, use the single send endpoint
             if (formattedRecipients.length === 1) {
@@ -181,7 +185,7 @@ export const smsService = {
                     })
                 });
 
-                const result = await response.json() as any;
+                const result = await response.json() as TextSmsResponse;
                 console.log(`[SMS Service] Response:`, JSON.stringify(result, null, 2));
 
                 if (result.responses && result.responses[0]) {
@@ -194,7 +198,7 @@ export const smsService = {
                     logsData.push({
                         phoneNumber: String(res.mobile),
                         message: logMessage,
-                        status: res['response-description'] || (isSuccess ? 'Success' : 'Failed'),
+                        status: (res['response-description'] as string | undefined) || (isSuccess ? 'Success' : 'Failed'),
                         messageId: res.messageid ? String(res.messageid) : null,
                     });
                 }
@@ -222,11 +226,11 @@ export const smsService = {
                         })
                     });
 
-                    const result = await response.json() as any;
+                    const result = await response.json() as TextSmsResponse;
                     console.log(`[SMS Service] Batch Response:`, JSON.stringify(result, null, 2));
 
                     if (result.responses) {
-                        result.responses.forEach((res: any) => {
+                        result.responses.forEach((res) => {
                             const responseCode = res['response-code'] || res['respose-code'];
                             const isSuccess = responseCode === 200 || responseCode === "200";
                             if (isSuccess) successCount++;
@@ -235,7 +239,7 @@ export const smsService = {
                             logsData.push({
                                 phoneNumber: String(res.mobile),
                                 message: logMessage,
-                                status: res['response-description'] || (isSuccess ? 'Success' : 'Failed'),
+                                status: (res['response-description'] as string | undefined) || (isSuccess ? 'Success' : 'Failed'),
                                 messageId: res.messageid ? String(res.messageid) : null,
                             });
                         });
@@ -264,7 +268,7 @@ export const smsService = {
     /**
      * Retrieves the current account balance from TextSMS
      */
-    async checkBalance(): Promise<any> {
+    async checkBalance(): Promise<unknown> {
         const { apiKey, partnerId } = getCredentials();
         if (!apiKey || !partnerId) {
             console.error("[SMS Service] Credentials not set.");

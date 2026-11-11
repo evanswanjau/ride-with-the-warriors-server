@@ -1,5 +1,9 @@
-import type { QuoteRequest } from '../validation/registrationSchemas.js';
+import type { PricingCategory } from '../generated/client/index.js';
+import type { QuoteRequest, RegistrationPayload } from '../validation/registrationSchemas.js';
 import { prisma } from '../storage/prisma.js';
+
+/** A pricing category as the quote logic needs it (timestamps not required). */
+export type PricingCategoryRow = Omit<PricingCategory, 'createdAt' | 'updatedAt'>;
 
 export type Classification = {
   category: string;
@@ -41,7 +45,7 @@ export function calculateAge(dob: string): number | null {
 }
 
 // In-memory cache for pricing categories to avoid DB hits on every quote
-let categoryCache: any[] | null = null;
+let categoryCache: PricingCategoryRow[] | null = null;
 let lastCacheUpdate: number = 0;
 const CACHE_TTL = 60 * 1000; // 1 minute
 
@@ -64,7 +68,7 @@ export async function getPricingCategories() {
 }
 
 export function getClassification(
-  categories: any[],
+  categories: PricingCategoryRow[],
   circuitId: QuoteRequest['circuitId'],
   type: QuoteRequest['type'],
   age: number | null = null,
@@ -158,12 +162,12 @@ export async function buildQuote(input: {
     const team = (input.payload as { teamDetails: { teamName: string; isMilitary?: boolean } }).teamDetails;
     const classification = getClassification(categories, input.circuitId, 'team');
     
-    const teamPrice = (input.payload as any).teamDetails?.isMilitary ? 0 : classification.price;
+    const teamPrice = (input.payload as RegistrationPayload).teamDetails?.isMilitary ? 0 : classification.price;
     totalAmount = teamPrice;
     
     classifications.push(classification);
     lineItems.push({
-      label: `Team: ${team.teamName}${(input.payload as any).teamDetails?.isMilitary ? ' (Military)' : ''}`,
+      label: `Team: ${team.teamName}${(input.payload as RegistrationPayload).teamDetails?.isMilitary ? ' (Military)' : ''}`,
       amount: teamPrice,
       category: classification.category,
       regRange: classification.regRange,
@@ -206,7 +210,7 @@ export async function buildQuote(input: {
     }
   }
 
-  const payload = input.payload as any;
+  const payload = input.payload as RegistrationPayload;
   const shouldHire = payload?.riderDetails?.hireBike || 
                      payload?.teamDetails?.hireBike || 
                      payload?.familyDetails?.guardian?.hireBike;

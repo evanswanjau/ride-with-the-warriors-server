@@ -10,6 +10,7 @@
  * number. Rows that already have a number are left alone, so repeated or late
  * callbacks are harmless.
  */
+import type { RegistrationPayload } from '../validation/registrationSchemas.js';
 import { prisma } from '../storage/prisma.js';
 
 type Tx = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
@@ -91,7 +92,7 @@ export async function assignBibs(registrationId: string) {
         if (anchor.type === 'team') {
             // One base number for the whole team; members are BASE-1..n in member order.
             const ordered = [...rows].sort((a, b) =>
-                ((a.payload as any)?.memberIndex ?? 0) - ((b.payload as any)?.memberIndex ?? 0));
+                ((a.payload as RegistrationPayload | null)?.memberIndex ?? 0) - ((b.payload as RegistrationPayload | null)?.memberIndex ?? 0));
             const existingBase = ordered.find(r => r.bibNumber)?.bibNumber?.split('-')[0];
             const base = existingBase ?? await nextBibInRange(tx, anchor.category || 'Team', anchor.circuitId, 'team', reserved);
             if (base) {

@@ -57,7 +57,10 @@ export const securityHeaders = helmet({
  * caller's mistake). 5xx errors in UAT and production say only
  * "Internal server error"; the stack never leaves the server.
  */
-export function errorBody(err: any, env: NodeJS.ProcessEnv = process.env) {
+type HttpError = { status?: number; statusCode?: number; code?: unknown; message?: string; name?: string; stack?: string };
+
+export function errorBody(error: unknown, env: NodeJS.ProcessEnv = process.env) {
+    const err = error as HttpError | null | undefined;
     const status = Number(err?.status || err?.statusCode) || 500;
     const which = appEnv(env);
     const deployed = which === 'uat' || which === 'production';
@@ -75,7 +78,7 @@ export function errorBody(err: any, env: NodeJS.ProcessEnv = process.env) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function errorHandler(err: any, _req: Request, res: Response, _next: NextFunction) {
+export function errorHandler(err: unknown, _req: Request, res: Response, _next: NextFunction) {
     console.error('[Global Error Handler]:', err);
     const { status, body } = errorBody(err);
     if (res.headersSent) return;

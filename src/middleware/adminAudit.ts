@@ -7,6 +7,7 @@
  * breaks the admin's request; it is reported to the console instead.
  */
 import { Response, NextFunction } from 'express';
+import type { Prisma } from '../generated/client/index.js';
 import { prisma } from '../storage/prisma.js';
 import type { AuthenticatedRequest } from './auth.js';
 
@@ -43,7 +44,7 @@ export async function writeAudit(entry: AuditEntry) {
             entityId: entry.entityId ?? null,
             status: entry.status ?? null,
             ip: entry.ip ?? null,
-            details: (entry.details ?? undefined) as any,
+            details: (entry.details ?? undefined) as Prisma.InputJsonValue | undefined,
         },
     });
 }
@@ -69,7 +70,7 @@ export async function writeAccountAudit(entry: AccountAuditEntry) {
             action: entry.action,
             entityId: entry.entityId ?? null,
             ip: entry.ip ?? null,
-            details: (entry.details ?? undefined) as any,
+            details: (entry.details ?? undefined) as Prisma.InputJsonValue | undefined,
         },
     });
 }

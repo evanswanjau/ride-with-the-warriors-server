@@ -260,15 +260,19 @@ function mask(recipient: string): string {
 const MAX_PAYLOAD_BYTES = 5 * 1024 * 1024;
 
 /** Turns a nodemailer message into JSON. Throws if it cannot be stored. */
-export function serializeMail(mail: Record<string, any>): EmailPayload {
+export type MailInput = Partial<Omit<EmailPayload, 'attachments'>> & {
+    attachments?: { path?: string; href?: string; content?: unknown; encoding?: string; filename?: string; contentType?: string }[];
+};
+
+export function serializeMail(mail: MailInput): EmailPayload {
     const attachments: SerializedAttachment[] = [];
     for (const a of mail.attachments ?? []) {
         if (a?.path || a?.href) throw new Error('Outbox emails cannot reference attachment files; pass the content');
-        const buf = Buffer.isBuffer(a?.content) ? a.content : Buffer.from(String(a?.content ?? ''), a?.encoding ?? 'utf8');
+        const buf = Buffer.isBuffer(a?.content) ? a.content : Buffer.from(String(a?.content ?? ''), (a?.encoding ?? 'utf8') as BufferEncoding);
         attachments.push({ filename: a?.filename, contentType: a?.contentType, encoding: 'base64', content: buf.toString('base64') });
     }
     const payload: EmailPayload = {
-        from: mail.from, to: mail.to, cc: mail.cc, bcc: mail.bcc, replyTo: mail.replyTo,
+        from: mail.from, to: mail.to as EmailPayload['to'], cc: mail.cc, bcc: mail.bcc, replyTo: mail.replyTo,
         subject: mail.subject, text: mail.text, html: mail.html,
         ...(attachments.length ? { attachments } : {}),
     };

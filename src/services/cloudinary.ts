@@ -51,7 +51,7 @@ export async function uploadImage(file: Buffer | string, filename: string, folde
     form.append('signature', sign(params, cfg.apiSecret));
 
     const res = await fetch(`https://api.cloudinary.com/v1_1/${cfg.cloudName}/image/upload`, { method: 'POST', body: form });
-    const data = await res.json() as any;
+    const data = await res.json() as UploadResult & { error?: { message?: string } };
     if (!res.ok) throw new Error(data?.error?.message || `Cloudinary upload failed (${res.status})`);
     return data as UploadResult;
 }
