@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
 import { prisma } from '../storage/prisma.js';
-import { messagingDisabled, logSuppressed } from '../utils/messaging.js';
+import { messagingDisabled, logSuppressed, filterAllowedPhones } from '../utils/messaging.js';
 import { enqueue, sendNow, registerDeliverer } from './outbox.js';
 
 const BASE_URL = 'https://sms.textsms.co.ke/api/services';
@@ -144,6 +144,9 @@ export const smsService = {
             logSuppressed('sms', recipients.length);
             return { success: true, successCount: 0, failedCount: 0 };
         }
+        // MESSAGING_ALLOWLIST: drop numbers that are not on the list (see utils/messaging.ts).
+        recipients = filterAllowedPhones(recipients);
+        if (recipients.length === 0) return { success: true, successCount: 0, failedCount: 0 };
         if (smsDriver() === 'mailpit') {
             return sendViaMailpit(recipients, message, logMessage);
         }

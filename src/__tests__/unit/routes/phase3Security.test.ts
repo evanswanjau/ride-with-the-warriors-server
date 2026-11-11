@@ -58,6 +58,11 @@ describe('SMTP TLS', () => {
         const o = smtpOptions({ SMTP_HOST: 'smtp.example.com', SMTP_PORT: '587', SMTP_SECURE: 'false' });
         expect(o.ignoreTLS).toBe(false);
         expect(o.tls.rejectUnauthorized).toBe(true);
+        expect(o.requireTLS).toBe(false);
+    });
+
+    it('SMTP_REQUIRE_TLS refuses a plain-text fallback', () => {
+        expect(smtpOptions({ SMTP_REQUIRE_TLS: 'true' }).requireTLS).toBe(true);
     });
 
     it('can be relaxed explicitly (local Mailpit)', () => {

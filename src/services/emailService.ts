@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import { messagingDisabled, logSuppressed } from '../utils/messaging.js';
+import { messagingDisabled, logSuppressed, applyEmailAllowlist } from '../utils/messaging.js';
 import { prisma } from '../storage/prisma.js';
 import { calculateAge } from './pricing.js';
 import { generateRaffleTicketPdf } from './pdfService.js';
@@ -88,12 +88,15 @@ const transporter = nodemailer.createTransport(smtpOptions());
  * off, which sent the SMTP password in clear text on port 587), and certificates are
  * checked. SMTP_TLS_INSECURE=true skips the certificate check (refused in production by
  * src/config.ts); SMTP_IGNORE_TLS=true never upgrades (local Mailpit only).
+ * SMTP_REQUIRE_TLS=true makes the connection fail rather than fall back to plain text
+ * when the server does not offer STARTTLS.
  */
 export function smtpOptions(env: NodeJS.ProcessEnv = process.env) {
   return {
     host: env.SMTP_HOST || 'smtp.gmail.com',
     port: parseInt(env.SMTP_PORT || '587'),
     secure: env.SMTP_SECURE === 'true',
+    requireTLS: env.SMTP_REQUIRE_TLS === 'true',
     ignoreTLS: env.SMTP_IGNORE_TLS === 'true',
     auth: {
       user: env.SMTP_USER,
@@ -112,7 +115,10 @@ export function smtpOptions(env: NodeJS.ProcessEnv = process.env) {
       logSuppressed('email', to, mail?.subject);
       return { messageId: 'suppressed', accepted: [], rejected: [] };
     }
-    return realSendMail(mail);
+    // MESSAGING_ALLOWLIST: drop recipients that are not on the list (see utils/messaging.ts).
+    const allowed = applyEmailAllowlist(mail ?? {});
+    if (!allowed) return { messageId: 'dropped', accepted: [], rejected: [] };
+    return realSendMail(allowed);
   };
 }
 
