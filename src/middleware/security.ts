@@ -77,7 +77,6 @@ export function errorBody(error: unknown, env: NodeJS.ProcessEnv = process.env) 
     };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function errorHandler(err: unknown, _req: Request, res: Response, _next: NextFunction) {
     console.error('[Global Error Handler]:', err);
     const { status, body } = errorBody(err);

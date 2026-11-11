@@ -10,9 +10,13 @@ export default tseslint.config(
         files: ['**/*.{ts,js,mjs}'],
         languageOptions: { globals: { ...globals.node } },
         rules: {
-            // Phase 3b removes the existing `any` casts, then this becomes an error.
-            '@typescript-eslint/no-explicit-any': 'warn',
+            '@typescript-eslint/no-explicit-any': 'error',
             '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrors: 'none' }],
         },
+    },
+    {
+        // Tests may use `any` for mocks and partial fixtures.
+        files: ['src/__tests__/**/*.ts'],
+        rules: { '@typescript-eslint/no-explicit-any': 'off' },
     },
 );

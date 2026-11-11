@@ -1,4 +1,7 @@
 import { Router } from 'express';
+import type { Prisma } from '../../generated/client/index.js';
+import type { RegistrationPayload } from '../../validation/registrationSchemas.js';
+import type { PricingResult } from '../../services/pricing.js';
 import { prisma } from '../../storage/prisma.js';
 import { z } from 'zod';
 import { requireAdmin, AuthenticatedRequest } from '../../middleware/auth.js';
@@ -16,11 +19,11 @@ adminRegistrationsRouter.get('/', requireAdmin, async (req, res) => {
 
         const { search, circuitId, type, status, category, isMilitary, dateFrom } = req.query;
 
-        const where: any = {};
-        if (circuitId) where.circuitId = circuitId;
-        if (type) where.type = type;
-        if (status) where.status = status;
-        if (category) where.category = category;
+        const where: Prisma.RegistrationWhereInput = {};
+        if (circuitId) where.circuitId = circuitId as string;
+        if (type) where.type = type as string;
+        if (status) where.status = status as Prisma.RegistrationWhereInput['status'];
+        if (category) where.category = category as string;
         if (isMilitary !== undefined && isMilitary !== '') {
             where.isMilitary = isMilitary === 'true';
         }
@@ -45,7 +48,7 @@ adminRegistrationsRouter.get('/', requireAdmin, async (req, res) => {
         }
 
         const [registrationsRaw, total] = await Promise.all([
-            (prisma.registration as any).findMany({
+            prisma.registration.findMany({
                 where,
                 skip,
                 take: limit,
@@ -56,11 +59,11 @@ adminRegistrationsRouter.get('/', requireAdmin, async (req, res) => {
 
         // Fallback: Inflate flat columns from payload if they are missing/null
         // This handles cases where Prisma Client hasn't been generated yet
-        const registrations = registrationsRaw.map((reg: any) => {
-            const p = reg.payload as any;
+        const registrations = registrationsRaw.map((reg) => {
+            const p = reg.payload as RegistrationPayload | null;
             if (!p) return reg;
 
-            const inflated = { ...reg };
+            const inflated: { [K in keyof typeof reg]: (typeof reg)[K] | undefined } = { ...reg };
 
             // Only override if flat column is actually missing/null
             if (!inflated.firstName) {
@@ -77,7 +80,7 @@ adminRegistrationsRouter.get('/', requireAdmin, async (req, res) => {
                     inflated.phoneNumber = m?.phoneNumber;
                     inflated.teamName = p.teamDetails?.teamName;
                 } else if (reg.type === 'family') {
-                    const r = Object.values(p.familyDetails?.riders || {}).flat().find((x: any) => x.id === p.riderId) as any;
+                    const r = Object.values(p.familyDetails?.riders || {}).flat().find((x) => x.id === p.riderId);
                     inflated.firstName = r?.firstName || p.familyDetails?.guardian?.fullName;
                     inflated.lastName = r?.lastName || '';
                     inflated.email = p.familyDetails?.guardian?.email;
@@ -85,8 +88,9 @@ adminRegistrationsRouter.get('/', requireAdmin, async (req, res) => {
                 }
             }
 
-            if (inflated.totalAmount == null && reg.pricing?.totalAmount) {
-                inflated.totalAmount = reg.pricing.totalAmount;
+            const pricing = reg.pricing as PricingResult | null;
+            if (inflated.totalAmount == null && pricing?.totalAmount) {
+                inflated.totalAmount = pricing.totalAmount;
             }
 
             return inflated;
@@ -136,11 +140,11 @@ adminRegistrationsRouter.patch('/:id/id-number', requireAdmin, async (req: Authe
         }
 
         // Keep the original submission in step (individual rider / team member).
-        const payload = (reg.payload as any) ?? null;
+        const payload = (reg.payload as RegistrationPayload | null) ?? null;
         let newPayload = payload;
         if (payload?.riderDetails) {
             newPayload = { ...payload, riderDetails: { ...payload.riderDetails, idNumber } };
-        } else if (payload?.teamDetails?.members && Number.isInteger(payload.memberIndex) && payload.teamDetails.members[payload.memberIndex]) {
+        } else if (payload?.teamDetails?.members && typeof payload.memberIndex === 'number' && Number.isInteger(payload.memberIndex) && payload.teamDetails.members[payload.memberIndex]) {
             const members = [...payload.teamDetails.members];
             members[payload.memberIndex] = { ...members[payload.memberIndex], idNumber };
             newPayload = { ...payload, teamDetails: { ...payload.teamDetails, members } };
@@ -148,7 +152,7 @@ adminRegistrationsRouter.patch('/:id/id-number', requireAdmin, async (req: Authe
 
         const updated = await prisma.registration.update({
             where: { id: reg.id },
-            data: { idNumber, ...(newPayload !== payload ? { payload: newPayload } : {}) },
+            data: { idNumber, ...(newPayload !== payload ? { payload: newPayload as Prisma.InputJsonValue } : {}) },
         });
         await writeAudit({
             adminId: req.admin!.id,
@@ -213,7 +217,7 @@ adminRegistrationsRouter.get('/stats/summary', requireAdmin, async (_req, res) =
         }
 
         // Efficient revenue calculation using flat columns
-        const revenueResult = await (prisma.registration as any).aggregate({
+        const revenueResult = await prisma.registration.aggregate({
             where: { status: 'PAID' },
             _sum: { totalAmount: true }
         });

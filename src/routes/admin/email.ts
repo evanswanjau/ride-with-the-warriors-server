@@ -1,7 +1,8 @@
 import { Router } from 'express';
+import type { Prisma } from '../../generated/client/index.js';
 import { requireAdmin, requireRole } from '../../middleware/auth.js';
 import { prisma } from '../../storage/prisma.js';
-import { sendConfirmationEmail, verifyEmailConnection, getTemplatePreview, sendEmail, sendRaffleEmail, sendBulkCustomEmail } from '../../services/emailService.js';
+import { sendConfirmationEmail, verifyEmailConnection, getTemplatePreview, type EmailType, sendEmail, sendRaffleEmail, sendBulkCustomEmail } from '../../services/emailService.js';
 import { triggerReminderCheck } from '../../services/reminderScheduler.js';
 import { smsService } from '../../services/smsService.js';
 
@@ -19,7 +20,7 @@ emailRouter.get('/preview/:type', (req, res) => {
         return res.status(400).json({ error: `Invalid type. Valid types: ${validTypes.join(', ')}` });
     }
 
-    const html = getTemplatePreview(type as any);
+    const html = getTemplatePreview(type as EmailType);
     res.setHeader('Content-Type', 'text/html');
     res.send(html);
 });
@@ -213,7 +214,7 @@ emailRouter.post('/resend-military', requireRole('super_admin'), async (req, res
         const militaryRegs = await prisma.registration.findMany({
             where: {
                 isMilitary: true,
-                status: statusFilter as any,
+                status: statusFilter as Prisma.RegistrationWhereInput['status'],
                 email: { not: null },
             },
             orderBy: { createdAt: 'asc' },
@@ -335,7 +336,7 @@ emailRouter.post('/raffle-reminders', requireRole('super_admin'), async (req, re
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - minDays);
 
-        const whereClause: any = {
+        const whereClause: Prisma.RaffleTicketWhereInput = {
             status: 'UNPAID',
             createdAt: { lte: cutoffDate }
         };
@@ -419,7 +420,7 @@ emailRouter.post('/raffle-reminders', requireRole('super_admin'), async (req, re
                     ticketCount: group.tickets.length,
                     totalAmount,
                     profileUrl,
-                } as any);
+                });
 
                 // If sent, log for the REST of the tickets in the group (sendRaffleEmail logs for the first one)
                 if (sent && ticketIds.length > 1) {
@@ -530,7 +531,7 @@ emailRouter.post('/bulk-send', requireRole('super_admin'), async (req, res) => {
                 });
             }
         } else {
-            const whereClause: any = {};
+            const whereClause: { status?: 'PAID' | 'UNPAID' } = {};
             if (targetStatus === 'paid') whereClause.status = 'PAID';
             else if (targetStatus === 'unpaid') whereClause.status = 'UNPAID';
 

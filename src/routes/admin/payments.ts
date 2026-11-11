@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import type { Prisma } from '../../generated/client/index.js';
 import { prisma } from '../../storage/prisma.js';
 import { requireAdmin, type AuthenticatedRequest } from '../../middleware/auth.js';
 import { reconcilePayments, unresolvedExpired } from '../../services/reconciliation.js';
@@ -15,7 +16,7 @@ adminPaymentsRouter.get('/', requireAdmin, async (req, res) => {
 
         const { status, registrationId, search, dateFrom, dateTo } = req.query;
 
-        const where: any = {};
+        const where: Prisma.PaymentWhereInput = {};
         if (status) where.status = String(status).toUpperCase();
         if (registrationId) where.registrationId = String(registrationId);
         if (search) {

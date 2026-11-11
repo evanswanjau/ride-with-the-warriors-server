@@ -120,7 +120,7 @@ donationsRouter.post('/pay/stk-push', donationLimiter, optionalUser, async (req:
                 error: { code: 'PAYMENT_FAILED', message: result.message || 'Failed to trigger M-Pesa prompt.' },
             });
         }
-    } catch (err: any) {
+    } catch (err) {
         console.error('[Donation STK Push] Error:', err);
         return res.status(500).json({ error: { code: 'INTERNAL', message: 'Payment initiation failed. Please try again.' } });
     }

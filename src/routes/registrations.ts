@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { ZodError } from 'zod';
 
-import { quoteRequestSchema, riderDetailsSchema, teamDetailsSchema, familyDetailsSchema } from '../validation/registrationSchemas.js';
+import { quoteRequestSchema, riderDetailsSchema, teamDetailsSchema, familyDetailsSchema, type RegistrationPayload, type ValidPayload } from '../validation/registrationSchemas.js';
 import { zodToApiError } from '../validation/zodError.js';
 import { buildQuote, getPricingCategories } from '../services/pricing.js';
 import { createRegistration, getRegistration, updateRegistration, findExistingRegistrationsByEmails, findExistingRegistrationsByIdNumbers } from '../storage/memoryRegistrations.js';
@@ -27,7 +27,7 @@ function registrationOpen() {
 async function loadOwnedRegistration(id: string, accountId: string) {
   const reg = await prisma.registration.findUnique({ where: { id } });
   if (!reg || reg.accountId !== accountId) return null;
-  const amountDue = Number((reg.pricing as any)?.totalAmount ?? reg.totalAmount ?? 0);
+  const amountDue = Number((reg.pricing as { totalAmount?: number } | null)?.totalAmount ?? reg.totalAmount ?? 0);
   return { reg, amountDue };
 }
 
@@ -36,12 +36,12 @@ function ownsAll(regs: { accountId?: string | null }[], accountId?: string | nul
   return !!accountId && regs.length > 0 && regs.every((r) => r.accountId === accountId);
 }
 
-function getEmailsFromPayload(type: string, payload: any): string[] {
+function getEmailsFromPayload(type: string, payload: RegistrationPayload): string[] {
   const emails: string[] = [];
   if (type === 'individual') {
     if (payload.riderDetails?.email) emails.push(payload.riderDetails.email);
   } else if (type === 'team') {
-    payload.teamDetails?.members?.forEach((m: any) => {
+    payload.teamDetails?.members?.forEach((m) => {
       if (m.email) emails.push(m.email);
     });
   } else if (type === 'family') {
@@ -52,12 +52,12 @@ function getEmailsFromPayload(type: string, payload: any): string[] {
   return emails;
 }
 
-function getIdNumbersFromPayload(type: string, payload: any): string[] {
+function getIdNumbersFromPayload(type: string, payload: RegistrationPayload): string[] {
   const idNumbers: string[] = [];
   if (type === 'individual') {
     if (payload.riderDetails?.idNumber) idNumbers.push(payload.riderDetails.idNumber);
   } else if (type === 'team') {
-    payload.teamDetails?.members?.forEach((m: any) => {
+    payload.teamDetails?.members?.forEach((m) => {
       if (m.idNumber) idNumbers.push(m.idNumber);
     });
   } else if (type === 'family') {
@@ -92,18 +92,18 @@ registrationsRouter.post('/quote', quoteLimiter, optionalUser, async (req: UserR
       return res.status(400).json({ error: { code: 'VALIDATION', message: 'Payload is required' } });
     }
 
-    let payload: any;
+    let payload: ValidPayload;
     if (base.type === 'individual') {
-      payload = { riderDetails: riderDetailsSchema.parse((base.payload as any).riderDetails ?? base.payload) };
+      payload = { riderDetails: riderDetailsSchema.parse((base.payload as Record<string, unknown>).riderDetails ?? base.payload) };
     } else if (base.type === 'team') {
       if (base.circuitId === 'family') {
         return res.status(400).json({ error: { code: 'VALIDATION', message: 'Family circuit does not support team registration' } });
       }
-      payload = { teamDetails: teamDetailsSchema.parse((base.payload as any).teamDetails ?? base.payload) };
+      payload = { teamDetails: teamDetailsSchema.parse((base.payload as Record<string, unknown>).teamDetails ?? base.payload) };
       const formErrors = validateTeamRules(base.circuitId, payload.teamDetails);
       if (formErrors.length) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Validation failed', details: { formErrors } } });
     } else {
-      payload = { familyDetails: familyDetailsSchema.parse((base.payload as any).familyDetails ?? base.payload) };
+      payload = { familyDetails: familyDetailsSchema.parse((base.payload as Record<string, unknown>).familyDetails ?? base.payload) };
     }
 
     // CHECK FOR DUPLICATES
@@ -126,12 +126,12 @@ registrationsRouter.post('/quote', quoteLimiter, optionalUser, async (req: UserR
       const lowerToCheck = emailsToCheck.map(e => e.toLowerCase());
 
       blockingDuplicates.forEach(reg => {
-        const p = reg.payload as any;
+        const p = (reg.payload ?? {}) as RegistrationPayload;
         if (reg.type === 'individual') {
           if (p.riderDetails?.email && lowerToCheck.includes(p.riderDetails.email.toLowerCase())) duplicateInfo.push(p.riderDetails.email);
           if (p.riderDetails?.idNumber && idNumbersToCheck.includes(p.riderDetails.idNumber)) duplicateInfo.push(p.riderDetails.idNumber);
         } else if (reg.type === 'team') {
-          p.teamDetails?.members?.forEach((m: any) => {
+          p.teamDetails?.members?.forEach((m) => {
             if (m.email && lowerToCheck.includes(m.email.toLowerCase())) duplicateInfo.push(m.email);
             if (m.idNumber && idNumbersToCheck.includes(m.idNumber)) duplicateInfo.push(m.idNumber);
           });
@@ -233,9 +233,9 @@ registrationsRouter.post('/pay/stk-push', requireUser, async (req: UserRequest, 
         }
       });
     }
-  } catch (err: any) {
+  } catch (err) {
     console.error('[STK Push] Error:', err);
-    return res.status(500).json({ error: { code: 'INTERNAL', message: err.message || 'Payment initiation failed' } });
+    return res.status(500).json({ error: { code: 'INTERNAL', message: (err as Error).message || 'Payment initiation failed' } });
   }
 });
 
@@ -251,18 +251,18 @@ registrationsRouter.post('/', requireUser, async (req: UserRequest, res, next) =
     const { type, circuitId } = base;
     console.log(`[Registration] Starting ${type} registration${existingId ? ` (edit: ${existingId})` : ''}`);
 
-    let payload: any;
+    let payload: ValidPayload;
     if (type === 'individual') {
-      payload = { riderDetails: riderDetailsSchema.parse((base.payload as any).riderDetails ?? base.payload) };
+      payload = { riderDetails: riderDetailsSchema.parse((base.payload as Record<string, unknown>).riderDetails ?? base.payload) };
     } else if (type === 'team') {
       if (circuitId === 'family') {
         return res.status(400).json({ error: { code: 'VALIDATION', message: 'Family circuit does not support team registration' } });
       }
-      payload = { teamDetails: teamDetailsSchema.parse((base.payload as any).teamDetails ?? base.payload) };
+      payload = { teamDetails: teamDetailsSchema.parse((base.payload as Record<string, unknown>).teamDetails ?? base.payload) };
       const formErrors = validateTeamRules(circuitId, payload.teamDetails);
       if (formErrors.length) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Validation failed', details: { formErrors } } });
     } else {
-      payload = { familyDetails: familyDetailsSchema.parse((base.payload as any).familyDetails ?? base.payload) };
+      payload = { familyDetails: familyDetailsSchema.parse((base.payload as Record<string, unknown>).familyDetails ?? base.payload) };
     }
 
     // CHECK FOR DUPLICATES
@@ -278,7 +278,7 @@ registrationsRouter.post('/', requireUser, async (req: UserRequest, res, next) =
       if (existing.status !== 'UNPAID') {
         return res.status(400).json({ error: { code: 'ALREADY_PAID', message: 'Paid registrations cannot be edited.' } });
       }
-      excludeGroupId = (existing as any).groupId || (existing.payload as any)?.groupId;
+      excludeGroupId = existing.groupId || (existing.payload as RegistrationPayload | null)?.groupId;
     }
 
     const duplicateByEmail = emailsToCheck.length > 0 ? await findExistingRegistrationsByEmails(emailsToCheck, excludeGroupId, existingId) : [];
@@ -298,12 +298,12 @@ registrationsRouter.post('/', requireUser, async (req: UserRequest, res, next) =
       const lowerToCheck = emailsToCheck.map(e => e.toLowerCase());
 
       paidDuplicates.forEach(reg => {
-        const p = reg.payload as any;
+        const p = (reg.payload ?? {}) as RegistrationPayload;
         if (reg.type === 'individual') {
           if (p.riderDetails?.email && lowerToCheck.includes(p.riderDetails.email.toLowerCase())) duplicateInfo.push(p.riderDetails.email);
           if (p.riderDetails?.idNumber && idNumbersToCheck.includes(p.riderDetails.idNumber)) duplicateInfo.push(p.riderDetails.idNumber);
         } else if (reg.type === 'team') {
-          p.teamDetails?.members?.forEach((m: any) => {
+          p.teamDetails?.members?.forEach((m) => {
             if (m.email && lowerToCheck.includes(m.email.toLowerCase())) duplicateInfo.push(m.email);
             if (m.idNumber && idNumbersToCheck.includes(m.idNumber)) duplicateInfo.push(m.idNumber);
           });
@@ -332,13 +332,13 @@ registrationsRouter.post('/', requireUser, async (req: UserRequest, res, next) =
     // and never when they have a payment in progress or made.
     const myUnpaidDuplicates = unpaidDuplicates.filter(reg => reg.accountId === accountId);
     const replace = myUnpaidDuplicates.length > 0 ? {
-      groupIds: [...new Set(myUnpaidDuplicates.map(reg => (reg as any).groupId).filter(Boolean))] as string[],
-      ids: myUnpaidDuplicates.filter(reg => !(reg as any).groupId).map(reg => reg.id),
+      groupIds: [...new Set(myUnpaidDuplicates.map(reg => reg.groupId).filter(Boolean))] as string[],
+      ids: myUnpaidDuplicates.filter(reg => !reg.groupId).map(reg => reg.id),
     } : undefined;
 
     const quote = await buildQuote({ circuitId: base.circuitId, type: base.type, payload });
 
-    let rec: any;
+    let rec: Awaited<ReturnType<typeof createRegistration>>;
     if (existingId) {
       console.log(`[Registration] Updating existing record ${existingId}`);
       rec = await updateRegistration(existingId, {
@@ -385,17 +385,17 @@ registrationsRouter.get('/:id', requireUser, async (req: UserRequest, res) => {
   if (!rec || (rec.accountId !== me && rec.participantAccountId !== me)) {
     return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Registration not found' } });
   }
-  const p = (rec.payload ?? {}) as any;
+  const p = (rec.payload ?? {}) as RegistrationPayload & { paymentFailed?: boolean; paymentFailureReason?: string };
   // Owner sees every rider in the group; a participant sees only their own row.
   const groupRows = rec.accountId === me && rec.groupId
     ? await prisma.registration.findMany({ where: { groupId: rec.groupId }, orderBy: { createdAt: 'asc' } })
-    : [rec as any];
+    : [rec as unknown as Awaited<ReturnType<typeof prisma.registration.findMany>>[number]];
   res.json({
     registration: {
       id: rec.id,
       status: rec.status,
       bibNumber: rec.bibNumber ?? null,
-      riders: groupRows.map((r: any) => ({
+      riders: groupRows.map((r) => ({
         id: r.id,
         firstName: r.firstName,
         lastName: r.lastName,
@@ -409,7 +409,7 @@ registrationsRouter.get('/:id', requireUser, async (req: UserRequest, res) => {
       circuitId: rec.circuitId,
       phoneNumber: rec.phoneNumber,
       classifications: Array.isArray(rec.classifications)
-        ? rec.classifications.map((c: any) => ({ category: c?.category }))
+        ? rec.classifications.map((c) => ({ category: c?.category }))
         : [],
       pricing: { totalAmount: Number(rec.pricing?.totalAmount ?? rec.totalAmount) },
       payload: {

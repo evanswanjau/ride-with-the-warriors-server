@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import type { Prisma } from '../../generated/client/index.js';
 import { requireAdmin } from '../../middleware/auth.js';
 import { prisma } from '../../storage/prisma.js';
 
@@ -14,7 +15,7 @@ adminReferralsRouter.get('/', async (req, res) => {
     const page = Math.max(1, parseInt(req.query.page as string) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
 
-    const where: any = {};
+    const where: Prisma.ReferralWhereInput = {};
     if (status === 'active') where.isActive = true;
     else if (status === 'inactive') where.isActive = false;
     if (search) {
@@ -27,23 +28,23 @@ adminReferralsRouter.get('/', async (req, res) => {
     }
 
     const [referrals, total] = await Promise.all([
-      (prisma.referral as any).findMany({
+      prisma.referral.findMany({
         where,
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
       }),
-      (prisma.referral as any).count({ where }),
+      prisma.referral.count({ where }),
     ]);
 
     // Get ticket counts for each referral code
-    const codes = referrals.map((r: any) => r.code);
-    const ticketCounts = await (prisma.raffleTicket as any).groupBy({
+    const codes = referrals.map((r) => r.code);
+    const ticketCounts = await prisma.raffleTicket.groupBy({
       by: ['referralCode'],
       where: { referralCode: { in: codes } },
       _count: { id: true },
     });
-    const paidTicketCounts = await (prisma.raffleTicket as any).groupBy({
+    const paidTicketCounts = await prisma.raffleTicket.groupBy({
       by: ['referralCode'],
       where: { referralCode: { in: codes }, status: 'PAID' },
       _count: { id: true },
@@ -51,21 +52,21 @@ adminReferralsRouter.get('/', async (req, res) => {
 
     const countMap: Record<string, number> = {};
     const paidCountMap: Record<string, number> = {};
-    for (const g of ticketCounts) countMap[g.referralCode] = g._count.id;
-    for (const g of paidTicketCounts) paidCountMap[g.referralCode] = g._count.id;
+    for (const g of ticketCounts) countMap[g.referralCode as string] = g._count.id;
+    for (const g of paidTicketCounts) paidCountMap[g.referralCode as string] = g._count.id;
 
-    const enriched = referrals.map((r: any) => ({
+    const enriched = referrals.map((r) => ({
       ...r,
       totalTickets: countMap[r.code] || 0,
       paidTickets: paidCountMap[r.code] || 0,
     }));
 
     // Summary stats
-    const totalReferrals = await (prisma.referral as any).count();
-    const activeReferrals = await (prisma.referral as any).count({ where: { isActive: true } });
-    const totalClicks = await (prisma.referral as any).aggregate({ _sum: { clicks: true } });
-    const totalTicketsReferred = await (prisma.raffleTicket as any).count({ where: { referralCode: { not: null } } });
-    const totalPaidReferred = await (prisma.raffleTicket as any).count({ where: { referralCode: { not: null }, status: 'PAID' } });
+    const totalReferrals = await prisma.referral.count();
+    const activeReferrals = await prisma.referral.count({ where: { isActive: true } });
+    const totalClicks = await prisma.referral.aggregate({ _sum: { clicks: true } });
+    const totalTicketsReferred = await prisma.raffleTicket.count({ where: { referralCode: { not: null } } });
+    const totalPaidReferred = await prisma.raffleTicket.count({ where: { referralCode: { not: null }, status: 'PAID' } });
 
     return res.json({
       referrals: enriched,
@@ -88,7 +89,7 @@ adminReferralsRouter.get('/', async (req, res) => {
 adminReferralsRouter.get('/tickets/:code', async (req, res) => {
   try {
     const code = req.params.code.toUpperCase().trim();
-    const tickets = await (prisma.raffleTicket as any).findMany({
+    const tickets = await prisma.raffleTicket.findMany({
       where: { referralCode: code },
       orderBy: { createdAt: 'desc' },
     });
@@ -110,12 +111,12 @@ adminReferralsRouter.post('/', async (req, res) => {
     const upper = code.toUpperCase().trim().replace(/\s+/g, '');
 
     // Check uniqueness
-    const existing = await (prisma.referral as any).findUnique({ where: { code: upper } });
+    const existing = await prisma.referral.findUnique({ where: { code: upper } });
     if (existing) {
       return res.status(409).json({ error: { code: 'DUPLICATE', message: 'Referral code already exists' } });
     }
 
-    const referral = await (prisma.referral as any).create({
+    const referral = await prisma.referral.create({
       data: {
         code: upper,
         influencerName: influencerName.trim(),
@@ -136,20 +137,20 @@ adminReferralsRouter.post('/', async (req, res) => {
 adminReferralsRouter.patch('/:id', async (req, res) => {
   try {
     const { influencerName, influencerEmail, influencerPhone, isActive } = req.body;
-    const data: any = {};
+    const data: Prisma.ReferralUpdateInput = {};
     if (influencerName !== undefined) data.influencerName = influencerName.trim();
     if (influencerEmail !== undefined) data.influencerEmail = influencerEmail?.trim() || null;
     if (influencerPhone !== undefined) data.influencerPhone = influencerPhone?.trim() || null;
     if (isActive !== undefined) data.isActive = isActive;
 
-    const referral = await (prisma.referral as any).update({
+    const referral = await prisma.referral.update({
       where: { id: req.params.id },
       data,
     });
 
     return res.json({ referral });
-  } catch (err: any) {
-    if (err.code === 'P2025') return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Referral not found' } });
+  } catch (err) {
+    if ((err as { code?: string }).code === 'P2025') return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Referral not found' } });
     console.error('[Admin Referral] Update error:', err);
     return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to update referral' } });
   }
@@ -158,13 +159,13 @@ adminReferralsRouter.patch('/:id', async (req, res) => {
 // ─── DELETE /:id — Deactivate a referral ─────────────────────────────────────
 adminReferralsRouter.delete('/:id', async (req, res) => {
   try {
-    await (prisma.referral as any).update({
+    await prisma.referral.update({
       where: { id: req.params.id },
       data: { isActive: false },
     });
     return res.json({ ok: true });
-  } catch (err: any) {
-    if (err.code === 'P2025') return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Referral not found' } });
+  } catch (err) {
+    if ((err as { code?: string }).code === 'P2025') return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Referral not found' } });
     console.error('[Admin Referral] Delete error:', err);
     return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to deactivate referral' } });
   }
@@ -173,25 +174,25 @@ adminReferralsRouter.delete('/:id', async (req, res) => {
 // ─── GET /export — CSV export ────────────────────────────────────────────────
 adminReferralsRouter.get('/export', async (req, res) => {
   try {
-    const referrals = await (prisma.referral as any).findMany({ orderBy: { createdAt: 'desc' } });
+    const referrals = await prisma.referral.findMany({ orderBy: { createdAt: 'desc' } });
 
     // Get all raffle tickets with referral codes
-    const tickets = await (prisma.raffleTicket as any).findMany({
+    const tickets = await prisma.raffleTicket.findMany({
       where: { referralCode: { not: null } },
       orderBy: { createdAt: 'desc' },
     });
 
     // Build CSV
     const header = 'Referral Code,Influencer,Email,Phone,Clicks,Total Tickets,Paid Tickets,Active,Created At';
-    const rows = referrals.map((r: any) => {
-      const total = tickets.filter((t: any) => t.referralCode === r.code).length;
-      const paid = tickets.filter((t: any) => t.referralCode === r.code && t.status === 'PAID').length;
+    const rows = referrals.map((r) => {
+      const total = tickets.filter((t) => t.referralCode === r.code).length;
+      const paid = tickets.filter((t) => t.referralCode === r.code && t.status === 'PAID').length;
       return `${r.code},"${r.influencerName}",${r.influencerEmail || ''},${r.influencerPhone || ''},${r.clicks},${total},${paid},${r.isActive},${new Date(r.createdAt).toISOString()}`;
     });
 
     // Add ticket detail section
     const ticketHeader = '\n\nTicket ID,Referral Code,Name,Email,Phone,Status,Created At';
-    const ticketRows = tickets.map((t: any) =>
+    const ticketRows = tickets.map((t) =>
       `${t.id},${t.referralCode},"${t.firstName} ${t.lastName}",${t.email},${t.phoneNumber || ''},${t.status},${new Date(t.createdAt).toISOString()}`
     );
 

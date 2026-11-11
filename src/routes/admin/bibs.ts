@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import type { Prisma } from '../../generated/client/index.js';
 import { randomUUID } from 'crypto';
 import { prisma } from '../../storage/prisma.js';
 import { requireAdmin, AuthenticatedRequest } from '../../middleware/auth.js';
@@ -28,15 +29,15 @@ setInterval(() => {
 }, 60_000);
 
 // ── Shared filter → bibs helper ───────────────────────────────────────────────
-async function buildBibs(query: any): Promise<{ bibs: BibEntry[]; filename: string } | { error: string; code: string }> {
+async function buildBibs(query: Record<string, unknown>): Promise<{ bibs: BibEntry[]; filename: string } | { error: string; code: string }> {
     const { circuitId, type, status, category, isMilitary, dateFrom } = query;
 
     // Only rows that have been paid (or made complementary) have a bib to print.
-    const where: any = { bibNumber: { not: null } };
-    if (circuitId) where.circuitId = circuitId;
-    if (type)      where.type = type;
-    if (status)    where.status = status;
-    if (category)  where.category = category;
+    const where: Prisma.RegistrationWhereInput = { bibNumber: { not: null } };
+    if (circuitId) where.circuitId = circuitId as string;
+    if (type)      where.type = type as string;
+    if (status)    where.status = status as Prisma.RegistrationWhereInput['status'];
+    if (category)  where.category = category as string;
     if (isMilitary !== undefined && isMilitary !== '') {
         where.isMilitary = isMilitary === 'true';
     }
@@ -45,7 +46,7 @@ async function buildBibs(query: any): Promise<{ bibs: BibEntry[]; filename: stri
         if (!isNaN(from.getTime())) where.createdAt = { gte: from };
     }
 
-    const regsRaw = await (prisma.registration as any).findMany({
+    const regsRaw = await prisma.registration.findMany({
         where,
         orderBy: [{ category: 'asc' }, { bibNumber: 'asc' }],
     });
@@ -54,13 +55,13 @@ async function buildBibs(query: any): Promise<{ bibs: BibEntry[]; filename: stri
 
     const pricingCats = await getPricingCategories();
 
-    const bibs: BibEntry[] = regsRaw.map((reg: any) => ({
-        id:        reg.bibNumber,
+    const bibs: BibEntry[] = regsRaw.map((reg) => ({
+        id:        reg.bibNumber as string,
         firstName: reg.firstName || '',
         lastName:  reg.lastName  || '',
         category:  reg.category  || '',
         hexColor:  pricingCats.find(
-            (c: any) => c.categoryName === reg.category && c.circuitId === reg.circuitId
+            (c) => c.categoryName === reg.category && c.circuitId === reg.circuitId
         )?.hexColor || '#000000',
         circuitId: reg.circuitId || '',
         teamName:  reg.teamName  || null,
@@ -104,7 +105,7 @@ adminBibsRouter.post('/generate/start', requireAdmin, async (req: AuthenticatedR
 
         res.json({ jobId, total: bibs.length });
 
-    } catch (err: any) {
+    } catch (err) {
         console.error('[Bib PDF] Start error:', err);
         res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to start PDF generation' } });
     }

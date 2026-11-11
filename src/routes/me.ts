@@ -2,12 +2,14 @@
  * The logged-in participant's own data. Everything here is scoped to the
  * session's account, so nothing is masked.
  */
-import { Router } from 'express';
+import { Router, type Response } from 'express';
 import { z } from 'zod';
+import type { Prisma } from '../generated/client/index.js';
+import type { RegistrationPayload } from '../validation/registrationSchemas.js';
 import { prisma } from '../storage/prisma.js';
 import { writeAccountAudit } from '../middleware/adminAudit.js';
 import { publicAccount } from '../services/accountService.js';
-import { buildQuote } from '../services/pricing.js';
+import { buildQuote, type PricingResult } from '../services/pricing.js';
 import { requireUser, UserRequest } from '../middleware/userAuth.js';
 import { paymentGateway } from '../services/paymentGateway.js';
 import { beginAttempt, recordAttempt } from '../services/payments.js';
@@ -18,7 +20,7 @@ const BIKE_HIRE_FEE = 1500;
 export const meRouter = Router();
 meRouter.use(requireUser);
 
-type Reg = Awaited<ReturnType<typeof prisma.registration.findMany>>[number] & { bikeHire: any };
+type Reg = Prisma.RegistrationGetPayload<{ include: { bikeHire: true } }>;
 
 function riderView(r: Reg) {
     return {
@@ -75,7 +77,7 @@ meRouter.get('/history', async (req: UserRequest, res, next) => {
 
         const registrations = [
             ...[...groups.entries()].map(([groupId, rows]) => {
-                const primary = rows.find(r => (r.payload as any)?.isPrimary) ?? rows[0];
+                const primary = rows.find(r => (r.payload as RegistrationPayload | null)?.isPrimary) ?? rows[0];
                 return {
                     groupId,
                     role: 'owner' as const,
@@ -147,7 +149,7 @@ meRouter.post('/bike-hire', async (req: UserRequest, res, next) => {
 
         if (unpaid) {
             // Fold the fee into the registration's own payment.
-            const pricing = { ...((reg.pricing as any) ?? {}) };
+            const pricing: Partial<PricingResult> = { ...((reg.pricing as Partial<PricingResult> | null) ?? {}) };
             pricing.totalAmount = Number(pricing.totalAmount ?? reg.totalAmount ?? 0) + BIKE_HIRE_FEE;
             pricing.lineItems = [...(pricing.lineItems ?? []), { label: 'Bike Hire', amount: BIKE_HIRE_FEE }];
             const rows = reg.groupId ? { groupId: reg.groupId } : { id: reg.id };
@@ -222,12 +224,12 @@ meRouter.get('/bike-hire/:id', async (req: UserRequest, res, next) => {
 
 const ID_LOCKED_MESSAGE = 'Your ID or passport number can only be changed by the organisers. Contact support.';
 
-function validationError(res: any, err: z.ZodError) {
+function validationError(res: Response, err: z.ZodError) {
     return res.status(400).json({ error: { code: 'VALIDATION', message: err.issues[0]?.message ?? 'Invalid details', details: err.flatten() } });
 }
 
 /** Field-by-field before/after for the fields that actually change. */
-function changes(before: Record<string, any>, after: Record<string, any>) {
+function changes(before: Record<string, unknown>, after: Record<string, unknown>) {
     const out: Record<string, { from: unknown; to: unknown }> = {};
     for (const [k, v] of Object.entries(after)) {
         if (v !== undefined && (before[k] ?? null) !== (v ?? null)) out[k] = { from: before[k] ?? null, to: v ?? null };
@@ -312,18 +314,18 @@ meRouter.patch('/riders/:id', async (req: UserRequest, res, next) => {
         const diff = changes(reg, data);
         if (Object.keys(diff).length === 0) return res.json({ rider: riderView(reg as Reg), requoted: false, totalAmount: reg.totalAmount });
 
-        const update: Record<string, any> = {};
-        for (const k of Object.keys(diff)) update[k] = (data as any)[k];
+        const update: Record<string, unknown> = {};
+        for (const k of Object.keys(diff)) update[k] = (data as Record<string, unknown>)[k];
         let requoted: { from: unknown; to: unknown } | null = null;
 
         if (reg.type === 'individual') {
             // Keep the original submission in step with the edited columns.
-            const payload = { ...((reg.payload as any) ?? {}) };
+            const payload: Record<string, unknown> & { riderDetails?: Record<string, unknown> } = { ...((reg.payload as Record<string, unknown> | null) ?? {}) };
             payload.riderDetails = { ...(payload.riderDetails ?? {}), ...update };
             update.payload = payload;
 
             if ('dob' in diff && !PAID_STATUSES.includes(reg.status)) {
-                const quote = await buildQuote({ circuitId: reg.circuitId as any, type: 'individual', payload });
+                const quote = await buildQuote({ circuitId: reg.circuitId as Parameters<typeof buildQuote>[0]['circuitId'], type: 'individual', payload: payload as Parameters<typeof buildQuote>[0]['payload'] });
                 const pricing = quote.pricing;
                 // A bike added after registering is part of this payment but not of the payload.
                 if (reg.bikeHire && !pricing.lineItems.some((l) => l.label === 'Bike Hire')) {
@@ -342,7 +344,7 @@ meRouter.patch('/riders/:id', async (req: UserRequest, res, next) => {
         }
         // bibNumber and (for paid entries) category are never written here.
 
-        const updated = await prisma.registration.update({ where: { id: reg.id }, data: update, include: { bikeHire: true } });
+        const updated = await prisma.registration.update({ where: { id: reg.id }, data: update as Prisma.RegistrationUncheckedUpdateInput, include: { bikeHire: true } });
         await writeAccountAudit({
             account: req.account!,
             action: 'account:update-rider',
