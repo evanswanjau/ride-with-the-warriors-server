@@ -193,7 +193,7 @@ export const quoteRequestSchema = z
     if (val.circuitId !== 'family') {
       let dob: string | undefined;
       if (val.type === 'individual' && val.payload) {
-        dob = (val.payload as any).riderDetails?.dob;
+        dob = (val.payload as RegistrationPayload).riderDetails?.dob;
       }
       // Note: Team members are checked in the payload validation if we had full payload schemas here.
       // For now, focusing on the individual entry point in superRefine.
@@ -226,3 +226,24 @@ export const quoteRequestSchema = z
 
 export type QuoteRequest = z.infer<typeof quoteRequestSchema>;
 
+
+export type RiderDetails = z.infer<typeof riderDetailsSchema>;
+export type TeamMember = z.infer<typeof teamMemberSchema>;
+export type TeamDetails = z.infer<typeof teamDetailsSchema>;
+export type JuniorRider = z.infer<typeof juniorRiderSchema>;
+export type FamilyDetails = z.infer<typeof familyDetailsSchema>;
+
+/**
+ * Shape of the `payload` JSON stored on a Registration row: the validated
+ * rider/team/family details plus the bookkeeping fields added when saving.
+ * Read defensively: old rows may not match exactly.
+ */
+export type RegistrationPayload = {
+  riderDetails?: RiderDetails;
+  teamDetails?: TeamDetails;
+  familyDetails?: FamilyDetails;
+  groupId?: string;
+  isPrimary?: boolean;
+  memberIndex?: number;
+  riderId?: string;
+};

@@ -69,7 +69,7 @@ export async function createShortLink(targetUrl: string): Promise<string> {
             body: `url=${encodeURIComponent(targetUrl)}`
         });
         if (response.ok) {
-            const data = await response.json() as any;
+            const data = await response.json() as { result_url?: string };
             if (data.result_url) {
                 await saveExternalShortLink(data.result_url, targetUrl);
                 return data.result_url;

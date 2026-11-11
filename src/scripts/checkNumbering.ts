@@ -1,3 +1,4 @@
+import type { Prisma } from '../generated/client/index.js';
 /**
  * Exercises pay-first numbering against a COPY of the database:
  * clones existing paid rows as new unpaid ones, assigns numbers (including two
@@ -14,13 +15,13 @@ function assert(cond: unknown, msg: string) {
     console.log(`ok - ${msg}`);
 }
 
-async function cloneGroup(where: any) {
+async function cloneGroup(where: Prisma.RegistrationWhereInput) {
     const sample = await prisma.registration.findFirst({ where, orderBy: { createdAt: 'desc' } });
     if (!sample) throw new Error('no sample row');
     const rows = sample.groupId ? await prisma.registration.findMany({ where: { groupId: sample.groupId } }) : [sample];
     const groupId = `TEST-${randomUUID()}`;
     const clones = rows.map(r => ({ ...r, id: randomUUID(), groupId, bibNumber: null, status: 'UNPAID' as const, accountId: null, participantAccountId: null, payload: r.payload ?? undefined, pricing: r.pricing ?? undefined, classifications: r.classifications ?? undefined }));
-    await prisma.registration.createMany({ data: clones as any });
+    await prisma.registration.createMany({ data: clones as Prisma.RegistrationCreateManyInput[] });
     return { groupId, ids: clones.map(c => c.id), category: sample.category };
 }
 

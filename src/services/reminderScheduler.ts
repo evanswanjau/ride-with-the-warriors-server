@@ -156,12 +156,12 @@ async function processRafflePaymentReminders() {
                 ticketCount: group.tickets.length,
                 totalAmount,
                 profileUrl,
-            } as any);
+            });
 
             if (sent && ticketIds.length > 1) {
                 const extraLogs = ticketIds.slice(1).map(id => ({
                     registrationId: id,
-                    type: 'raffle_payment_reminder_periodic' as any,
+                    type: 'raffle_payment_reminder_periodic',
                     status: 'sent' as const,
                 }));
                 await prisma.emailLog.createMany({ data: extraLogs });

@@ -25,6 +25,9 @@ const FOOT_H = mm(30);            // footer height   (mirrors .bib-footer { heig
 const CONT_H = BIB_H - BAND_H - FOOT_H;  // middle content area = 90.5 mm = 256.54 pt
 const H_PAD  = px(40);           // footer horizontal padding (mirrors `padding: 0 40px`)
 
+/** The parts of PDFKit's internal font object we read for glyph metrics. */
+type PdfKitFont = { unitsPerEm?: number; ascender?: number; capHeight?: number };
+
 export interface BibEntry {
     id: string;
     firstName: string;
@@ -122,7 +125,7 @@ function renderBib(
     // Read real font metrics from the loaded TTF via PDFKit's internal font ref.
     // Digits are lining figures (cap-top → baseline, no descenders), so we centre
     // only that visible range — not the full line box which includes descender space.
-    const f         = (doc as any)._font;
+    const f         = (doc as unknown as { _font: PdfKitFont })._font;
     const upm       = f.unitsPerEm || 1000;
     const asc       = f.ascender   || 900;
     // capHeight comes from the OS/2 table; fall back to 72 % of ascender if absent.
@@ -144,9 +147,9 @@ function renderBib(
     // page break. Extend maxY just for this one call by making the bottom margin
     // deeply negative, then restore it immediately after.
     const savedMarginBottom = doc.page.margins.bottom;
-    (doc.page.margins as any).bottom = -(A4_H * 2);
+    (doc.page.margins as { bottom: number }).bottom = -(A4_H * 2);
     doc.text(bib.id, 0, numY, { width: A4_W, align: 'center', lineBreak: false });
-    (doc.page.margins as any).bottom = savedMarginBottom;
+    (doc.page.margins as { bottom: number }).bottom = savedMarginBottom;
 
     // ── Footer background ───────────────────────────────────────────────────────
     const footerY = y + BIB_H - FOOT_H;

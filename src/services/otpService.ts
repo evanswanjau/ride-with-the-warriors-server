@@ -9,6 +9,7 @@
  *   response so the flow can be tested without sending anything.
  */
 import { createHash, randomInt, timingSafeEqual } from 'crypto';
+import type { Prisma } from '../generated/client/index.js';
 import { prisma } from '../storage/prisma.js';
 import { smsService } from './smsService.js';
 import { sendOtpEmail } from './emailService.js';
@@ -58,7 +59,7 @@ export async function issueOtp(id: Identifier, purpose: OtpPurpose, context?: Re
             destination: id.value,
             purpose,
             codeHash: hashCode(id.value, code),
-            context: (context ?? undefined) as any,
+            context: (context ?? undefined) as Prisma.InputJsonValue | undefined,
             expiresAt: new Date(Date.now() + CODE_TTL_MS),
         },
     });
@@ -78,7 +79,7 @@ export async function issueOtp(id: Identifier, purpose: OtpPurpose, context?: Re
 }
 
 /** Checks a code. On success marks it used and returns its purpose and context. */
-export async function verifyOtp(id: Identifier, code: string): Promise<{ purpose: OtpPurpose; context: any }> {
+export async function verifyOtp(id: Identifier, code: string): Promise<{ purpose: OtpPurpose; context: Record<string, unknown> | null }> {
     const otp = await prisma.otpCode.findFirst({
         where: { destination: id.value, consumedAt: null },
         orderBy: { createdAt: 'desc' },
@@ -97,5 +98,5 @@ export async function verifyOtp(id: Identifier, code: string): Promise<{ purpose
     // Mark used atomically so the same code can't be redeemed twice.
     const used = await prisma.otpCode.updateMany({ where: { id: otp.id, consumedAt: null }, data: { consumedAt: new Date() } });
     if (used.count === 0) throw new OtpError('INVALID_CODE', 'That code has already been used.');
-    return { purpose: otp.purpose as OtpPurpose, context: otp.context };
+    return { purpose: otp.purpose as OtpPurpose, context: otp.context as Record<string, unknown> | null };
 }

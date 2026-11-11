@@ -39,11 +39,40 @@ interface DTBStkPushInitiation {
     callbackUrl?: string;
 }
 
+/** Fields we read from DTB Fiorano JSON bodies (names vary between endpoints, so all optional). */
+export interface DtbBody {
+    transactionStatus?: string;
+    TransactionStatus?: string;
+    paymentStatus?: string;
+    transactionStatusDescription?: string;
+    responseDescription?: string;
+    ResponseDescription?: string;
+    CustomerMessage?: string;
+    message?: string;
+    mnoReference?: string;
+    MnoReference?: string;
+    cbsReference?: string;
+    amount?: string | number | null;
+    Amount?: string | number | null;
+    phoneNumber?: string;
+    PhoneNumber?: string;
+    msisdn?: string;
+    status?: string;
+    responseCode?: string;
+    externalReference?: string;
+    CheckoutRequestID?: string;
+    MerchantRequestID?: string;
+    id?: string;
+    access_token?: string;
+    token?: string;
+    expires_in?: string | number;
+}
+
 interface DTBPaymentResponse {
     success: boolean;
     transactionReference?: string;
     message?: string;
-    rawResponse?: any;
+    rawResponse?: DtbBody;
 }
 
 const DTB_CONFIG = {
@@ -75,7 +104,7 @@ const PENDING_WORDS = ['PENDING', 'PROCESSING', 'IN_PROGRESS', 'INITIATED', 'SUB
  * mnoReference, cbsReference); confirm them against DTB's API document before relying on
  * this in production (see DTB_STATUS_URL in .env.example).
  */
-export function parseDtbStatus(data: any): GatewayStatus {
+export function parseDtbStatus(data: DtbBody | null | undefined): GatewayStatus {
     const tx = String(data?.transactionStatus ?? data?.TransactionStatus ?? data?.paymentStatus ?? '').trim().toUpperCase();
     const receipt = data?.mnoReference || data?.MnoReference || null;
     const reason = data?.transactionStatusDescription || data?.responseDescription || data?.message || null;
@@ -136,13 +165,13 @@ export const dtbService = {
                 return null;
             }
 
-            const data = await response.json() as any;
+            const data = await response.json() as DtbBody;
             const token = data.access_token || data.token;
 
             if (token) {
                 cachedToken = token;
                 // Use expires_in if provided, otherwise default to 1 hour
-                const expiresId = data.expires_in ? parseInt(data.expires_in) : 3600;
+                const expiresId = data.expires_in ? parseInt(String(data.expires_in)) : 3600;
                 tokenExpiry = Date.now() + (expiresId * 1000) - 60000; // Subtract 1 minute for safety
                 console.log('[DTB Service] Authentication successful');
                 return token;
@@ -172,7 +201,7 @@ export const dtbService = {
             body: JSON.stringify({ TransactionRef: ref, externalReference: ref }),
         });
         const text = await response.text();
-        let data: any;
+        let data: DtbBody;
         try {
             data = JSON.parse(text);
         } catch {
@@ -222,7 +251,7 @@ export const dtbService = {
                 body: JSON.stringify(payload),
             });
 
-            let data: any;
+            let data: DtbBody;
             const responseText = await response.text();
 
             try {

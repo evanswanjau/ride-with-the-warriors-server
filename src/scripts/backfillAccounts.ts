@@ -15,6 +15,7 @@
  * - A registration group (family / team) is owned by the account of its primary
  *   row; members whose own email/phone has an account are linked as participants.
  */
+import type { RegistrationPayload } from '../validation/registrationSchemas.js';
 import fs from 'fs';
 import { prisma } from '../storage/prisma.js';
 import { normalizeEmail, normalizePhone, splitName } from '../utils/identity.js';
@@ -163,7 +164,7 @@ async function main() {
     const ownerlessGroups: string[] = [];
     for (const [groupId, rows] of groups) {
         const primary =
-            rows.find(r => (r.payload as any)?.isPrimary === true) ||
+            rows.find(r => (r.payload as RegistrationPayload | null)?.isPrimary === true) ||
             rows.find(r => r.type === 'individual') ||
             rows.find(r => r.isCaptain) ||
             rows.find(r => normalizeEmail(r.email)) ||

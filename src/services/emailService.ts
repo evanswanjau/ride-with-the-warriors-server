@@ -1,9 +1,22 @@
 import nodemailer from 'nodemailer';
+import type Mail from 'nodemailer/lib/mailer/index.js';
+import type { Prisma } from '../generated/client/index.js';
+import type { RiderDetails } from '../validation/registrationSchemas.js';
+
+/** Payload fields the confirmation email reads, including ones only older rows carry. */
+type LegacyPayload = {
+  age?: number | string;
+  gender?: string;
+  idNumber?: string;
+  tshirtSize?: string;
+  emergencyContactPhone?: string;
+  riderDetails?: Partial<RiderDetails> & { emergencyContactPhone?: string };
+};
 import { messagingDisabled, logSuppressed, applyEmailAllowlist } from '../utils/messaging.js';
 import { prisma } from '../storage/prisma.js';
 import { calculateAge } from './pricing.js';
 import { generateRaffleTicketPdf } from './pdfService.js';
-import { enqueue, sendNow, registerDeliverer, setOutboxHooks, serializeMail, deserializeMail, type EmailPayload } from './outbox.js';
+import { enqueue, sendNow, registerDeliverer, setOutboxHooks, serializeMail, deserializeMail, type EmailPayload, type MailInput } from './outbox.js';
 
 // --- CONFIGURATION & CONSTANTS ---
 
@@ -50,7 +63,8 @@ interface RegistrationData {
   totalAmount: number;
   status: string;
   category?: string;
-  payload?: any;
+  /** Raw registration payload JSON; read through `LegacyPayload` (older rows have loose fields). */
+  payload?: unknown;
   teamName?: string;
   gender?: string | null;
   dob?: string | null;
@@ -109,7 +123,7 @@ export function smtpOptions(env: NodeJS.ProcessEnv = process.env) {
 // Kill switch: never contact anyone when messaging is disabled (see utils/messaging.ts).
 {
   const realSendMail = transporter.sendMail.bind(transporter);
-  (transporter as any).sendMail = async (mail: any) => {
+  (transporter as { sendMail: (mail: Mail.Options | undefined) => Promise<unknown> }).sendMail = async (mail) => {
     if (messagingDisabled()) {
       const to = Array.isArray(mail?.to) ? mail.to.length : 1;
       logSuppressed('email', to, mail?.subject);
@@ -133,7 +147,7 @@ type QueueOpts = { template: string; dedupeKey?: string; meta?: Record<string, u
 const recipientOf = (to: unknown) => (Array.isArray(to) ? to.join(', ') : String(to ?? ''));
 
 /** Queues a fully built message. Returns true when it is queued (or was already queued). */
-async function queueMail(mail: Record<string, any>, opts: QueueOpts): Promise<boolean> {
+async function queueMail(mail: MailInput, opts: QueueOpts): Promise<boolean> {
   await enqueue({
     channel: 'EMAIL',
     recipient: recipientOf(mail.to),
@@ -231,7 +245,7 @@ function renderIdBlock(label: string, value: string, sub?: string, danger = fals
 }
 
 function renderDetailsTable(data: RegistrationData): string {
-  const p = data.payload || {};
+  const p = (data.payload || {}) as LegacyPayload;
   const rider = p.riderDetails || {};
   const ageValue = data.dob ? calculateAge(data.dob) : (p.age || '—');
 
@@ -677,7 +691,8 @@ function getRaffleConfirmationEmail(data: RaffleTicketData): { subject: string; 
     html: getEmailTemplate(content, 'Raffle Entry Confirmed', `Your ticket ${data.quantity === 1 ? 'code is' : 'codes:'} ${data.ids.join(', ')}`),
   };
 }
-function getRafflePaymentReminderEmail(data: { firstName: string; email: string; ticketCount: number; totalAmount: number; profileUrl: string }): { subject: string; html: string } {
+export type RafflePaymentReminderData = { firstName: string; email: string; ticketCount: number; totalAmount: number; profileUrl: string };
+function getRafflePaymentReminderEmail(data: RafflePaymentReminderData): { subject: string; html: string } {
   const profileUrl = data.profileUrl;
   const ticketText = data.ticketCount > 1 ? `${data.ticketCount} raffle tickets` : 'your raffle ticket';
 
@@ -710,7 +725,7 @@ function getRafflePaymentReminderEmail(data: { firstName: string; email: string;
 export async function sendRaffleEmail(
   ticketId: string,
   type: EmailType,
-  data: RaffleTicketData
+  data: RaffleTicketData | RafflePaymentReminderData
 ): Promise<boolean> {
   if (await wasEmailSent(ticketId, type)) {
     console.log(`[Email] Skipping ${type} for Raffle ${ticketId} - already sent`);
@@ -726,7 +741,7 @@ export async function sendRaffleEmail(
  
   switch (type) {
     case 'raffle_payment_reminder_periodic':
-      emailContent = getRafflePaymentReminderEmail(data as any);
+      emailContent = getRafflePaymentReminderEmail(data as RafflePaymentReminderData);
       break;
     default:
       console.error(`[Email] Unknown raffle email type: ${type}`);
@@ -904,7 +919,7 @@ export async function sendEnquiryEmails(data: EnquiryData): Promise<{ success: b
 }
 
 async function wasEmailSent(registrationId: string, type: EmailType): Promise<boolean> {
-  const where: any = { registrationId, type, status: 'sent' };
+  const where: Prisma.EmailLogWhereInput = { registrationId, type, status: 'sent' };
   
   // For periodic reminders, we only care if they were sent today
   if (type.includes('periodic')) {
@@ -1162,10 +1177,10 @@ export async function sendBulkCustomEmail(
   recipients: Array<{ email: string, firstName: string, lastName: string, bibNumber?: string, message?: string }>,
   subject: string,
   messageTemplate?: string
-): Promise<{ successCount: number; failedCount: number; errors: any[] }> {
+): Promise<{ successCount: number; failedCount: number; errors: { email: string; error: string }[] }> {
   let successCount = 0;
   let failedCount = 0;
-  const errors: any[] = [];
+  const errors: { email: string; error: string }[] = [];
 
   for (const recipient of recipients) {
     if (!recipient.email) continue;
@@ -1198,9 +1213,9 @@ export async function sendBulkCustomEmail(
         { template: 'email:bulk' },
       );
       successCount++;
-    } catch (error: any) {
+    } catch (error) {
       failedCount++;
-      errors.push({ email: recipient.email, error: error.message });
+      errors.push({ email: recipient.email, error: error instanceof Error ? error.message : String(error) });
     }
   }
 
