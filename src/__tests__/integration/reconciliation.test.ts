@@ -158,6 +158,36 @@ describe.skipIf(!hasDb)('Payment reconciliation', () => {
         expect((await prisma.payment.findUniqueOrThrow({ where: { id: paymentId } })).status).toBe('EXPIRED');
     });
 
+    it('keeps checking an expired prompt the gateway could not answer for, and pays it when it turns out paid', async () => {
+        const { ref, paymentId, donationId } = await pendingDonation(EXPIRE_AFTER_MS / 60_000 + 1);
+        gateway[ref] = new Error('DTB down');
+        expect(await reconcilePayments({ query })).toMatchObject({ errors: 1, expired: 1 });
+        expect((await prisma.payment.findUniqueOrThrow({ where: { id: paymentId } })).status).toBe('EXPIRED');
+
+        gateway[ref] = { state: 'PAID', receipt: 'SAB999' };
+        const later = new Date(Date.now() + RECHECK_AFTER_MS + 60_000);
+        expect(await reconcilePayments({ query, now: later })).toMatchObject({ checked: 1, paid: 1 });
+        expect((await prisma.payment.findUniqueOrThrow({ where: { id: paymentId } })).status).toBe('PAID');
+        expect((await prisma.donation.findUniqueOrThrow({ where: { id: donationId } })).status).toBe('PAID');
+    });
+
+    it('stops checking an expired prompt once the gateway gave a final answer', async () => {
+        const { ref } = await pendingDonation(EXPIRE_AFTER_MS / 60_000 + 1);
+        gateway[ref] = { state: 'FAILED', reason: 'Request cancelled by user' };
+        await reconcilePayments({ query });
+        asked = [];
+        await reconcilePayments({ query, now: new Date(Date.now() + RECHECK_AFTER_MS + 60_000) });
+        expect(asked).toEqual([]);
+    });
+
+    it('checks the least recently checked payments first, so unanswered ones do not starve new ones', async () => {
+        const stuck = await pendingDonation(20);
+        await prisma.payment.update({ where: { id: stuck.paymentId }, data: { lastCheckedAt: minutesAgo(5), checkCount: 3, lastCheckResult: 'UNKNOWN' } });
+        const fresh = await pendingDonation(3);
+        await reconcilePayments({ query, limit: 1 });
+        expect(asked).toEqual([fresh.ref]);
+    });
+
     it('without a status API it checks nothing but still expires', async () => {
         await pendingDonation();
         const old = await pendingDonation(EXPIRE_AFTER_MS / 60_000 + 1);

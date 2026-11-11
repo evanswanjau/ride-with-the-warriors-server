@@ -10,7 +10,11 @@
  *   that overlaps a callback or another run changes nothing twice.
  * - PENDING, UNKNOWN and errors leave the payment alone; it is checked again next run,
  *   and expireStalePayments marks it EXPIRED after 30 minutes. A later success (callback
- *   or reconciliation) still pays an EXPIRED payment.
+ *   or reconciliation) still pays an EXPIRED payment, so an EXPIRED payment without a final
+ *   answer (PAID or FAILED) is still checked until STOP_CHECKING_AFTER_MS: a gateway outage
+ *   longer than 30 minutes must not leave a paid prompt unmatched.
+ * - Least recently checked first, so payments the gateway cannot answer for do not starve
+ *   new ones.
  * - Every run is stored in ReconciliationRun; each payment keeps lastCheckedAt,
  *   checkCount and lastCheckResult. Admins see both (GET /api/v1/admin/payments/reconciliation).
  *
@@ -28,6 +32,12 @@ export const CHECK_AFTER_MS = 2 * 60_000;
 export const RECHECK_AFTER_MS = 2 * 60_000;
 /** Payments older than this are no longer queried (they were expired long ago). */
 export const STOP_CHECKING_AFTER_MS = 24 * 3600_000;
+
+/** EXPIRED with no final answer from the gateway yet: it may still turn out paid. */
+export const unresolvedExpired: Prisma.PaymentWhereInput = {
+    status: 'EXPIRED',
+    OR: [{ lastCheckResult: null }, { lastCheckResult: { notIn: ['PAID', 'FAILED'] } }],
+};
 
 export type StatusQuery = (p: Payment) => Promise<GatewayStatus>;
 
@@ -79,12 +89,14 @@ export async function reconcilePayments(opts: {
 
     const due = await prisma.payment.findMany({
         where: {
-            status: 'PENDING',
             checkoutRequestId: { not: null },
             createdAt: { lt: new Date(now.getTime() - CHECK_AFTER_MS), gt: new Date(now.getTime() - STOP_CHECKING_AFTER_MS) },
-            OR: [{ lastCheckedAt: null }, { lastCheckedAt: { lt: new Date(now.getTime() - RECHECK_AFTER_MS) } }],
+            AND: [
+                { OR: [{ lastCheckedAt: null }, { lastCheckedAt: { lt: new Date(now.getTime() - RECHECK_AFTER_MS) } }] },
+                { OR: [{ status: 'PENDING' }, unresolvedExpired] },
+            ],
         },
-        orderBy: { createdAt: 'asc' },
+        orderBy: [{ lastCheckedAt: { sort: 'asc', nulls: 'first' } }, { createdAt: 'asc' }],
         take: opts.limit ?? Number(process.env.RECONCILE_BATCH_SIZE || 25),
     });
 
