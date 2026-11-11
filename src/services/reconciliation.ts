@@ -72,6 +72,8 @@ export type ReconcileSummary = {
     stillPending: number;
     errors: number;
     expired: number;
+    /** Gateway said paid, but amount or phone did not match: left for an admin. */
+    flagged: number;
     skipped?: string;
     details: ReconcileDetail[];
 };
@@ -85,7 +87,7 @@ export async function reconcilePayments(opts: {
     const now = opts.now ?? new Date();
     const query = opts.query ?? defaultStatusQuery();
     const run = await prisma.reconciliationRun.create({ data: { trigger: opts.trigger ?? 'cron', startedAt: now } });
-    const summary: ReconcileSummary = { runId: run.id, checked: 0, paid: 0, failed: 0, stillPending: 0, errors: 0, expired: 0, details: [] };
+    const summary: ReconcileSummary = { runId: run.id, checked: 0, paid: 0, failed: 0, stillPending: 0, errors: 0, expired: 0, flagged: 0, details: [] };
 
     const due = await prisma.payment.findMany({
         where: {
@@ -126,9 +128,13 @@ export async function reconcilePayments(opts: {
                     receipt: status.receipt ?? null,
                     mnoReference: status.receipt ?? null,
                     cbsReference: status.cbsReference ?? null,
+                    amount: status.amount ?? null,
+                    phone: status.phone ?? null,
+                    source: 'reconciliation',
                     details: { source: 'reconciliation', response: status.raw ?? null },
                 });
                 if (detail.settle === 'settled') summary.paid++;
+                if (detail.settle === 'flagged') summary.flagged++;
             } else if (status?.state === 'FAILED') {
                 detail.settle = await settlePayment({
                     ref: p.checkoutRequestId!,
@@ -165,7 +171,7 @@ export async function reconcilePayments(opts: {
             finishedAt: new Date(),
             checked: summary.checked, paid: summary.paid, failed: summary.failed,
             stillPending: summary.stillPending, errors: summary.errors, expired: summary.expired,
-            details: { skipped: summary.skipped ?? null, payments: summary.details } as unknown as Prisma.InputJsonValue,
+            details: { skipped: summary.skipped ?? null, flagged: summary.flagged, payments: summary.details } as unknown as Prisma.InputJsonValue,
         },
     });
     if (summary.checked || summary.expired || summary.skipped) {

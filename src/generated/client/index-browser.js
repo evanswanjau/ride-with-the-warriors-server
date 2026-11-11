@@ -215,7 +215,9 @@ exports.Prisma.PaymentScalarFieldEnum = {
   bikeHireId: 'bikeHireId',
   lastCheckedAt: 'lastCheckedAt',
   checkCount: 'checkCount',
-  lastCheckResult: 'lastCheckResult'
+  lastCheckResult: 'lastCheckResult',
+  flaggedAt: 'flaggedAt',
+  flagReason: 'flagReason'
 };
 
 exports.Prisma.PricingCategoryScalarFieldEnum = {
@@ -419,6 +421,22 @@ exports.Prisma.ReconciliationRunScalarFieldEnum = {
   details: 'details'
 };
 
+exports.Prisma.PaymentFlagScalarFieldEnum = {
+  id: 'id',
+  paymentId: 'paymentId',
+  createdAt: 'createdAt',
+  source: 'source',
+  kind: 'kind',
+  expected: 'expected',
+  received: 'received',
+  statusWas: 'statusWas',
+  details: 'details',
+  resolvedAt: 'resolvedAt',
+  resolvedBy: 'resolvedBy',
+  resolution: 'resolution',
+  note: 'note'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -477,7 +495,8 @@ exports.Prisma.ModelName = {
   UserSession: 'UserSession',
   GalleryPhoto: 'GalleryPhoto',
   Notification: 'Notification',
-  ReconciliationRun: 'ReconciliationRun'
+  ReconciliationRun: 'ReconciliationRun',
+  PaymentFlag: 'PaymentFlag'
 };
 
 /**
