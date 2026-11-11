@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import { messagingDisabled, logSuppressed } from '../utils/messaging.js';
+import { messagingDisabled, logSuppressed, applyEmailAllowlist } from '../utils/messaging.js';
 import { prisma } from '../storage/prisma.js';
 import { calculateAge } from './pricing.js';
 import { generateRaffleTicketPdf } from './pdfService.js';
@@ -84,12 +84,15 @@ const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
   port: parseInt(process.env.SMTP_PORT || '587'),
   secure: process.env.SMTP_SECURE === 'true',
-  ignoreTLS: process.env.SMTP_SECURE !== 'true',
+  // SMTP_REQUIRE_TLS=true makes the connection fail rather than fall back to plain text.
+  requireTLS: process.env.SMTP_REQUIRE_TLS === 'true',
+  ignoreTLS: process.env.SMTP_SECURE !== 'true' && process.env.SMTP_REQUIRE_TLS !== 'true',
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
-  tls: { rejectUnauthorized: false },
+  // SMTP_TLS_STRICT=true checks the server certificate (set it when the provider has a valid one).
+  tls: { rejectUnauthorized: process.env.SMTP_TLS_STRICT === 'true' },
 });
 
 // Kill switch: never contact anyone when messaging is disabled (see utils/messaging.ts).
@@ -101,7 +104,10 @@ const transporter = nodemailer.createTransport({
       logSuppressed('email', to, mail?.subject);
       return { messageId: 'suppressed', accepted: [], rejected: [] };
     }
-    return realSendMail(mail);
+    // MESSAGING_ALLOWLIST: drop recipients that are not on the list (see utils/messaging.ts).
+    const allowed = applyEmailAllowlist(mail ?? {});
+    if (!allowed) return { messageId: 'dropped', accepted: [], rejected: [] };
+    return realSendMail(allowed);
   };
 }
 

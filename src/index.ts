@@ -2,7 +2,7 @@
 import { initSentry, Sentry } from './instrument.js';
 import express from 'express';
 import cors from 'cors';
-import { assertConfig } from './config.js';
+import { assertConfig, shouldListen } from './config.js';
 
 import { circuitsRouter } from './routes/circuits.js';
 import { registrationsRouter } from './routes/registrations.js';
@@ -98,9 +98,9 @@ Sentry.setupExpressErrorHandler(app);
 app.use(errorHandler);
 
 const port = Number(process.env.PORT ?? 4000);
-// In Vercel, the app is exported and doesn't need to listen
-// We check for VERCEL environment variable or if we're running locally
-if (!process.env.VERCEL || process.env.NODE_ENV === 'development') {
+// On Vercel the app is only exported; it never listens and never starts node-cron,
+// whatever NODE_ENV is. Vercel Cron calls /api/cron/* instead (see vercel.json).
+if (shouldListen()) {
   app.listen(port, async () => {
     console.log(`[server] listening on http://localhost:${port} in ${process.env.NODE_ENV || 'development'} mode`);
 

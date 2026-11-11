@@ -21,6 +21,20 @@ export function appEnv(env: NodeJS.ProcessEnv = process.env): AppEnv {
     return 'local';
 }
 
+/** True when running as a Vercel serverless function (Vercel sets VERCEL=1). */
+export function onVercel(env: NodeJS.ProcessEnv = process.env): boolean {
+    return !!env.VERCEL;
+}
+
+/**
+ * Whether index.ts should open a port and start the node-cron reminder jobs.
+ * Never on Vercel, whatever NODE_ENV is: functions are frozen between calls,
+ * so in-process timers do not run. Vercel Cron calls /api/cron/* instead.
+ */
+export function shouldListen(env: NodeJS.ProcessEnv = process.env): boolean {
+    return !onVercel(env);
+}
+
 const MIN_SECRET = 32;
 
 const schema = z.object({
@@ -67,6 +81,13 @@ export function checkConfig(env: NodeJS.ProcessEnv = process.env): ConfigReport 
         if (isTrue(env.RATE_LIMITS_DISABLED)) errors.push(`RATE_LIMITS_DISABLED=true is not allowed in ${which}.`);
     }
 
+    // On Vercel these must always be set, so the function never starts half configured.
+    if (onVercel(env) && which !== 'test') {
+        for (const key of ['APP_URL', 'CRON_SECRET', 'DATABASE_URL'] as const) {
+            if (!env[key] && !errors.some(e => e.startsWith(key))) errors.push(`${key} must be set on Vercel.`);
+        }
+    }
+
     if (which === 'production') {
         if (env.PAYMENT_MODE === 'simulate') errors.push('PAYMENT_MODE=simulate is not allowed in production.');
         if (isTrue(env.DTB_INSECURE)) errors.push('DTB_INSECURE=true is not allowed in production (it turns off TLS checks).');
@@ -102,6 +123,12 @@ export function checkConfig(env: NodeJS.ProcessEnv = process.env): ConfigReport 
     }
     if (deployed && !env.CRON_SECRET) {
         warnings.push('CRON_SECRET is not set: scheduled jobs (/api/cron/*) will refuse every call.');
+    }
+    if (which === 'uat' && !env.MESSAGING_ALLOWLIST && !isTrue(env.MESSAGING_DISABLED)) {
+        warnings.push('MESSAGING_ALLOWLIST is not set in uat: real riders in this database could be emailed or texted.');
+    }
+    if (deployed && env.SMTP_REQUIRE_TLS !== 'true' && env.SMTP_SECURE !== 'true') {
+        warnings.push('Neither SMTP_SECURE nor SMTP_REQUIRE_TLS is true: email may be sent without TLS.');
     }
     if (!deployed && !env.DTB_CALLBACK_SECRET) {
         warnings.push('DTB_CALLBACK_SECRET is not set: payment callbacks are not authenticated.');

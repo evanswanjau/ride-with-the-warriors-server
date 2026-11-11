@@ -6,6 +6,8 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { timingSafeEqual } from 'crypto';
 import { expireStalePayments } from '../services/payments.js';
 import { cleanupExpiredLogins } from '../services/cleanup.js';
+import { runScheduledTasks } from '../services/reminderScheduler.js';
+import { messagingDisabled } from '../utils/messaging.js';
 
 export const cronRouter = Router();
 
@@ -49,6 +51,26 @@ cronRouter.get('/expire-payments', requireCronSecret, async (_req, res, next) =>
         const expired = await expireStalePayments();
         if (expired > 0) console.log(`[Cron] Expired ${expired} unanswered payment prompt(s)`);
         res.json({ expired });
+    } catch (err) {
+        next(err);
+    }
+});
+
+/**
+ * Payment, raffle and event reminders (replaces the node-cron jobs, which do
+ * not run on Vercel). Reminders only go out when CRON_REMINDERS_ENABLED=true,
+ * so an environment opts in on purpose; staging also applies MESSAGING_ALLOWLIST.
+ */
+cronRouter.get('/reminders', requireCronSecret, async (_req, res, next) => {
+    try {
+        if (process.env.CRON_REMINDERS_ENABLED !== 'true') {
+            return res.json({ skipped: 'CRON_REMINDERS_ENABLED is not true' });
+        }
+        if (messagingDisabled()) {
+            return res.json({ skipped: 'MESSAGING_DISABLED' });
+        }
+        await runScheduledTasks();
+        res.json({ ran: true });
     } catch (err) {
         next(err);
     }
