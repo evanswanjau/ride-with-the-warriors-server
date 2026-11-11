@@ -19,7 +19,7 @@ import { donationsRouter } from './routes/donations.js';
 import { dtbCallbacksRouter } from './routes/dtbCallbacks.js';
 import { cronRouter } from './routes/cron.js';
 import smsCallbacksRouter from './routes/smsCallbacks.js';
-import shortenerRouter from './routes/s.js';
+import shortenerRouter from './routes/shortLinks.js';
 import { referralsRouter } from './routes/referrals.js';
 import { adminReferralsRouter } from './routes/admin/referrals.js';
 import { notifyRouter, adminNotifyRouter } from './routes/notify.js';

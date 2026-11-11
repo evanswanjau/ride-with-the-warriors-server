@@ -93,7 +93,7 @@ vi.mock('../../../storage/prisma.js', () => ({
 }));
 
 // Mock the memory registrations update
-vi.mock('../../../storage/memoryRegistrations.js', () => ({
+vi.mock('../../../storage/registrationStore.js', () => ({
     updateRegistration: vi.fn().mockImplementation((id: string, data: any) => {
         const reg = mockRegistrations.find((r: any) => r.id === id);
         if (!reg) throw new Error('Not found');

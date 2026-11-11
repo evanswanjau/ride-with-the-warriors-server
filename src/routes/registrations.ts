@@ -4,7 +4,8 @@ import { ZodError } from 'zod';
 import { quoteRequestSchema, riderDetailsSchema, teamDetailsSchema, familyDetailsSchema, type RegistrationPayload, type ValidPayload } from '../validation/registrationSchemas.js';
 import { zodToApiError } from '../validation/zodError.js';
 import { buildQuote, getPricingCategories } from '../services/pricing.js';
-import { createRegistration, getRegistration, updateRegistration, findExistingRegistrationsByEmails, findExistingRegistrationsByIdNumbers } from '../storage/memoryRegistrations.js';
+import { createRegistration, getRegistration, updateRegistration } from '../storage/registrationStore.js';
+import { checkDuplicates } from '../services/registrationDuplicates.js';
 import { paymentGateway } from '../services/paymentGateway.js';
 import { beginAttempt, recordAttempt } from '../services/payments.js';
 
@@ -36,36 +37,20 @@ function ownsAll(regs: { accountId?: string | null }[], accountId?: string | nul
   return !!accountId && regs.length > 0 && regs.every((r) => r.accountId === accountId);
 }
 
-function getEmailsFromPayload(type: string, payload: RegistrationPayload): string[] {
-  const emails: string[] = [];
-  if (type === 'individual') {
-    if (payload.riderDetails?.email) emails.push(payload.riderDetails.email);
-  } else if (type === 'team') {
-    payload.teamDetails?.members?.forEach((m) => {
-      if (m.email) emails.push(m.email);
-    });
-  } else if (type === 'family') {
-    if (payload.familyDetails?.guardian?.email && payload.familyDetails?.guardian?.participation === 'mom') {
-      emails.push(payload.familyDetails.guardian.email);
-    }
-  }
-  return emails;
-}
-
-function getIdNumbersFromPayload(type: string, payload: RegistrationPayload): string[] {
-  const idNumbers: string[] = [];
-  if (type === 'individual') {
-    if (payload.riderDetails?.idNumber) idNumbers.push(payload.riderDetails.idNumber);
-  } else if (type === 'team') {
-    payload.teamDetails?.members?.forEach((m) => {
-      if (m.idNumber) idNumbers.push(m.idNumber);
-    });
-  } else if (type === 'family') {
-    if (payload.familyDetails?.guardian?.idNumber) {
-      idNumbers.push(payload.familyDetails.guardian.idNumber);
-    }
-  }
-  return idNumbers;
+/** The 400 body for a paid duplicate. Matches are shown only to the account that owns them. */
+function duplicateError(paid: { accountId?: string | null }[], duplicateInfo: string[], accountId?: string | null) {
+  return {
+    error: {
+      code: 'DUPLICATE',
+      message: 'One or more participants are already registered and paid.',
+      details: {
+        formErrors: ['One or more participants are already registered.'],
+        // Which emails/ID numbers matched is shown only to the account that owns those
+        // registrations, so this endpoint cannot be used to check who is registered.
+        ...(ownsAll(paid, accountId) ? { duplicates: [...new Set(duplicateInfo)] } : {}),
+      },
+    },
+  };
 }
 
 function validateTeamRules(circuitId: 'blitz' | 'recon' | 'corporate' | 'family', team: { members: Array<{ gender: 'male' | 'female' }> }) {
@@ -106,53 +91,11 @@ registrationsRouter.post('/quote', quoteLimiter, optionalUser, async (req: UserR
       payload = { familyDetails: familyDetailsSchema.parse((base.payload as Record<string, unknown>).familyDetails ?? base.payload) };
     }
 
-    // CHECK FOR DUPLICATES
-    const emailsToCheck = getEmailsFromPayload(base.type, payload);
-    const idNumbersToCheck = getIdNumbersFromPayload(base.type, payload);
-    
-    const duplicateByEmail = emailsToCheck.length > 0 ? await findExistingRegistrationsByEmails(emailsToCheck) : [];
-    const duplicateById = idNumbersToCheck.length > 0 ? await findExistingRegistrationsByIdNumbers(idNumbersToCheck) : [];
-    
-    const allDuplicates = [...duplicateByEmail, ...duplicateById];
-    const uniqueDuplicatesMap = new Map();
-    allDuplicates.forEach(d => uniqueDuplicatesMap.set(d.id, d));
-    const duplicates = Array.from(uniqueDuplicatesMap.values());
-
-    // Only block if there are PAID or CONFIRMED duplicates
-    const blockingDuplicates = duplicates.filter(reg => reg.status === 'PAID' || reg.status === 'CONFIRMED');
+    // CHECK FOR DUPLICATES (only PAID or CONFIRMED rows block a quote)
+    const { paidDuplicates: blockingDuplicates, duplicateInfo } = await checkDuplicates(base.type, payload);
 
     if (blockingDuplicates.length > 0) {
-      const duplicateInfo: string[] = [];
-      const lowerToCheck = emailsToCheck.map(e => e.toLowerCase());
-
-      blockingDuplicates.forEach(reg => {
-        const p = (reg.payload ?? {}) as RegistrationPayload;
-        if (reg.type === 'individual') {
-          if (p.riderDetails?.email && lowerToCheck.includes(p.riderDetails.email.toLowerCase())) duplicateInfo.push(p.riderDetails.email);
-          if (p.riderDetails?.idNumber && idNumbersToCheck.includes(p.riderDetails.idNumber)) duplicateInfo.push(p.riderDetails.idNumber);
-        } else if (reg.type === 'team') {
-          p.teamDetails?.members?.forEach((m) => {
-            if (m.email && lowerToCheck.includes(m.email.toLowerCase())) duplicateInfo.push(m.email);
-            if (m.idNumber && idNumbersToCheck.includes(m.idNumber)) duplicateInfo.push(m.idNumber);
-          });
-        } else if (reg.type === 'family') {
-          if (p.familyDetails?.guardian?.email && lowerToCheck.includes(p.familyDetails.guardian.email.toLowerCase())) duplicateInfo.push(p.familyDetails.guardian.email);
-          if (p.familyDetails?.guardian?.idNumber && idNumbersToCheck.includes(p.familyDetails.guardian.idNumber)) duplicateInfo.push(p.familyDetails.guardian.idNumber);
-        }
-      });
-
-      return res.status(400).json({
-        error: {
-          code: 'DUPLICATE',
-          message: 'One or more participants are already registered and paid.',
-          details: {
-            formErrors: ['One or more participants are already registered.'],
-            // Which emails/ID numbers matched is shown only to the account that owns those
-            // registrations, so this endpoint cannot be used to check who is registered.
-            ...(ownsAll(blockingDuplicates, req.account?.id) ? { duplicates: [...new Set(duplicateInfo)] } : {})
-          }
-        }
-      });
+      return res.status(400).json(duplicateError(blockingDuplicates, duplicateInfo, req.account?.id));
     }
 
     const quote = await buildQuote({ circuitId: base.circuitId, type: base.type, payload });
@@ -266,9 +209,6 @@ registrationsRouter.post('/', requireUser, async (req: UserRequest, res, next) =
     }
 
     // CHECK FOR DUPLICATES
-    const emailsToCheck = getEmailsFromPayload(type, payload);
-    const idNumbersToCheck = getIdNumbersFromPayload(type, payload);
-    
     let excludeGroupId: string | undefined;
     if (existingId) {
       const existing = await getRegistration(existingId);
@@ -281,49 +221,11 @@ registrationsRouter.post('/', requireUser, async (req: UserRequest, res, next) =
       excludeGroupId = existing.groupId || (existing.payload as RegistrationPayload | null)?.groupId;
     }
 
-    const duplicateByEmail = emailsToCheck.length > 0 ? await findExistingRegistrationsByEmails(emailsToCheck, excludeGroupId, existingId) : [];
-    const duplicateById = idNumbersToCheck.length > 0 ? await findExistingRegistrationsByIdNumbers(idNumbersToCheck, excludeGroupId, existingId) : [];
-    
-    const allDuplicates = [...duplicateByEmail, ...duplicateById];
-    const uniqueDuplicatesMap = new Map();
-    allDuplicates.forEach(d => uniqueDuplicatesMap.set(d.id, d));
-    const duplicates = Array.from(uniqueDuplicatesMap.values());
-
-    // Separate duplicates by status
-    const paidDuplicates = duplicates.filter(reg => reg.status === 'PAID' || reg.status === 'CONFIRMED');
-    const unpaidDuplicates = duplicates.filter(reg => reg.status === 'UNPAID');
+    const { paidDuplicates, unpaidDuplicates, duplicateInfo } = await checkDuplicates(type, payload, { groupId: excludeGroupId, id: existingId });
 
     if (paidDuplicates.length > 0) {
-      const duplicateInfo: string[] = [];
-      const lowerToCheck = emailsToCheck.map(e => e.toLowerCase());
-
-      paidDuplicates.forEach(reg => {
-        const p = (reg.payload ?? {}) as RegistrationPayload;
-        if (reg.type === 'individual') {
-          if (p.riderDetails?.email && lowerToCheck.includes(p.riderDetails.email.toLowerCase())) duplicateInfo.push(p.riderDetails.email);
-          if (p.riderDetails?.idNumber && idNumbersToCheck.includes(p.riderDetails.idNumber)) duplicateInfo.push(p.riderDetails.idNumber);
-        } else if (reg.type === 'team') {
-          p.teamDetails?.members?.forEach((m) => {
-            if (m.email && lowerToCheck.includes(m.email.toLowerCase())) duplicateInfo.push(m.email);
-            if (m.idNumber && idNumbersToCheck.includes(m.idNumber)) duplicateInfo.push(m.idNumber);
-          });
-        } else if (reg.type === 'family') {
-          if (p.familyDetails?.guardian?.email && lowerToCheck.includes(p.familyDetails.guardian.email.toLowerCase())) duplicateInfo.push(p.familyDetails.guardian.email);
-          if (p.familyDetails?.guardian?.idNumber && idNumbersToCheck.includes(p.familyDetails.guardian.idNumber)) duplicateInfo.push(p.familyDetails.guardian.idNumber);
-        }
-      });
-
       console.log(`[Registration] Duplicate check failed: ${duplicateInfo.length} paid match(es)`);
-      return res.status(400).json({
-        error: {
-          code: 'DUPLICATE',
-          message: 'One or more participants are already registered and paid.',
-          details: {
-            formErrors: ['One or more participants are already registered.'],
-            ...(ownsAll(paidDuplicates, accountId) ? { duplicates: [...new Set(duplicateInfo)] } : {})
-          }
-        }
-      });
+      return res.status(400).json(duplicateError(paidDuplicates, duplicateInfo, accountId));
     }
 
     // AUTO-CLEANUP: replace this account's own earlier UNPAID attempts. Never
