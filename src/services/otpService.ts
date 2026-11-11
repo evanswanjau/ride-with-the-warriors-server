@@ -68,7 +68,7 @@ export async function issueOtp(id: Identifier, purpose: OtpPurpose, context?: Re
         : (await smsService.sendSMS(
             [id.value],
             `${code} is your Ride With The Warriors login code. It expires in 10 minutes. Do not share it with anyone.`,
-            { logAs: '[one-time login code]' },
+            { logAs: '[one-time login code]', immediate: true },
         )).success;
 
     if (!sent && !devEchoEnabled()) {

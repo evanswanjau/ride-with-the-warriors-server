@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
 import { prisma } from '../storage/prisma.js';
 import { messagingDisabled, logSuppressed } from '../utils/messaging.js';
+import { enqueue, sendNow, registerDeliverer } from './outbox.js';
 
 const BASE_URL = 'https://sms.textsms.co.ke/api/services';
 
@@ -86,15 +87,58 @@ async function sendViaMailpit(recipients: string[], message: string, logMessage:
     return { success: successCount > 0 || numbers.length === 0, successCount, failedCount };
 }
 
+type SendResult = { success: boolean; successCount: number; failedCount: number };
+
+export type SendSmsOptions = {
+    /** Text stored instead of the real message (one-time codes, which must never be stored). */
+    logAs?: string;
+    /** Outbox template name, e.g. "sms:payment-confirmed". */
+    template?: string;
+    /** Idempotency key; with several recipients each gets `<key>:<number>`. */
+    dedupeKey?: string;
+    /** Send now instead of queuing (login codes only). Not retried. */
+    immediate?: boolean;
+};
+
+const OTP_LOG_TEXT = '[one-time login code]';
+
 export const smsService = {
     /**
-     * Send an SMS to one or more recipients.
+     * Queues an SMS to each recipient in the notification outbox (src/services/outbox.ts);
+     * the worker sends it. With `immediate`, sends at once and records it.
+     * successCount is the number queued (or sent, when immediate).
      */
+    async sendSMS(recipients: string[], message: string, opts: SendSmsOptions = {}): Promise<SendResult> {
+        const numbers = [...new Set(recipients.filter(r => r && r.trim().length > 5).map(formatPhoneNumber))];
+        const template = opts.template ?? (opts.logAs ? 'otp' : 'sms');
+        const keyFor = (n: string) => opts.dedupeKey && (numbers.length > 1 ? `${opts.dedupeKey}:${n}` : opts.dedupeKey);
+        let successCount = 0;
+        let failedCount = 0;
+        for (const n of numbers) {
+            try {
+                if (opts.immediate) {
+                    const ok = await sendNow({
+                        channel: 'SMS', recipient: n, template, dedupeKey: keyFor(n),
+                        payload: { message }, storedPayload: { message: opts.logAs ?? message },
+                    });
+                    if (ok) successCount++; else failedCount++;
+                } else {
+                    await enqueue({ channel: 'SMS', recipient: n, template, payload: { message }, dedupeKey: keyFor(n) });
+                    successCount++;
+                }
+            } catch (err) {
+                console.error('[SMS Service] Could not queue SMS:', (err as Error).message);
+                failedCount++;
+            }
+        }
+        return { success: failedCount === 0, successCount, failedCount };
+    },
+
     /**
-     * @param opts.logAs  Text stored in SmsLog instead of the real message
-     *                    (used for one-time codes, which must never be stored).
+     * Sends right now through the configured driver and writes SmsLog. Used by the outbox
+     * worker; everything else calls sendSMS.
      */
-    async sendSMS(recipients: string[], message: string, opts: { logAs?: string } = {}): Promise<{ success: boolean; successCount: number; failedCount: number }> {
+    async deliverSMS(recipients: string[], message: string, opts: { logAs?: string } = {}): Promise<SendResult> {
         const logMessage = opts.logAs ?? message;
         if (messagingDisabled()) {
             logSuppressed('sms', recipients.length);
@@ -244,3 +288,11 @@ export const smsService = {
     }
 };
 
+
+// The outbox worker sends SMS rows through deliverSMS. A provider rejection counts as a failure,
+// so the row is retried.
+registerDeliverer('SMS', async ({ recipient, payload, template }) => {
+    const { message } = payload as { message: string };
+    const result = await smsService.deliverSMS([recipient], message, template === 'otp' ? { logAs: OTP_LOG_TEXT } : {});
+    if (!result.success) throw new Error('SMS provider did not accept the message');
+});

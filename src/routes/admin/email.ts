@@ -101,7 +101,7 @@ emailRouter.post('/send-confirmation/:registrationId', async (req, res) => {
             category: registration.category || undefined,
         });
 
-        res.json({ ok: sent, message: sent ? 'Email sent' : 'Failed to send email' });
+        res.json({ ok: sent, message: sent ? 'Email queued' : 'Failed to queue email' });
     } catch (error) {
         res.status(500).json({
             ok: false,
@@ -181,7 +181,7 @@ emailRouter.post('/resend/:registrationId', async (req, res) => {
             emergencyContactName: registration.emergencyContactName,
             emergencyPhone: registration.emergencyPhone,
             teamName: registration.teamName || undefined,
-        });
+        }, { force: true });
 
         res.json({
             ok: sent,
@@ -281,7 +281,7 @@ emailRouter.post('/resend-military', requireRole('super_admin'), async (req, res
                     emergencyContactName: reg.emergencyContactName,
                     emergencyPhone: reg.emergencyPhone,
                     teamName: reg.teamName || undefined,
-                });
+                }, { force: true });
 
                 results.push({
                     id: reg.id,

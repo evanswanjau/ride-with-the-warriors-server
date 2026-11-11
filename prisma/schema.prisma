@@ -370,3 +370,34 @@ model GalleryPhoto {
 
   @@index([eventYear, album, sortOrder])
 }
+
+// Outbox for every email and SMS (see src/services/outbox.ts). Senders insert a row; the worker
+// (/api/cron/notifications, every minute) sends it, retrying with backoff. dedupeKey is unique,
+// so the same confirmation can never be queued twice. Login codes are sent at once and stored
+// here without the code.
+model Notification {
+  id            String    @id @default(uuid())
+  // EMAIL | SMS
+  channel       String
+  recipient     String
+  // e.g. "email:confirmation", "sms:payment-confirmed", "otp"
+  template      String
+  // The rendered message (email: from/to/subject/html/text/attachments; SMS: { message }),
+  // or the data a template renderer needs (see RENDERERS in outbox.ts).
+  payload       Json
+  dedupeKey     String    @unique
+  // PENDING -> SENDING -> SENT | FAILED (gave up) | SUPPRESSED (MESSAGING_DISABLED)
+  status        String    @default("PENDING")
+  attempts      Int       @default(0)
+  nextAttemptAt DateTime  @default(now())
+  lastError     String?
+  sentAt        DateTime?
+  // Extra bookkeeping, e.g. { emailLog: { registrationId, type } } for the admin email history
+  meta          Json?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([status, nextAttemptAt])
+  @@index([createdAt])
+  @@index([recipient])
+}
