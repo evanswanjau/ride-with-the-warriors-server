@@ -108,6 +108,21 @@ export type UserSession = $Result.DefaultSelection<Prisma.$UserSessionPayload>
  * 
  */
 export type GalleryPhoto = $Result.DefaultSelection<Prisma.$GalleryPhotoPayload>
+/**
+ * Model Notification
+ * 
+ */
+export type Notification = $Result.DefaultSelection<Prisma.$NotificationPayload>
+/**
+ * Model ReconciliationRun
+ * 
+ */
+export type ReconciliationRun = $Result.DefaultSelection<Prisma.$ReconciliationRunPayload>
+/**
+ * Model PaymentFlag
+ * 
+ */
+export type PaymentFlag = $Result.DefaultSelection<Prisma.$PaymentFlagPayload>
 
 /**
  * Enums
@@ -439,6 +454,36 @@ export class PrismaClient<
     * ```
     */
   get galleryPhoto(): Prisma.GalleryPhotoDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.notification`: Exposes CRUD operations for the **Notification** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Notifications
+    * const notifications = await prisma.notification.findMany()
+    * ```
+    */
+  get notification(): Prisma.NotificationDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.reconciliationRun`: Exposes CRUD operations for the **ReconciliationRun** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ReconciliationRuns
+    * const reconciliationRuns = await prisma.reconciliationRun.findMany()
+    * ```
+    */
+  get reconciliationRun(): Prisma.ReconciliationRunDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.paymentFlag`: Exposes CRUD operations for the **PaymentFlag** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PaymentFlags
+    * const paymentFlags = await prisma.paymentFlag.findMany()
+    * ```
+    */
+  get paymentFlag(): Prisma.PaymentFlagDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -891,7 +936,10 @@ export namespace Prisma {
     Account: 'Account',
     OtpCode: 'OtpCode',
     UserSession: 'UserSession',
-    GalleryPhoto: 'GalleryPhoto'
+    GalleryPhoto: 'GalleryPhoto',
+    Notification: 'Notification',
+    ReconciliationRun: 'ReconciliationRun',
+    PaymentFlag: 'PaymentFlag'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -907,7 +955,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "registration" | "admin" | "adminAuditLog" | "adminSession" | "payment" | "pricingCategory" | "emailLog" | "raffleTicket" | "referral" | "donation" | "smsLog" | "shortLink" | "bikeHire" | "notifyInterest" | "eventFeedback" | "account" | "otpCode" | "userSession" | "galleryPhoto"
+      modelProps: "registration" | "admin" | "adminAuditLog" | "adminSession" | "payment" | "pricingCategory" | "emailLog" | "raffleTicket" | "referral" | "donation" | "smsLog" | "shortLink" | "bikeHire" | "notifyInterest" | "eventFeedback" | "account" | "otpCode" | "userSession" | "galleryPhoto" | "notification" | "reconciliationRun" | "paymentFlag"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2317,6 +2365,228 @@ export namespace Prisma {
           }
         }
       }
+      Notification: {
+        payload: Prisma.$NotificationPayload<ExtArgs>
+        fields: Prisma.NotificationFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.NotificationFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.NotificationFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationPayload>
+          }
+          findFirst: {
+            args: Prisma.NotificationFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.NotificationFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationPayload>
+          }
+          findMany: {
+            args: Prisma.NotificationFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationPayload>[]
+          }
+          create: {
+            args: Prisma.NotificationCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationPayload>
+          }
+          createMany: {
+            args: Prisma.NotificationCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.NotificationCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationPayload>[]
+          }
+          delete: {
+            args: Prisma.NotificationDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationPayload>
+          }
+          update: {
+            args: Prisma.NotificationUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationPayload>
+          }
+          deleteMany: {
+            args: Prisma.NotificationDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.NotificationUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.NotificationUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationPayload>[]
+          }
+          upsert: {
+            args: Prisma.NotificationUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotificationPayload>
+          }
+          aggregate: {
+            args: Prisma.NotificationAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateNotification>
+          }
+          groupBy: {
+            args: Prisma.NotificationGroupByArgs<ExtArgs>
+            result: $Utils.Optional<NotificationGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.NotificationCountArgs<ExtArgs>
+            result: $Utils.Optional<NotificationCountAggregateOutputType> | number
+          }
+        }
+      }
+      ReconciliationRun: {
+        payload: Prisma.$ReconciliationRunPayload<ExtArgs>
+        fields: Prisma.ReconciliationRunFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ReconciliationRunFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReconciliationRunPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ReconciliationRunFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReconciliationRunPayload>
+          }
+          findFirst: {
+            args: Prisma.ReconciliationRunFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReconciliationRunPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ReconciliationRunFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReconciliationRunPayload>
+          }
+          findMany: {
+            args: Prisma.ReconciliationRunFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReconciliationRunPayload>[]
+          }
+          create: {
+            args: Prisma.ReconciliationRunCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReconciliationRunPayload>
+          }
+          createMany: {
+            args: Prisma.ReconciliationRunCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ReconciliationRunCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReconciliationRunPayload>[]
+          }
+          delete: {
+            args: Prisma.ReconciliationRunDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReconciliationRunPayload>
+          }
+          update: {
+            args: Prisma.ReconciliationRunUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReconciliationRunPayload>
+          }
+          deleteMany: {
+            args: Prisma.ReconciliationRunDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ReconciliationRunUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ReconciliationRunUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReconciliationRunPayload>[]
+          }
+          upsert: {
+            args: Prisma.ReconciliationRunUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ReconciliationRunPayload>
+          }
+          aggregate: {
+            args: Prisma.ReconciliationRunAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateReconciliationRun>
+          }
+          groupBy: {
+            args: Prisma.ReconciliationRunGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ReconciliationRunGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ReconciliationRunCountArgs<ExtArgs>
+            result: $Utils.Optional<ReconciliationRunCountAggregateOutputType> | number
+          }
+        }
+      }
+      PaymentFlag: {
+        payload: Prisma.$PaymentFlagPayload<ExtArgs>
+        fields: Prisma.PaymentFlagFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PaymentFlagFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PaymentFlagPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PaymentFlagFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PaymentFlagPayload>
+          }
+          findFirst: {
+            args: Prisma.PaymentFlagFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PaymentFlagPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PaymentFlagFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PaymentFlagPayload>
+          }
+          findMany: {
+            args: Prisma.PaymentFlagFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PaymentFlagPayload>[]
+          }
+          create: {
+            args: Prisma.PaymentFlagCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PaymentFlagPayload>
+          }
+          createMany: {
+            args: Prisma.PaymentFlagCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PaymentFlagCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PaymentFlagPayload>[]
+          }
+          delete: {
+            args: Prisma.PaymentFlagDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PaymentFlagPayload>
+          }
+          update: {
+            args: Prisma.PaymentFlagUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PaymentFlagPayload>
+          }
+          deleteMany: {
+            args: Prisma.PaymentFlagDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PaymentFlagUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PaymentFlagUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PaymentFlagPayload>[]
+          }
+          upsert: {
+            args: Prisma.PaymentFlagUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PaymentFlagPayload>
+          }
+          aggregate: {
+            args: Prisma.PaymentFlagAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePaymentFlag>
+          }
+          groupBy: {
+            args: Prisma.PaymentFlagGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PaymentFlagGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PaymentFlagCountArgs<ExtArgs>
+            result: $Utils.Optional<PaymentFlagCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -2444,6 +2714,9 @@ export namespace Prisma {
     otpCode?: OtpCodeOmit
     userSession?: UserSessionOmit
     galleryPhoto?: GalleryPhotoOmit
+    notification?: NotificationOmit
+    reconciliationRun?: ReconciliationRunOmit
+    paymentFlag?: PaymentFlagOmit
   }
 
   /* Types for Logging */
@@ -7503,10 +7776,12 @@ export namespace Prisma {
 
   export type PaymentAvgAggregateOutputType = {
     amount: number | null
+    checkCount: number | null
   }
 
   export type PaymentSumAggregateOutputType = {
     amount: number | null
+    checkCount: number | null
   }
 
   export type PaymentMinAggregateOutputType = {
@@ -7527,6 +7802,11 @@ export namespace Prisma {
     mnoReference: string | null
     cbsReference: string | null
     bikeHireId: string | null
+    lastCheckedAt: Date | null
+    checkCount: number | null
+    lastCheckResult: string | null
+    flaggedAt: Date | null
+    flagReason: string | null
   }
 
   export type PaymentMaxAggregateOutputType = {
@@ -7547,6 +7827,11 @@ export namespace Prisma {
     mnoReference: string | null
     cbsReference: string | null
     bikeHireId: string | null
+    lastCheckedAt: Date | null
+    checkCount: number | null
+    lastCheckResult: string | null
+    flaggedAt: Date | null
+    flagReason: string | null
   }
 
   export type PaymentCountAggregateOutputType = {
@@ -7569,16 +7854,23 @@ export namespace Prisma {
     cbsReference: number
     paymentDetails: number
     bikeHireId: number
+    lastCheckedAt: number
+    checkCount: number
+    lastCheckResult: number
+    flaggedAt: number
+    flagReason: number
     _all: number
   }
 
 
   export type PaymentAvgAggregateInputType = {
     amount?: true
+    checkCount?: true
   }
 
   export type PaymentSumAggregateInputType = {
     amount?: true
+    checkCount?: true
   }
 
   export type PaymentMinAggregateInputType = {
@@ -7599,6 +7891,11 @@ export namespace Prisma {
     mnoReference?: true
     cbsReference?: true
     bikeHireId?: true
+    lastCheckedAt?: true
+    checkCount?: true
+    lastCheckResult?: true
+    flaggedAt?: true
+    flagReason?: true
   }
 
   export type PaymentMaxAggregateInputType = {
@@ -7619,6 +7916,11 @@ export namespace Prisma {
     mnoReference?: true
     cbsReference?: true
     bikeHireId?: true
+    lastCheckedAt?: true
+    checkCount?: true
+    lastCheckResult?: true
+    flaggedAt?: true
+    flagReason?: true
   }
 
   export type PaymentCountAggregateInputType = {
@@ -7641,6 +7943,11 @@ export namespace Prisma {
     cbsReference?: true
     paymentDetails?: true
     bikeHireId?: true
+    lastCheckedAt?: true
+    checkCount?: true
+    lastCheckResult?: true
+    flaggedAt?: true
+    flagReason?: true
     _all?: true
   }
 
@@ -7750,6 +8057,11 @@ export namespace Prisma {
     cbsReference: string | null
     paymentDetails: JsonValue | null
     bikeHireId: string | null
+    lastCheckedAt: Date | null
+    checkCount: number
+    lastCheckResult: string | null
+    flaggedAt: Date | null
+    flagReason: string | null
     _count: PaymentCountAggregateOutputType | null
     _avg: PaymentAvgAggregateOutputType | null
     _sum: PaymentSumAggregateOutputType | null
@@ -7791,6 +8103,11 @@ export namespace Prisma {
     cbsReference?: boolean
     paymentDetails?: boolean
     bikeHireId?: boolean
+    lastCheckedAt?: boolean
+    checkCount?: boolean
+    lastCheckResult?: boolean
+    flaggedAt?: boolean
+    flagReason?: boolean
   }, ExtArgs["result"]["payment"]>
 
   export type PaymentSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -7813,6 +8130,11 @@ export namespace Prisma {
     cbsReference?: boolean
     paymentDetails?: boolean
     bikeHireId?: boolean
+    lastCheckedAt?: boolean
+    checkCount?: boolean
+    lastCheckResult?: boolean
+    flaggedAt?: boolean
+    flagReason?: boolean
   }, ExtArgs["result"]["payment"]>
 
   export type PaymentSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -7835,6 +8157,11 @@ export namespace Prisma {
     cbsReference?: boolean
     paymentDetails?: boolean
     bikeHireId?: boolean
+    lastCheckedAt?: boolean
+    checkCount?: boolean
+    lastCheckResult?: boolean
+    flaggedAt?: boolean
+    flagReason?: boolean
   }, ExtArgs["result"]["payment"]>
 
   export type PaymentSelectScalar = {
@@ -7857,9 +8184,14 @@ export namespace Prisma {
     cbsReference?: boolean
     paymentDetails?: boolean
     bikeHireId?: boolean
+    lastCheckedAt?: boolean
+    checkCount?: boolean
+    lastCheckResult?: boolean
+    flaggedAt?: boolean
+    flagReason?: boolean
   }
 
-  export type PaymentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "purpose" | "registrationId" | "raffleTicketIds" | "donationId" | "checkoutRequestId" | "merchantRequestId" | "phone" | "amount" | "status" | "failureReason" | "createdAt" | "updatedAt" | "mpesaReceiptNumber" | "transactionDate" | "mnoReference" | "cbsReference" | "paymentDetails" | "bikeHireId", ExtArgs["result"]["payment"]>
+  export type PaymentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "purpose" | "registrationId" | "raffleTicketIds" | "donationId" | "checkoutRequestId" | "merchantRequestId" | "phone" | "amount" | "status" | "failureReason" | "createdAt" | "updatedAt" | "mpesaReceiptNumber" | "transactionDate" | "mnoReference" | "cbsReference" | "paymentDetails" | "bikeHireId" | "lastCheckedAt" | "checkCount" | "lastCheckResult" | "flaggedAt" | "flagReason", ExtArgs["result"]["payment"]>
 
   export type $PaymentPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Payment"
@@ -7884,6 +8216,11 @@ export namespace Prisma {
       cbsReference: string | null
       paymentDetails: Prisma.JsonValue | null
       bikeHireId: string | null
+      lastCheckedAt: Date | null
+      checkCount: number
+      lastCheckResult: string | null
+      flaggedAt: Date | null
+      flagReason: string | null
     }, ExtArgs["result"]["payment"]>
     composites: {}
   }
@@ -8326,6 +8663,11 @@ export namespace Prisma {
     readonly cbsReference: FieldRef<"Payment", 'String'>
     readonly paymentDetails: FieldRef<"Payment", 'Json'>
     readonly bikeHireId: FieldRef<"Payment", 'String'>
+    readonly lastCheckedAt: FieldRef<"Payment", 'DateTime'>
+    readonly checkCount: FieldRef<"Payment", 'Int'>
+    readonly lastCheckResult: FieldRef<"Payment", 'String'>
+    readonly flaggedAt: FieldRef<"Payment", 'DateTime'>
+    readonly flagReason: FieldRef<"Payment", 'String'>
   }
     
 
@@ -24306,6 +24648,3369 @@ export namespace Prisma {
 
 
   /**
+   * Model Notification
+   */
+
+  export type AggregateNotification = {
+    _count: NotificationCountAggregateOutputType | null
+    _avg: NotificationAvgAggregateOutputType | null
+    _sum: NotificationSumAggregateOutputType | null
+    _min: NotificationMinAggregateOutputType | null
+    _max: NotificationMaxAggregateOutputType | null
+  }
+
+  export type NotificationAvgAggregateOutputType = {
+    attempts: number | null
+  }
+
+  export type NotificationSumAggregateOutputType = {
+    attempts: number | null
+  }
+
+  export type NotificationMinAggregateOutputType = {
+    id: string | null
+    channel: string | null
+    recipient: string | null
+    template: string | null
+    dedupeKey: string | null
+    status: string | null
+    attempts: number | null
+    nextAttemptAt: Date | null
+    lastError: string | null
+    sentAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type NotificationMaxAggregateOutputType = {
+    id: string | null
+    channel: string | null
+    recipient: string | null
+    template: string | null
+    dedupeKey: string | null
+    status: string | null
+    attempts: number | null
+    nextAttemptAt: Date | null
+    lastError: string | null
+    sentAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type NotificationCountAggregateOutputType = {
+    id: number
+    channel: number
+    recipient: number
+    template: number
+    payload: number
+    dedupeKey: number
+    status: number
+    attempts: number
+    nextAttemptAt: number
+    lastError: number
+    sentAt: number
+    meta: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type NotificationAvgAggregateInputType = {
+    attempts?: true
+  }
+
+  export type NotificationSumAggregateInputType = {
+    attempts?: true
+  }
+
+  export type NotificationMinAggregateInputType = {
+    id?: true
+    channel?: true
+    recipient?: true
+    template?: true
+    dedupeKey?: true
+    status?: true
+    attempts?: true
+    nextAttemptAt?: true
+    lastError?: true
+    sentAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type NotificationMaxAggregateInputType = {
+    id?: true
+    channel?: true
+    recipient?: true
+    template?: true
+    dedupeKey?: true
+    status?: true
+    attempts?: true
+    nextAttemptAt?: true
+    lastError?: true
+    sentAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type NotificationCountAggregateInputType = {
+    id?: true
+    channel?: true
+    recipient?: true
+    template?: true
+    payload?: true
+    dedupeKey?: true
+    status?: true
+    attempts?: true
+    nextAttemptAt?: true
+    lastError?: true
+    sentAt?: true
+    meta?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type NotificationAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Notification to aggregate.
+     */
+    where?: NotificationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Notifications to fetch.
+     */
+    orderBy?: NotificationOrderByWithRelationInput | NotificationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: NotificationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Notifications from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Notifications.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Notifications
+    **/
+    _count?: true | NotificationCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: NotificationAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: NotificationSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: NotificationMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: NotificationMaxAggregateInputType
+  }
+
+  export type GetNotificationAggregateType<T extends NotificationAggregateArgs> = {
+        [P in keyof T & keyof AggregateNotification]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateNotification[P]>
+      : GetScalarType<T[P], AggregateNotification[P]>
+  }
+
+
+
+
+  export type NotificationGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: NotificationWhereInput
+    orderBy?: NotificationOrderByWithAggregationInput | NotificationOrderByWithAggregationInput[]
+    by: NotificationScalarFieldEnum[] | NotificationScalarFieldEnum
+    having?: NotificationScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: NotificationCountAggregateInputType | true
+    _avg?: NotificationAvgAggregateInputType
+    _sum?: NotificationSumAggregateInputType
+    _min?: NotificationMinAggregateInputType
+    _max?: NotificationMaxAggregateInputType
+  }
+
+  export type NotificationGroupByOutputType = {
+    id: string
+    channel: string
+    recipient: string
+    template: string
+    payload: JsonValue
+    dedupeKey: string
+    status: string
+    attempts: number
+    nextAttemptAt: Date
+    lastError: string | null
+    sentAt: Date | null
+    meta: JsonValue | null
+    createdAt: Date
+    updatedAt: Date
+    _count: NotificationCountAggregateOutputType | null
+    _avg: NotificationAvgAggregateOutputType | null
+    _sum: NotificationSumAggregateOutputType | null
+    _min: NotificationMinAggregateOutputType | null
+    _max: NotificationMaxAggregateOutputType | null
+  }
+
+  type GetNotificationGroupByPayload<T extends NotificationGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<NotificationGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof NotificationGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], NotificationGroupByOutputType[P]>
+            : GetScalarType<T[P], NotificationGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type NotificationSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    channel?: boolean
+    recipient?: boolean
+    template?: boolean
+    payload?: boolean
+    dedupeKey?: boolean
+    status?: boolean
+    attempts?: boolean
+    nextAttemptAt?: boolean
+    lastError?: boolean
+    sentAt?: boolean
+    meta?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["notification"]>
+
+  export type NotificationSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    channel?: boolean
+    recipient?: boolean
+    template?: boolean
+    payload?: boolean
+    dedupeKey?: boolean
+    status?: boolean
+    attempts?: boolean
+    nextAttemptAt?: boolean
+    lastError?: boolean
+    sentAt?: boolean
+    meta?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["notification"]>
+
+  export type NotificationSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    channel?: boolean
+    recipient?: boolean
+    template?: boolean
+    payload?: boolean
+    dedupeKey?: boolean
+    status?: boolean
+    attempts?: boolean
+    nextAttemptAt?: boolean
+    lastError?: boolean
+    sentAt?: boolean
+    meta?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["notification"]>
+
+  export type NotificationSelectScalar = {
+    id?: boolean
+    channel?: boolean
+    recipient?: boolean
+    template?: boolean
+    payload?: boolean
+    dedupeKey?: boolean
+    status?: boolean
+    attempts?: boolean
+    nextAttemptAt?: boolean
+    lastError?: boolean
+    sentAt?: boolean
+    meta?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type NotificationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "channel" | "recipient" | "template" | "payload" | "dedupeKey" | "status" | "attempts" | "nextAttemptAt" | "lastError" | "sentAt" | "meta" | "createdAt" | "updatedAt", ExtArgs["result"]["notification"]>
+
+  export type $NotificationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Notification"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      channel: string
+      recipient: string
+      template: string
+      payload: Prisma.JsonValue
+      dedupeKey: string
+      status: string
+      attempts: number
+      nextAttemptAt: Date
+      lastError: string | null
+      sentAt: Date | null
+      meta: Prisma.JsonValue | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["notification"]>
+    composites: {}
+  }
+
+  type NotificationGetPayload<S extends boolean | null | undefined | NotificationDefaultArgs> = $Result.GetResult<Prisma.$NotificationPayload, S>
+
+  type NotificationCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<NotificationFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: NotificationCountAggregateInputType | true
+    }
+
+  export interface NotificationDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Notification'], meta: { name: 'Notification' } }
+    /**
+     * Find zero or one Notification that matches the filter.
+     * @param {NotificationFindUniqueArgs} args - Arguments to find a Notification
+     * @example
+     * // Get one Notification
+     * const notification = await prisma.notification.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends NotificationFindUniqueArgs>(args: SelectSubset<T, NotificationFindUniqueArgs<ExtArgs>>): Prisma__NotificationClient<$Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Notification that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {NotificationFindUniqueOrThrowArgs} args - Arguments to find a Notification
+     * @example
+     * // Get one Notification
+     * const notification = await prisma.notification.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends NotificationFindUniqueOrThrowArgs>(args: SelectSubset<T, NotificationFindUniqueOrThrowArgs<ExtArgs>>): Prisma__NotificationClient<$Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Notification that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationFindFirstArgs} args - Arguments to find a Notification
+     * @example
+     * // Get one Notification
+     * const notification = await prisma.notification.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends NotificationFindFirstArgs>(args?: SelectSubset<T, NotificationFindFirstArgs<ExtArgs>>): Prisma__NotificationClient<$Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Notification that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationFindFirstOrThrowArgs} args - Arguments to find a Notification
+     * @example
+     * // Get one Notification
+     * const notification = await prisma.notification.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends NotificationFindFirstOrThrowArgs>(args?: SelectSubset<T, NotificationFindFirstOrThrowArgs<ExtArgs>>): Prisma__NotificationClient<$Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Notifications that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Notifications
+     * const notifications = await prisma.notification.findMany()
+     * 
+     * // Get first 10 Notifications
+     * const notifications = await prisma.notification.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const notificationWithIdOnly = await prisma.notification.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends NotificationFindManyArgs>(args?: SelectSubset<T, NotificationFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Notification.
+     * @param {NotificationCreateArgs} args - Arguments to create a Notification.
+     * @example
+     * // Create one Notification
+     * const Notification = await prisma.notification.create({
+     *   data: {
+     *     // ... data to create a Notification
+     *   }
+     * })
+     * 
+     */
+    create<T extends NotificationCreateArgs>(args: SelectSubset<T, NotificationCreateArgs<ExtArgs>>): Prisma__NotificationClient<$Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Notifications.
+     * @param {NotificationCreateManyArgs} args - Arguments to create many Notifications.
+     * @example
+     * // Create many Notifications
+     * const notification = await prisma.notification.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends NotificationCreateManyArgs>(args?: SelectSubset<T, NotificationCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Notifications and returns the data saved in the database.
+     * @param {NotificationCreateManyAndReturnArgs} args - Arguments to create many Notifications.
+     * @example
+     * // Create many Notifications
+     * const notification = await prisma.notification.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Notifications and only return the `id`
+     * const notificationWithIdOnly = await prisma.notification.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends NotificationCreateManyAndReturnArgs>(args?: SelectSubset<T, NotificationCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Notification.
+     * @param {NotificationDeleteArgs} args - Arguments to delete one Notification.
+     * @example
+     * // Delete one Notification
+     * const Notification = await prisma.notification.delete({
+     *   where: {
+     *     // ... filter to delete one Notification
+     *   }
+     * })
+     * 
+     */
+    delete<T extends NotificationDeleteArgs>(args: SelectSubset<T, NotificationDeleteArgs<ExtArgs>>): Prisma__NotificationClient<$Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Notification.
+     * @param {NotificationUpdateArgs} args - Arguments to update one Notification.
+     * @example
+     * // Update one Notification
+     * const notification = await prisma.notification.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends NotificationUpdateArgs>(args: SelectSubset<T, NotificationUpdateArgs<ExtArgs>>): Prisma__NotificationClient<$Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Notifications.
+     * @param {NotificationDeleteManyArgs} args - Arguments to filter Notifications to delete.
+     * @example
+     * // Delete a few Notifications
+     * const { count } = await prisma.notification.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends NotificationDeleteManyArgs>(args?: SelectSubset<T, NotificationDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Notifications.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Notifications
+     * const notification = await prisma.notification.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends NotificationUpdateManyArgs>(args: SelectSubset<T, NotificationUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Notifications and returns the data updated in the database.
+     * @param {NotificationUpdateManyAndReturnArgs} args - Arguments to update many Notifications.
+     * @example
+     * // Update many Notifications
+     * const notification = await prisma.notification.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Notifications and only return the `id`
+     * const notificationWithIdOnly = await prisma.notification.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends NotificationUpdateManyAndReturnArgs>(args: SelectSubset<T, NotificationUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Notification.
+     * @param {NotificationUpsertArgs} args - Arguments to update or create a Notification.
+     * @example
+     * // Update or create a Notification
+     * const notification = await prisma.notification.upsert({
+     *   create: {
+     *     // ... data to create a Notification
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Notification we want to update
+     *   }
+     * })
+     */
+    upsert<T extends NotificationUpsertArgs>(args: SelectSubset<T, NotificationUpsertArgs<ExtArgs>>): Prisma__NotificationClient<$Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Notifications.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationCountArgs} args - Arguments to filter Notifications to count.
+     * @example
+     * // Count the number of Notifications
+     * const count = await prisma.notification.count({
+     *   where: {
+     *     // ... the filter for the Notifications we want to count
+     *   }
+     * })
+    **/
+    count<T extends NotificationCountArgs>(
+      args?: Subset<T, NotificationCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], NotificationCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Notification.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends NotificationAggregateArgs>(args: Subset<T, NotificationAggregateArgs>): Prisma.PrismaPromise<GetNotificationAggregateType<T>>
+
+    /**
+     * Group by Notification.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NotificationGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends NotificationGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: NotificationGroupByArgs['orderBy'] }
+        : { orderBy?: NotificationGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, NotificationGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetNotificationGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Notification model
+   */
+  readonly fields: NotificationFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Notification.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__NotificationClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Notification model
+   */
+  interface NotificationFieldRefs {
+    readonly id: FieldRef<"Notification", 'String'>
+    readonly channel: FieldRef<"Notification", 'String'>
+    readonly recipient: FieldRef<"Notification", 'String'>
+    readonly template: FieldRef<"Notification", 'String'>
+    readonly payload: FieldRef<"Notification", 'Json'>
+    readonly dedupeKey: FieldRef<"Notification", 'String'>
+    readonly status: FieldRef<"Notification", 'String'>
+    readonly attempts: FieldRef<"Notification", 'Int'>
+    readonly nextAttemptAt: FieldRef<"Notification", 'DateTime'>
+    readonly lastError: FieldRef<"Notification", 'String'>
+    readonly sentAt: FieldRef<"Notification", 'DateTime'>
+    readonly meta: FieldRef<"Notification", 'Json'>
+    readonly createdAt: FieldRef<"Notification", 'DateTime'>
+    readonly updatedAt: FieldRef<"Notification", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Notification findUnique
+   */
+  export type NotificationFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Notification
+     */
+    select?: NotificationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Notification
+     */
+    omit?: NotificationOmit<ExtArgs> | null
+    /**
+     * Filter, which Notification to fetch.
+     */
+    where: NotificationWhereUniqueInput
+  }
+
+  /**
+   * Notification findUniqueOrThrow
+   */
+  export type NotificationFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Notification
+     */
+    select?: NotificationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Notification
+     */
+    omit?: NotificationOmit<ExtArgs> | null
+    /**
+     * Filter, which Notification to fetch.
+     */
+    where: NotificationWhereUniqueInput
+  }
+
+  /**
+   * Notification findFirst
+   */
+  export type NotificationFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Notification
+     */
+    select?: NotificationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Notification
+     */
+    omit?: NotificationOmit<ExtArgs> | null
+    /**
+     * Filter, which Notification to fetch.
+     */
+    where?: NotificationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Notifications to fetch.
+     */
+    orderBy?: NotificationOrderByWithRelationInput | NotificationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Notifications.
+     */
+    cursor?: NotificationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Notifications from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Notifications.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Notifications.
+     */
+    distinct?: NotificationScalarFieldEnum | NotificationScalarFieldEnum[]
+  }
+
+  /**
+   * Notification findFirstOrThrow
+   */
+  export type NotificationFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Notification
+     */
+    select?: NotificationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Notification
+     */
+    omit?: NotificationOmit<ExtArgs> | null
+    /**
+     * Filter, which Notification to fetch.
+     */
+    where?: NotificationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Notifications to fetch.
+     */
+    orderBy?: NotificationOrderByWithRelationInput | NotificationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Notifications.
+     */
+    cursor?: NotificationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Notifications from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Notifications.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Notifications.
+     */
+    distinct?: NotificationScalarFieldEnum | NotificationScalarFieldEnum[]
+  }
+
+  /**
+   * Notification findMany
+   */
+  export type NotificationFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Notification
+     */
+    select?: NotificationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Notification
+     */
+    omit?: NotificationOmit<ExtArgs> | null
+    /**
+     * Filter, which Notifications to fetch.
+     */
+    where?: NotificationWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Notifications to fetch.
+     */
+    orderBy?: NotificationOrderByWithRelationInput | NotificationOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Notifications.
+     */
+    cursor?: NotificationWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Notifications from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Notifications.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Notifications.
+     */
+    distinct?: NotificationScalarFieldEnum | NotificationScalarFieldEnum[]
+  }
+
+  /**
+   * Notification create
+   */
+  export type NotificationCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Notification
+     */
+    select?: NotificationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Notification
+     */
+    omit?: NotificationOmit<ExtArgs> | null
+    /**
+     * The data needed to create a Notification.
+     */
+    data: XOR<NotificationCreateInput, NotificationUncheckedCreateInput>
+  }
+
+  /**
+   * Notification createMany
+   */
+  export type NotificationCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Notifications.
+     */
+    data: NotificationCreateManyInput | NotificationCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Notification createManyAndReturn
+   */
+  export type NotificationCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Notification
+     */
+    select?: NotificationSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Notification
+     */
+    omit?: NotificationOmit<ExtArgs> | null
+    /**
+     * The data used to create many Notifications.
+     */
+    data: NotificationCreateManyInput | NotificationCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Notification update
+   */
+  export type NotificationUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Notification
+     */
+    select?: NotificationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Notification
+     */
+    omit?: NotificationOmit<ExtArgs> | null
+    /**
+     * The data needed to update a Notification.
+     */
+    data: XOR<NotificationUpdateInput, NotificationUncheckedUpdateInput>
+    /**
+     * Choose, which Notification to update.
+     */
+    where: NotificationWhereUniqueInput
+  }
+
+  /**
+   * Notification updateMany
+   */
+  export type NotificationUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Notifications.
+     */
+    data: XOR<NotificationUpdateManyMutationInput, NotificationUncheckedUpdateManyInput>
+    /**
+     * Filter which Notifications to update
+     */
+    where?: NotificationWhereInput
+    /**
+     * Limit how many Notifications to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Notification updateManyAndReturn
+   */
+  export type NotificationUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Notification
+     */
+    select?: NotificationSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Notification
+     */
+    omit?: NotificationOmit<ExtArgs> | null
+    /**
+     * The data used to update Notifications.
+     */
+    data: XOR<NotificationUpdateManyMutationInput, NotificationUncheckedUpdateManyInput>
+    /**
+     * Filter which Notifications to update
+     */
+    where?: NotificationWhereInput
+    /**
+     * Limit how many Notifications to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Notification upsert
+   */
+  export type NotificationUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Notification
+     */
+    select?: NotificationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Notification
+     */
+    omit?: NotificationOmit<ExtArgs> | null
+    /**
+     * The filter to search for the Notification to update in case it exists.
+     */
+    where: NotificationWhereUniqueInput
+    /**
+     * In case the Notification found by the `where` argument doesn't exist, create a new Notification with this data.
+     */
+    create: XOR<NotificationCreateInput, NotificationUncheckedCreateInput>
+    /**
+     * In case the Notification was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<NotificationUpdateInput, NotificationUncheckedUpdateInput>
+  }
+
+  /**
+   * Notification delete
+   */
+  export type NotificationDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Notification
+     */
+    select?: NotificationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Notification
+     */
+    omit?: NotificationOmit<ExtArgs> | null
+    /**
+     * Filter which Notification to delete.
+     */
+    where: NotificationWhereUniqueInput
+  }
+
+  /**
+   * Notification deleteMany
+   */
+  export type NotificationDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Notifications to delete
+     */
+    where?: NotificationWhereInput
+    /**
+     * Limit how many Notifications to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Notification without action
+   */
+  export type NotificationDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Notification
+     */
+    select?: NotificationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Notification
+     */
+    omit?: NotificationOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ReconciliationRun
+   */
+
+  export type AggregateReconciliationRun = {
+    _count: ReconciliationRunCountAggregateOutputType | null
+    _avg: ReconciliationRunAvgAggregateOutputType | null
+    _sum: ReconciliationRunSumAggregateOutputType | null
+    _min: ReconciliationRunMinAggregateOutputType | null
+    _max: ReconciliationRunMaxAggregateOutputType | null
+  }
+
+  export type ReconciliationRunAvgAggregateOutputType = {
+    checked: number | null
+    paid: number | null
+    failed: number | null
+    stillPending: number | null
+    errors: number | null
+    expired: number | null
+  }
+
+  export type ReconciliationRunSumAggregateOutputType = {
+    checked: number | null
+    paid: number | null
+    failed: number | null
+    stillPending: number | null
+    errors: number | null
+    expired: number | null
+  }
+
+  export type ReconciliationRunMinAggregateOutputType = {
+    id: string | null
+    trigger: string | null
+    startedAt: Date | null
+    finishedAt: Date | null
+    checked: number | null
+    paid: number | null
+    failed: number | null
+    stillPending: number | null
+    errors: number | null
+    expired: number | null
+  }
+
+  export type ReconciliationRunMaxAggregateOutputType = {
+    id: string | null
+    trigger: string | null
+    startedAt: Date | null
+    finishedAt: Date | null
+    checked: number | null
+    paid: number | null
+    failed: number | null
+    stillPending: number | null
+    errors: number | null
+    expired: number | null
+  }
+
+  export type ReconciliationRunCountAggregateOutputType = {
+    id: number
+    trigger: number
+    startedAt: number
+    finishedAt: number
+    checked: number
+    paid: number
+    failed: number
+    stillPending: number
+    errors: number
+    expired: number
+    details: number
+    _all: number
+  }
+
+
+  export type ReconciliationRunAvgAggregateInputType = {
+    checked?: true
+    paid?: true
+    failed?: true
+    stillPending?: true
+    errors?: true
+    expired?: true
+  }
+
+  export type ReconciliationRunSumAggregateInputType = {
+    checked?: true
+    paid?: true
+    failed?: true
+    stillPending?: true
+    errors?: true
+    expired?: true
+  }
+
+  export type ReconciliationRunMinAggregateInputType = {
+    id?: true
+    trigger?: true
+    startedAt?: true
+    finishedAt?: true
+    checked?: true
+    paid?: true
+    failed?: true
+    stillPending?: true
+    errors?: true
+    expired?: true
+  }
+
+  export type ReconciliationRunMaxAggregateInputType = {
+    id?: true
+    trigger?: true
+    startedAt?: true
+    finishedAt?: true
+    checked?: true
+    paid?: true
+    failed?: true
+    stillPending?: true
+    errors?: true
+    expired?: true
+  }
+
+  export type ReconciliationRunCountAggregateInputType = {
+    id?: true
+    trigger?: true
+    startedAt?: true
+    finishedAt?: true
+    checked?: true
+    paid?: true
+    failed?: true
+    stillPending?: true
+    errors?: true
+    expired?: true
+    details?: true
+    _all?: true
+  }
+
+  export type ReconciliationRunAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ReconciliationRun to aggregate.
+     */
+    where?: ReconciliationRunWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ReconciliationRuns to fetch.
+     */
+    orderBy?: ReconciliationRunOrderByWithRelationInput | ReconciliationRunOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ReconciliationRunWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ReconciliationRuns from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ReconciliationRuns.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ReconciliationRuns
+    **/
+    _count?: true | ReconciliationRunCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ReconciliationRunAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ReconciliationRunSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ReconciliationRunMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ReconciliationRunMaxAggregateInputType
+  }
+
+  export type GetReconciliationRunAggregateType<T extends ReconciliationRunAggregateArgs> = {
+        [P in keyof T & keyof AggregateReconciliationRun]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateReconciliationRun[P]>
+      : GetScalarType<T[P], AggregateReconciliationRun[P]>
+  }
+
+
+
+
+  export type ReconciliationRunGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ReconciliationRunWhereInput
+    orderBy?: ReconciliationRunOrderByWithAggregationInput | ReconciliationRunOrderByWithAggregationInput[]
+    by: ReconciliationRunScalarFieldEnum[] | ReconciliationRunScalarFieldEnum
+    having?: ReconciliationRunScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ReconciliationRunCountAggregateInputType | true
+    _avg?: ReconciliationRunAvgAggregateInputType
+    _sum?: ReconciliationRunSumAggregateInputType
+    _min?: ReconciliationRunMinAggregateInputType
+    _max?: ReconciliationRunMaxAggregateInputType
+  }
+
+  export type ReconciliationRunGroupByOutputType = {
+    id: string
+    trigger: string
+    startedAt: Date
+    finishedAt: Date | null
+    checked: number
+    paid: number
+    failed: number
+    stillPending: number
+    errors: number
+    expired: number
+    details: JsonValue | null
+    _count: ReconciliationRunCountAggregateOutputType | null
+    _avg: ReconciliationRunAvgAggregateOutputType | null
+    _sum: ReconciliationRunSumAggregateOutputType | null
+    _min: ReconciliationRunMinAggregateOutputType | null
+    _max: ReconciliationRunMaxAggregateOutputType | null
+  }
+
+  type GetReconciliationRunGroupByPayload<T extends ReconciliationRunGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ReconciliationRunGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ReconciliationRunGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ReconciliationRunGroupByOutputType[P]>
+            : GetScalarType<T[P], ReconciliationRunGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ReconciliationRunSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    trigger?: boolean
+    startedAt?: boolean
+    finishedAt?: boolean
+    checked?: boolean
+    paid?: boolean
+    failed?: boolean
+    stillPending?: boolean
+    errors?: boolean
+    expired?: boolean
+    details?: boolean
+  }, ExtArgs["result"]["reconciliationRun"]>
+
+  export type ReconciliationRunSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    trigger?: boolean
+    startedAt?: boolean
+    finishedAt?: boolean
+    checked?: boolean
+    paid?: boolean
+    failed?: boolean
+    stillPending?: boolean
+    errors?: boolean
+    expired?: boolean
+    details?: boolean
+  }, ExtArgs["result"]["reconciliationRun"]>
+
+  export type ReconciliationRunSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    trigger?: boolean
+    startedAt?: boolean
+    finishedAt?: boolean
+    checked?: boolean
+    paid?: boolean
+    failed?: boolean
+    stillPending?: boolean
+    errors?: boolean
+    expired?: boolean
+    details?: boolean
+  }, ExtArgs["result"]["reconciliationRun"]>
+
+  export type ReconciliationRunSelectScalar = {
+    id?: boolean
+    trigger?: boolean
+    startedAt?: boolean
+    finishedAt?: boolean
+    checked?: boolean
+    paid?: boolean
+    failed?: boolean
+    stillPending?: boolean
+    errors?: boolean
+    expired?: boolean
+    details?: boolean
+  }
+
+  export type ReconciliationRunOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "trigger" | "startedAt" | "finishedAt" | "checked" | "paid" | "failed" | "stillPending" | "errors" | "expired" | "details", ExtArgs["result"]["reconciliationRun"]>
+
+  export type $ReconciliationRunPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ReconciliationRun"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      trigger: string
+      startedAt: Date
+      finishedAt: Date | null
+      checked: number
+      paid: number
+      failed: number
+      stillPending: number
+      errors: number
+      expired: number
+      details: Prisma.JsonValue | null
+    }, ExtArgs["result"]["reconciliationRun"]>
+    composites: {}
+  }
+
+  type ReconciliationRunGetPayload<S extends boolean | null | undefined | ReconciliationRunDefaultArgs> = $Result.GetResult<Prisma.$ReconciliationRunPayload, S>
+
+  type ReconciliationRunCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ReconciliationRunFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ReconciliationRunCountAggregateInputType | true
+    }
+
+  export interface ReconciliationRunDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ReconciliationRun'], meta: { name: 'ReconciliationRun' } }
+    /**
+     * Find zero or one ReconciliationRun that matches the filter.
+     * @param {ReconciliationRunFindUniqueArgs} args - Arguments to find a ReconciliationRun
+     * @example
+     * // Get one ReconciliationRun
+     * const reconciliationRun = await prisma.reconciliationRun.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ReconciliationRunFindUniqueArgs>(args: SelectSubset<T, ReconciliationRunFindUniqueArgs<ExtArgs>>): Prisma__ReconciliationRunClient<$Result.GetResult<Prisma.$ReconciliationRunPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ReconciliationRun that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ReconciliationRunFindUniqueOrThrowArgs} args - Arguments to find a ReconciliationRun
+     * @example
+     * // Get one ReconciliationRun
+     * const reconciliationRun = await prisma.reconciliationRun.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ReconciliationRunFindUniqueOrThrowArgs>(args: SelectSubset<T, ReconciliationRunFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ReconciliationRunClient<$Result.GetResult<Prisma.$ReconciliationRunPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ReconciliationRun that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReconciliationRunFindFirstArgs} args - Arguments to find a ReconciliationRun
+     * @example
+     * // Get one ReconciliationRun
+     * const reconciliationRun = await prisma.reconciliationRun.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ReconciliationRunFindFirstArgs>(args?: SelectSubset<T, ReconciliationRunFindFirstArgs<ExtArgs>>): Prisma__ReconciliationRunClient<$Result.GetResult<Prisma.$ReconciliationRunPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ReconciliationRun that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReconciliationRunFindFirstOrThrowArgs} args - Arguments to find a ReconciliationRun
+     * @example
+     * // Get one ReconciliationRun
+     * const reconciliationRun = await prisma.reconciliationRun.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ReconciliationRunFindFirstOrThrowArgs>(args?: SelectSubset<T, ReconciliationRunFindFirstOrThrowArgs<ExtArgs>>): Prisma__ReconciliationRunClient<$Result.GetResult<Prisma.$ReconciliationRunPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ReconciliationRuns that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReconciliationRunFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ReconciliationRuns
+     * const reconciliationRuns = await prisma.reconciliationRun.findMany()
+     * 
+     * // Get first 10 ReconciliationRuns
+     * const reconciliationRuns = await prisma.reconciliationRun.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const reconciliationRunWithIdOnly = await prisma.reconciliationRun.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ReconciliationRunFindManyArgs>(args?: SelectSubset<T, ReconciliationRunFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReconciliationRunPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ReconciliationRun.
+     * @param {ReconciliationRunCreateArgs} args - Arguments to create a ReconciliationRun.
+     * @example
+     * // Create one ReconciliationRun
+     * const ReconciliationRun = await prisma.reconciliationRun.create({
+     *   data: {
+     *     // ... data to create a ReconciliationRun
+     *   }
+     * })
+     * 
+     */
+    create<T extends ReconciliationRunCreateArgs>(args: SelectSubset<T, ReconciliationRunCreateArgs<ExtArgs>>): Prisma__ReconciliationRunClient<$Result.GetResult<Prisma.$ReconciliationRunPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ReconciliationRuns.
+     * @param {ReconciliationRunCreateManyArgs} args - Arguments to create many ReconciliationRuns.
+     * @example
+     * // Create many ReconciliationRuns
+     * const reconciliationRun = await prisma.reconciliationRun.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ReconciliationRunCreateManyArgs>(args?: SelectSubset<T, ReconciliationRunCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ReconciliationRuns and returns the data saved in the database.
+     * @param {ReconciliationRunCreateManyAndReturnArgs} args - Arguments to create many ReconciliationRuns.
+     * @example
+     * // Create many ReconciliationRuns
+     * const reconciliationRun = await prisma.reconciliationRun.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ReconciliationRuns and only return the `id`
+     * const reconciliationRunWithIdOnly = await prisma.reconciliationRun.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ReconciliationRunCreateManyAndReturnArgs>(args?: SelectSubset<T, ReconciliationRunCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReconciliationRunPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ReconciliationRun.
+     * @param {ReconciliationRunDeleteArgs} args - Arguments to delete one ReconciliationRun.
+     * @example
+     * // Delete one ReconciliationRun
+     * const ReconciliationRun = await prisma.reconciliationRun.delete({
+     *   where: {
+     *     // ... filter to delete one ReconciliationRun
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ReconciliationRunDeleteArgs>(args: SelectSubset<T, ReconciliationRunDeleteArgs<ExtArgs>>): Prisma__ReconciliationRunClient<$Result.GetResult<Prisma.$ReconciliationRunPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ReconciliationRun.
+     * @param {ReconciliationRunUpdateArgs} args - Arguments to update one ReconciliationRun.
+     * @example
+     * // Update one ReconciliationRun
+     * const reconciliationRun = await prisma.reconciliationRun.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ReconciliationRunUpdateArgs>(args: SelectSubset<T, ReconciliationRunUpdateArgs<ExtArgs>>): Prisma__ReconciliationRunClient<$Result.GetResult<Prisma.$ReconciliationRunPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ReconciliationRuns.
+     * @param {ReconciliationRunDeleteManyArgs} args - Arguments to filter ReconciliationRuns to delete.
+     * @example
+     * // Delete a few ReconciliationRuns
+     * const { count } = await prisma.reconciliationRun.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ReconciliationRunDeleteManyArgs>(args?: SelectSubset<T, ReconciliationRunDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ReconciliationRuns.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReconciliationRunUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ReconciliationRuns
+     * const reconciliationRun = await prisma.reconciliationRun.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ReconciliationRunUpdateManyArgs>(args: SelectSubset<T, ReconciliationRunUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ReconciliationRuns and returns the data updated in the database.
+     * @param {ReconciliationRunUpdateManyAndReturnArgs} args - Arguments to update many ReconciliationRuns.
+     * @example
+     * // Update many ReconciliationRuns
+     * const reconciliationRun = await prisma.reconciliationRun.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ReconciliationRuns and only return the `id`
+     * const reconciliationRunWithIdOnly = await prisma.reconciliationRun.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ReconciliationRunUpdateManyAndReturnArgs>(args: SelectSubset<T, ReconciliationRunUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReconciliationRunPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ReconciliationRun.
+     * @param {ReconciliationRunUpsertArgs} args - Arguments to update or create a ReconciliationRun.
+     * @example
+     * // Update or create a ReconciliationRun
+     * const reconciliationRun = await prisma.reconciliationRun.upsert({
+     *   create: {
+     *     // ... data to create a ReconciliationRun
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ReconciliationRun we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ReconciliationRunUpsertArgs>(args: SelectSubset<T, ReconciliationRunUpsertArgs<ExtArgs>>): Prisma__ReconciliationRunClient<$Result.GetResult<Prisma.$ReconciliationRunPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ReconciliationRuns.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReconciliationRunCountArgs} args - Arguments to filter ReconciliationRuns to count.
+     * @example
+     * // Count the number of ReconciliationRuns
+     * const count = await prisma.reconciliationRun.count({
+     *   where: {
+     *     // ... the filter for the ReconciliationRuns we want to count
+     *   }
+     * })
+    **/
+    count<T extends ReconciliationRunCountArgs>(
+      args?: Subset<T, ReconciliationRunCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ReconciliationRunCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ReconciliationRun.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReconciliationRunAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ReconciliationRunAggregateArgs>(args: Subset<T, ReconciliationRunAggregateArgs>): Prisma.PrismaPromise<GetReconciliationRunAggregateType<T>>
+
+    /**
+     * Group by ReconciliationRun.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ReconciliationRunGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ReconciliationRunGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ReconciliationRunGroupByArgs['orderBy'] }
+        : { orderBy?: ReconciliationRunGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ReconciliationRunGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetReconciliationRunGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ReconciliationRun model
+   */
+  readonly fields: ReconciliationRunFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ReconciliationRun.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ReconciliationRunClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ReconciliationRun model
+   */
+  interface ReconciliationRunFieldRefs {
+    readonly id: FieldRef<"ReconciliationRun", 'String'>
+    readonly trigger: FieldRef<"ReconciliationRun", 'String'>
+    readonly startedAt: FieldRef<"ReconciliationRun", 'DateTime'>
+    readonly finishedAt: FieldRef<"ReconciliationRun", 'DateTime'>
+    readonly checked: FieldRef<"ReconciliationRun", 'Int'>
+    readonly paid: FieldRef<"ReconciliationRun", 'Int'>
+    readonly failed: FieldRef<"ReconciliationRun", 'Int'>
+    readonly stillPending: FieldRef<"ReconciliationRun", 'Int'>
+    readonly errors: FieldRef<"ReconciliationRun", 'Int'>
+    readonly expired: FieldRef<"ReconciliationRun", 'Int'>
+    readonly details: FieldRef<"ReconciliationRun", 'Json'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ReconciliationRun findUnique
+   */
+  export type ReconciliationRunFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReconciliationRun
+     */
+    select?: ReconciliationRunSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReconciliationRun
+     */
+    omit?: ReconciliationRunOmit<ExtArgs> | null
+    /**
+     * Filter, which ReconciliationRun to fetch.
+     */
+    where: ReconciliationRunWhereUniqueInput
+  }
+
+  /**
+   * ReconciliationRun findUniqueOrThrow
+   */
+  export type ReconciliationRunFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReconciliationRun
+     */
+    select?: ReconciliationRunSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReconciliationRun
+     */
+    omit?: ReconciliationRunOmit<ExtArgs> | null
+    /**
+     * Filter, which ReconciliationRun to fetch.
+     */
+    where: ReconciliationRunWhereUniqueInput
+  }
+
+  /**
+   * ReconciliationRun findFirst
+   */
+  export type ReconciliationRunFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReconciliationRun
+     */
+    select?: ReconciliationRunSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReconciliationRun
+     */
+    omit?: ReconciliationRunOmit<ExtArgs> | null
+    /**
+     * Filter, which ReconciliationRun to fetch.
+     */
+    where?: ReconciliationRunWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ReconciliationRuns to fetch.
+     */
+    orderBy?: ReconciliationRunOrderByWithRelationInput | ReconciliationRunOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ReconciliationRuns.
+     */
+    cursor?: ReconciliationRunWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ReconciliationRuns from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ReconciliationRuns.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ReconciliationRuns.
+     */
+    distinct?: ReconciliationRunScalarFieldEnum | ReconciliationRunScalarFieldEnum[]
+  }
+
+  /**
+   * ReconciliationRun findFirstOrThrow
+   */
+  export type ReconciliationRunFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReconciliationRun
+     */
+    select?: ReconciliationRunSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReconciliationRun
+     */
+    omit?: ReconciliationRunOmit<ExtArgs> | null
+    /**
+     * Filter, which ReconciliationRun to fetch.
+     */
+    where?: ReconciliationRunWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ReconciliationRuns to fetch.
+     */
+    orderBy?: ReconciliationRunOrderByWithRelationInput | ReconciliationRunOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ReconciliationRuns.
+     */
+    cursor?: ReconciliationRunWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ReconciliationRuns from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ReconciliationRuns.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ReconciliationRuns.
+     */
+    distinct?: ReconciliationRunScalarFieldEnum | ReconciliationRunScalarFieldEnum[]
+  }
+
+  /**
+   * ReconciliationRun findMany
+   */
+  export type ReconciliationRunFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReconciliationRun
+     */
+    select?: ReconciliationRunSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReconciliationRun
+     */
+    omit?: ReconciliationRunOmit<ExtArgs> | null
+    /**
+     * Filter, which ReconciliationRuns to fetch.
+     */
+    where?: ReconciliationRunWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ReconciliationRuns to fetch.
+     */
+    orderBy?: ReconciliationRunOrderByWithRelationInput | ReconciliationRunOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ReconciliationRuns.
+     */
+    cursor?: ReconciliationRunWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ReconciliationRuns from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ReconciliationRuns.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ReconciliationRuns.
+     */
+    distinct?: ReconciliationRunScalarFieldEnum | ReconciliationRunScalarFieldEnum[]
+  }
+
+  /**
+   * ReconciliationRun create
+   */
+  export type ReconciliationRunCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReconciliationRun
+     */
+    select?: ReconciliationRunSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReconciliationRun
+     */
+    omit?: ReconciliationRunOmit<ExtArgs> | null
+    /**
+     * The data needed to create a ReconciliationRun.
+     */
+    data: XOR<ReconciliationRunCreateInput, ReconciliationRunUncheckedCreateInput>
+  }
+
+  /**
+   * ReconciliationRun createMany
+   */
+  export type ReconciliationRunCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ReconciliationRuns.
+     */
+    data: ReconciliationRunCreateManyInput | ReconciliationRunCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ReconciliationRun createManyAndReturn
+   */
+  export type ReconciliationRunCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReconciliationRun
+     */
+    select?: ReconciliationRunSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReconciliationRun
+     */
+    omit?: ReconciliationRunOmit<ExtArgs> | null
+    /**
+     * The data used to create many ReconciliationRuns.
+     */
+    data: ReconciliationRunCreateManyInput | ReconciliationRunCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ReconciliationRun update
+   */
+  export type ReconciliationRunUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReconciliationRun
+     */
+    select?: ReconciliationRunSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReconciliationRun
+     */
+    omit?: ReconciliationRunOmit<ExtArgs> | null
+    /**
+     * The data needed to update a ReconciliationRun.
+     */
+    data: XOR<ReconciliationRunUpdateInput, ReconciliationRunUncheckedUpdateInput>
+    /**
+     * Choose, which ReconciliationRun to update.
+     */
+    where: ReconciliationRunWhereUniqueInput
+  }
+
+  /**
+   * ReconciliationRun updateMany
+   */
+  export type ReconciliationRunUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ReconciliationRuns.
+     */
+    data: XOR<ReconciliationRunUpdateManyMutationInput, ReconciliationRunUncheckedUpdateManyInput>
+    /**
+     * Filter which ReconciliationRuns to update
+     */
+    where?: ReconciliationRunWhereInput
+    /**
+     * Limit how many ReconciliationRuns to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ReconciliationRun updateManyAndReturn
+   */
+  export type ReconciliationRunUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReconciliationRun
+     */
+    select?: ReconciliationRunSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReconciliationRun
+     */
+    omit?: ReconciliationRunOmit<ExtArgs> | null
+    /**
+     * The data used to update ReconciliationRuns.
+     */
+    data: XOR<ReconciliationRunUpdateManyMutationInput, ReconciliationRunUncheckedUpdateManyInput>
+    /**
+     * Filter which ReconciliationRuns to update
+     */
+    where?: ReconciliationRunWhereInput
+    /**
+     * Limit how many ReconciliationRuns to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ReconciliationRun upsert
+   */
+  export type ReconciliationRunUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReconciliationRun
+     */
+    select?: ReconciliationRunSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReconciliationRun
+     */
+    omit?: ReconciliationRunOmit<ExtArgs> | null
+    /**
+     * The filter to search for the ReconciliationRun to update in case it exists.
+     */
+    where: ReconciliationRunWhereUniqueInput
+    /**
+     * In case the ReconciliationRun found by the `where` argument doesn't exist, create a new ReconciliationRun with this data.
+     */
+    create: XOR<ReconciliationRunCreateInput, ReconciliationRunUncheckedCreateInput>
+    /**
+     * In case the ReconciliationRun was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ReconciliationRunUpdateInput, ReconciliationRunUncheckedUpdateInput>
+  }
+
+  /**
+   * ReconciliationRun delete
+   */
+  export type ReconciliationRunDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReconciliationRun
+     */
+    select?: ReconciliationRunSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReconciliationRun
+     */
+    omit?: ReconciliationRunOmit<ExtArgs> | null
+    /**
+     * Filter which ReconciliationRun to delete.
+     */
+    where: ReconciliationRunWhereUniqueInput
+  }
+
+  /**
+   * ReconciliationRun deleteMany
+   */
+  export type ReconciliationRunDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ReconciliationRuns to delete
+     */
+    where?: ReconciliationRunWhereInput
+    /**
+     * Limit how many ReconciliationRuns to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ReconciliationRun without action
+   */
+  export type ReconciliationRunDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReconciliationRun
+     */
+    select?: ReconciliationRunSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReconciliationRun
+     */
+    omit?: ReconciliationRunOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model PaymentFlag
+   */
+
+  export type AggregatePaymentFlag = {
+    _count: PaymentFlagCountAggregateOutputType | null
+    _min: PaymentFlagMinAggregateOutputType | null
+    _max: PaymentFlagMaxAggregateOutputType | null
+  }
+
+  export type PaymentFlagMinAggregateOutputType = {
+    id: string | null
+    paymentId: string | null
+    createdAt: Date | null
+    source: string | null
+    kind: string | null
+    statusWas: string | null
+    resolvedAt: Date | null
+    resolvedBy: string | null
+    resolution: string | null
+    note: string | null
+  }
+
+  export type PaymentFlagMaxAggregateOutputType = {
+    id: string | null
+    paymentId: string | null
+    createdAt: Date | null
+    source: string | null
+    kind: string | null
+    statusWas: string | null
+    resolvedAt: Date | null
+    resolvedBy: string | null
+    resolution: string | null
+    note: string | null
+  }
+
+  export type PaymentFlagCountAggregateOutputType = {
+    id: number
+    paymentId: number
+    createdAt: number
+    source: number
+    kind: number
+    expected: number
+    received: number
+    statusWas: number
+    details: number
+    resolvedAt: number
+    resolvedBy: number
+    resolution: number
+    note: number
+    _all: number
+  }
+
+
+  export type PaymentFlagMinAggregateInputType = {
+    id?: true
+    paymentId?: true
+    createdAt?: true
+    source?: true
+    kind?: true
+    statusWas?: true
+    resolvedAt?: true
+    resolvedBy?: true
+    resolution?: true
+    note?: true
+  }
+
+  export type PaymentFlagMaxAggregateInputType = {
+    id?: true
+    paymentId?: true
+    createdAt?: true
+    source?: true
+    kind?: true
+    statusWas?: true
+    resolvedAt?: true
+    resolvedBy?: true
+    resolution?: true
+    note?: true
+  }
+
+  export type PaymentFlagCountAggregateInputType = {
+    id?: true
+    paymentId?: true
+    createdAt?: true
+    source?: true
+    kind?: true
+    expected?: true
+    received?: true
+    statusWas?: true
+    details?: true
+    resolvedAt?: true
+    resolvedBy?: true
+    resolution?: true
+    note?: true
+    _all?: true
+  }
+
+  export type PaymentFlagAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PaymentFlag to aggregate.
+     */
+    where?: PaymentFlagWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PaymentFlags to fetch.
+     */
+    orderBy?: PaymentFlagOrderByWithRelationInput | PaymentFlagOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PaymentFlagWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PaymentFlags from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PaymentFlags.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PaymentFlags
+    **/
+    _count?: true | PaymentFlagCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PaymentFlagMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PaymentFlagMaxAggregateInputType
+  }
+
+  export type GetPaymentFlagAggregateType<T extends PaymentFlagAggregateArgs> = {
+        [P in keyof T & keyof AggregatePaymentFlag]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePaymentFlag[P]>
+      : GetScalarType<T[P], AggregatePaymentFlag[P]>
+  }
+
+
+
+
+  export type PaymentFlagGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PaymentFlagWhereInput
+    orderBy?: PaymentFlagOrderByWithAggregationInput | PaymentFlagOrderByWithAggregationInput[]
+    by: PaymentFlagScalarFieldEnum[] | PaymentFlagScalarFieldEnum
+    having?: PaymentFlagScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PaymentFlagCountAggregateInputType | true
+    _min?: PaymentFlagMinAggregateInputType
+    _max?: PaymentFlagMaxAggregateInputType
+  }
+
+  export type PaymentFlagGroupByOutputType = {
+    id: string
+    paymentId: string
+    createdAt: Date
+    source: string
+    kind: string
+    expected: JsonValue
+    received: JsonValue
+    statusWas: string
+    details: JsonValue | null
+    resolvedAt: Date | null
+    resolvedBy: string | null
+    resolution: string | null
+    note: string | null
+    _count: PaymentFlagCountAggregateOutputType | null
+    _min: PaymentFlagMinAggregateOutputType | null
+    _max: PaymentFlagMaxAggregateOutputType | null
+  }
+
+  type GetPaymentFlagGroupByPayload<T extends PaymentFlagGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PaymentFlagGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PaymentFlagGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PaymentFlagGroupByOutputType[P]>
+            : GetScalarType<T[P], PaymentFlagGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PaymentFlagSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    paymentId?: boolean
+    createdAt?: boolean
+    source?: boolean
+    kind?: boolean
+    expected?: boolean
+    received?: boolean
+    statusWas?: boolean
+    details?: boolean
+    resolvedAt?: boolean
+    resolvedBy?: boolean
+    resolution?: boolean
+    note?: boolean
+  }, ExtArgs["result"]["paymentFlag"]>
+
+  export type PaymentFlagSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    paymentId?: boolean
+    createdAt?: boolean
+    source?: boolean
+    kind?: boolean
+    expected?: boolean
+    received?: boolean
+    statusWas?: boolean
+    details?: boolean
+    resolvedAt?: boolean
+    resolvedBy?: boolean
+    resolution?: boolean
+    note?: boolean
+  }, ExtArgs["result"]["paymentFlag"]>
+
+  export type PaymentFlagSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    paymentId?: boolean
+    createdAt?: boolean
+    source?: boolean
+    kind?: boolean
+    expected?: boolean
+    received?: boolean
+    statusWas?: boolean
+    details?: boolean
+    resolvedAt?: boolean
+    resolvedBy?: boolean
+    resolution?: boolean
+    note?: boolean
+  }, ExtArgs["result"]["paymentFlag"]>
+
+  export type PaymentFlagSelectScalar = {
+    id?: boolean
+    paymentId?: boolean
+    createdAt?: boolean
+    source?: boolean
+    kind?: boolean
+    expected?: boolean
+    received?: boolean
+    statusWas?: boolean
+    details?: boolean
+    resolvedAt?: boolean
+    resolvedBy?: boolean
+    resolution?: boolean
+    note?: boolean
+  }
+
+  export type PaymentFlagOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "paymentId" | "createdAt" | "source" | "kind" | "expected" | "received" | "statusWas" | "details" | "resolvedAt" | "resolvedBy" | "resolution" | "note", ExtArgs["result"]["paymentFlag"]>
+
+  export type $PaymentFlagPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PaymentFlag"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      paymentId: string
+      createdAt: Date
+      source: string
+      kind: string
+      expected: Prisma.JsonValue
+      received: Prisma.JsonValue
+      statusWas: string
+      details: Prisma.JsonValue | null
+      resolvedAt: Date | null
+      resolvedBy: string | null
+      resolution: string | null
+      note: string | null
+    }, ExtArgs["result"]["paymentFlag"]>
+    composites: {}
+  }
+
+  type PaymentFlagGetPayload<S extends boolean | null | undefined | PaymentFlagDefaultArgs> = $Result.GetResult<Prisma.$PaymentFlagPayload, S>
+
+  type PaymentFlagCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PaymentFlagFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PaymentFlagCountAggregateInputType | true
+    }
+
+  export interface PaymentFlagDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PaymentFlag'], meta: { name: 'PaymentFlag' } }
+    /**
+     * Find zero or one PaymentFlag that matches the filter.
+     * @param {PaymentFlagFindUniqueArgs} args - Arguments to find a PaymentFlag
+     * @example
+     * // Get one PaymentFlag
+     * const paymentFlag = await prisma.paymentFlag.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PaymentFlagFindUniqueArgs>(args: SelectSubset<T, PaymentFlagFindUniqueArgs<ExtArgs>>): Prisma__PaymentFlagClient<$Result.GetResult<Prisma.$PaymentFlagPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one PaymentFlag that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PaymentFlagFindUniqueOrThrowArgs} args - Arguments to find a PaymentFlag
+     * @example
+     * // Get one PaymentFlag
+     * const paymentFlag = await prisma.paymentFlag.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PaymentFlagFindUniqueOrThrowArgs>(args: SelectSubset<T, PaymentFlagFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PaymentFlagClient<$Result.GetResult<Prisma.$PaymentFlagPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PaymentFlag that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PaymentFlagFindFirstArgs} args - Arguments to find a PaymentFlag
+     * @example
+     * // Get one PaymentFlag
+     * const paymentFlag = await prisma.paymentFlag.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PaymentFlagFindFirstArgs>(args?: SelectSubset<T, PaymentFlagFindFirstArgs<ExtArgs>>): Prisma__PaymentFlagClient<$Result.GetResult<Prisma.$PaymentFlagPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PaymentFlag that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PaymentFlagFindFirstOrThrowArgs} args - Arguments to find a PaymentFlag
+     * @example
+     * // Get one PaymentFlag
+     * const paymentFlag = await prisma.paymentFlag.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PaymentFlagFindFirstOrThrowArgs>(args?: SelectSubset<T, PaymentFlagFindFirstOrThrowArgs<ExtArgs>>): Prisma__PaymentFlagClient<$Result.GetResult<Prisma.$PaymentFlagPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more PaymentFlags that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PaymentFlagFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PaymentFlags
+     * const paymentFlags = await prisma.paymentFlag.findMany()
+     * 
+     * // Get first 10 PaymentFlags
+     * const paymentFlags = await prisma.paymentFlag.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const paymentFlagWithIdOnly = await prisma.paymentFlag.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PaymentFlagFindManyArgs>(args?: SelectSubset<T, PaymentFlagFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PaymentFlagPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a PaymentFlag.
+     * @param {PaymentFlagCreateArgs} args - Arguments to create a PaymentFlag.
+     * @example
+     * // Create one PaymentFlag
+     * const PaymentFlag = await prisma.paymentFlag.create({
+     *   data: {
+     *     // ... data to create a PaymentFlag
+     *   }
+     * })
+     * 
+     */
+    create<T extends PaymentFlagCreateArgs>(args: SelectSubset<T, PaymentFlagCreateArgs<ExtArgs>>): Prisma__PaymentFlagClient<$Result.GetResult<Prisma.$PaymentFlagPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many PaymentFlags.
+     * @param {PaymentFlagCreateManyArgs} args - Arguments to create many PaymentFlags.
+     * @example
+     * // Create many PaymentFlags
+     * const paymentFlag = await prisma.paymentFlag.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PaymentFlagCreateManyArgs>(args?: SelectSubset<T, PaymentFlagCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PaymentFlags and returns the data saved in the database.
+     * @param {PaymentFlagCreateManyAndReturnArgs} args - Arguments to create many PaymentFlags.
+     * @example
+     * // Create many PaymentFlags
+     * const paymentFlag = await prisma.paymentFlag.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PaymentFlags and only return the `id`
+     * const paymentFlagWithIdOnly = await prisma.paymentFlag.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PaymentFlagCreateManyAndReturnArgs>(args?: SelectSubset<T, PaymentFlagCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PaymentFlagPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a PaymentFlag.
+     * @param {PaymentFlagDeleteArgs} args - Arguments to delete one PaymentFlag.
+     * @example
+     * // Delete one PaymentFlag
+     * const PaymentFlag = await prisma.paymentFlag.delete({
+     *   where: {
+     *     // ... filter to delete one PaymentFlag
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PaymentFlagDeleteArgs>(args: SelectSubset<T, PaymentFlagDeleteArgs<ExtArgs>>): Prisma__PaymentFlagClient<$Result.GetResult<Prisma.$PaymentFlagPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one PaymentFlag.
+     * @param {PaymentFlagUpdateArgs} args - Arguments to update one PaymentFlag.
+     * @example
+     * // Update one PaymentFlag
+     * const paymentFlag = await prisma.paymentFlag.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PaymentFlagUpdateArgs>(args: SelectSubset<T, PaymentFlagUpdateArgs<ExtArgs>>): Prisma__PaymentFlagClient<$Result.GetResult<Prisma.$PaymentFlagPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more PaymentFlags.
+     * @param {PaymentFlagDeleteManyArgs} args - Arguments to filter PaymentFlags to delete.
+     * @example
+     * // Delete a few PaymentFlags
+     * const { count } = await prisma.paymentFlag.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PaymentFlagDeleteManyArgs>(args?: SelectSubset<T, PaymentFlagDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PaymentFlags.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PaymentFlagUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PaymentFlags
+     * const paymentFlag = await prisma.paymentFlag.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PaymentFlagUpdateManyArgs>(args: SelectSubset<T, PaymentFlagUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PaymentFlags and returns the data updated in the database.
+     * @param {PaymentFlagUpdateManyAndReturnArgs} args - Arguments to update many PaymentFlags.
+     * @example
+     * // Update many PaymentFlags
+     * const paymentFlag = await prisma.paymentFlag.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more PaymentFlags and only return the `id`
+     * const paymentFlagWithIdOnly = await prisma.paymentFlag.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PaymentFlagUpdateManyAndReturnArgs>(args: SelectSubset<T, PaymentFlagUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PaymentFlagPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one PaymentFlag.
+     * @param {PaymentFlagUpsertArgs} args - Arguments to update or create a PaymentFlag.
+     * @example
+     * // Update or create a PaymentFlag
+     * const paymentFlag = await prisma.paymentFlag.upsert({
+     *   create: {
+     *     // ... data to create a PaymentFlag
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PaymentFlag we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PaymentFlagUpsertArgs>(args: SelectSubset<T, PaymentFlagUpsertArgs<ExtArgs>>): Prisma__PaymentFlagClient<$Result.GetResult<Prisma.$PaymentFlagPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of PaymentFlags.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PaymentFlagCountArgs} args - Arguments to filter PaymentFlags to count.
+     * @example
+     * // Count the number of PaymentFlags
+     * const count = await prisma.paymentFlag.count({
+     *   where: {
+     *     // ... the filter for the PaymentFlags we want to count
+     *   }
+     * })
+    **/
+    count<T extends PaymentFlagCountArgs>(
+      args?: Subset<T, PaymentFlagCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PaymentFlagCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PaymentFlag.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PaymentFlagAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PaymentFlagAggregateArgs>(args: Subset<T, PaymentFlagAggregateArgs>): Prisma.PrismaPromise<GetPaymentFlagAggregateType<T>>
+
+    /**
+     * Group by PaymentFlag.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PaymentFlagGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PaymentFlagGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PaymentFlagGroupByArgs['orderBy'] }
+        : { orderBy?: PaymentFlagGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PaymentFlagGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPaymentFlagGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PaymentFlag model
+   */
+  readonly fields: PaymentFlagFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PaymentFlag.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PaymentFlagClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PaymentFlag model
+   */
+  interface PaymentFlagFieldRefs {
+    readonly id: FieldRef<"PaymentFlag", 'String'>
+    readonly paymentId: FieldRef<"PaymentFlag", 'String'>
+    readonly createdAt: FieldRef<"PaymentFlag", 'DateTime'>
+    readonly source: FieldRef<"PaymentFlag", 'String'>
+    readonly kind: FieldRef<"PaymentFlag", 'String'>
+    readonly expected: FieldRef<"PaymentFlag", 'Json'>
+    readonly received: FieldRef<"PaymentFlag", 'Json'>
+    readonly statusWas: FieldRef<"PaymentFlag", 'String'>
+    readonly details: FieldRef<"PaymentFlag", 'Json'>
+    readonly resolvedAt: FieldRef<"PaymentFlag", 'DateTime'>
+    readonly resolvedBy: FieldRef<"PaymentFlag", 'String'>
+    readonly resolution: FieldRef<"PaymentFlag", 'String'>
+    readonly note: FieldRef<"PaymentFlag", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PaymentFlag findUnique
+   */
+  export type PaymentFlagFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentFlag
+     */
+    select?: PaymentFlagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PaymentFlag
+     */
+    omit?: PaymentFlagOmit<ExtArgs> | null
+    /**
+     * Filter, which PaymentFlag to fetch.
+     */
+    where: PaymentFlagWhereUniqueInput
+  }
+
+  /**
+   * PaymentFlag findUniqueOrThrow
+   */
+  export type PaymentFlagFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentFlag
+     */
+    select?: PaymentFlagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PaymentFlag
+     */
+    omit?: PaymentFlagOmit<ExtArgs> | null
+    /**
+     * Filter, which PaymentFlag to fetch.
+     */
+    where: PaymentFlagWhereUniqueInput
+  }
+
+  /**
+   * PaymentFlag findFirst
+   */
+  export type PaymentFlagFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentFlag
+     */
+    select?: PaymentFlagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PaymentFlag
+     */
+    omit?: PaymentFlagOmit<ExtArgs> | null
+    /**
+     * Filter, which PaymentFlag to fetch.
+     */
+    where?: PaymentFlagWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PaymentFlags to fetch.
+     */
+    orderBy?: PaymentFlagOrderByWithRelationInput | PaymentFlagOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PaymentFlags.
+     */
+    cursor?: PaymentFlagWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PaymentFlags from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PaymentFlags.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PaymentFlags.
+     */
+    distinct?: PaymentFlagScalarFieldEnum | PaymentFlagScalarFieldEnum[]
+  }
+
+  /**
+   * PaymentFlag findFirstOrThrow
+   */
+  export type PaymentFlagFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentFlag
+     */
+    select?: PaymentFlagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PaymentFlag
+     */
+    omit?: PaymentFlagOmit<ExtArgs> | null
+    /**
+     * Filter, which PaymentFlag to fetch.
+     */
+    where?: PaymentFlagWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PaymentFlags to fetch.
+     */
+    orderBy?: PaymentFlagOrderByWithRelationInput | PaymentFlagOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PaymentFlags.
+     */
+    cursor?: PaymentFlagWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PaymentFlags from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PaymentFlags.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PaymentFlags.
+     */
+    distinct?: PaymentFlagScalarFieldEnum | PaymentFlagScalarFieldEnum[]
+  }
+
+  /**
+   * PaymentFlag findMany
+   */
+  export type PaymentFlagFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentFlag
+     */
+    select?: PaymentFlagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PaymentFlag
+     */
+    omit?: PaymentFlagOmit<ExtArgs> | null
+    /**
+     * Filter, which PaymentFlags to fetch.
+     */
+    where?: PaymentFlagWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PaymentFlags to fetch.
+     */
+    orderBy?: PaymentFlagOrderByWithRelationInput | PaymentFlagOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PaymentFlags.
+     */
+    cursor?: PaymentFlagWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PaymentFlags from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PaymentFlags.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PaymentFlags.
+     */
+    distinct?: PaymentFlagScalarFieldEnum | PaymentFlagScalarFieldEnum[]
+  }
+
+  /**
+   * PaymentFlag create
+   */
+  export type PaymentFlagCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentFlag
+     */
+    select?: PaymentFlagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PaymentFlag
+     */
+    omit?: PaymentFlagOmit<ExtArgs> | null
+    /**
+     * The data needed to create a PaymentFlag.
+     */
+    data: XOR<PaymentFlagCreateInput, PaymentFlagUncheckedCreateInput>
+  }
+
+  /**
+   * PaymentFlag createMany
+   */
+  export type PaymentFlagCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PaymentFlags.
+     */
+    data: PaymentFlagCreateManyInput | PaymentFlagCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PaymentFlag createManyAndReturn
+   */
+  export type PaymentFlagCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentFlag
+     */
+    select?: PaymentFlagSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PaymentFlag
+     */
+    omit?: PaymentFlagOmit<ExtArgs> | null
+    /**
+     * The data used to create many PaymentFlags.
+     */
+    data: PaymentFlagCreateManyInput | PaymentFlagCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PaymentFlag update
+   */
+  export type PaymentFlagUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentFlag
+     */
+    select?: PaymentFlagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PaymentFlag
+     */
+    omit?: PaymentFlagOmit<ExtArgs> | null
+    /**
+     * The data needed to update a PaymentFlag.
+     */
+    data: XOR<PaymentFlagUpdateInput, PaymentFlagUncheckedUpdateInput>
+    /**
+     * Choose, which PaymentFlag to update.
+     */
+    where: PaymentFlagWhereUniqueInput
+  }
+
+  /**
+   * PaymentFlag updateMany
+   */
+  export type PaymentFlagUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PaymentFlags.
+     */
+    data: XOR<PaymentFlagUpdateManyMutationInput, PaymentFlagUncheckedUpdateManyInput>
+    /**
+     * Filter which PaymentFlags to update
+     */
+    where?: PaymentFlagWhereInput
+    /**
+     * Limit how many PaymentFlags to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PaymentFlag updateManyAndReturn
+   */
+  export type PaymentFlagUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentFlag
+     */
+    select?: PaymentFlagSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PaymentFlag
+     */
+    omit?: PaymentFlagOmit<ExtArgs> | null
+    /**
+     * The data used to update PaymentFlags.
+     */
+    data: XOR<PaymentFlagUpdateManyMutationInput, PaymentFlagUncheckedUpdateManyInput>
+    /**
+     * Filter which PaymentFlags to update
+     */
+    where?: PaymentFlagWhereInput
+    /**
+     * Limit how many PaymentFlags to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PaymentFlag upsert
+   */
+  export type PaymentFlagUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentFlag
+     */
+    select?: PaymentFlagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PaymentFlag
+     */
+    omit?: PaymentFlagOmit<ExtArgs> | null
+    /**
+     * The filter to search for the PaymentFlag to update in case it exists.
+     */
+    where: PaymentFlagWhereUniqueInput
+    /**
+     * In case the PaymentFlag found by the `where` argument doesn't exist, create a new PaymentFlag with this data.
+     */
+    create: XOR<PaymentFlagCreateInput, PaymentFlagUncheckedCreateInput>
+    /**
+     * In case the PaymentFlag was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PaymentFlagUpdateInput, PaymentFlagUncheckedUpdateInput>
+  }
+
+  /**
+   * PaymentFlag delete
+   */
+  export type PaymentFlagDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentFlag
+     */
+    select?: PaymentFlagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PaymentFlag
+     */
+    omit?: PaymentFlagOmit<ExtArgs> | null
+    /**
+     * Filter which PaymentFlag to delete.
+     */
+    where: PaymentFlagWhereUniqueInput
+  }
+
+  /**
+   * PaymentFlag deleteMany
+   */
+  export type PaymentFlagDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PaymentFlags to delete
+     */
+    where?: PaymentFlagWhereInput
+    /**
+     * Limit how many PaymentFlags to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * PaymentFlag without action
+   */
+  export type PaymentFlagDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentFlag
+     */
+    select?: PaymentFlagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PaymentFlag
+     */
+    omit?: PaymentFlagOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -24423,7 +28128,12 @@ export namespace Prisma {
     mnoReference: 'mnoReference',
     cbsReference: 'cbsReference',
     paymentDetails: 'paymentDetails',
-    bikeHireId: 'bikeHireId'
+    bikeHireId: 'bikeHireId',
+    lastCheckedAt: 'lastCheckedAt',
+    checkCount: 'checkCount',
+    lastCheckResult: 'lastCheckResult',
+    flaggedAt: 'flaggedAt',
+    flagReason: 'flagReason'
   };
 
   export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeof PaymentScalarFieldEnum]
@@ -24641,6 +28351,62 @@ export namespace Prisma {
   export type GalleryPhotoScalarFieldEnum = (typeof GalleryPhotoScalarFieldEnum)[keyof typeof GalleryPhotoScalarFieldEnum]
 
 
+  export const NotificationScalarFieldEnum: {
+    id: 'id',
+    channel: 'channel',
+    recipient: 'recipient',
+    template: 'template',
+    payload: 'payload',
+    dedupeKey: 'dedupeKey',
+    status: 'status',
+    attempts: 'attempts',
+    nextAttemptAt: 'nextAttemptAt',
+    lastError: 'lastError',
+    sentAt: 'sentAt',
+    meta: 'meta',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type NotificationScalarFieldEnum = (typeof NotificationScalarFieldEnum)[keyof typeof NotificationScalarFieldEnum]
+
+
+  export const ReconciliationRunScalarFieldEnum: {
+    id: 'id',
+    trigger: 'trigger',
+    startedAt: 'startedAt',
+    finishedAt: 'finishedAt',
+    checked: 'checked',
+    paid: 'paid',
+    failed: 'failed',
+    stillPending: 'stillPending',
+    errors: 'errors',
+    expired: 'expired',
+    details: 'details'
+  };
+
+  export type ReconciliationRunScalarFieldEnum = (typeof ReconciliationRunScalarFieldEnum)[keyof typeof ReconciliationRunScalarFieldEnum]
+
+
+  export const PaymentFlagScalarFieldEnum: {
+    id: 'id',
+    paymentId: 'paymentId',
+    createdAt: 'createdAt',
+    source: 'source',
+    kind: 'kind',
+    expected: 'expected',
+    received: 'received',
+    statusWas: 'statusWas',
+    details: 'details',
+    resolvedAt: 'resolvedAt',
+    resolvedBy: 'resolvedBy',
+    resolution: 'resolution',
+    note: 'note'
+  };
+
+  export type PaymentFlagScalarFieldEnum = (typeof PaymentFlagScalarFieldEnum)[keyof typeof PaymentFlagScalarFieldEnum]
+
+
   export const SortOrder: {
     asc: 'asc',
     desc: 'desc'
@@ -24655,6 +28421,13 @@ export namespace Prisma {
   };
 
   export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
+  export const JsonNullValueInput: {
+    JsonNull: typeof JsonNull
+  };
+
+  export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
   export const QueryMode: {
@@ -25236,6 +29009,11 @@ export namespace Prisma {
     cbsReference?: StringNullableFilter<"Payment"> | string | null
     paymentDetails?: JsonNullableFilter<"Payment">
     bikeHireId?: StringNullableFilter<"Payment"> | string | null
+    lastCheckedAt?: DateTimeNullableFilter<"Payment"> | Date | string | null
+    checkCount?: IntFilter<"Payment"> | number
+    lastCheckResult?: StringNullableFilter<"Payment"> | string | null
+    flaggedAt?: DateTimeNullableFilter<"Payment"> | Date | string | null
+    flagReason?: StringNullableFilter<"Payment"> | string | null
   }
 
   export type PaymentOrderByWithRelationInput = {
@@ -25258,6 +29036,11 @@ export namespace Prisma {
     cbsReference?: SortOrderInput | SortOrder
     paymentDetails?: SortOrderInput | SortOrder
     bikeHireId?: SortOrderInput | SortOrder
+    lastCheckedAt?: SortOrderInput | SortOrder
+    checkCount?: SortOrder
+    lastCheckResult?: SortOrderInput | SortOrder
+    flaggedAt?: SortOrderInput | SortOrder
+    flagReason?: SortOrderInput | SortOrder
   }
 
   export type PaymentWhereUniqueInput = Prisma.AtLeast<{
@@ -25283,6 +29066,11 @@ export namespace Prisma {
     cbsReference?: StringNullableFilter<"Payment"> | string | null
     paymentDetails?: JsonNullableFilter<"Payment">
     bikeHireId?: StringNullableFilter<"Payment"> | string | null
+    lastCheckedAt?: DateTimeNullableFilter<"Payment"> | Date | string | null
+    checkCount?: IntFilter<"Payment"> | number
+    lastCheckResult?: StringNullableFilter<"Payment"> | string | null
+    flaggedAt?: DateTimeNullableFilter<"Payment"> | Date | string | null
+    flagReason?: StringNullableFilter<"Payment"> | string | null
   }, "id" | "checkoutRequestId">
 
   export type PaymentOrderByWithAggregationInput = {
@@ -25305,6 +29093,11 @@ export namespace Prisma {
     cbsReference?: SortOrderInput | SortOrder
     paymentDetails?: SortOrderInput | SortOrder
     bikeHireId?: SortOrderInput | SortOrder
+    lastCheckedAt?: SortOrderInput | SortOrder
+    checkCount?: SortOrder
+    lastCheckResult?: SortOrderInput | SortOrder
+    flaggedAt?: SortOrderInput | SortOrder
+    flagReason?: SortOrderInput | SortOrder
     _count?: PaymentCountOrderByAggregateInput
     _avg?: PaymentAvgOrderByAggregateInput
     _max?: PaymentMaxOrderByAggregateInput
@@ -25335,6 +29128,11 @@ export namespace Prisma {
     cbsReference?: StringNullableWithAggregatesFilter<"Payment"> | string | null
     paymentDetails?: JsonNullableWithAggregatesFilter<"Payment">
     bikeHireId?: StringNullableWithAggregatesFilter<"Payment"> | string | null
+    lastCheckedAt?: DateTimeNullableWithAggregatesFilter<"Payment"> | Date | string | null
+    checkCount?: IntWithAggregatesFilter<"Payment"> | number
+    lastCheckResult?: StringNullableWithAggregatesFilter<"Payment"> | string | null
+    flaggedAt?: DateTimeNullableWithAggregatesFilter<"Payment"> | Date | string | null
+    flagReason?: StringNullableWithAggregatesFilter<"Payment"> | string | null
   }
 
   export type PricingCategoryWhereInput = {
@@ -26407,6 +30205,281 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"GalleryPhoto"> | Date | string
   }
 
+  export type NotificationWhereInput = {
+    AND?: NotificationWhereInput | NotificationWhereInput[]
+    OR?: NotificationWhereInput[]
+    NOT?: NotificationWhereInput | NotificationWhereInput[]
+    id?: StringFilter<"Notification"> | string
+    channel?: StringFilter<"Notification"> | string
+    recipient?: StringFilter<"Notification"> | string
+    template?: StringFilter<"Notification"> | string
+    payload?: JsonFilter<"Notification">
+    dedupeKey?: StringFilter<"Notification"> | string
+    status?: StringFilter<"Notification"> | string
+    attempts?: IntFilter<"Notification"> | number
+    nextAttemptAt?: DateTimeFilter<"Notification"> | Date | string
+    lastError?: StringNullableFilter<"Notification"> | string | null
+    sentAt?: DateTimeNullableFilter<"Notification"> | Date | string | null
+    meta?: JsonNullableFilter<"Notification">
+    createdAt?: DateTimeFilter<"Notification"> | Date | string
+    updatedAt?: DateTimeFilter<"Notification"> | Date | string
+  }
+
+  export type NotificationOrderByWithRelationInput = {
+    id?: SortOrder
+    channel?: SortOrder
+    recipient?: SortOrder
+    template?: SortOrder
+    payload?: SortOrder
+    dedupeKey?: SortOrder
+    status?: SortOrder
+    attempts?: SortOrder
+    nextAttemptAt?: SortOrder
+    lastError?: SortOrderInput | SortOrder
+    sentAt?: SortOrderInput | SortOrder
+    meta?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type NotificationWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    dedupeKey?: string
+    AND?: NotificationWhereInput | NotificationWhereInput[]
+    OR?: NotificationWhereInput[]
+    NOT?: NotificationWhereInput | NotificationWhereInput[]
+    channel?: StringFilter<"Notification"> | string
+    recipient?: StringFilter<"Notification"> | string
+    template?: StringFilter<"Notification"> | string
+    payload?: JsonFilter<"Notification">
+    status?: StringFilter<"Notification"> | string
+    attempts?: IntFilter<"Notification"> | number
+    nextAttemptAt?: DateTimeFilter<"Notification"> | Date | string
+    lastError?: StringNullableFilter<"Notification"> | string | null
+    sentAt?: DateTimeNullableFilter<"Notification"> | Date | string | null
+    meta?: JsonNullableFilter<"Notification">
+    createdAt?: DateTimeFilter<"Notification"> | Date | string
+    updatedAt?: DateTimeFilter<"Notification"> | Date | string
+  }, "id" | "dedupeKey">
+
+  export type NotificationOrderByWithAggregationInput = {
+    id?: SortOrder
+    channel?: SortOrder
+    recipient?: SortOrder
+    template?: SortOrder
+    payload?: SortOrder
+    dedupeKey?: SortOrder
+    status?: SortOrder
+    attempts?: SortOrder
+    nextAttemptAt?: SortOrder
+    lastError?: SortOrderInput | SortOrder
+    sentAt?: SortOrderInput | SortOrder
+    meta?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: NotificationCountOrderByAggregateInput
+    _avg?: NotificationAvgOrderByAggregateInput
+    _max?: NotificationMaxOrderByAggregateInput
+    _min?: NotificationMinOrderByAggregateInput
+    _sum?: NotificationSumOrderByAggregateInput
+  }
+
+  export type NotificationScalarWhereWithAggregatesInput = {
+    AND?: NotificationScalarWhereWithAggregatesInput | NotificationScalarWhereWithAggregatesInput[]
+    OR?: NotificationScalarWhereWithAggregatesInput[]
+    NOT?: NotificationScalarWhereWithAggregatesInput | NotificationScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Notification"> | string
+    channel?: StringWithAggregatesFilter<"Notification"> | string
+    recipient?: StringWithAggregatesFilter<"Notification"> | string
+    template?: StringWithAggregatesFilter<"Notification"> | string
+    payload?: JsonWithAggregatesFilter<"Notification">
+    dedupeKey?: StringWithAggregatesFilter<"Notification"> | string
+    status?: StringWithAggregatesFilter<"Notification"> | string
+    attempts?: IntWithAggregatesFilter<"Notification"> | number
+    nextAttemptAt?: DateTimeWithAggregatesFilter<"Notification"> | Date | string
+    lastError?: StringNullableWithAggregatesFilter<"Notification"> | string | null
+    sentAt?: DateTimeNullableWithAggregatesFilter<"Notification"> | Date | string | null
+    meta?: JsonNullableWithAggregatesFilter<"Notification">
+    createdAt?: DateTimeWithAggregatesFilter<"Notification"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Notification"> | Date | string
+  }
+
+  export type ReconciliationRunWhereInput = {
+    AND?: ReconciliationRunWhereInput | ReconciliationRunWhereInput[]
+    OR?: ReconciliationRunWhereInput[]
+    NOT?: ReconciliationRunWhereInput | ReconciliationRunWhereInput[]
+    id?: StringFilter<"ReconciliationRun"> | string
+    trigger?: StringFilter<"ReconciliationRun"> | string
+    startedAt?: DateTimeFilter<"ReconciliationRun"> | Date | string
+    finishedAt?: DateTimeNullableFilter<"ReconciliationRun"> | Date | string | null
+    checked?: IntFilter<"ReconciliationRun"> | number
+    paid?: IntFilter<"ReconciliationRun"> | number
+    failed?: IntFilter<"ReconciliationRun"> | number
+    stillPending?: IntFilter<"ReconciliationRun"> | number
+    errors?: IntFilter<"ReconciliationRun"> | number
+    expired?: IntFilter<"ReconciliationRun"> | number
+    details?: JsonNullableFilter<"ReconciliationRun">
+  }
+
+  export type ReconciliationRunOrderByWithRelationInput = {
+    id?: SortOrder
+    trigger?: SortOrder
+    startedAt?: SortOrder
+    finishedAt?: SortOrderInput | SortOrder
+    checked?: SortOrder
+    paid?: SortOrder
+    failed?: SortOrder
+    stillPending?: SortOrder
+    errors?: SortOrder
+    expired?: SortOrder
+    details?: SortOrderInput | SortOrder
+  }
+
+  export type ReconciliationRunWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: ReconciliationRunWhereInput | ReconciliationRunWhereInput[]
+    OR?: ReconciliationRunWhereInput[]
+    NOT?: ReconciliationRunWhereInput | ReconciliationRunWhereInput[]
+    trigger?: StringFilter<"ReconciliationRun"> | string
+    startedAt?: DateTimeFilter<"ReconciliationRun"> | Date | string
+    finishedAt?: DateTimeNullableFilter<"ReconciliationRun"> | Date | string | null
+    checked?: IntFilter<"ReconciliationRun"> | number
+    paid?: IntFilter<"ReconciliationRun"> | number
+    failed?: IntFilter<"ReconciliationRun"> | number
+    stillPending?: IntFilter<"ReconciliationRun"> | number
+    errors?: IntFilter<"ReconciliationRun"> | number
+    expired?: IntFilter<"ReconciliationRun"> | number
+    details?: JsonNullableFilter<"ReconciliationRun">
+  }, "id">
+
+  export type ReconciliationRunOrderByWithAggregationInput = {
+    id?: SortOrder
+    trigger?: SortOrder
+    startedAt?: SortOrder
+    finishedAt?: SortOrderInput | SortOrder
+    checked?: SortOrder
+    paid?: SortOrder
+    failed?: SortOrder
+    stillPending?: SortOrder
+    errors?: SortOrder
+    expired?: SortOrder
+    details?: SortOrderInput | SortOrder
+    _count?: ReconciliationRunCountOrderByAggregateInput
+    _avg?: ReconciliationRunAvgOrderByAggregateInput
+    _max?: ReconciliationRunMaxOrderByAggregateInput
+    _min?: ReconciliationRunMinOrderByAggregateInput
+    _sum?: ReconciliationRunSumOrderByAggregateInput
+  }
+
+  export type ReconciliationRunScalarWhereWithAggregatesInput = {
+    AND?: ReconciliationRunScalarWhereWithAggregatesInput | ReconciliationRunScalarWhereWithAggregatesInput[]
+    OR?: ReconciliationRunScalarWhereWithAggregatesInput[]
+    NOT?: ReconciliationRunScalarWhereWithAggregatesInput | ReconciliationRunScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"ReconciliationRun"> | string
+    trigger?: StringWithAggregatesFilter<"ReconciliationRun"> | string
+    startedAt?: DateTimeWithAggregatesFilter<"ReconciliationRun"> | Date | string
+    finishedAt?: DateTimeNullableWithAggregatesFilter<"ReconciliationRun"> | Date | string | null
+    checked?: IntWithAggregatesFilter<"ReconciliationRun"> | number
+    paid?: IntWithAggregatesFilter<"ReconciliationRun"> | number
+    failed?: IntWithAggregatesFilter<"ReconciliationRun"> | number
+    stillPending?: IntWithAggregatesFilter<"ReconciliationRun"> | number
+    errors?: IntWithAggregatesFilter<"ReconciliationRun"> | number
+    expired?: IntWithAggregatesFilter<"ReconciliationRun"> | number
+    details?: JsonNullableWithAggregatesFilter<"ReconciliationRun">
+  }
+
+  export type PaymentFlagWhereInput = {
+    AND?: PaymentFlagWhereInput | PaymentFlagWhereInput[]
+    OR?: PaymentFlagWhereInput[]
+    NOT?: PaymentFlagWhereInput | PaymentFlagWhereInput[]
+    id?: StringFilter<"PaymentFlag"> | string
+    paymentId?: StringFilter<"PaymentFlag"> | string
+    createdAt?: DateTimeFilter<"PaymentFlag"> | Date | string
+    source?: StringFilter<"PaymentFlag"> | string
+    kind?: StringFilter<"PaymentFlag"> | string
+    expected?: JsonFilter<"PaymentFlag">
+    received?: JsonFilter<"PaymentFlag">
+    statusWas?: StringFilter<"PaymentFlag"> | string
+    details?: JsonNullableFilter<"PaymentFlag">
+    resolvedAt?: DateTimeNullableFilter<"PaymentFlag"> | Date | string | null
+    resolvedBy?: StringNullableFilter<"PaymentFlag"> | string | null
+    resolution?: StringNullableFilter<"PaymentFlag"> | string | null
+    note?: StringNullableFilter<"PaymentFlag"> | string | null
+  }
+
+  export type PaymentFlagOrderByWithRelationInput = {
+    id?: SortOrder
+    paymentId?: SortOrder
+    createdAt?: SortOrder
+    source?: SortOrder
+    kind?: SortOrder
+    expected?: SortOrder
+    received?: SortOrder
+    statusWas?: SortOrder
+    details?: SortOrderInput | SortOrder
+    resolvedAt?: SortOrderInput | SortOrder
+    resolvedBy?: SortOrderInput | SortOrder
+    resolution?: SortOrderInput | SortOrder
+    note?: SortOrderInput | SortOrder
+  }
+
+  export type PaymentFlagWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: PaymentFlagWhereInput | PaymentFlagWhereInput[]
+    OR?: PaymentFlagWhereInput[]
+    NOT?: PaymentFlagWhereInput | PaymentFlagWhereInput[]
+    paymentId?: StringFilter<"PaymentFlag"> | string
+    createdAt?: DateTimeFilter<"PaymentFlag"> | Date | string
+    source?: StringFilter<"PaymentFlag"> | string
+    kind?: StringFilter<"PaymentFlag"> | string
+    expected?: JsonFilter<"PaymentFlag">
+    received?: JsonFilter<"PaymentFlag">
+    statusWas?: StringFilter<"PaymentFlag"> | string
+    details?: JsonNullableFilter<"PaymentFlag">
+    resolvedAt?: DateTimeNullableFilter<"PaymentFlag"> | Date | string | null
+    resolvedBy?: StringNullableFilter<"PaymentFlag"> | string | null
+    resolution?: StringNullableFilter<"PaymentFlag"> | string | null
+    note?: StringNullableFilter<"PaymentFlag"> | string | null
+  }, "id">
+
+  export type PaymentFlagOrderByWithAggregationInput = {
+    id?: SortOrder
+    paymentId?: SortOrder
+    createdAt?: SortOrder
+    source?: SortOrder
+    kind?: SortOrder
+    expected?: SortOrder
+    received?: SortOrder
+    statusWas?: SortOrder
+    details?: SortOrderInput | SortOrder
+    resolvedAt?: SortOrderInput | SortOrder
+    resolvedBy?: SortOrderInput | SortOrder
+    resolution?: SortOrderInput | SortOrder
+    note?: SortOrderInput | SortOrder
+    _count?: PaymentFlagCountOrderByAggregateInput
+    _max?: PaymentFlagMaxOrderByAggregateInput
+    _min?: PaymentFlagMinOrderByAggregateInput
+  }
+
+  export type PaymentFlagScalarWhereWithAggregatesInput = {
+    AND?: PaymentFlagScalarWhereWithAggregatesInput | PaymentFlagScalarWhereWithAggregatesInput[]
+    OR?: PaymentFlagScalarWhereWithAggregatesInput[]
+    NOT?: PaymentFlagScalarWhereWithAggregatesInput | PaymentFlagScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"PaymentFlag"> | string
+    paymentId?: StringWithAggregatesFilter<"PaymentFlag"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"PaymentFlag"> | Date | string
+    source?: StringWithAggregatesFilter<"PaymentFlag"> | string
+    kind?: StringWithAggregatesFilter<"PaymentFlag"> | string
+    expected?: JsonWithAggregatesFilter<"PaymentFlag">
+    received?: JsonWithAggregatesFilter<"PaymentFlag">
+    statusWas?: StringWithAggregatesFilter<"PaymentFlag"> | string
+    details?: JsonNullableWithAggregatesFilter<"PaymentFlag">
+    resolvedAt?: DateTimeNullableWithAggregatesFilter<"PaymentFlag"> | Date | string | null
+    resolvedBy?: StringNullableWithAggregatesFilter<"PaymentFlag"> | string | null
+    resolution?: StringNullableWithAggregatesFilter<"PaymentFlag"> | string | null
+    note?: StringNullableWithAggregatesFilter<"PaymentFlag"> | string | null
+  }
+
   export type RegistrationCreateInput = {
     id: string
     createdAt?: Date | string
@@ -26943,6 +31016,11 @@ export namespace Prisma {
     cbsReference?: string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
     bikeHireId?: string | null
+    lastCheckedAt?: Date | string | null
+    checkCount?: number
+    lastCheckResult?: string | null
+    flaggedAt?: Date | string | null
+    flagReason?: string | null
   }
 
   export type PaymentUncheckedCreateInput = {
@@ -26965,6 +31043,11 @@ export namespace Prisma {
     cbsReference?: string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
     bikeHireId?: string | null
+    lastCheckedAt?: Date | string | null
+    checkCount?: number
+    lastCheckResult?: string | null
+    flaggedAt?: Date | string | null
+    flagReason?: string | null
   }
 
   export type PaymentUpdateInput = {
@@ -26987,6 +31070,11 @@ export namespace Prisma {
     cbsReference?: NullableStringFieldUpdateOperationsInput | string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
     bikeHireId?: NullableStringFieldUpdateOperationsInput | string | null
+    lastCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    checkCount?: IntFieldUpdateOperationsInput | number
+    lastCheckResult?: NullableStringFieldUpdateOperationsInput | string | null
+    flaggedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    flagReason?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type PaymentUncheckedUpdateInput = {
@@ -27009,6 +31097,11 @@ export namespace Prisma {
     cbsReference?: NullableStringFieldUpdateOperationsInput | string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
     bikeHireId?: NullableStringFieldUpdateOperationsInput | string | null
+    lastCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    checkCount?: IntFieldUpdateOperationsInput | number
+    lastCheckResult?: NullableStringFieldUpdateOperationsInput | string | null
+    flaggedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    flagReason?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type PaymentCreateManyInput = {
@@ -27031,6 +31124,11 @@ export namespace Prisma {
     cbsReference?: string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
     bikeHireId?: string | null
+    lastCheckedAt?: Date | string | null
+    checkCount?: number
+    lastCheckResult?: string | null
+    flaggedAt?: Date | string | null
+    flagReason?: string | null
   }
 
   export type PaymentUpdateManyMutationInput = {
@@ -27053,6 +31151,11 @@ export namespace Prisma {
     cbsReference?: NullableStringFieldUpdateOperationsInput | string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
     bikeHireId?: NullableStringFieldUpdateOperationsInput | string | null
+    lastCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    checkCount?: IntFieldUpdateOperationsInput | number
+    lastCheckResult?: NullableStringFieldUpdateOperationsInput | string | null
+    flaggedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    flagReason?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type PaymentUncheckedUpdateManyInput = {
@@ -27075,6 +31178,11 @@ export namespace Prisma {
     cbsReference?: NullableStringFieldUpdateOperationsInput | string | null
     paymentDetails?: NullableJsonNullValueInput | InputJsonValue
     bikeHireId?: NullableStringFieldUpdateOperationsInput | string | null
+    lastCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    checkCount?: IntFieldUpdateOperationsInput | number
+    lastCheckResult?: NullableStringFieldUpdateOperationsInput | string | null
+    flaggedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    flagReason?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type PricingCategoryCreateInput = {
@@ -28286,6 +32394,335 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type NotificationCreateInput = {
+    id?: string
+    channel: string
+    recipient: string
+    template: string
+    payload: JsonNullValueInput | InputJsonValue
+    dedupeKey: string
+    status?: string
+    attempts?: number
+    nextAttemptAt?: Date | string
+    lastError?: string | null
+    sentAt?: Date | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type NotificationUncheckedCreateInput = {
+    id?: string
+    channel: string
+    recipient: string
+    template: string
+    payload: JsonNullValueInput | InputJsonValue
+    dedupeKey: string
+    status?: string
+    attempts?: number
+    nextAttemptAt?: Date | string
+    lastError?: string | null
+    sentAt?: Date | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type NotificationUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    channel?: StringFieldUpdateOperationsInput | string
+    recipient?: StringFieldUpdateOperationsInput | string
+    template?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    dedupeKey?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    attempts?: IntFieldUpdateOperationsInput | number
+    nextAttemptAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    sentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NotificationUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    channel?: StringFieldUpdateOperationsInput | string
+    recipient?: StringFieldUpdateOperationsInput | string
+    template?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    dedupeKey?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    attempts?: IntFieldUpdateOperationsInput | number
+    nextAttemptAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    sentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NotificationCreateManyInput = {
+    id?: string
+    channel: string
+    recipient: string
+    template: string
+    payload: JsonNullValueInput | InputJsonValue
+    dedupeKey: string
+    status?: string
+    attempts?: number
+    nextAttemptAt?: Date | string
+    lastError?: string | null
+    sentAt?: Date | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type NotificationUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    channel?: StringFieldUpdateOperationsInput | string
+    recipient?: StringFieldUpdateOperationsInput | string
+    template?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    dedupeKey?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    attempts?: IntFieldUpdateOperationsInput | number
+    nextAttemptAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    sentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NotificationUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    channel?: StringFieldUpdateOperationsInput | string
+    recipient?: StringFieldUpdateOperationsInput | string
+    template?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    dedupeKey?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    attempts?: IntFieldUpdateOperationsInput | number
+    nextAttemptAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lastError?: NullableStringFieldUpdateOperationsInput | string | null
+    sentAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    meta?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ReconciliationRunCreateInput = {
+    id?: string
+    trigger: string
+    startedAt?: Date | string
+    finishedAt?: Date | string | null
+    checked?: number
+    paid?: number
+    failed?: number
+    stillPending?: number
+    errors?: number
+    expired?: number
+    details?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type ReconciliationRunUncheckedCreateInput = {
+    id?: string
+    trigger: string
+    startedAt?: Date | string
+    finishedAt?: Date | string | null
+    checked?: number
+    paid?: number
+    failed?: number
+    stillPending?: number
+    errors?: number
+    expired?: number
+    details?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type ReconciliationRunUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    trigger?: StringFieldUpdateOperationsInput | string
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    checked?: IntFieldUpdateOperationsInput | number
+    paid?: IntFieldUpdateOperationsInput | number
+    failed?: IntFieldUpdateOperationsInput | number
+    stillPending?: IntFieldUpdateOperationsInput | number
+    errors?: IntFieldUpdateOperationsInput | number
+    expired?: IntFieldUpdateOperationsInput | number
+    details?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type ReconciliationRunUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    trigger?: StringFieldUpdateOperationsInput | string
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    checked?: IntFieldUpdateOperationsInput | number
+    paid?: IntFieldUpdateOperationsInput | number
+    failed?: IntFieldUpdateOperationsInput | number
+    stillPending?: IntFieldUpdateOperationsInput | number
+    errors?: IntFieldUpdateOperationsInput | number
+    expired?: IntFieldUpdateOperationsInput | number
+    details?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type ReconciliationRunCreateManyInput = {
+    id?: string
+    trigger: string
+    startedAt?: Date | string
+    finishedAt?: Date | string | null
+    checked?: number
+    paid?: number
+    failed?: number
+    stillPending?: number
+    errors?: number
+    expired?: number
+    details?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type ReconciliationRunUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    trigger?: StringFieldUpdateOperationsInput | string
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    checked?: IntFieldUpdateOperationsInput | number
+    paid?: IntFieldUpdateOperationsInput | number
+    failed?: IntFieldUpdateOperationsInput | number
+    stillPending?: IntFieldUpdateOperationsInput | number
+    errors?: IntFieldUpdateOperationsInput | number
+    expired?: IntFieldUpdateOperationsInput | number
+    details?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type ReconciliationRunUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    trigger?: StringFieldUpdateOperationsInput | string
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    finishedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    checked?: IntFieldUpdateOperationsInput | number
+    paid?: IntFieldUpdateOperationsInput | number
+    failed?: IntFieldUpdateOperationsInput | number
+    stillPending?: IntFieldUpdateOperationsInput | number
+    errors?: IntFieldUpdateOperationsInput | number
+    expired?: IntFieldUpdateOperationsInput | number
+    details?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type PaymentFlagCreateInput = {
+    id?: string
+    paymentId: string
+    createdAt?: Date | string
+    source: string
+    kind: string
+    expected: JsonNullValueInput | InputJsonValue
+    received: JsonNullValueInput | InputJsonValue
+    statusWas: string
+    details?: NullableJsonNullValueInput | InputJsonValue
+    resolvedAt?: Date | string | null
+    resolvedBy?: string | null
+    resolution?: string | null
+    note?: string | null
+  }
+
+  export type PaymentFlagUncheckedCreateInput = {
+    id?: string
+    paymentId: string
+    createdAt?: Date | string
+    source: string
+    kind: string
+    expected: JsonNullValueInput | InputJsonValue
+    received: JsonNullValueInput | InputJsonValue
+    statusWas: string
+    details?: NullableJsonNullValueInput | InputJsonValue
+    resolvedAt?: Date | string | null
+    resolvedBy?: string | null
+    resolution?: string | null
+    note?: string | null
+  }
+
+  export type PaymentFlagUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    paymentId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    source?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    expected?: JsonNullValueInput | InputJsonValue
+    received?: JsonNullValueInput | InputJsonValue
+    statusWas?: StringFieldUpdateOperationsInput | string
+    details?: NullableJsonNullValueInput | InputJsonValue
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    resolvedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    resolution?: NullableStringFieldUpdateOperationsInput | string | null
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type PaymentFlagUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    paymentId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    source?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    expected?: JsonNullValueInput | InputJsonValue
+    received?: JsonNullValueInput | InputJsonValue
+    statusWas?: StringFieldUpdateOperationsInput | string
+    details?: NullableJsonNullValueInput | InputJsonValue
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    resolvedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    resolution?: NullableStringFieldUpdateOperationsInput | string | null
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type PaymentFlagCreateManyInput = {
+    id?: string
+    paymentId: string
+    createdAt?: Date | string
+    source: string
+    kind: string
+    expected: JsonNullValueInput | InputJsonValue
+    received: JsonNullValueInput | InputJsonValue
+    statusWas: string
+    details?: NullableJsonNullValueInput | InputJsonValue
+    resolvedAt?: Date | string | null
+    resolvedBy?: string | null
+    resolution?: string | null
+    note?: string | null
+  }
+
+  export type PaymentFlagUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    paymentId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    source?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    expected?: JsonNullValueInput | InputJsonValue
+    received?: JsonNullValueInput | InputJsonValue
+    statusWas?: StringFieldUpdateOperationsInput | string
+    details?: NullableJsonNullValueInput | InputJsonValue
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    resolvedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    resolution?: NullableStringFieldUpdateOperationsInput | string | null
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type PaymentFlagUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    paymentId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    source?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    expected?: JsonNullValueInput | InputJsonValue
+    received?: JsonNullValueInput | InputJsonValue
+    statusWas?: StringFieldUpdateOperationsInput | string
+    details?: NullableJsonNullValueInput | InputJsonValue
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    resolvedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    resolution?: NullableStringFieldUpdateOperationsInput | string | null
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -28849,10 +33286,16 @@ export namespace Prisma {
     cbsReference?: SortOrder
     paymentDetails?: SortOrder
     bikeHireId?: SortOrder
+    lastCheckedAt?: SortOrder
+    checkCount?: SortOrder
+    lastCheckResult?: SortOrder
+    flaggedAt?: SortOrder
+    flagReason?: SortOrder
   }
 
   export type PaymentAvgOrderByAggregateInput = {
     amount?: SortOrder
+    checkCount?: SortOrder
   }
 
   export type PaymentMaxOrderByAggregateInput = {
@@ -28873,6 +33316,11 @@ export namespace Prisma {
     mnoReference?: SortOrder
     cbsReference?: SortOrder
     bikeHireId?: SortOrder
+    lastCheckedAt?: SortOrder
+    checkCount?: SortOrder
+    lastCheckResult?: SortOrder
+    flaggedAt?: SortOrder
+    flagReason?: SortOrder
   }
 
   export type PaymentMinOrderByAggregateInput = {
@@ -28893,10 +33341,16 @@ export namespace Prisma {
     mnoReference?: SortOrder
     cbsReference?: SortOrder
     bikeHireId?: SortOrder
+    lastCheckedAt?: SortOrder
+    checkCount?: SortOrder
+    lastCheckResult?: SortOrder
+    flaggedAt?: SortOrder
+    flagReason?: SortOrder
   }
 
   export type PaymentSumOrderByAggregateInput = {
     amount?: SortOrder
+    checkCount?: SortOrder
   }
 
   export type PricingCategoryCircuitIdTypeCategoryNameFamilyCategoryCompoundUniqueInput = {
@@ -29554,6 +34008,210 @@ export namespace Prisma {
     width?: SortOrder
     height?: SortOrder
     sortOrder?: SortOrder
+  }
+  export type JsonFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type NotificationCountOrderByAggregateInput = {
+    id?: SortOrder
+    channel?: SortOrder
+    recipient?: SortOrder
+    template?: SortOrder
+    payload?: SortOrder
+    dedupeKey?: SortOrder
+    status?: SortOrder
+    attempts?: SortOrder
+    nextAttemptAt?: SortOrder
+    lastError?: SortOrder
+    sentAt?: SortOrder
+    meta?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type NotificationAvgOrderByAggregateInput = {
+    attempts?: SortOrder
+  }
+
+  export type NotificationMaxOrderByAggregateInput = {
+    id?: SortOrder
+    channel?: SortOrder
+    recipient?: SortOrder
+    template?: SortOrder
+    dedupeKey?: SortOrder
+    status?: SortOrder
+    attempts?: SortOrder
+    nextAttemptAt?: SortOrder
+    lastError?: SortOrder
+    sentAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type NotificationMinOrderByAggregateInput = {
+    id?: SortOrder
+    channel?: SortOrder
+    recipient?: SortOrder
+    template?: SortOrder
+    dedupeKey?: SortOrder
+    status?: SortOrder
+    attempts?: SortOrder
+    nextAttemptAt?: SortOrder
+    lastError?: SortOrder
+    sentAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type NotificationSumOrderByAggregateInput = {
+    attempts?: SortOrder
+  }
+  export type JsonWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedJsonFilter<$PrismaModel>
+    _max?: NestedJsonFilter<$PrismaModel>
+  }
+
+  export type ReconciliationRunCountOrderByAggregateInput = {
+    id?: SortOrder
+    trigger?: SortOrder
+    startedAt?: SortOrder
+    finishedAt?: SortOrder
+    checked?: SortOrder
+    paid?: SortOrder
+    failed?: SortOrder
+    stillPending?: SortOrder
+    errors?: SortOrder
+    expired?: SortOrder
+    details?: SortOrder
+  }
+
+  export type ReconciliationRunAvgOrderByAggregateInput = {
+    checked?: SortOrder
+    paid?: SortOrder
+    failed?: SortOrder
+    stillPending?: SortOrder
+    errors?: SortOrder
+    expired?: SortOrder
+  }
+
+  export type ReconciliationRunMaxOrderByAggregateInput = {
+    id?: SortOrder
+    trigger?: SortOrder
+    startedAt?: SortOrder
+    finishedAt?: SortOrder
+    checked?: SortOrder
+    paid?: SortOrder
+    failed?: SortOrder
+    stillPending?: SortOrder
+    errors?: SortOrder
+    expired?: SortOrder
+  }
+
+  export type ReconciliationRunMinOrderByAggregateInput = {
+    id?: SortOrder
+    trigger?: SortOrder
+    startedAt?: SortOrder
+    finishedAt?: SortOrder
+    checked?: SortOrder
+    paid?: SortOrder
+    failed?: SortOrder
+    stillPending?: SortOrder
+    errors?: SortOrder
+    expired?: SortOrder
+  }
+
+  export type ReconciliationRunSumOrderByAggregateInput = {
+    checked?: SortOrder
+    paid?: SortOrder
+    failed?: SortOrder
+    stillPending?: SortOrder
+    errors?: SortOrder
+    expired?: SortOrder
+  }
+
+  export type PaymentFlagCountOrderByAggregateInput = {
+    id?: SortOrder
+    paymentId?: SortOrder
+    createdAt?: SortOrder
+    source?: SortOrder
+    kind?: SortOrder
+    expected?: SortOrder
+    received?: SortOrder
+    statusWas?: SortOrder
+    details?: SortOrder
+    resolvedAt?: SortOrder
+    resolvedBy?: SortOrder
+    resolution?: SortOrder
+    note?: SortOrder
+  }
+
+  export type PaymentFlagMaxOrderByAggregateInput = {
+    id?: SortOrder
+    paymentId?: SortOrder
+    createdAt?: SortOrder
+    source?: SortOrder
+    kind?: SortOrder
+    statusWas?: SortOrder
+    resolvedAt?: SortOrder
+    resolvedBy?: SortOrder
+    resolution?: SortOrder
+    note?: SortOrder
+  }
+
+  export type PaymentFlagMinOrderByAggregateInput = {
+    id?: SortOrder
+    paymentId?: SortOrder
+    createdAt?: SortOrder
+    source?: SortOrder
+    kind?: SortOrder
+    statusWas?: SortOrder
+    resolvedAt?: SortOrder
+    resolvedBy?: SortOrder
+    resolution?: SortOrder
+    note?: SortOrder
   }
 
   export type BikeHireCreateNestedOneWithoutRegistrationInput = {
@@ -30316,6 +34974,29 @@ export namespace Prisma {
     gt?: number | FloatFieldRefInput<$PrismaModel>
     gte?: number | FloatFieldRefInput<$PrismaModel>
     not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+  export type NestedJsonFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
   export type BikeHireCreateWithoutRegistrationInput = {

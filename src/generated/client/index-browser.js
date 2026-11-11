@@ -212,7 +212,12 @@ exports.Prisma.PaymentScalarFieldEnum = {
   mnoReference: 'mnoReference',
   cbsReference: 'cbsReference',
   paymentDetails: 'paymentDetails',
-  bikeHireId: 'bikeHireId'
+  bikeHireId: 'bikeHireId',
+  lastCheckedAt: 'lastCheckedAt',
+  checkCount: 'checkCount',
+  lastCheckResult: 'lastCheckResult',
+  flaggedAt: 'flaggedAt',
+  flagReason: 'flagReason'
 };
 
 exports.Prisma.PricingCategoryScalarFieldEnum = {
@@ -385,6 +390,53 @@ exports.Prisma.GalleryPhotoScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.NotificationScalarFieldEnum = {
+  id: 'id',
+  channel: 'channel',
+  recipient: 'recipient',
+  template: 'template',
+  payload: 'payload',
+  dedupeKey: 'dedupeKey',
+  status: 'status',
+  attempts: 'attempts',
+  nextAttemptAt: 'nextAttemptAt',
+  lastError: 'lastError',
+  sentAt: 'sentAt',
+  meta: 'meta',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ReconciliationRunScalarFieldEnum = {
+  id: 'id',
+  trigger: 'trigger',
+  startedAt: 'startedAt',
+  finishedAt: 'finishedAt',
+  checked: 'checked',
+  paid: 'paid',
+  failed: 'failed',
+  stillPending: 'stillPending',
+  errors: 'errors',
+  expired: 'expired',
+  details: 'details'
+};
+
+exports.Prisma.PaymentFlagScalarFieldEnum = {
+  id: 'id',
+  paymentId: 'paymentId',
+  createdAt: 'createdAt',
+  source: 'source',
+  kind: 'kind',
+  expected: 'expected',
+  received: 'received',
+  statusWas: 'statusWas',
+  details: 'details',
+  resolvedAt: 'resolvedAt',
+  resolvedBy: 'resolvedBy',
+  resolution: 'resolution',
+  note: 'note'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -392,6 +444,10 @@ exports.Prisma.SortOrder = {
 
 exports.Prisma.NullableJsonNullValueInput = {
   DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull
+};
+
+exports.Prisma.JsonNullValueInput = {
   JsonNull: Prisma.JsonNull
 };
 
@@ -437,7 +493,10 @@ exports.Prisma.ModelName = {
   Account: 'Account',
   OtpCode: 'OtpCode',
   UserSession: 'UserSession',
-  GalleryPhoto: 'GalleryPhoto'
+  GalleryPhoto: 'GalleryPhoto',
+  Notification: 'Notification',
+  ReconciliationRun: 'ReconciliationRun',
+  PaymentFlag: 'PaymentFlag'
 };
 
 /**

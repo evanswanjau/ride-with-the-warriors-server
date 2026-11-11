@@ -186,7 +186,7 @@ async function noticeToOldContact(kind: 'email' | 'phone', oldValue: string, new
         if (kind === 'email') {
             await sendContactChangedEmail(oldValue, 'email', newMasked);
         } else {
-            await smsService.sendSMS([oldValue], `The phone number on your Ride With The Warriors account was changed to ${newMasked}. If this wasn't you, contact us straight away.`);
+            await smsService.sendSMS([oldValue], `The phone number on your Ride With The Warriors account was changed to ${newMasked}. If this wasn't you, contact us straight away.`, { template: 'sms:contact-changed' });
         }
     } catch (err) {
         console.error('[Auth] Failed to notify old contact:', err instanceof Error ? err.message : err);

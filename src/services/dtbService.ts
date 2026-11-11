@@ -57,6 +57,42 @@ const DTB_CONFIG = {
     passKey: process.env.DTB_PASS_KEY || '',
 };
 
+/** What the gateway says about one payment. */
+export type GatewayStatus =
+    | { state: 'PAID'; receipt?: string | null; cbsReference?: string | null; amount?: number | null; phone?: string | null; raw?: unknown }
+    | { state: 'FAILED'; reason?: string | null; raw?: unknown }
+    | { state: 'PENDING' | 'UNKNOWN'; reason?: string | null; raw?: unknown }
+    | { state: 'UNSUPPORTED'; reason: string };
+
+const PAID_WORDS = ['SUCCESS', 'SUCCESSFUL', 'COMPLETED', 'COMPLETE', 'PAID'];
+const FAILED_WORDS = ['FAILED', 'FAILURE', 'CANCELLED', 'CANCELED', 'REJECTED', 'DECLINED', 'TIMEOUT', 'EXPIRED', 'REVERSED'];
+const PENDING_WORDS = ['PENDING', 'PROCESSING', 'IN_PROGRESS', 'INITIATED', 'SUBMITTED'];
+
+/**
+ * Reads a DTB transaction-status response. Only an explicit transaction status counts:
+ * `status`/`responseCode` describe the query call itself, so "SUCCESS" there alone never
+ * marks a payment paid. The field names follow the callback DTB sends (externalReference,
+ * mnoReference, cbsReference); confirm them against DTB's API document before relying on
+ * this in production (see DTB_STATUS_URL in .env.example).
+ */
+export function parseDtbStatus(data: any): GatewayStatus {
+    const tx = String(data?.transactionStatus ?? data?.TransactionStatus ?? data?.paymentStatus ?? '').trim().toUpperCase();
+    const receipt = data?.mnoReference || data?.MnoReference || null;
+    const reason = data?.transactionStatusDescription || data?.responseDescription || data?.message || null;
+    if (PAID_WORDS.includes(tx)) {
+        const amount = data?.amount ?? data?.Amount;
+        return {
+            state: 'PAID', receipt, cbsReference: data?.cbsReference || null,
+            amount: amount === undefined || amount === null || amount === '' ? null : Number(amount),
+            phone: data?.phoneNumber ?? data?.PhoneNumber ?? data?.msisdn ?? null,
+            raw: data,
+        };
+    }
+    if (FAILED_WORDS.includes(tx)) return { state: 'FAILED', reason, raw: data };
+    if (PENDING_WORDS.includes(tx)) return { state: 'PENDING', reason, raw: data };
+    return { state: 'UNKNOWN', reason: reason ?? (tx ? `Unrecognised status ${tx}` : 'No transaction status in response'), raw: data };
+}
+
 
 
 // Cache token in memory
@@ -118,6 +154,33 @@ export const dtbService = {
             console.error('[DTB Service] Auth Error:', error);
             return null;
         }
+    },
+
+    /**
+     * Asks DTB for the status of a push we sent (TransactionRef = our Payment.checkoutRequestId).
+     * Needs DTB_STATUS_URL; without it returns UNSUPPORTED and reconciliation only expires.
+     * Throws on network errors, so the caller records an error and tries again next run.
+     */
+    async queryTransactionStatus(ref: string): Promise<GatewayStatus> {
+        const url = process.env.DTB_STATUS_URL;
+        if (!url) return { state: 'UNSUPPORTED', reason: 'DTB_STATUS_URL is not set' };
+        const token = await this.getAuthToken();
+        if (!token) throw new Error('DTB authentication failed');
+        const response = await dtbFetch(url, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ TransactionRef: ref, externalReference: ref }),
+        });
+        const text = await response.text();
+        let data: any;
+        try {
+            data = JSON.parse(text);
+        } catch {
+            throw new Error(`DTB status: invalid JSON (HTTP ${response.status})`);
+        }
+        if (response.status === 404) return { state: 'UNKNOWN', reason: 'DTB does not know this reference', raw: data };
+        if (!response.ok) throw new Error(`DTB status: HTTP ${response.status} ${String(data?.responseDescription ?? data?.message ?? '').slice(0, 100)}`);
+        return parseDtbStatus(data);
     },
 
     /**

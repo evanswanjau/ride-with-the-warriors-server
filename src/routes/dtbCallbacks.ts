@@ -1,18 +1,25 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { timingSafeEqual } from 'crypto';
 import { settlePayment } from '../services/payments.js';
+import { appEnv } from '../config.js';
 
 export const dtbCallbacksRouter = Router();
 
 /**
  * Rejects callbacks that don't carry DTB_CALLBACK_SECRET (sent to DTB as the
- * `key` query param on UserCallback). If the secret is not configured the check
- * is skipped with a warning, so payments keep working until it is set.
+ * `key` query param on UserCallback). The secret is mandatory in UAT and production:
+ * src/config.ts refuses to start without it, and this check fails closed (503) if it
+ * is missing anyway. Only local and test runs may skip it.
  */
-function verifyCallbackKey(req: Request, res: Response, next: NextFunction) {
+export function verifyCallbackKey(req: Request, res: Response, next: NextFunction) {
     const secret = process.env.DTB_CALLBACK_SECRET;
     if (!secret) {
-        console.warn('[DTB Callback] DTB_CALLBACK_SECRET is not set — callback is NOT authenticated');
+        const env = appEnv();
+        if (env === 'uat' || env === 'production') {
+            console.error('[DTB Callback] DTB_CALLBACK_SECRET is not set; callback refused');
+            return res.status(503).json({ received: false, error: 'Callbacks are not configured' });
+        }
+        console.warn('[DTB Callback] DTB_CALLBACK_SECRET is not set — callback is NOT authenticated (local only)');
         return next();
     }
     const key = typeof req.query.key === 'string' ? req.query.key : '';
@@ -77,6 +84,11 @@ dtbCallbacksRouter.post('/stkpush', verifyCallbackKey, async (req, res) => {
     const mnoRef = callbackData.mnoReference || callbackData.MnoReference || (darajaReceipt ? String(darajaReceipt) : '');
     const cbsRef = callbackData.cbsReference || callbackData.CbsReference || '';
 
+    // Checked against the Payment when present (see settlePayment); Daraja sends them in
+    // CallbackMetadata, DTB as top-level fields if at all.
+    const amount = callbackData.amount ?? callbackData.Amount ?? callbackData.TransAmount ?? metaItems.find(i => i.Name === 'Amount')?.Value ?? null;
+    const phone = callbackData.phoneNumber ?? callbackData.PhoneNumber ?? callbackData.msisdn ?? callbackData.MSISDN ?? metaItems.find(i => i.Name === 'PhoneNumber')?.Value ?? null;
+
     console.log(
         `[DTB Callback] ExternalRef: ${externalReference}, Status: ${rawStatus}, Code: ${rawCode}, Success: ${isSuccess}`
     );
@@ -94,12 +106,16 @@ dtbCallbacksRouter.post('/stkpush', verifyCallbackKey, async (req, res) => {
             receipt: mnoRef || null,
             mnoReference: mnoRef || null,
             cbsReference: cbsRef || null,
+            amount: amount as number | string | null,
+            phone: phone as string | number | null,
+            source: 'callback',
             details: callbackData,
         });
         if (result === 'unknown') {
             console.warn(`[DTB Callback] No payment found for externalReference: ${externalReference}`);
             return res.json({ received: true, message: 'No record associated with this externalReference' });
         }
+        // A flagged callback is acknowledged too: DTB must not retry it; an admin decides.
         return res.json({ received: true });
     } catch (err) {
         console.error('[DTB Callback] Processing Error:', err);

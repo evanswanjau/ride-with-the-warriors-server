@@ -22,6 +22,18 @@ here touches it.
 
   The 05:30 EAT race-day job of the old node-cron setup is not replicated yet; add a third cron
   entry when the Vercel plan allows it.
+
+  Two more jobs need a schedule more often than daily, which Vercel's Hobby plan does not allow,
+  so they are **not** in `vercel.json` yet. Schedule them on a Pro plan (add them to `vercel.json`)
+  or from an external scheduler sending the same `Authorization` header:
+
+  | Path | Every | Does |
+  |---|---|---|
+  | `/api/cron/notifications` | minute | sends queued email and SMS (the notification outbox) |
+  | `/api/cron/reconcile-payments` | 5 minutes | asks the gateway about unanswered M-Pesa prompts (needs `DTB_STATUS_URL` for DTB) |
+
+  Until then queued email and SMS (confirmations, notices) only go out with `/api/cron/daily`.
+  Login codes do not wait: they are sent at once.
 - The server **refuses to start** on Vercel without `APP_URL`, `CRON_SECRET` and `DATABASE_URL`
   (and, with `APP_ENV=uat`, without `DTB_CALLBACK_SECRET` and `OTP_PEPPER` of 32+ characters).
   The deploy then fails its first request with `[config] Refusing to start`; read the function
@@ -41,8 +53,8 @@ here touches it.
 | `MESSAGING_ALLOWLIST` | tester emails and phones, comma separated | Only these get email or SMS. Everyone else is logged (no content) and dropped. Phones are matched after normalising (`0711 000 222` = `254711000222`). If set but no entry is valid, nothing is sent. |
 | `MESSAGING_DISABLED` | unset | `true` stops all email and SMS. |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` | per provider | `SMTP_SECURE=true` for implicit TLS (port 465). |
-| `SMTP_REQUIRE_TLS` | `true` | With `SMTP_SECURE=false` (STARTTLS, ports 587/25/26), refuses to send in plain text. |
-| `SMTP_TLS_STRICT` | `true` once the provider has a valid certificate for `SMTP_HOST` | Verifies the certificate. Leave unset when `SMTP_HOST` is an IP address. |
+| `SMTP_REQUIRE_TLS` | `true` | With `SMTP_SECURE=false` (STARTTLS, ports 587/25/26), refuses to send in plain text. STARTTLS is used whenever offered even without it. |
+| `SMTP_TLS_INSECURE` | unset; `true` only while `SMTP_HOST` is an IP address or has no valid certificate | Certificates are checked by default. `true` skips the check (warned in `uat`, refused in production). |
 | `OTP_PEPPER`, `DTB_CALLBACK_SECRET` | 32+ random characters | Required by the config check. |
 | `PAYMENT_PROVIDER` | `sandbox` (Daraja) or `dtb` with the DTB UAT URLs | Staging never uses live DTB. |
 | `CORS_ORIGINS` | `https://rwtw.vercel.app` | Browser origin of the web app. |
