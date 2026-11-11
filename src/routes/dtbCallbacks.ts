@@ -1,18 +1,25 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { timingSafeEqual } from 'crypto';
 import { settlePayment } from '../services/payments.js';
+import { appEnv } from '../config.js';
 
 export const dtbCallbacksRouter = Router();
 
 /**
  * Rejects callbacks that don't carry DTB_CALLBACK_SECRET (sent to DTB as the
- * `key` query param on UserCallback). If the secret is not configured the check
- * is skipped with a warning, so payments keep working until it is set.
+ * `key` query param on UserCallback). The secret is mandatory in UAT and production:
+ * src/config.ts refuses to start without it, and this check fails closed (503) if it
+ * is missing anyway. Only local and test runs may skip it.
  */
-function verifyCallbackKey(req: Request, res: Response, next: NextFunction) {
+export function verifyCallbackKey(req: Request, res: Response, next: NextFunction) {
     const secret = process.env.DTB_CALLBACK_SECRET;
     if (!secret) {
-        console.warn('[DTB Callback] DTB_CALLBACK_SECRET is not set — callback is NOT authenticated');
+        const env = appEnv();
+        if (env === 'uat' || env === 'production') {
+            console.error('[DTB Callback] DTB_CALLBACK_SECRET is not set; callback refused');
+            return res.status(503).json({ received: false, error: 'Callbacks are not configured' });
+        }
+        console.warn('[DTB Callback] DTB_CALLBACK_SECRET is not set — callback is NOT authenticated (local only)');
         return next();
     }
     const key = typeof req.query.key === 'string' ? req.query.key : '';

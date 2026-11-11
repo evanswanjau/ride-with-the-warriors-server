@@ -81,17 +81,27 @@ export interface EnquiryData {
 
 // --- SMTP SETUP ---
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: process.env.SMTP_SECURE === 'true',
-  ignoreTLS: process.env.SMTP_SECURE !== 'true',
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-  tls: { rejectUnauthorized: false },
-});
+const transporter = nodemailer.createTransport(smtpOptions());
+
+/**
+ * SMTP settings. STARTTLS is used whenever the server offers it (it used to be switched
+ * off, which sent the SMTP password in clear text on port 587), and certificates are
+ * checked. SMTP_TLS_INSECURE=true skips the certificate check (refused in production by
+ * src/config.ts); SMTP_IGNORE_TLS=true never upgrades (local Mailpit only).
+ */
+export function smtpOptions(env: NodeJS.ProcessEnv = process.env) {
+  return {
+    host: env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(env.SMTP_PORT || '587'),
+    secure: env.SMTP_SECURE === 'true',
+    ignoreTLS: env.SMTP_IGNORE_TLS === 'true',
+    auth: {
+      user: env.SMTP_USER,
+      pass: env.SMTP_PASS,
+    },
+    tls: { rejectUnauthorized: env.SMTP_TLS_INSECURE !== 'true' },
+  };
+}
 
 // Kill switch: never contact anyone when messaging is disabled (see utils/messaging.ts).
 {

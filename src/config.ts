@@ -70,6 +70,8 @@ export function checkConfig(env: NodeJS.ProcessEnv = process.env): ConfigReport 
     if (which === 'production') {
         if (env.PAYMENT_MODE === 'simulate') errors.push('PAYMENT_MODE=simulate is not allowed in production.');
         if (isTrue(env.DTB_INSECURE)) errors.push('DTB_INSECURE=true is not allowed in production (it turns off TLS checks).');
+        if (isTrue(env.SMTP_TLS_INSECURE)) errors.push('SMTP_TLS_INSECURE=true is not allowed in production (it turns off TLS checks for email).');
+        if (isTrue(env.SMTP_IGNORE_TLS)) errors.push('SMTP_IGNORE_TLS=true is not allowed in production (email would be sent without TLS).');
         if (isTrue(env.OTP_DEV_ECHO)) errors.push('OTP_DEV_ECHO=true is not allowed in production.');
         if (isTrue(env.MESSAGING_DISABLED)) errors.push('MESSAGING_DISABLED=true is not allowed in production.');
         if (!env.DTB_CLIENT_ID || !env.DTB_CLIENT_SECRET) errors.push('DTB_CLIENT_ID and DTB_CLIENT_SECRET must be set in production.');
@@ -88,6 +90,9 @@ export function checkConfig(env: NodeJS.ProcessEnv = process.env): ConfigReport 
         warnings.push('UAT is not using the M-Pesa sandbox (PAYMENT_PROVIDER is not "sandbox").');
     }
 
+    if (which === 'uat' && isTrue(env.SMTP_TLS_INSECURE)) {
+        warnings.push('SMTP_TLS_INSECURE=true: TLS certificate checks are off for email.');
+    }
     if (which === 'uat' && isTrue(env.DTB_INSECURE)) {
         warnings.push('DTB_INSECURE=true: TLS certificate checks are off for requests to DTB.');
     }
@@ -98,7 +103,7 @@ export function checkConfig(env: NodeJS.ProcessEnv = process.env): ConfigReport 
         warnings.push('TURNSTILE_SECRET_KEY is not set: the contact form has no bot check (rate limit only).');
     }
     if (deployed && !env.SMS_CALLBACK_SECRET) {
-        warnings.push('SMS_CALLBACK_SECRET is not set: SMS delivery webhooks are not authenticated.');
+        warnings.push('SMS_CALLBACK_SECRET is not set: SMS delivery webhooks are refused (503) until it is set.');
     }
     if (deployed && !env.CRON_SECRET) {
         warnings.push('CRON_SECRET is not set: scheduled jobs (/api/cron/*) will refuse every call.');
