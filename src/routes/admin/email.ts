@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireAdmin } from '../../middleware/auth.js';
+import { requireAdmin, requireRole } from '../../middleware/auth.js';
 import { prisma } from '../../storage/prisma.js';
 import { sendConfirmationEmail, verifyEmailConnection, getTemplatePreview, sendEmail, sendRaffleEmail, sendBulkCustomEmail } from '../../services/emailService.js';
 import { triggerReminderCheck } from '../../services/reminderScheduler.js';
@@ -41,7 +41,7 @@ emailRouter.get('/test-connection', async (_req, res) => {
 });
 
 // Manually trigger reminder check
-emailRouter.post('/trigger-reminders', async (_req, res) => {
+emailRouter.post('/trigger-reminders', requireRole('super_admin'), async (_req, res) => {
     try {
         await triggerReminderCheck();
         res.json({ ok: true, message: 'Reminder check triggered' });
@@ -203,7 +203,7 @@ emailRouter.post('/resend/:registrationId', async (req, res) => {
 //   limit   - max to process (default: 2 for safe testing)
 //   dryRun  - "true" to preview without sending
 //   status  - registration status filter (default: PAID)
-emailRouter.post('/resend-military', async (req, res) => {
+emailRouter.post('/resend-military', requireRole('super_admin'), async (req, res) => {
     try {
         const limit = parseInt(String(req.query.limit || req.body.limit || '2'));
         const dryRun = String(req.query.dryRun || req.body.dryRun) === 'true';
@@ -325,7 +325,7 @@ emailRouter.post('/resend-military', async (req, res) => {
 //   limit   - max to process (default: 5)
 //   dryRun  - "true" to preview without sending
 //   minDays - only remind if older than X days (default: 1)
-emailRouter.post('/raffle-reminders', async (req, res) => {
+emailRouter.post('/raffle-reminders', requireRole('super_admin'), async (req, res) => {
     try {
         const limit = parseInt(String(req.query.limit || req.body.limit || '5'));
         const dryRun = String(req.query.dryRun || req.body.dryRun) === 'true';
@@ -470,7 +470,7 @@ emailRouter.post('/raffle-reminders', async (req, res) => {
 });
 
 // ── Admin: Send Unified Bulk Communications ──
-emailRouter.post('/bulk-send', async (req, res) => {
+emailRouter.post('/bulk-send', requireRole('super_admin'), async (req, res) => {
     try {
         const { mode, targetEntity, targetStatus, message, subject, customPhones, customEmails, csvRecipients, testMode } = req.body;
         if (!message) return res.status(400).json({ ok: false, error: 'Message is required' });

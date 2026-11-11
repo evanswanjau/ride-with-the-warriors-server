@@ -169,6 +169,18 @@ exports.Prisma.AdminScalarFieldEnum = {
   lastLogin: 'lastLogin'
 };
 
+exports.Prisma.AdminAuditLogScalarFieldEnum = {
+  id: 'id',
+  createdAt: 'createdAt',
+  adminId: 'adminId',
+  adminEmail: 'adminEmail',
+  action: 'action',
+  entityId: 'entityId',
+  status: 'status',
+  ip: 'ip',
+  details: 'details'
+};
+
 exports.Prisma.AdminSessionScalarFieldEnum = {
   id: 'id',
   adminId: 'adminId',
@@ -405,6 +417,7 @@ exports.RegistrationStatus = exports.$Enums.RegistrationStatus = {
 exports.Prisma.ModelName = {
   Registration: 'Registration',
   Admin: 'Admin',
+  AdminAuditLog: 'AdminAuditLog',
   AdminSession: 'AdminSession',
   Payment: 'Payment',
   PricingCategory: 'PricingCategory',
