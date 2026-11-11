@@ -13,6 +13,12 @@
  *   when a new prompt starts (a late success still pays them).
  * - A failure only flags the item ("Payment failed" on the payment page) when it belongs
  *   to the newest attempt, so an old prompt cannot fail a newer one.
+ * - A success that reports an amount or phone different from the Payment is never paid
+ *   automatically: it is recorded in PaymentFlag and the payment becomes FLAGGED until an
+ *   admin accepts or rejects it (resolveFlaggedPayment). A success without an amount or
+ *   phone is accepted (DTB's callback may not carry them); reconciliation supplies them
+ *   when the status API does. With PAYMENT_PROVIDER=sandbox the amount is the sandbox's
+ *   SANDBOX_STK_AMOUNT and the phone is not checked (the sandbox reports a test number).
  */
 import type { Payment, Prisma } from '../generated/client/index.js';
 import { prisma } from '../storage/prisma.js';
@@ -117,10 +123,73 @@ export type PaymentOutcome = {
     receipt?: string | null;
     mnoReference?: string | null;
     cbsReference?: string | null;
+    /** What the gateway says was paid; checked against the Payment when present. */
+    amount?: number | string | null;
+    phone?: string | number | null;
+    /** Where the outcome came from (recorded on a flag). */
+    source?: 'callback' | 'reconciliation';
     details?: unknown;
 };
 
-export type SettleResult = 'settled' | 'ignored' | 'unknown';
+export type SettleResult = 'settled' | 'ignored' | 'unknown' | 'flagged';
+
+/** Last 9 digits: 0711..., 254711..., +254 711 ... are the same number. */
+export function samePhone(a: string, b: string): boolean {
+    const da = a.replace(/\D/g, '');
+    const db = b.replace(/\D/g, '');
+    return da.length >= 9 && db.length >= 9 && da.slice(-9) === db.slice(-9);
+}
+
+/**
+ * Compares a phone reported by the gateway with ours. M-Pesa often masks the number
+ * ("2547****126", "254 7XX XXX 126"): masked digits are skipped and the visible ones must
+ * match. Returns null when the reported value is too short to tell (nothing is checked).
+ */
+export function phoneMatches(received: string, ours: string): boolean | null {
+    const got = received.replace(/[^0-9*xX]/g, '').toUpperCase();
+    const want = ours.replace(/\D/g, '');
+    if (got.length < 9 || want.length < 9) return null;
+    const g = got.slice(-9);
+    const w = want.slice(-9);
+    const visible = [...g].filter(c => c !== '*' && c !== 'X').length;
+    if (visible < 3) return null;
+    return [...g].every((c, i) => c === '*' || c === 'X' || c === w[i]);
+}
+
+/**
+ * The amount the prompt actually asked for. The Daraja sandbox charges SANDBOX_STK_AMOUNT
+ * (KES 1 by default) instead of the real price; config.ts refuses the sandbox in production.
+ */
+export function promptedAmount(p: Pick<Payment, 'amount'>, env: NodeJS.ProcessEnv = process.env): number {
+    if (env.PAYMENT_PROVIDER === 'sandbox' && env.SANDBOX_STK_AMOUNT !== 'actual') return Number(env.SANDBOX_STK_AMOUNT || 1);
+    return Math.round(p.amount);
+}
+
+/** Compares what the gateway reported with the Payment. Missing values are not checked. */
+export function checkOutcome(p: Pick<Payment, 'amount' | 'phone'>, o: Pick<PaymentOutcome, 'amount' | 'phone'>):
+    { ok: true } | { ok: false; kind: string; expected: Record<string, unknown>; received: Record<string, unknown> } {
+    const problems: string[] = [];
+    const expected: Record<string, unknown> = {};
+    const received: Record<string, unknown> = {};
+    if (o.amount !== undefined && o.amount !== null && o.amount !== '') {
+        const got = Number(o.amount);
+        const want = promptedAmount(p);
+        if (!Number.isFinite(got) || Math.round(got) !== want) {
+            problems.push('AMOUNT_MISMATCH');
+            expected.amount = want;
+            received.amount = o.amount;
+        }
+    }
+    // The Daraja sandbox reports its own test number, so the phone is only checked for DTB.
+    if (process.env.PAYMENT_PROVIDER !== 'sandbox' && o.phone !== undefined && o.phone !== null && String(o.phone) !== '' && p.phone) {
+        if (phoneMatches(String(o.phone), p.phone) === false) {
+            problems.push('PHONE_MISMATCH');
+            expected.phone = p.phone;
+            received.phone = String(o.phone);
+        }
+    }
+    return problems.length ? { ok: false, kind: problems.join(','), expected, received } : { ok: true };
+}
 
 function purposeOf(p: Payment): PaymentPurpose | null {
     if (p.purpose) return p.purpose as PaymentPurpose;
@@ -173,9 +242,15 @@ export async function settlePayment(o: PaymentOutcome): Promise<SettleResult> {
     if (!payment) return 'unknown';
     const purpose = purposeOf(payment);
 
+    if (o.success) {
+        const check = checkOutcome(payment, o);
+        if (!check.ok) return flagPayment(payment, o, check);
+    }
+
     const receipt = o.receipt || o.mnoReference || null;
     const moved = await prisma.payment.updateMany({
-        where: o.success ? { id: payment.id, status: { not: 'PAID' } } : { id: payment.id, status: 'PENDING' },
+        // FLAGGED waits for an admin: no callback may settle it.
+        where: o.success ? { id: payment.id, status: { notIn: ['PAID', 'FLAGGED'] } } : { id: payment.id, status: 'PENDING' },
         data: {
             status: o.success ? 'PAID' : 'FAILED',
             failureReason: o.success ? null : (o.reason ?? 'Payment was not completed.'),
@@ -196,6 +271,67 @@ export async function settlePayment(o: PaymentOutcome): Promise<SettleResult> {
     return 'settled';
 }
 
+/**
+ * Records a success that does not match the Payment. A payment that is not PAID yet becomes
+ * FLAGGED (conditional update, so a racing callback cannot be overwritten); a PAID one keeps
+ * its status and only gets the flag row for admins to look at.
+ */
+async function flagPayment(
+    payment: Payment,
+    o: PaymentOutcome,
+    check: { kind: string; expected: Record<string, unknown>; received: Record<string, unknown> },
+): Promise<SettleResult> {
+    const reason = `${check.kind}: expected ${JSON.stringify(check.expected)}, received ${JSON.stringify(check.received)}`;
+    await prisma.paymentFlag.create({
+        data: {
+            paymentId: payment.id,
+            source: o.source ?? 'callback',
+            kind: check.kind,
+            expected: check.expected as Prisma.InputJsonValue,
+            received: check.received as Prisma.InputJsonValue,
+            statusWas: payment.status,
+            details: { receipt: o.receipt ?? o.mnoReference ?? null, cbsReference: o.cbsReference ?? null, payload: (o.details ?? null) as Prisma.InputJsonValue } as Prisma.InputJsonValue,
+        },
+    });
+    await prisma.payment.updateMany({
+        where: { id: payment.id, status: { notIn: ['PAID', 'FLAGGED'] } },
+        data: { status: 'FLAGGED', flaggedAt: new Date(), flagReason: reason.slice(0, 500) },
+    });
+    console.warn(`[Payments] ${payment.checkoutRequestId}: success ${o.source ?? 'callback'} does not match the payment (${check.kind}); flagged for admin review`);
+    return 'flagged';
+}
+
+/**
+ * Admin decision on a FLAGGED payment. "accept" pays it (and the item, with confirmations)
+ * using the receipt from the flagged callback; "reject" marks it FAILED. Open flags are closed.
+ */
+export async function resolveFlaggedPayment(
+    paymentId: string,
+    action: 'accept' | 'reject',
+    by: string,
+    note?: string,
+): Promise<'resolved' | 'not-flagged'> {
+    const payment = await prisma.payment.findUnique({ where: { id: paymentId } });
+    if (!payment || payment.status !== 'FLAGGED') return 'not-flagged';
+    const flag = await prisma.paymentFlag.findFirst({ where: { paymentId, resolvedAt: null }, orderBy: { createdAt: 'desc' } });
+    const receipt = ((flag?.details as { receipt?: string | null } | null)?.receipt) ?? null;
+
+    const moved = await prisma.payment.updateMany({
+        where: { id: paymentId, status: 'FLAGGED' },
+        data: action === 'accept'
+            ? { status: 'PAID', failureReason: null, mpesaReceiptNumber: receipt, mnoReference: receipt }
+            : { status: 'FAILED', failureReason: `Rejected by admin: ${note ?? payment.flagReason ?? 'callback did not match'}`.slice(0, 500) },
+    });
+    if (moved.count === 0) return 'not-flagged';
+
+    await prisma.paymentFlag.updateMany({
+        where: { paymentId, resolvedAt: null },
+        data: { resolvedAt: new Date(), resolvedBy: by, resolution: action === 'accept' ? 'ACCEPTED' : 'REJECTED', note: note ?? null },
+    });
+    if (action === 'accept') await applySuccess(payment, purposeOf(payment), receipt);
+    return 'resolved';
+}
+
 async function applySuccess(p: Payment, purpose: PaymentPurpose | null, receipt: string | null) {
     switch (purpose) {
         case 'REGISTRATION': {
@@ -213,7 +349,7 @@ async function applySuccess(p: Payment, purpose: PaymentPurpose | null, receipt:
             });
             const fresh = await prisma.registration.findUnique({ where: { id: reg.id } });
             if (fresh?.phoneNumber) {
-                smsService.sendSMS([fresh.phoneNumber], `Hi ${fresh.firstName}, your payment of KES ${fresh.totalAmount} for Ride With The Warriors cycling registration (BIB: ${fresh.bibNumber ?? 'pending'}) is confirmed. Thank you!`);
+                await smsService.sendSMS([fresh.phoneNumber], `Hi ${fresh.firstName}, your payment of KES ${fresh.totalAmount} for Ride With The Warriors cycling registration (BIB: ${fresh.bibNumber ?? 'pending'}) is confirmed. Thank you!`, { template: 'sms:registration-paid', dedupeKey: `sms:registration-paid:${p.id}` });
             }
             return;
         }
@@ -228,13 +364,13 @@ async function applySuccess(p: Payment, purpose: PaymentPurpose | null, receipt:
             const numbers = numbered.map(t => t.ticketNumber ?? t.id);
             const first = await prisma.raffleTicket.findUnique({ where: { id: ids[0] } });
             if (first?.phoneNumber) {
-                smsService.sendSMS([first.phoneNumber], `Hi ${first.firstName}, payment received for your ${ids.length} raffle ticket(s) (Nos: ${numbers.join(', ')}). Thank you for supporting Ride With The Warriors!`);
+                await smsService.sendSMS([first.phoneNumber], `Hi ${first.firstName}, payment received for your ${ids.length} raffle ticket(s) (Nos: ${numbers.join(', ')}). Thank you for supporting Ride With The Warriors!`, { template: 'sms:raffle-paid', dedupeKey: `sms:raffle-paid:${p.id}` });
             }
             if (first?.email) {
-                sendRaffleConfirmationEmail({
+                await sendRaffleConfirmationEmail({
                     id: numbers[0], ids: numbers, firstName: first.firstName, lastName: first.lastName,
                     email: first.email, phoneNumber: first.phoneNumber, quantity: ids.length, totalAmount: p.amount,
-                }).catch(err => console.error(`[Payments] Raffle confirmation email failed for ${first.id}:`, err));
+                }, { dedupeKey: `email:raffle-confirmation:${p.id}` }).catch(err => console.error(`[Payments] Raffle confirmation email failed for ${first.id}:`, err));
             }
             return;
         }
@@ -248,7 +384,7 @@ async function applySuccess(p: Payment, purpose: PaymentPurpose | null, receipt:
             const d = await prisma.donation.findUnique({ where: { id: p.donationId } });
             if (d?.phone) {
                 const hi = d.name ? `Hi ${d.name.split(' ')[0]}, t` : 'T';
-                smsService.sendSMS([d.phone], `${hi}hank you for your donation of KES ${d.amount} to Ride With The Warriors. Your support is deeply appreciated!`);
+                await smsService.sendSMS([d.phone], `${hi}hank you for your donation of KES ${d.amount} to Ride With The Warriors. Your support is deeply appreciated!`, { template: 'sms:donation-paid', dedupeKey: `sms:donation-paid:${p.id}` });
             }
             return;
         }
@@ -258,7 +394,7 @@ async function applySuccess(p: Payment, purpose: PaymentPurpose | null, receipt:
             if (paid.count === 0) return;
             const hire = await prisma.bikeHire.findUnique({ where: { id: p.bikeHireId }, include: { registration: true } });
             if (hire?.registration.phoneNumber) {
-                smsService.sendSMS([hire.registration.phoneNumber], `Hi ${hire.registration.firstName}, your bike hire payment of KES ${hire.amount} for Ride With The Warriors is confirmed. Thank you!`);
+                await smsService.sendSMS([hire.registration.phoneNumber], `Hi ${hire.registration.firstName}, your bike hire payment of KES ${hire.amount} for Ride With The Warriors is confirmed. Thank you!`, { template: 'sms:bike-hire-paid', dedupeKey: `sms:bike-hire-paid:${p.id}` });
             }
             return;
         }

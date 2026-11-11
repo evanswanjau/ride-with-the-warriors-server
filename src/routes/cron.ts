@@ -6,6 +6,8 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { timingSafeEqual } from 'crypto';
 import { expireStalePayments } from '../services/payments.js';
 import { cleanupExpiredLogins } from '../services/cleanup.js';
+import { processOutbox, cleanupNotifications } from '../services/outbox.js';
+import { reconcilePayments } from '../services/reconciliation.js';
 
 export const cronRouter = Router();
 
@@ -27,8 +29,11 @@ cronRouter.get('/daily', requireCronSecret, async (_req, res, next) => {
     try {
         const expired = await expireStalePayments();
         const cleaned = await cleanupExpiredLogins();
-        console.log(`[Cron] daily: expired ${expired} payment prompt(s); removed ${cleaned.otpCodes} code(s), ${cleaned.userSessions} rider session(s), ${cleaned.adminSessions} admin session(s)`);
-        res.json({ expired, ...cleaned });
+        const notifications = await cleanupNotifications();
+        // Safety net in case the every-minute outbox job is not scheduled.
+        const outbox = await processOutbox();
+        console.log(`[Cron] daily: expired ${expired} payment prompt(s); removed ${cleaned.otpCodes} code(s), ${cleaned.userSessions} rider session(s), ${cleaned.adminSessions} admin session(s), ${notifications} old notification(s)`);
+        res.json({ expired, ...cleaned, notificationsRemoved: notifications, outbox });
     } catch (err) {
         next(err);
     }
@@ -49,6 +54,31 @@ cronRouter.get('/expire-payments', requireCronSecret, async (_req, res, next) =>
         const expired = await expireStalePayments();
         if (expired > 0) console.log(`[Cron] Expired ${expired} unanswered payment prompt(s)`);
         res.json({ expired });
+    } catch (err) {
+        next(err);
+    }
+});
+
+/**
+ * Notification outbox worker: sends queued email and SMS (src/services/outbox.ts).
+ * Meant to run every minute (Vercel Cron schedule "* * * * *").
+ */
+cronRouter.get('/notifications', requireCronSecret, async (_req, res, next) => {
+    try {
+        res.json(await processOutbox());
+    } catch (err) {
+        next(err);
+    }
+});
+
+/**
+ * Checks PENDING payments with the gateway and settles them; also expires old prompts.
+ * Meant to run every 5 minutes on Vercel Cron. Safe to repeat.
+ */
+cronRouter.get('/reconcile-payments', requireCronSecret, async (_req, res, next) => {
+    try {
+        const { details: _details, ...summary } = await reconcilePayments({ trigger: 'cron' });
+        res.json(summary);
     } catch (err) {
         next(err);
     }

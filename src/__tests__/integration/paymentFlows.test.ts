@@ -523,13 +523,20 @@ describe.skipIf(!hasDb)('Payment flows (STK push → callback)', () => {
     // ── Daraja sandbox callback shape (PAYMENT_PROVIDER=sandbox) ─────────────
 
     describe('Daraja sandbox callback', () => {
-        function darajaCallback(ref: string, resultCode: number, receipt?: string) {
+        async function darajaCallback(ref: string, resultCode: number, receipt?: string) {
             const stkCallback: Record<string, unknown> = {
                 MerchantRequestID: 'm-1', CheckoutRequestID: ref, ResultCode: resultCode,
                 ResultDesc: resultCode === 0 ? 'The service request is processed successfully.' : 'Request cancelled by user',
             };
             if (receipt) stkCallback.CallbackMetadata = { Item: [{ Name: 'Amount', Value: 1 }, { Name: 'MpesaReceiptNumber', Value: receipt }, { Name: 'PhoneNumber', Value: 254708374149 }] };
-            return request.post(`/api/dtb/stkpush?key=${encodeURIComponent(SECRET)}`).send({ Body: { stkCallback } });
+            // The sandbox charges KES 1 and reports its own test number; the callback checks
+            // allow for that only while PAYMENT_PROVIDER=sandbox.
+            process.env.PAYMENT_PROVIDER = 'sandbox';
+            try {
+                return await request.post(`/api/dtb/stkpush?key=${encodeURIComponent(SECRET)}`).send({ Body: { stkCallback } });
+            } finally {
+                delete process.env.PAYMENT_PROVIDER;
+            }
         }
 
         async function pushRegistration() {
