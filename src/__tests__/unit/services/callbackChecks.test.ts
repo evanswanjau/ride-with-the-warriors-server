@@ -45,6 +45,18 @@ describe('checkOutcome', () => {
     });
 });
 
+describe('sandbox', () => {
+    it('does not check the phone (the sandbox reports its test number)', () => {
+        process.env.PAYMENT_PROVIDER = 'sandbox';
+        try {
+            expect(checkOutcome(payment, { amount: 1, phone: '254708374149' })).toEqual({ ok: true });
+            expect(checkOutcome(payment, { amount: 1500 })).toMatchObject({ ok: false, kind: 'AMOUNT_MISMATCH' });
+        } finally {
+            delete process.env.PAYMENT_PROVIDER;
+        }
+    });
+});
+
 describe('promptedAmount', () => {
     it('is the rounded amount for DTB', () => {
         expect(promptedAmount({ amount: 1500.4 }, {})).toBe(1500);

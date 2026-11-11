@@ -17,7 +17,8 @@
  *   automatically: it is recorded in PaymentFlag and the payment becomes FLAGGED until an
  *   admin accepts or rejects it (resolveFlaggedPayment). A success without an amount or
  *   phone is accepted (DTB's callback may not carry them); reconciliation supplies them
- *   when the status API does.
+ *   when the status API does. With PAYMENT_PROVIDER=sandbox the amount is the sandbox's
+ *   SANDBOX_STK_AMOUNT and the phone is not checked (the sandbox reports a test number).
  */
 import type { Payment, Prisma } from '../generated/client/index.js';
 import { prisma } from '../storage/prisma.js';
@@ -163,7 +164,8 @@ export function checkOutcome(p: Pick<Payment, 'amount' | 'phone'>, o: Pick<Payme
             received.amount = o.amount;
         }
     }
-    if (o.phone !== undefined && o.phone !== null && String(o.phone) !== '' && p.phone) {
+    // The Daraja sandbox reports its own test number, so the phone is only checked for DTB.
+    if (process.env.PAYMENT_PROVIDER !== 'sandbox' && o.phone !== undefined && o.phone !== null && String(o.phone) !== '' && p.phone) {
         if (!samePhone(String(o.phone), p.phone)) {
             problems.push('PHONE_MISMATCH');
             expected.phone = p.phone;
