@@ -174,7 +174,9 @@ exports.Prisma.AdminScalarFieldEnum = {
 exports.Prisma.AdminAuditLogScalarFieldEnum = {
   id: 'id',
   createdAt: 'createdAt',
+  actorType: 'actorType',
   adminId: 'adminId',
+  accountId: 'accountId',
   adminEmail: 'adminEmail',
   action: 'action',
   entityId: 'entityId',

@@ -36,11 +36,38 @@ type AuditEntry = {
 export async function writeAudit(entry: AuditEntry) {
     await prisma.adminAuditLog.create({
         data: {
+            actorType: 'admin',
             adminId: entry.adminId ?? null,
             adminEmail: entry.adminEmail,
             action: entry.action,
             entityId: entry.entityId ?? null,
             status: entry.status ?? null,
+            ip: entry.ip ?? null,
+            details: (entry.details ?? undefined) as any,
+        },
+    });
+}
+
+type AccountAuditEntry = {
+    account: { id: string; email: string | null; phone: string | null };
+    action: string;
+    entityId?: string | null;
+    ip?: string | null;
+    details?: unknown;
+};
+
+/**
+ * Audit row for a change a participant made to their own account or riders
+ * (action "account:<what>"). adminEmail holds the account's email or phone.
+ */
+export async function writeAccountAudit(entry: AccountAuditEntry) {
+    await prisma.adminAuditLog.create({
+        data: {
+            actorType: 'account',
+            accountId: entry.account.id,
+            adminEmail: entry.account.email ?? entry.account.phone ?? '',
+            action: entry.action,
+            entityId: entry.entityId ?? null,
             ip: entry.ip ?? null,
             details: (entry.details ?? undefined) as any,
         },

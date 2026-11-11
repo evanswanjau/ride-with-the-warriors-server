@@ -3,7 +3,11 @@
  * session's account, so nothing is masked.
  */
 import { Router } from 'express';
+import { z } from 'zod';
 import { prisma } from '../storage/prisma.js';
+import { writeAccountAudit } from '../middleware/adminAudit.js';
+import { publicAccount } from '../services/accountService.js';
+import { buildQuote } from '../services/pricing.js';
 import { requireUser, UserRequest } from '../middleware/userAuth.js';
 import { paymentGateway } from '../services/paymentGateway.js';
 import { beginAttempt, recordAttempt } from '../services/payments.js';
@@ -28,6 +32,13 @@ function riderView(r: Reg) {
         gender: r.gender,
         dob: r.dob,
         tshirtSize: r.tshirtSize,
+        emergencyContactName: r.emergencyContactName,
+        emergencyPhone: r.emergencyPhone,
+        isMilitary: r.isMilitary,
+        rank: r.rank,
+        service: r.service,
+        serviceNumber: r.serviceNumber,
+        unit: r.unit,
         email: r.email,
         phoneNumber: r.phoneNumber,
         bikeHire: r.bikeHire ? { id: r.bikeHire.id, status: r.bikeHire.status, amount: r.bikeHire.amount } : null,
@@ -198,6 +209,148 @@ meRouter.get('/bike-hire/:id', async (req: UserRequest, res, next) => {
             return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Bike hire not found' } });
         }
         res.json({ bikeHire: { id: bikeHire.id, status: bikeHire.status, amount: bikeHire.amount } });
+    } catch (err) {
+        next(err);
+    }
+});
+
+// ─── Profile editing ──────────────────────────────────────────────────────────
+//
+// Riders may edit their own details except the ID/passport number, which only
+// an admin can change (PATCH /admin/registrations/:id/id-number). Every change
+// writes an audit row. Email and phone change through /auth/contact/*.
+
+const ID_LOCKED_MESSAGE = 'Your ID or passport number can only be changed by the organisers. Contact support.';
+
+function validationError(res: any, err: z.ZodError) {
+    return res.status(400).json({ error: { code: 'VALIDATION', message: err.issues[0]?.message ?? 'Invalid details', details: err.flatten() } });
+}
+
+/** Field-by-field before/after for the fields that actually change. */
+function changes(before: Record<string, any>, after: Record<string, any>) {
+    const out: Record<string, { from: unknown; to: unknown }> = {};
+    for (const [k, v] of Object.entries(after)) {
+        if (v !== undefined && (before[k] ?? null) !== (v ?? null)) out[k] = { from: before[k] ?? null, to: v ?? null };
+    }
+    return out;
+}
+
+const accountSchema = z.object({
+    firstName: z.string().trim().min(1, 'First name is required').max(100).optional(),
+    lastName: z.string().trim().max(100).optional(),
+});
+
+/** PATCH /me/account { firstName?, lastName? } — email and phone change via /auth/contact/*. */
+meRouter.patch('/account', async (req: UserRequest, res, next) => {
+    try {
+        const body = accountSchema.safeParse(req.body ?? {});
+        if (!body.success) return validationError(res, body.error);
+        const before = await prisma.account.findUniqueOrThrow({ where: { id: req.account!.id } });
+        const diff = changes(before, body.data);
+        if (Object.keys(diff).length === 0) return res.json({ account: publicAccount(before) });
+
+        const account = await prisma.account.update({ where: { id: before.id }, data: body.data });
+        await writeAccountAudit({ account: before, action: 'account:update-account', entityId: account.id, ip: req.ip ?? null, details: diff });
+        res.json({ account: publicAccount(account) });
+    } catch (err) {
+        next(err);
+    }
+});
+
+const optionalText = (max: number) => z.string().trim().max(max).nullable().optional();
+const kenyanPhone = /^(?:254|\+254|0)?(7|1)\d{8}$/;
+
+/** What a rider may change about themselves. idNumber is refused (see ID_LOCKED_MESSAGE). */
+export const riderUpdateSchema = z.object({
+    idNumber: z.never({ message: ID_LOCKED_MESSAGE }).optional(),
+    dob: z.string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use the format YYYY-MM-DD')
+        .refine((v) => !Number.isNaN(Date.parse(v)), 'Invalid date')
+        .refine((v) => new Date(v) <= new Date(), 'Date of birth cannot be in the future')
+        .refine((v) => new Date(v).getFullYear() >= 1900, 'Invalid date')
+        .optional(),
+    gender: z.enum(['male', 'female']).optional(),
+    tshirtSize: z.string().trim().min(1).max(10).optional(),
+    emergencyContactName: optionalText(120),
+    emergencyPhone: z.string().transform((v) => v.replace(/\s+/g, ''))
+        .refine((v) => v === '' || kenyanPhone.test(v), 'Invalid Kenyan phone number (e.g., 0712345678)')
+        .nullable().optional(),
+    isMilitary: z.boolean().optional(),
+    rank: optionalText(100),
+    service: optionalText(100),
+    serviceNumber: optionalText(100),
+    unit: optionalText(100),
+});
+
+const PAID_STATUSES = ['PAID', 'CONFIRMED', 'COMPLEMENTARY'];
+
+/**
+ * PATCH /me/riders/:id — a registration row the account owns or rides on.
+ * Until RiderProfile exists, a "rider" is a Registration row.
+ * - Paid entries keep their bib and category, whatever the new DOB.
+ * - Unpaid individual entries are re-quoted: category and price follow the DOB.
+ *   (Team and family prices don't depend on DOB.)
+ */
+meRouter.patch('/riders/:id', async (req: UserRequest, res, next) => {
+    try {
+        if (req.body && typeof req.body === 'object' && 'idNumber' in req.body) {
+            return res.status(400).json({ error: { code: 'ID_NUMBER_LOCKED', message: ID_LOCKED_MESSAGE } });
+        }
+        const body = riderUpdateSchema.safeParse(req.body ?? {});
+        if (!body.success) return validationError(res, body.error);
+        const { idNumber: _locked, ...data } = body.data;
+
+        const accountId = req.account!.id;
+        const reg = await prisma.registration.findUnique({ where: { id: req.params.id }, include: { bikeHire: true } });
+        if (!reg || (reg.accountId !== accountId && reg.participantAccountId !== accountId)) {
+            return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Rider not found' } });
+        }
+        if (reg.status === 'CANCELLED') {
+            return res.status(400).json({ error: { code: 'CANCELLED', message: 'This registration is cancelled.' } });
+        }
+
+        const diff = changes(reg, data);
+        if (Object.keys(diff).length === 0) return res.json({ rider: riderView(reg as Reg), requoted: false, totalAmount: reg.totalAmount });
+
+        const update: Record<string, any> = {};
+        for (const k of Object.keys(diff)) update[k] = (data as any)[k];
+        let requoted: { from: unknown; to: unknown } | null = null;
+
+        if (reg.type === 'individual') {
+            // Keep the original submission in step with the edited columns.
+            const payload = { ...((reg.payload as any) ?? {}) };
+            payload.riderDetails = { ...(payload.riderDetails ?? {}), ...update };
+            update.payload = payload;
+
+            if ('dob' in diff && !PAID_STATUSES.includes(reg.status)) {
+                const quote = await buildQuote({ circuitId: reg.circuitId as any, type: 'individual', payload });
+                const pricing = quote.pricing;
+                // A bike added after registering is part of this payment but not of the payload.
+                if (reg.bikeHire && !pricing.lineItems.some((l) => l.label === 'Bike Hire')) {
+                    pricing.lineItems.push({ label: 'Bike Hire', amount: reg.bikeHire.amount });
+                    pricing.totalAmount += reg.bikeHire.amount;
+                }
+                update.pricing = pricing;
+                update.classifications = quote.classifications;
+                update.category = quote.classifications[0]?.category ?? reg.category;
+                update.totalAmount = pricing.totalAmount;
+                requoted = {
+                    from: { category: reg.category, totalAmount: reg.totalAmount },
+                    to: { category: update.category, totalAmount: update.totalAmount },
+                };
+            }
+        }
+        // bibNumber and (for paid entries) category are never written here.
+
+        const updated = await prisma.registration.update({ where: { id: reg.id }, data: update, include: { bikeHire: true } });
+        await writeAccountAudit({
+            account: req.account!,
+            action: 'account:update-rider',
+            entityId: reg.id,
+            ip: req.ip ?? null,
+            details: { changes: diff, status: reg.status, ...(requoted ? { requoted } : {}) },
+        });
+        res.json({ rider: riderView(updated as Reg), requoted: !!requoted, totalAmount: updated.totalAmount });
     } catch (err) {
         next(err);
     }
