@@ -1,6 +1,6 @@
 /** Amount and phone checks on payment callbacks (src/services/payments.ts). */
 import { describe, it, expect } from 'vitest';
-import { checkOutcome, samePhone, promptedAmount } from '../../../services/payments.js';
+import { checkOutcome, samePhone, phoneMatches, promptedAmount } from '../../../services/payments.js';
 
 const payment = { amount: 1500, phone: '254711000222' };
 
@@ -14,6 +14,19 @@ describe('samePhone', () => {
     it('different or too-short numbers do not match', () => {
         expect(samePhone('254711000223', '254711000222')).toBe(false);
         expect(samePhone('1234', '1234')).toBe(false);
+    });
+});
+
+describe('phoneMatches', () => {
+    it('compares the visible digits of a masked number', () => {
+        expect(phoneMatches('2547****0222', '254711000222')).toBe(true);
+        expect(phoneMatches('254 7XX XXX 222', '0711000222')).toBe(true);
+        expect(phoneMatches('2547****0333', '254711000222')).toBe(false);
+    });
+
+    it('cannot tell from a value that is too short or almost all masked', () => {
+        expect(phoneMatches('****222', '254711000222')).toBeNull();
+        expect(phoneMatches('*********22', '254711000222')).toBeNull();
     });
 });
 
@@ -37,6 +50,11 @@ describe('checkOutcome', () => {
             ok: false, kind: 'AMOUNT_MISMATCH', expected: { amount: 1500 }, received: { amount: 1499 },
         });
         expect(checkOutcome(payment, { amount: 'abc' })).toMatchObject({ ok: false, kind: 'AMOUNT_MISMATCH' });
+    });
+
+    it('accepts a masked phone whose visible digits match', () => {
+        expect(checkOutcome(payment, { amount: 1500, phone: '2547*****222' })).toEqual({ ok: true });
+        expect(checkOutcome(payment, { phone: '2547*****333' })).toMatchObject({ ok: false, kind: 'PHONE_MISMATCH' });
     });
 
     it('reports a wrong phone, and both at once', () => {

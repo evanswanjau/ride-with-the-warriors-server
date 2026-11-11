@@ -141,6 +141,22 @@ export function samePhone(a: string, b: string): boolean {
 }
 
 /**
+ * Compares a phone reported by the gateway with ours. M-Pesa often masks the number
+ * ("2547****126", "254 7XX XXX 126"): masked digits are skipped and the visible ones must
+ * match. Returns null when the reported value is too short to tell (nothing is checked).
+ */
+export function phoneMatches(received: string, ours: string): boolean | null {
+    const got = received.replace(/[^0-9*xX]/g, '').toUpperCase();
+    const want = ours.replace(/\D/g, '');
+    if (got.length < 9 || want.length < 9) return null;
+    const g = got.slice(-9);
+    const w = want.slice(-9);
+    const visible = [...g].filter(c => c !== '*' && c !== 'X').length;
+    if (visible < 3) return null;
+    return [...g].every((c, i) => c === '*' || c === 'X' || c === w[i]);
+}
+
+/**
  * The amount the prompt actually asked for. The Daraja sandbox charges SANDBOX_STK_AMOUNT
  * (KES 1 by default) instead of the real price; config.ts refuses the sandbox in production.
  */
@@ -166,7 +182,7 @@ export function checkOutcome(p: Pick<Payment, 'amount' | 'phone'>, o: Pick<Payme
     }
     // The Daraja sandbox reports its own test number, so the phone is only checked for DTB.
     if (process.env.PAYMENT_PROVIDER !== 'sandbox' && o.phone !== undefined && o.phone !== null && String(o.phone) !== '' && p.phone) {
-        if (!samePhone(String(o.phone), p.phone)) {
+        if (phoneMatches(String(o.phone), p.phone) === false) {
             problems.push('PHONE_MISMATCH');
             expected.phone = p.phone;
             received.phone = String(o.phone);
