@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../../storage/prisma.js';
 import { requireAdmin, type AuthenticatedRequest } from '../../middleware/auth.js';
-import { reconcilePayments } from '../../services/reconciliation.js';
+import { reconcilePayments, unresolvedExpired } from '../../services/reconciliation.js';
 import { resolveFlaggedPayment } from '../../services/payments.js';
 
 export const adminPaymentsRouter = Router();
@@ -130,12 +130,13 @@ adminPaymentsRouter.get('/reconciliation', requireAdmin, async (req, res, next) 
             take: limit,
             ...(req.query.details ? {} : { omit: { details: true } }),
         });
-        // PENDING payments the gateway could not settle yet (still pending, unknown or errors).
+        // Payments the gateway could not settle yet (still pending, unknown or errors),
+        // including expired prompts that are still being checked.
         const unresolved = await prisma.payment.findMany({
-            where: { status: 'PENDING', checkCount: { gt: 0 } },
+            where: { checkCount: { gt: 0 }, OR: [{ status: 'PENDING' }, unresolvedExpired] },
             orderBy: { createdAt: 'asc' },
             take: 100,
-            select: { id: true, purpose: true, amount: true, phone: true, checkoutRequestId: true, createdAt: true, lastCheckedAt: true, checkCount: true, lastCheckResult: true },
+            select: { id: true, status: true, purpose: true, amount: true, phone: true, checkoutRequestId: true, createdAt: true, lastCheckedAt: true, checkCount: true, lastCheckResult: true },
         });
         res.json({ runs, unresolved });
     } catch (err) {

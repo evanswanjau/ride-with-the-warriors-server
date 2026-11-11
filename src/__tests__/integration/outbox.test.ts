@@ -250,6 +250,19 @@ describe.skipIf(!hasDb)('Notification outbox', () => {
             expect((await processOutbox()).claimed).toBe(0);
         });
 
+        it('a code row left in SENDING is marked FAILED, never re-sent with its redacted text', async () => {
+            await smsService.sendSMS(['0711000111'], '123456', { logAs: '[one-time login code]', immediate: true });
+            const row = await prisma.notification.findFirstOrThrow();
+            await prisma.notification.update({ where: { id: row.id }, data: { status: 'SENDING' } });
+            sent.length = 0;
+            const r = await processOutbox({ now: () => new Date(Date.now() + STUCK_AFTER_MS + 60_000) });
+            expect(r).toMatchObject({ reclaimed: 0, failed: 1, claimed: 0 });
+            expect(sent).toHaveLength(0);
+            expect((await prisma.notification.findUniqueOrThrow({ where: { id: row.id } })).status).toBe('FAILED');
+            // An admin cannot put it back in the queue either.
+            expect(await retryNotification(row.id)).toBe(false);
+        });
+
         it('with MESSAGING_DISABLED nothing is sent and the row is SUPPRESSED', async () => {
             process.env.MESSAGING_DISABLED = 'true';
             expect(await sendOtpEmail('otp@example.com', '654321')).toBe(true);
