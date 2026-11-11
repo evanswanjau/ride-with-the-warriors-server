@@ -39,6 +39,11 @@ export const MAX_ATTEMPTS = RETRY_DELAYS_MS.length + 1;
 export const STUCK_AFTER_MS = 10 * 60_000;
 /** SENT and SUPPRESSED rows are deleted after this long (daily cleanup). */
 export const KEEP_SENT_MS = 90 * 24 * 3600_000;
+/**
+ * Template of rows written by sendNow (login codes). Their stored payload is redacted, so the
+ * worker must never send them: a stuck one is marked FAILED and an admin cannot retry it.
+ */
+export const IMMEDIATE_TEMPLATE = 'otp';
 
 const errorText = (err: unknown) => String(err instanceof Error ? err.message : err).slice(0, 500);
 
@@ -164,12 +169,14 @@ export async function processOutbox(opts: { limit?: number; budgetMs?: number; n
     const result: ProcessResult = { claimed: 0, sent: 0, retried: 0, failed: 0, suppressed: 0, reclaimed: 0 };
 
     // A worker that died mid-send left its rows in SENDING. The attempt counts.
+    // Login-code rows hold no code (redacted payload), so they are never sent again.
+    const stale = { status: 'SENDING', updatedAt: { lt: new Date(now().getTime() - STUCK_AFTER_MS) } };
     const stuck = await prisma.notification.updateMany({
-        where: { status: 'SENDING', updatedAt: { lt: new Date(now().getTime() - STUCK_AFTER_MS) }, attempts: { lt: MAX_ATTEMPTS } },
+        where: { ...stale, attempts: { lt: MAX_ATTEMPTS }, template: { not: IMMEDIATE_TEMPLATE } },
         data: { status: 'PENDING', nextAttemptAt: now(), lastError: 'Worker stopped while sending' },
     });
     const stuckGiveUp = await prisma.notification.updateMany({
-        where: { status: 'SENDING', updatedAt: { lt: new Date(now().getTime() - STUCK_AFTER_MS) }, attempts: { gte: MAX_ATTEMPTS } },
+        where: { ...stale, OR: [{ attempts: { gte: MAX_ATTEMPTS } }, { template: IMMEDIATE_TEMPLATE }] },
         data: { status: 'FAILED', lastError: 'Worker stopped while sending' },
     });
     result.reclaimed = stuck.count;
@@ -223,10 +230,13 @@ export async function processOutbox(opts: { limit?: number; budgetMs?: number; n
     return result;
 }
 
-/** Puts a FAILED row back in the queue with a fresh set of attempts (admin action). */
+/**
+ * Puts a FAILED row back in the queue with a fresh set of attempts (admin action).
+ * Login-code rows cannot be retried: their stored payload has no code.
+ */
 export async function retryNotification(id: string): Promise<boolean> {
     const { count } = await prisma.notification.updateMany({
-        where: { id, status: 'FAILED' },
+        where: { id, status: 'FAILED', template: { not: IMMEDIATE_TEMPLATE } },
         data: { status: 'PENDING', attempts: 0, nextAttemptAt: new Date(), lastError: null },
     });
     return count === 1;
