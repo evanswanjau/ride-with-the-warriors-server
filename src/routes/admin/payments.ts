@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../../storage/prisma.js';
 import { requireAdmin, type AuthenticatedRequest } from '../../middleware/auth.js';
 import { reconcilePayments } from '../../services/reconciliation.js';
+import { resolveFlaggedPayment } from '../../services/payments.js';
 
 export const adminPaymentsRouter = Router();
 
@@ -76,7 +77,7 @@ adminPaymentsRouter.get('/', requireAdmin, async (req, res) => {
 // Payment statistics for dashboard
 adminPaymentsRouter.get('/stats/summary', requireAdmin, async (_req, res) => {
     try {
-        const [total, paid, failed, pending, revenueResult] = await Promise.all([
+        const [total, paid, failed, pending, revenueResult, flagged] = await Promise.all([
             prisma.payment.count(),
             prisma.payment.count({ where: { status: 'PAID' } }),
             prisma.payment.count({ where: { status: 'FAILED' } }),
@@ -85,6 +86,7 @@ adminPaymentsRouter.get('/stats/summary', requireAdmin, async (_req, res) => {
                 where: { status: 'PAID' },
                 _sum: { amount: true },
             }),
+            prisma.payment.count({ where: { status: 'FLAGGED' } }),
         ]);
         const revenue = revenueResult._sum?.amount ?? 0;
         res.json({
@@ -94,6 +96,8 @@ adminPaymentsRouter.get('/stats/summary', requireAdmin, async (_req, res) => {
                 failed,
                 pending,
                 revenue,
+                // Callbacks that did not match; waiting for an admin (GET /flags)
+                flagged,
             },
         });
     } catch (error) {
@@ -143,6 +147,45 @@ adminPaymentsRouter.get('/reconciliation', requireAdmin, async (req, res, next) 
 adminPaymentsRouter.post('/reconcile', requireAdmin, async (req: AuthenticatedRequest, res, next) => {
     try {
         res.json(await reconcilePayments({ trigger: `admin:${req.admin?.email ?? 'unknown'}` }));
+    } catch (err) {
+        next(err);
+    }
+});
+
+// ─── Flagged payments (callback did not match; src/services/payments.ts) ────
+
+/** Open flags (`?all=1` includes resolved ones), newest first, with their payment. */
+adminPaymentsRouter.get('/flags', requireAdmin, async (req, res, next) => {
+    try {
+        const flags = await prisma.paymentFlag.findMany({
+            where: req.query.all ? {} : { resolvedAt: null },
+            orderBy: { createdAt: 'desc' },
+            take: 200,
+        });
+        const payments = await prisma.payment.findMany({
+            where: { id: { in: [...new Set(flags.map(f => f.paymentId))] } },
+            select: { id: true, purpose: true, status: true, amount: true, phone: true, checkoutRequestId: true, registrationId: true, raffleTicketIds: true, donationId: true, bikeHireId: true, createdAt: true, flagReason: true },
+        });
+        const byId = new Map(payments.map(p => [p.id, p]));
+        res.json({ flags: flags.map(f => ({ ...f, payment: byId.get(f.paymentId) ?? null })) });
+    } catch (err) {
+        next(err);
+    }
+});
+
+/** Accept (pay) or reject (fail) a FLAGGED payment. Body: { action: 'accept' | 'reject', note? }. */
+adminPaymentsRouter.post('/:id/resolve', requireAdmin, async (req: AuthenticatedRequest, res, next) => {
+    try {
+        const action = req.body?.action;
+        if (action !== 'accept' && action !== 'reject') {
+            return res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: "action must be 'accept' or 'reject'" } });
+        }
+        const note = typeof req.body?.note === 'string' ? req.body.note.slice(0, 500) : undefined;
+        const result = await resolveFlaggedPayment(req.params.id, action, req.admin?.email ?? 'unknown', note);
+        if (result === 'not-flagged') {
+            return res.status(409).json({ error: { code: 'NOT_FLAGGED', message: 'This payment is not waiting for review' } });
+        }
+        res.json({ ok: true, payment: await prisma.payment.findUnique({ where: { id: req.params.id } }) });
     } catch (err) {
         next(err);
     }

@@ -118,6 +118,11 @@ export type Notification = $Result.DefaultSelection<Prisma.$NotificationPayload>
  * 
  */
 export type ReconciliationRun = $Result.DefaultSelection<Prisma.$ReconciliationRunPayload>
+/**
+ * Model PaymentFlag
+ * 
+ */
+export type PaymentFlag = $Result.DefaultSelection<Prisma.$PaymentFlagPayload>
 
 /**
  * Enums
@@ -469,6 +474,16 @@ export class PrismaClient<
     * ```
     */
   get reconciliationRun(): Prisma.ReconciliationRunDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.paymentFlag`: Exposes CRUD operations for the **PaymentFlag** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PaymentFlags
+    * const paymentFlags = await prisma.paymentFlag.findMany()
+    * ```
+    */
+  get paymentFlag(): Prisma.PaymentFlagDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -923,7 +938,8 @@ export namespace Prisma {
     UserSession: 'UserSession',
     GalleryPhoto: 'GalleryPhoto',
     Notification: 'Notification',
-    ReconciliationRun: 'ReconciliationRun'
+    ReconciliationRun: 'ReconciliationRun',
+    PaymentFlag: 'PaymentFlag'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -939,7 +955,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "registration" | "admin" | "adminAuditLog" | "adminSession" | "payment" | "pricingCategory" | "emailLog" | "raffleTicket" | "referral" | "donation" | "smsLog" | "shortLink" | "bikeHire" | "notifyInterest" | "eventFeedback" | "account" | "otpCode" | "userSession" | "galleryPhoto" | "notification" | "reconciliationRun"
+      modelProps: "registration" | "admin" | "adminAuditLog" | "adminSession" | "payment" | "pricingCategory" | "emailLog" | "raffleTicket" | "referral" | "donation" | "smsLog" | "shortLink" | "bikeHire" | "notifyInterest" | "eventFeedback" | "account" | "otpCode" | "userSession" | "galleryPhoto" | "notification" | "reconciliationRun" | "paymentFlag"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2497,6 +2513,80 @@ export namespace Prisma {
           }
         }
       }
+      PaymentFlag: {
+        payload: Prisma.$PaymentFlagPayload<ExtArgs>
+        fields: Prisma.PaymentFlagFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PaymentFlagFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PaymentFlagPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PaymentFlagFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PaymentFlagPayload>
+          }
+          findFirst: {
+            args: Prisma.PaymentFlagFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PaymentFlagPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PaymentFlagFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PaymentFlagPayload>
+          }
+          findMany: {
+            args: Prisma.PaymentFlagFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PaymentFlagPayload>[]
+          }
+          create: {
+            args: Prisma.PaymentFlagCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PaymentFlagPayload>
+          }
+          createMany: {
+            args: Prisma.PaymentFlagCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PaymentFlagCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PaymentFlagPayload>[]
+          }
+          delete: {
+            args: Prisma.PaymentFlagDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PaymentFlagPayload>
+          }
+          update: {
+            args: Prisma.PaymentFlagUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PaymentFlagPayload>
+          }
+          deleteMany: {
+            args: Prisma.PaymentFlagDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PaymentFlagUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PaymentFlagUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PaymentFlagPayload>[]
+          }
+          upsert: {
+            args: Prisma.PaymentFlagUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PaymentFlagPayload>
+          }
+          aggregate: {
+            args: Prisma.PaymentFlagAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePaymentFlag>
+          }
+          groupBy: {
+            args: Prisma.PaymentFlagGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PaymentFlagGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PaymentFlagCountArgs<ExtArgs>
+            result: $Utils.Optional<PaymentFlagCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -2626,6 +2716,7 @@ export namespace Prisma {
     galleryPhoto?: GalleryPhotoOmit
     notification?: NotificationOmit
     reconciliationRun?: ReconciliationRunOmit
+    paymentFlag?: PaymentFlagOmit
   }
 
   /* Types for Logging */
@@ -7714,6 +7805,8 @@ export namespace Prisma {
     lastCheckedAt: Date | null
     checkCount: number | null
     lastCheckResult: string | null
+    flaggedAt: Date | null
+    flagReason: string | null
   }
 
   export type PaymentMaxAggregateOutputType = {
@@ -7737,6 +7830,8 @@ export namespace Prisma {
     lastCheckedAt: Date | null
     checkCount: number | null
     lastCheckResult: string | null
+    flaggedAt: Date | null
+    flagReason: string | null
   }
 
   export type PaymentCountAggregateOutputType = {
@@ -7762,6 +7857,8 @@ export namespace Prisma {
     lastCheckedAt: number
     checkCount: number
     lastCheckResult: number
+    flaggedAt: number
+    flagReason: number
     _all: number
   }
 
@@ -7797,6 +7894,8 @@ export namespace Prisma {
     lastCheckedAt?: true
     checkCount?: true
     lastCheckResult?: true
+    flaggedAt?: true
+    flagReason?: true
   }
 
   export type PaymentMaxAggregateInputType = {
@@ -7820,6 +7919,8 @@ export namespace Prisma {
     lastCheckedAt?: true
     checkCount?: true
     lastCheckResult?: true
+    flaggedAt?: true
+    flagReason?: true
   }
 
   export type PaymentCountAggregateInputType = {
@@ -7845,6 +7946,8 @@ export namespace Prisma {
     lastCheckedAt?: true
     checkCount?: true
     lastCheckResult?: true
+    flaggedAt?: true
+    flagReason?: true
     _all?: true
   }
 
@@ -7957,6 +8060,8 @@ export namespace Prisma {
     lastCheckedAt: Date | null
     checkCount: number
     lastCheckResult: string | null
+    flaggedAt: Date | null
+    flagReason: string | null
     _count: PaymentCountAggregateOutputType | null
     _avg: PaymentAvgAggregateOutputType | null
     _sum: PaymentSumAggregateOutputType | null
@@ -8001,6 +8106,8 @@ export namespace Prisma {
     lastCheckedAt?: boolean
     checkCount?: boolean
     lastCheckResult?: boolean
+    flaggedAt?: boolean
+    flagReason?: boolean
   }, ExtArgs["result"]["payment"]>
 
   export type PaymentSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -8026,6 +8133,8 @@ export namespace Prisma {
     lastCheckedAt?: boolean
     checkCount?: boolean
     lastCheckResult?: boolean
+    flaggedAt?: boolean
+    flagReason?: boolean
   }, ExtArgs["result"]["payment"]>
 
   export type PaymentSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -8051,6 +8160,8 @@ export namespace Prisma {
     lastCheckedAt?: boolean
     checkCount?: boolean
     lastCheckResult?: boolean
+    flaggedAt?: boolean
+    flagReason?: boolean
   }, ExtArgs["result"]["payment"]>
 
   export type PaymentSelectScalar = {
@@ -8076,9 +8187,11 @@ export namespace Prisma {
     lastCheckedAt?: boolean
     checkCount?: boolean
     lastCheckResult?: boolean
+    flaggedAt?: boolean
+    flagReason?: boolean
   }
 
-  export type PaymentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "purpose" | "registrationId" | "raffleTicketIds" | "donationId" | "checkoutRequestId" | "merchantRequestId" | "phone" | "amount" | "status" | "failureReason" | "createdAt" | "updatedAt" | "mpesaReceiptNumber" | "transactionDate" | "mnoReference" | "cbsReference" | "paymentDetails" | "bikeHireId" | "lastCheckedAt" | "checkCount" | "lastCheckResult", ExtArgs["result"]["payment"]>
+  export type PaymentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "purpose" | "registrationId" | "raffleTicketIds" | "donationId" | "checkoutRequestId" | "merchantRequestId" | "phone" | "amount" | "status" | "failureReason" | "createdAt" | "updatedAt" | "mpesaReceiptNumber" | "transactionDate" | "mnoReference" | "cbsReference" | "paymentDetails" | "bikeHireId" | "lastCheckedAt" | "checkCount" | "lastCheckResult" | "flaggedAt" | "flagReason", ExtArgs["result"]["payment"]>
 
   export type $PaymentPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Payment"
@@ -8106,6 +8219,8 @@ export namespace Prisma {
       lastCheckedAt: Date | null
       checkCount: number
       lastCheckResult: string | null
+      flaggedAt: Date | null
+      flagReason: string | null
     }, ExtArgs["result"]["payment"]>
     composites: {}
   }
@@ -8551,6 +8666,8 @@ export namespace Prisma {
     readonly lastCheckedAt: FieldRef<"Payment", 'DateTime'>
     readonly checkCount: FieldRef<"Payment", 'Int'>
     readonly lastCheckResult: FieldRef<"Payment", 'String'>
+    readonly flaggedAt: FieldRef<"Payment", 'DateTime'>
+    readonly flagReason: FieldRef<"Payment", 'String'>
   }
     
 
@@ -26802,6 +26919,1098 @@ export namespace Prisma {
 
 
   /**
+   * Model PaymentFlag
+   */
+
+  export type AggregatePaymentFlag = {
+    _count: PaymentFlagCountAggregateOutputType | null
+    _min: PaymentFlagMinAggregateOutputType | null
+    _max: PaymentFlagMaxAggregateOutputType | null
+  }
+
+  export type PaymentFlagMinAggregateOutputType = {
+    id: string | null
+    paymentId: string | null
+    createdAt: Date | null
+    source: string | null
+    kind: string | null
+    statusWas: string | null
+    resolvedAt: Date | null
+    resolvedBy: string | null
+    resolution: string | null
+    note: string | null
+  }
+
+  export type PaymentFlagMaxAggregateOutputType = {
+    id: string | null
+    paymentId: string | null
+    createdAt: Date | null
+    source: string | null
+    kind: string | null
+    statusWas: string | null
+    resolvedAt: Date | null
+    resolvedBy: string | null
+    resolution: string | null
+    note: string | null
+  }
+
+  export type PaymentFlagCountAggregateOutputType = {
+    id: number
+    paymentId: number
+    createdAt: number
+    source: number
+    kind: number
+    expected: number
+    received: number
+    statusWas: number
+    details: number
+    resolvedAt: number
+    resolvedBy: number
+    resolution: number
+    note: number
+    _all: number
+  }
+
+
+  export type PaymentFlagMinAggregateInputType = {
+    id?: true
+    paymentId?: true
+    createdAt?: true
+    source?: true
+    kind?: true
+    statusWas?: true
+    resolvedAt?: true
+    resolvedBy?: true
+    resolution?: true
+    note?: true
+  }
+
+  export type PaymentFlagMaxAggregateInputType = {
+    id?: true
+    paymentId?: true
+    createdAt?: true
+    source?: true
+    kind?: true
+    statusWas?: true
+    resolvedAt?: true
+    resolvedBy?: true
+    resolution?: true
+    note?: true
+  }
+
+  export type PaymentFlagCountAggregateInputType = {
+    id?: true
+    paymentId?: true
+    createdAt?: true
+    source?: true
+    kind?: true
+    expected?: true
+    received?: true
+    statusWas?: true
+    details?: true
+    resolvedAt?: true
+    resolvedBy?: true
+    resolution?: true
+    note?: true
+    _all?: true
+  }
+
+  export type PaymentFlagAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PaymentFlag to aggregate.
+     */
+    where?: PaymentFlagWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PaymentFlags to fetch.
+     */
+    orderBy?: PaymentFlagOrderByWithRelationInput | PaymentFlagOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PaymentFlagWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PaymentFlags from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PaymentFlags.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PaymentFlags
+    **/
+    _count?: true | PaymentFlagCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PaymentFlagMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PaymentFlagMaxAggregateInputType
+  }
+
+  export type GetPaymentFlagAggregateType<T extends PaymentFlagAggregateArgs> = {
+        [P in keyof T & keyof AggregatePaymentFlag]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePaymentFlag[P]>
+      : GetScalarType<T[P], AggregatePaymentFlag[P]>
+  }
+
+
+
+
+  export type PaymentFlagGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PaymentFlagWhereInput
+    orderBy?: PaymentFlagOrderByWithAggregationInput | PaymentFlagOrderByWithAggregationInput[]
+    by: PaymentFlagScalarFieldEnum[] | PaymentFlagScalarFieldEnum
+    having?: PaymentFlagScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PaymentFlagCountAggregateInputType | true
+    _min?: PaymentFlagMinAggregateInputType
+    _max?: PaymentFlagMaxAggregateInputType
+  }
+
+  export type PaymentFlagGroupByOutputType = {
+    id: string
+    paymentId: string
+    createdAt: Date
+    source: string
+    kind: string
+    expected: JsonValue
+    received: JsonValue
+    statusWas: string
+    details: JsonValue | null
+    resolvedAt: Date | null
+    resolvedBy: string | null
+    resolution: string | null
+    note: string | null
+    _count: PaymentFlagCountAggregateOutputType | null
+    _min: PaymentFlagMinAggregateOutputType | null
+    _max: PaymentFlagMaxAggregateOutputType | null
+  }
+
+  type GetPaymentFlagGroupByPayload<T extends PaymentFlagGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PaymentFlagGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PaymentFlagGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PaymentFlagGroupByOutputType[P]>
+            : GetScalarType<T[P], PaymentFlagGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PaymentFlagSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    paymentId?: boolean
+    createdAt?: boolean
+    source?: boolean
+    kind?: boolean
+    expected?: boolean
+    received?: boolean
+    statusWas?: boolean
+    details?: boolean
+    resolvedAt?: boolean
+    resolvedBy?: boolean
+    resolution?: boolean
+    note?: boolean
+  }, ExtArgs["result"]["paymentFlag"]>
+
+  export type PaymentFlagSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    paymentId?: boolean
+    createdAt?: boolean
+    source?: boolean
+    kind?: boolean
+    expected?: boolean
+    received?: boolean
+    statusWas?: boolean
+    details?: boolean
+    resolvedAt?: boolean
+    resolvedBy?: boolean
+    resolution?: boolean
+    note?: boolean
+  }, ExtArgs["result"]["paymentFlag"]>
+
+  export type PaymentFlagSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    paymentId?: boolean
+    createdAt?: boolean
+    source?: boolean
+    kind?: boolean
+    expected?: boolean
+    received?: boolean
+    statusWas?: boolean
+    details?: boolean
+    resolvedAt?: boolean
+    resolvedBy?: boolean
+    resolution?: boolean
+    note?: boolean
+  }, ExtArgs["result"]["paymentFlag"]>
+
+  export type PaymentFlagSelectScalar = {
+    id?: boolean
+    paymentId?: boolean
+    createdAt?: boolean
+    source?: boolean
+    kind?: boolean
+    expected?: boolean
+    received?: boolean
+    statusWas?: boolean
+    details?: boolean
+    resolvedAt?: boolean
+    resolvedBy?: boolean
+    resolution?: boolean
+    note?: boolean
+  }
+
+  export type PaymentFlagOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "paymentId" | "createdAt" | "source" | "kind" | "expected" | "received" | "statusWas" | "details" | "resolvedAt" | "resolvedBy" | "resolution" | "note", ExtArgs["result"]["paymentFlag"]>
+
+  export type $PaymentFlagPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PaymentFlag"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      paymentId: string
+      createdAt: Date
+      source: string
+      kind: string
+      expected: Prisma.JsonValue
+      received: Prisma.JsonValue
+      statusWas: string
+      details: Prisma.JsonValue | null
+      resolvedAt: Date | null
+      resolvedBy: string | null
+      resolution: string | null
+      note: string | null
+    }, ExtArgs["result"]["paymentFlag"]>
+    composites: {}
+  }
+
+  type PaymentFlagGetPayload<S extends boolean | null | undefined | PaymentFlagDefaultArgs> = $Result.GetResult<Prisma.$PaymentFlagPayload, S>
+
+  type PaymentFlagCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PaymentFlagFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PaymentFlagCountAggregateInputType | true
+    }
+
+  export interface PaymentFlagDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PaymentFlag'], meta: { name: 'PaymentFlag' } }
+    /**
+     * Find zero or one PaymentFlag that matches the filter.
+     * @param {PaymentFlagFindUniqueArgs} args - Arguments to find a PaymentFlag
+     * @example
+     * // Get one PaymentFlag
+     * const paymentFlag = await prisma.paymentFlag.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PaymentFlagFindUniqueArgs>(args: SelectSubset<T, PaymentFlagFindUniqueArgs<ExtArgs>>): Prisma__PaymentFlagClient<$Result.GetResult<Prisma.$PaymentFlagPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one PaymentFlag that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PaymentFlagFindUniqueOrThrowArgs} args - Arguments to find a PaymentFlag
+     * @example
+     * // Get one PaymentFlag
+     * const paymentFlag = await prisma.paymentFlag.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PaymentFlagFindUniqueOrThrowArgs>(args: SelectSubset<T, PaymentFlagFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PaymentFlagClient<$Result.GetResult<Prisma.$PaymentFlagPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PaymentFlag that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PaymentFlagFindFirstArgs} args - Arguments to find a PaymentFlag
+     * @example
+     * // Get one PaymentFlag
+     * const paymentFlag = await prisma.paymentFlag.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PaymentFlagFindFirstArgs>(args?: SelectSubset<T, PaymentFlagFindFirstArgs<ExtArgs>>): Prisma__PaymentFlagClient<$Result.GetResult<Prisma.$PaymentFlagPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PaymentFlag that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PaymentFlagFindFirstOrThrowArgs} args - Arguments to find a PaymentFlag
+     * @example
+     * // Get one PaymentFlag
+     * const paymentFlag = await prisma.paymentFlag.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PaymentFlagFindFirstOrThrowArgs>(args?: SelectSubset<T, PaymentFlagFindFirstOrThrowArgs<ExtArgs>>): Prisma__PaymentFlagClient<$Result.GetResult<Prisma.$PaymentFlagPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more PaymentFlags that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PaymentFlagFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PaymentFlags
+     * const paymentFlags = await prisma.paymentFlag.findMany()
+     * 
+     * // Get first 10 PaymentFlags
+     * const paymentFlags = await prisma.paymentFlag.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const paymentFlagWithIdOnly = await prisma.paymentFlag.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PaymentFlagFindManyArgs>(args?: SelectSubset<T, PaymentFlagFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PaymentFlagPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a PaymentFlag.
+     * @param {PaymentFlagCreateArgs} args - Arguments to create a PaymentFlag.
+     * @example
+     * // Create one PaymentFlag
+     * const PaymentFlag = await prisma.paymentFlag.create({
+     *   data: {
+     *     // ... data to create a PaymentFlag
+     *   }
+     * })
+     * 
+     */
+    create<T extends PaymentFlagCreateArgs>(args: SelectSubset<T, PaymentFlagCreateArgs<ExtArgs>>): Prisma__PaymentFlagClient<$Result.GetResult<Prisma.$PaymentFlagPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many PaymentFlags.
+     * @param {PaymentFlagCreateManyArgs} args - Arguments to create many PaymentFlags.
+     * @example
+     * // Create many PaymentFlags
+     * const paymentFlag = await prisma.paymentFlag.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PaymentFlagCreateManyArgs>(args?: SelectSubset<T, PaymentFlagCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PaymentFlags and returns the data saved in the database.
+     * @param {PaymentFlagCreateManyAndReturnArgs} args - Arguments to create many PaymentFlags.
+     * @example
+     * // Create many PaymentFlags
+     * const paymentFlag = await prisma.paymentFlag.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PaymentFlags and only return the `id`
+     * const paymentFlagWithIdOnly = await prisma.paymentFlag.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PaymentFlagCreateManyAndReturnArgs>(args?: SelectSubset<T, PaymentFlagCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PaymentFlagPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a PaymentFlag.
+     * @param {PaymentFlagDeleteArgs} args - Arguments to delete one PaymentFlag.
+     * @example
+     * // Delete one PaymentFlag
+     * const PaymentFlag = await prisma.paymentFlag.delete({
+     *   where: {
+     *     // ... filter to delete one PaymentFlag
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PaymentFlagDeleteArgs>(args: SelectSubset<T, PaymentFlagDeleteArgs<ExtArgs>>): Prisma__PaymentFlagClient<$Result.GetResult<Prisma.$PaymentFlagPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one PaymentFlag.
+     * @param {PaymentFlagUpdateArgs} args - Arguments to update one PaymentFlag.
+     * @example
+     * // Update one PaymentFlag
+     * const paymentFlag = await prisma.paymentFlag.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PaymentFlagUpdateArgs>(args: SelectSubset<T, PaymentFlagUpdateArgs<ExtArgs>>): Prisma__PaymentFlagClient<$Result.GetResult<Prisma.$PaymentFlagPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more PaymentFlags.
+     * @param {PaymentFlagDeleteManyArgs} args - Arguments to filter PaymentFlags to delete.
+     * @example
+     * // Delete a few PaymentFlags
+     * const { count } = await prisma.paymentFlag.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PaymentFlagDeleteManyArgs>(args?: SelectSubset<T, PaymentFlagDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PaymentFlags.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PaymentFlagUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PaymentFlags
+     * const paymentFlag = await prisma.paymentFlag.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PaymentFlagUpdateManyArgs>(args: SelectSubset<T, PaymentFlagUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PaymentFlags and returns the data updated in the database.
+     * @param {PaymentFlagUpdateManyAndReturnArgs} args - Arguments to update many PaymentFlags.
+     * @example
+     * // Update many PaymentFlags
+     * const paymentFlag = await prisma.paymentFlag.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more PaymentFlags and only return the `id`
+     * const paymentFlagWithIdOnly = await prisma.paymentFlag.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PaymentFlagUpdateManyAndReturnArgs>(args: SelectSubset<T, PaymentFlagUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PaymentFlagPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one PaymentFlag.
+     * @param {PaymentFlagUpsertArgs} args - Arguments to update or create a PaymentFlag.
+     * @example
+     * // Update or create a PaymentFlag
+     * const paymentFlag = await prisma.paymentFlag.upsert({
+     *   create: {
+     *     // ... data to create a PaymentFlag
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PaymentFlag we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PaymentFlagUpsertArgs>(args: SelectSubset<T, PaymentFlagUpsertArgs<ExtArgs>>): Prisma__PaymentFlagClient<$Result.GetResult<Prisma.$PaymentFlagPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of PaymentFlags.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PaymentFlagCountArgs} args - Arguments to filter PaymentFlags to count.
+     * @example
+     * // Count the number of PaymentFlags
+     * const count = await prisma.paymentFlag.count({
+     *   where: {
+     *     // ... the filter for the PaymentFlags we want to count
+     *   }
+     * })
+    **/
+    count<T extends PaymentFlagCountArgs>(
+      args?: Subset<T, PaymentFlagCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PaymentFlagCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PaymentFlag.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PaymentFlagAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PaymentFlagAggregateArgs>(args: Subset<T, PaymentFlagAggregateArgs>): Prisma.PrismaPromise<GetPaymentFlagAggregateType<T>>
+
+    /**
+     * Group by PaymentFlag.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PaymentFlagGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PaymentFlagGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PaymentFlagGroupByArgs['orderBy'] }
+        : { orderBy?: PaymentFlagGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PaymentFlagGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPaymentFlagGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PaymentFlag model
+   */
+  readonly fields: PaymentFlagFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PaymentFlag.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PaymentFlagClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PaymentFlag model
+   */
+  interface PaymentFlagFieldRefs {
+    readonly id: FieldRef<"PaymentFlag", 'String'>
+    readonly paymentId: FieldRef<"PaymentFlag", 'String'>
+    readonly createdAt: FieldRef<"PaymentFlag", 'DateTime'>
+    readonly source: FieldRef<"PaymentFlag", 'String'>
+    readonly kind: FieldRef<"PaymentFlag", 'String'>
+    readonly expected: FieldRef<"PaymentFlag", 'Json'>
+    readonly received: FieldRef<"PaymentFlag", 'Json'>
+    readonly statusWas: FieldRef<"PaymentFlag", 'String'>
+    readonly details: FieldRef<"PaymentFlag", 'Json'>
+    readonly resolvedAt: FieldRef<"PaymentFlag", 'DateTime'>
+    readonly resolvedBy: FieldRef<"PaymentFlag", 'String'>
+    readonly resolution: FieldRef<"PaymentFlag", 'String'>
+    readonly note: FieldRef<"PaymentFlag", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PaymentFlag findUnique
+   */
+  export type PaymentFlagFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentFlag
+     */
+    select?: PaymentFlagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PaymentFlag
+     */
+    omit?: PaymentFlagOmit<ExtArgs> | null
+    /**
+     * Filter, which PaymentFlag to fetch.
+     */
+    where: PaymentFlagWhereUniqueInput
+  }
+
+  /**
+   * PaymentFlag findUniqueOrThrow
+   */
+  export type PaymentFlagFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentFlag
+     */
+    select?: PaymentFlagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PaymentFlag
+     */
+    omit?: PaymentFlagOmit<ExtArgs> | null
+    /**
+     * Filter, which PaymentFlag to fetch.
+     */
+    where: PaymentFlagWhereUniqueInput
+  }
+
+  /**
+   * PaymentFlag findFirst
+   */
+  export type PaymentFlagFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentFlag
+     */
+    select?: PaymentFlagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PaymentFlag
+     */
+    omit?: PaymentFlagOmit<ExtArgs> | null
+    /**
+     * Filter, which PaymentFlag to fetch.
+     */
+    where?: PaymentFlagWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PaymentFlags to fetch.
+     */
+    orderBy?: PaymentFlagOrderByWithRelationInput | PaymentFlagOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PaymentFlags.
+     */
+    cursor?: PaymentFlagWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PaymentFlags from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PaymentFlags.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PaymentFlags.
+     */
+    distinct?: PaymentFlagScalarFieldEnum | PaymentFlagScalarFieldEnum[]
+  }
+
+  /**
+   * PaymentFlag findFirstOrThrow
+   */
+  export type PaymentFlagFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentFlag
+     */
+    select?: PaymentFlagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PaymentFlag
+     */
+    omit?: PaymentFlagOmit<ExtArgs> | null
+    /**
+     * Filter, which PaymentFlag to fetch.
+     */
+    where?: PaymentFlagWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PaymentFlags to fetch.
+     */
+    orderBy?: PaymentFlagOrderByWithRelationInput | PaymentFlagOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PaymentFlags.
+     */
+    cursor?: PaymentFlagWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PaymentFlags from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PaymentFlags.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PaymentFlags.
+     */
+    distinct?: PaymentFlagScalarFieldEnum | PaymentFlagScalarFieldEnum[]
+  }
+
+  /**
+   * PaymentFlag findMany
+   */
+  export type PaymentFlagFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentFlag
+     */
+    select?: PaymentFlagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PaymentFlag
+     */
+    omit?: PaymentFlagOmit<ExtArgs> | null
+    /**
+     * Filter, which PaymentFlags to fetch.
+     */
+    where?: PaymentFlagWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PaymentFlags to fetch.
+     */
+    orderBy?: PaymentFlagOrderByWithRelationInput | PaymentFlagOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PaymentFlags.
+     */
+    cursor?: PaymentFlagWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PaymentFlags from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PaymentFlags.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PaymentFlags.
+     */
+    distinct?: PaymentFlagScalarFieldEnum | PaymentFlagScalarFieldEnum[]
+  }
+
+  /**
+   * PaymentFlag create
+   */
+  export type PaymentFlagCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentFlag
+     */
+    select?: PaymentFlagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PaymentFlag
+     */
+    omit?: PaymentFlagOmit<ExtArgs> | null
+    /**
+     * The data needed to create a PaymentFlag.
+     */
+    data: XOR<PaymentFlagCreateInput, PaymentFlagUncheckedCreateInput>
+  }
+
+  /**
+   * PaymentFlag createMany
+   */
+  export type PaymentFlagCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PaymentFlags.
+     */
+    data: PaymentFlagCreateManyInput | PaymentFlagCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PaymentFlag createManyAndReturn
+   */
+  export type PaymentFlagCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentFlag
+     */
+    select?: PaymentFlagSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PaymentFlag
+     */
+    omit?: PaymentFlagOmit<ExtArgs> | null
+    /**
+     * The data used to create many PaymentFlags.
+     */
+    data: PaymentFlagCreateManyInput | PaymentFlagCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PaymentFlag update
+   */
+  export type PaymentFlagUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentFlag
+     */
+    select?: PaymentFlagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PaymentFlag
+     */
+    omit?: PaymentFlagOmit<ExtArgs> | null
+    /**
+     * The data needed to update a PaymentFlag.
+     */
+    data: XOR<PaymentFlagUpdateInput, PaymentFlagUncheckedUpdateInput>
+    /**
+     * Choose, which PaymentFlag to update.
+     */
+    where: PaymentFlagWhereUniqueInput
+  }
+
+  /**
+   * PaymentFlag updateMany
+   */
+  export type PaymentFlagUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PaymentFlags.
+     */
+    data: XOR<PaymentFlagUpdateManyMutationInput, PaymentFlagUncheckedUpdateManyInput>
+    /**
+     * Filter which PaymentFlags to update
+     */
+    where?: PaymentFlagWhereInput
+    /**
+     * Limit how many PaymentFlags to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PaymentFlag updateManyAndReturn
+   */
+  export type PaymentFlagUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentFlag
+     */
+    select?: PaymentFlagSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PaymentFlag
+     */
+    omit?: PaymentFlagOmit<ExtArgs> | null
+    /**
+     * The data used to update PaymentFlags.
+     */
+    data: XOR<PaymentFlagUpdateManyMutationInput, PaymentFlagUncheckedUpdateManyInput>
+    /**
+     * Filter which PaymentFlags to update
+     */
+    where?: PaymentFlagWhereInput
+    /**
+     * Limit how many PaymentFlags to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PaymentFlag upsert
+   */
+  export type PaymentFlagUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentFlag
+     */
+    select?: PaymentFlagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PaymentFlag
+     */
+    omit?: PaymentFlagOmit<ExtArgs> | null
+    /**
+     * The filter to search for the PaymentFlag to update in case it exists.
+     */
+    where: PaymentFlagWhereUniqueInput
+    /**
+     * In case the PaymentFlag found by the `where` argument doesn't exist, create a new PaymentFlag with this data.
+     */
+    create: XOR<PaymentFlagCreateInput, PaymentFlagUncheckedCreateInput>
+    /**
+     * In case the PaymentFlag was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PaymentFlagUpdateInput, PaymentFlagUncheckedUpdateInput>
+  }
+
+  /**
+   * PaymentFlag delete
+   */
+  export type PaymentFlagDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentFlag
+     */
+    select?: PaymentFlagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PaymentFlag
+     */
+    omit?: PaymentFlagOmit<ExtArgs> | null
+    /**
+     * Filter which PaymentFlag to delete.
+     */
+    where: PaymentFlagWhereUniqueInput
+  }
+
+  /**
+   * PaymentFlag deleteMany
+   */
+  export type PaymentFlagDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PaymentFlags to delete
+     */
+    where?: PaymentFlagWhereInput
+    /**
+     * Limit how many PaymentFlags to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * PaymentFlag without action
+   */
+  export type PaymentFlagDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentFlag
+     */
+    select?: PaymentFlagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PaymentFlag
+     */
+    omit?: PaymentFlagOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -26922,7 +28131,9 @@ export namespace Prisma {
     bikeHireId: 'bikeHireId',
     lastCheckedAt: 'lastCheckedAt',
     checkCount: 'checkCount',
-    lastCheckResult: 'lastCheckResult'
+    lastCheckResult: 'lastCheckResult',
+    flaggedAt: 'flaggedAt',
+    flagReason: 'flagReason'
   };
 
   export type PaymentScalarFieldEnum = (typeof PaymentScalarFieldEnum)[keyof typeof PaymentScalarFieldEnum]
@@ -27175,6 +28386,25 @@ export namespace Prisma {
   };
 
   export type ReconciliationRunScalarFieldEnum = (typeof ReconciliationRunScalarFieldEnum)[keyof typeof ReconciliationRunScalarFieldEnum]
+
+
+  export const PaymentFlagScalarFieldEnum: {
+    id: 'id',
+    paymentId: 'paymentId',
+    createdAt: 'createdAt',
+    source: 'source',
+    kind: 'kind',
+    expected: 'expected',
+    received: 'received',
+    statusWas: 'statusWas',
+    details: 'details',
+    resolvedAt: 'resolvedAt',
+    resolvedBy: 'resolvedBy',
+    resolution: 'resolution',
+    note: 'note'
+  };
+
+  export type PaymentFlagScalarFieldEnum = (typeof PaymentFlagScalarFieldEnum)[keyof typeof PaymentFlagScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -27782,6 +29012,8 @@ export namespace Prisma {
     lastCheckedAt?: DateTimeNullableFilter<"Payment"> | Date | string | null
     checkCount?: IntFilter<"Payment"> | number
     lastCheckResult?: StringNullableFilter<"Payment"> | string | null
+    flaggedAt?: DateTimeNullableFilter<"Payment"> | Date | string | null
+    flagReason?: StringNullableFilter<"Payment"> | string | null
   }
 
   export type PaymentOrderByWithRelationInput = {
@@ -27807,6 +29039,8 @@ export namespace Prisma {
     lastCheckedAt?: SortOrderInput | SortOrder
     checkCount?: SortOrder
     lastCheckResult?: SortOrderInput | SortOrder
+    flaggedAt?: SortOrderInput | SortOrder
+    flagReason?: SortOrderInput | SortOrder
   }
 
   export type PaymentWhereUniqueInput = Prisma.AtLeast<{
@@ -27835,6 +29069,8 @@ export namespace Prisma {
     lastCheckedAt?: DateTimeNullableFilter<"Payment"> | Date | string | null
     checkCount?: IntFilter<"Payment"> | number
     lastCheckResult?: StringNullableFilter<"Payment"> | string | null
+    flaggedAt?: DateTimeNullableFilter<"Payment"> | Date | string | null
+    flagReason?: StringNullableFilter<"Payment"> | string | null
   }, "id" | "checkoutRequestId">
 
   export type PaymentOrderByWithAggregationInput = {
@@ -27860,6 +29096,8 @@ export namespace Prisma {
     lastCheckedAt?: SortOrderInput | SortOrder
     checkCount?: SortOrder
     lastCheckResult?: SortOrderInput | SortOrder
+    flaggedAt?: SortOrderInput | SortOrder
+    flagReason?: SortOrderInput | SortOrder
     _count?: PaymentCountOrderByAggregateInput
     _avg?: PaymentAvgOrderByAggregateInput
     _max?: PaymentMaxOrderByAggregateInput
@@ -27893,6 +29131,8 @@ export namespace Prisma {
     lastCheckedAt?: DateTimeNullableWithAggregatesFilter<"Payment"> | Date | string | null
     checkCount?: IntWithAggregatesFilter<"Payment"> | number
     lastCheckResult?: StringNullableWithAggregatesFilter<"Payment"> | string | null
+    flaggedAt?: DateTimeNullableWithAggregatesFilter<"Payment"> | Date | string | null
+    flagReason?: StringNullableWithAggregatesFilter<"Payment"> | string | null
   }
 
   export type PricingCategoryWhereInput = {
@@ -29148,6 +30388,98 @@ export namespace Prisma {
     details?: JsonNullableWithAggregatesFilter<"ReconciliationRun">
   }
 
+  export type PaymentFlagWhereInput = {
+    AND?: PaymentFlagWhereInput | PaymentFlagWhereInput[]
+    OR?: PaymentFlagWhereInput[]
+    NOT?: PaymentFlagWhereInput | PaymentFlagWhereInput[]
+    id?: StringFilter<"PaymentFlag"> | string
+    paymentId?: StringFilter<"PaymentFlag"> | string
+    createdAt?: DateTimeFilter<"PaymentFlag"> | Date | string
+    source?: StringFilter<"PaymentFlag"> | string
+    kind?: StringFilter<"PaymentFlag"> | string
+    expected?: JsonFilter<"PaymentFlag">
+    received?: JsonFilter<"PaymentFlag">
+    statusWas?: StringFilter<"PaymentFlag"> | string
+    details?: JsonNullableFilter<"PaymentFlag">
+    resolvedAt?: DateTimeNullableFilter<"PaymentFlag"> | Date | string | null
+    resolvedBy?: StringNullableFilter<"PaymentFlag"> | string | null
+    resolution?: StringNullableFilter<"PaymentFlag"> | string | null
+    note?: StringNullableFilter<"PaymentFlag"> | string | null
+  }
+
+  export type PaymentFlagOrderByWithRelationInput = {
+    id?: SortOrder
+    paymentId?: SortOrder
+    createdAt?: SortOrder
+    source?: SortOrder
+    kind?: SortOrder
+    expected?: SortOrder
+    received?: SortOrder
+    statusWas?: SortOrder
+    details?: SortOrderInput | SortOrder
+    resolvedAt?: SortOrderInput | SortOrder
+    resolvedBy?: SortOrderInput | SortOrder
+    resolution?: SortOrderInput | SortOrder
+    note?: SortOrderInput | SortOrder
+  }
+
+  export type PaymentFlagWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: PaymentFlagWhereInput | PaymentFlagWhereInput[]
+    OR?: PaymentFlagWhereInput[]
+    NOT?: PaymentFlagWhereInput | PaymentFlagWhereInput[]
+    paymentId?: StringFilter<"PaymentFlag"> | string
+    createdAt?: DateTimeFilter<"PaymentFlag"> | Date | string
+    source?: StringFilter<"PaymentFlag"> | string
+    kind?: StringFilter<"PaymentFlag"> | string
+    expected?: JsonFilter<"PaymentFlag">
+    received?: JsonFilter<"PaymentFlag">
+    statusWas?: StringFilter<"PaymentFlag"> | string
+    details?: JsonNullableFilter<"PaymentFlag">
+    resolvedAt?: DateTimeNullableFilter<"PaymentFlag"> | Date | string | null
+    resolvedBy?: StringNullableFilter<"PaymentFlag"> | string | null
+    resolution?: StringNullableFilter<"PaymentFlag"> | string | null
+    note?: StringNullableFilter<"PaymentFlag"> | string | null
+  }, "id">
+
+  export type PaymentFlagOrderByWithAggregationInput = {
+    id?: SortOrder
+    paymentId?: SortOrder
+    createdAt?: SortOrder
+    source?: SortOrder
+    kind?: SortOrder
+    expected?: SortOrder
+    received?: SortOrder
+    statusWas?: SortOrder
+    details?: SortOrderInput | SortOrder
+    resolvedAt?: SortOrderInput | SortOrder
+    resolvedBy?: SortOrderInput | SortOrder
+    resolution?: SortOrderInput | SortOrder
+    note?: SortOrderInput | SortOrder
+    _count?: PaymentFlagCountOrderByAggregateInput
+    _max?: PaymentFlagMaxOrderByAggregateInput
+    _min?: PaymentFlagMinOrderByAggregateInput
+  }
+
+  export type PaymentFlagScalarWhereWithAggregatesInput = {
+    AND?: PaymentFlagScalarWhereWithAggregatesInput | PaymentFlagScalarWhereWithAggregatesInput[]
+    OR?: PaymentFlagScalarWhereWithAggregatesInput[]
+    NOT?: PaymentFlagScalarWhereWithAggregatesInput | PaymentFlagScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"PaymentFlag"> | string
+    paymentId?: StringWithAggregatesFilter<"PaymentFlag"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"PaymentFlag"> | Date | string
+    source?: StringWithAggregatesFilter<"PaymentFlag"> | string
+    kind?: StringWithAggregatesFilter<"PaymentFlag"> | string
+    expected?: JsonWithAggregatesFilter<"PaymentFlag">
+    received?: JsonWithAggregatesFilter<"PaymentFlag">
+    statusWas?: StringWithAggregatesFilter<"PaymentFlag"> | string
+    details?: JsonNullableWithAggregatesFilter<"PaymentFlag">
+    resolvedAt?: DateTimeNullableWithAggregatesFilter<"PaymentFlag"> | Date | string | null
+    resolvedBy?: StringNullableWithAggregatesFilter<"PaymentFlag"> | string | null
+    resolution?: StringNullableWithAggregatesFilter<"PaymentFlag"> | string | null
+    note?: StringNullableWithAggregatesFilter<"PaymentFlag"> | string | null
+  }
+
   export type RegistrationCreateInput = {
     id: string
     createdAt?: Date | string
@@ -29687,6 +31019,8 @@ export namespace Prisma {
     lastCheckedAt?: Date | string | null
     checkCount?: number
     lastCheckResult?: string | null
+    flaggedAt?: Date | string | null
+    flagReason?: string | null
   }
 
   export type PaymentUncheckedCreateInput = {
@@ -29712,6 +31046,8 @@ export namespace Prisma {
     lastCheckedAt?: Date | string | null
     checkCount?: number
     lastCheckResult?: string | null
+    flaggedAt?: Date | string | null
+    flagReason?: string | null
   }
 
   export type PaymentUpdateInput = {
@@ -29737,6 +31073,8 @@ export namespace Prisma {
     lastCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     checkCount?: IntFieldUpdateOperationsInput | number
     lastCheckResult?: NullableStringFieldUpdateOperationsInput | string | null
+    flaggedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    flagReason?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type PaymentUncheckedUpdateInput = {
@@ -29762,6 +31100,8 @@ export namespace Prisma {
     lastCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     checkCount?: IntFieldUpdateOperationsInput | number
     lastCheckResult?: NullableStringFieldUpdateOperationsInput | string | null
+    flaggedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    flagReason?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type PaymentCreateManyInput = {
@@ -29787,6 +31127,8 @@ export namespace Prisma {
     lastCheckedAt?: Date | string | null
     checkCount?: number
     lastCheckResult?: string | null
+    flaggedAt?: Date | string | null
+    flagReason?: string | null
   }
 
   export type PaymentUpdateManyMutationInput = {
@@ -29812,6 +31154,8 @@ export namespace Prisma {
     lastCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     checkCount?: IntFieldUpdateOperationsInput | number
     lastCheckResult?: NullableStringFieldUpdateOperationsInput | string | null
+    flaggedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    flagReason?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type PaymentUncheckedUpdateManyInput = {
@@ -29837,6 +31181,8 @@ export namespace Prisma {
     lastCheckedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     checkCount?: IntFieldUpdateOperationsInput | number
     lastCheckResult?: NullableStringFieldUpdateOperationsInput | string | null
+    flaggedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    flagReason?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type PricingCategoryCreateInput = {
@@ -31265,6 +32611,118 @@ export namespace Prisma {
     details?: NullableJsonNullValueInput | InputJsonValue
   }
 
+  export type PaymentFlagCreateInput = {
+    id?: string
+    paymentId: string
+    createdAt?: Date | string
+    source: string
+    kind: string
+    expected: JsonNullValueInput | InputJsonValue
+    received: JsonNullValueInput | InputJsonValue
+    statusWas: string
+    details?: NullableJsonNullValueInput | InputJsonValue
+    resolvedAt?: Date | string | null
+    resolvedBy?: string | null
+    resolution?: string | null
+    note?: string | null
+  }
+
+  export type PaymentFlagUncheckedCreateInput = {
+    id?: string
+    paymentId: string
+    createdAt?: Date | string
+    source: string
+    kind: string
+    expected: JsonNullValueInput | InputJsonValue
+    received: JsonNullValueInput | InputJsonValue
+    statusWas: string
+    details?: NullableJsonNullValueInput | InputJsonValue
+    resolvedAt?: Date | string | null
+    resolvedBy?: string | null
+    resolution?: string | null
+    note?: string | null
+  }
+
+  export type PaymentFlagUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    paymentId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    source?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    expected?: JsonNullValueInput | InputJsonValue
+    received?: JsonNullValueInput | InputJsonValue
+    statusWas?: StringFieldUpdateOperationsInput | string
+    details?: NullableJsonNullValueInput | InputJsonValue
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    resolvedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    resolution?: NullableStringFieldUpdateOperationsInput | string | null
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type PaymentFlagUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    paymentId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    source?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    expected?: JsonNullValueInput | InputJsonValue
+    received?: JsonNullValueInput | InputJsonValue
+    statusWas?: StringFieldUpdateOperationsInput | string
+    details?: NullableJsonNullValueInput | InputJsonValue
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    resolvedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    resolution?: NullableStringFieldUpdateOperationsInput | string | null
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type PaymentFlagCreateManyInput = {
+    id?: string
+    paymentId: string
+    createdAt?: Date | string
+    source: string
+    kind: string
+    expected: JsonNullValueInput | InputJsonValue
+    received: JsonNullValueInput | InputJsonValue
+    statusWas: string
+    details?: NullableJsonNullValueInput | InputJsonValue
+    resolvedAt?: Date | string | null
+    resolvedBy?: string | null
+    resolution?: string | null
+    note?: string | null
+  }
+
+  export type PaymentFlagUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    paymentId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    source?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    expected?: JsonNullValueInput | InputJsonValue
+    received?: JsonNullValueInput | InputJsonValue
+    statusWas?: StringFieldUpdateOperationsInput | string
+    details?: NullableJsonNullValueInput | InputJsonValue
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    resolvedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    resolution?: NullableStringFieldUpdateOperationsInput | string | null
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type PaymentFlagUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    paymentId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    source?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    expected?: JsonNullValueInput | InputJsonValue
+    received?: JsonNullValueInput | InputJsonValue
+    statusWas?: StringFieldUpdateOperationsInput | string
+    details?: NullableJsonNullValueInput | InputJsonValue
+    resolvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    resolvedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    resolution?: NullableStringFieldUpdateOperationsInput | string | null
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -31831,6 +33289,8 @@ export namespace Prisma {
     lastCheckedAt?: SortOrder
     checkCount?: SortOrder
     lastCheckResult?: SortOrder
+    flaggedAt?: SortOrder
+    flagReason?: SortOrder
   }
 
   export type PaymentAvgOrderByAggregateInput = {
@@ -31859,6 +33319,8 @@ export namespace Prisma {
     lastCheckedAt?: SortOrder
     checkCount?: SortOrder
     lastCheckResult?: SortOrder
+    flaggedAt?: SortOrder
+    flagReason?: SortOrder
   }
 
   export type PaymentMinOrderByAggregateInput = {
@@ -31882,6 +33344,8 @@ export namespace Prisma {
     lastCheckedAt?: SortOrder
     checkCount?: SortOrder
     lastCheckResult?: SortOrder
+    flaggedAt?: SortOrder
+    flagReason?: SortOrder
   }
 
   export type PaymentSumOrderByAggregateInput = {
@@ -32706,6 +34170,48 @@ export namespace Prisma {
     stillPending?: SortOrder
     errors?: SortOrder
     expired?: SortOrder
+  }
+
+  export type PaymentFlagCountOrderByAggregateInput = {
+    id?: SortOrder
+    paymentId?: SortOrder
+    createdAt?: SortOrder
+    source?: SortOrder
+    kind?: SortOrder
+    expected?: SortOrder
+    received?: SortOrder
+    statusWas?: SortOrder
+    details?: SortOrder
+    resolvedAt?: SortOrder
+    resolvedBy?: SortOrder
+    resolution?: SortOrder
+    note?: SortOrder
+  }
+
+  export type PaymentFlagMaxOrderByAggregateInput = {
+    id?: SortOrder
+    paymentId?: SortOrder
+    createdAt?: SortOrder
+    source?: SortOrder
+    kind?: SortOrder
+    statusWas?: SortOrder
+    resolvedAt?: SortOrder
+    resolvedBy?: SortOrder
+    resolution?: SortOrder
+    note?: SortOrder
+  }
+
+  export type PaymentFlagMinOrderByAggregateInput = {
+    id?: SortOrder
+    paymentId?: SortOrder
+    createdAt?: SortOrder
+    source?: SortOrder
+    kind?: SortOrder
+    statusWas?: SortOrder
+    resolvedAt?: SortOrder
+    resolvedBy?: SortOrder
+    resolution?: SortOrder
+    note?: SortOrder
   }
 
   export type BikeHireCreateNestedOneWithoutRegistrationInput = {

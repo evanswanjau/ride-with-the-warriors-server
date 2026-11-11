@@ -13,6 +13,11 @@
  *   when a new prompt starts (a late success still pays them).
  * - A failure only flags the item ("Payment failed" on the payment page) when it belongs
  *   to the newest attempt, so an old prompt cannot fail a newer one.
+ * - A success that reports an amount or phone different from the Payment is never paid
+ *   automatically: it is recorded in PaymentFlag and the payment becomes FLAGGED until an
+ *   admin accepts or rejects it (resolveFlaggedPayment). A success without an amount or
+ *   phone is accepted (DTB's callback may not carry them); reconciliation supplies them
+ *   when the status API does.
  */
 import type { Payment, Prisma } from '../generated/client/index.js';
 import { prisma } from '../storage/prisma.js';
@@ -117,10 +122,56 @@ export type PaymentOutcome = {
     receipt?: string | null;
     mnoReference?: string | null;
     cbsReference?: string | null;
+    /** What the gateway says was paid; checked against the Payment when present. */
+    amount?: number | string | null;
+    phone?: string | number | null;
+    /** Where the outcome came from (recorded on a flag). */
+    source?: 'callback' | 'reconciliation';
     details?: unknown;
 };
 
-export type SettleResult = 'settled' | 'ignored' | 'unknown';
+export type SettleResult = 'settled' | 'ignored' | 'unknown' | 'flagged';
+
+/** Last 9 digits: 0711..., 254711..., +254 711 ... are the same number. */
+export function samePhone(a: string, b: string): boolean {
+    const da = a.replace(/\D/g, '');
+    const db = b.replace(/\D/g, '');
+    return da.length >= 9 && db.length >= 9 && da.slice(-9) === db.slice(-9);
+}
+
+/**
+ * The amount the prompt actually asked for. The Daraja sandbox charges SANDBOX_STK_AMOUNT
+ * (KES 1 by default) instead of the real price; config.ts refuses the sandbox in production.
+ */
+export function promptedAmount(p: Pick<Payment, 'amount'>, env: NodeJS.ProcessEnv = process.env): number {
+    if (env.PAYMENT_PROVIDER === 'sandbox' && env.SANDBOX_STK_AMOUNT !== 'actual') return Number(env.SANDBOX_STK_AMOUNT || 1);
+    return Math.round(p.amount);
+}
+
+/** Compares what the gateway reported with the Payment. Missing values are not checked. */
+export function checkOutcome(p: Pick<Payment, 'amount' | 'phone'>, o: Pick<PaymentOutcome, 'amount' | 'phone'>):
+    { ok: true } | { ok: false; kind: string; expected: Record<string, unknown>; received: Record<string, unknown> } {
+    const problems: string[] = [];
+    const expected: Record<string, unknown> = {};
+    const received: Record<string, unknown> = {};
+    if (o.amount !== undefined && o.amount !== null && o.amount !== '') {
+        const got = Number(o.amount);
+        const want = promptedAmount(p);
+        if (!Number.isFinite(got) || Math.round(got) !== want) {
+            problems.push('AMOUNT_MISMATCH');
+            expected.amount = want;
+            received.amount = o.amount;
+        }
+    }
+    if (o.phone !== undefined && o.phone !== null && String(o.phone) !== '' && p.phone) {
+        if (!samePhone(String(o.phone), p.phone)) {
+            problems.push('PHONE_MISMATCH');
+            expected.phone = p.phone;
+            received.phone = String(o.phone);
+        }
+    }
+    return problems.length ? { ok: false, kind: problems.join(','), expected, received } : { ok: true };
+}
 
 function purposeOf(p: Payment): PaymentPurpose | null {
     if (p.purpose) return p.purpose as PaymentPurpose;
@@ -173,9 +224,15 @@ export async function settlePayment(o: PaymentOutcome): Promise<SettleResult> {
     if (!payment) return 'unknown';
     const purpose = purposeOf(payment);
 
+    if (o.success) {
+        const check = checkOutcome(payment, o);
+        if (!check.ok) return flagPayment(payment, o, check);
+    }
+
     const receipt = o.receipt || o.mnoReference || null;
     const moved = await prisma.payment.updateMany({
-        where: o.success ? { id: payment.id, status: { not: 'PAID' } } : { id: payment.id, status: 'PENDING' },
+        // FLAGGED waits for an admin: no callback may settle it.
+        where: o.success ? { id: payment.id, status: { notIn: ['PAID', 'FLAGGED'] } } : { id: payment.id, status: 'PENDING' },
         data: {
             status: o.success ? 'PAID' : 'FAILED',
             failureReason: o.success ? null : (o.reason ?? 'Payment was not completed.'),
@@ -194,6 +251,67 @@ export async function settlePayment(o: PaymentOutcome): Promise<SettleResult> {
     if (o.success) await applySuccess(payment, purpose, receipt);
     else if (purpose && await isNewestAttempt(payment, purpose)) await applyFailure(payment, purpose, o.reason ?? 'Payment was not completed.');
     return 'settled';
+}
+
+/**
+ * Records a success that does not match the Payment. A payment that is not PAID yet becomes
+ * FLAGGED (conditional update, so a racing callback cannot be overwritten); a PAID one keeps
+ * its status and only gets the flag row for admins to look at.
+ */
+async function flagPayment(
+    payment: Payment,
+    o: PaymentOutcome,
+    check: { kind: string; expected: Record<string, unknown>; received: Record<string, unknown> },
+): Promise<SettleResult> {
+    const reason = `${check.kind}: expected ${JSON.stringify(check.expected)}, received ${JSON.stringify(check.received)}`;
+    await prisma.paymentFlag.create({
+        data: {
+            paymentId: payment.id,
+            source: o.source ?? 'callback',
+            kind: check.kind,
+            expected: check.expected as Prisma.InputJsonValue,
+            received: check.received as Prisma.InputJsonValue,
+            statusWas: payment.status,
+            details: { receipt: o.receipt ?? o.mnoReference ?? null, cbsReference: o.cbsReference ?? null, payload: (o.details ?? null) as Prisma.InputJsonValue } as Prisma.InputJsonValue,
+        },
+    });
+    await prisma.payment.updateMany({
+        where: { id: payment.id, status: { notIn: ['PAID', 'FLAGGED'] } },
+        data: { status: 'FLAGGED', flaggedAt: new Date(), flagReason: reason.slice(0, 500) },
+    });
+    console.warn(`[Payments] ${payment.checkoutRequestId}: success ${o.source ?? 'callback'} does not match the payment (${check.kind}); flagged for admin review`);
+    return 'flagged';
+}
+
+/**
+ * Admin decision on a FLAGGED payment. "accept" pays it (and the item, with confirmations)
+ * using the receipt from the flagged callback; "reject" marks it FAILED. Open flags are closed.
+ */
+export async function resolveFlaggedPayment(
+    paymentId: string,
+    action: 'accept' | 'reject',
+    by: string,
+    note?: string,
+): Promise<'resolved' | 'not-flagged'> {
+    const payment = await prisma.payment.findUnique({ where: { id: paymentId } });
+    if (!payment || payment.status !== 'FLAGGED') return 'not-flagged';
+    const flag = await prisma.paymentFlag.findFirst({ where: { paymentId, resolvedAt: null }, orderBy: { createdAt: 'desc' } });
+    const receipt = ((flag?.details as { receipt?: string | null } | null)?.receipt) ?? null;
+
+    const moved = await prisma.payment.updateMany({
+        where: { id: paymentId, status: 'FLAGGED' },
+        data: action === 'accept'
+            ? { status: 'PAID', failureReason: null, mpesaReceiptNumber: receipt, mnoReference: receipt }
+            : { status: 'FAILED', failureReason: `Rejected by admin: ${note ?? payment.flagReason ?? 'callback did not match'}`.slice(0, 500) },
+    });
+    if (moved.count === 0) return 'not-flagged';
+
+    await prisma.paymentFlag.updateMany({
+        where: { paymentId, resolvedAt: null },
+        data: { resolvedAt: new Date(), resolvedBy: by, resolution: action === 'accept' ? 'ACCEPTED' : 'REJECTED', note: note ?? null },
+    });
+    if (action === 'accept') await applySuccess(payment, purposeOf(payment), receipt);
+    return 'resolved';
 }
 
 async function applySuccess(p: Payment, purpose: PaymentPurpose | null, receipt: string | null) {

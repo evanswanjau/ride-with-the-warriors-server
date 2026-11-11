@@ -119,8 +119,9 @@ model Payment {
   merchantRequestId  String?
   phone              String?
   amount             Float
-  // PENDING -> PAID | FAILED | EXPIRED. A success also settles FAILED/EXPIRED (money was taken);
-  // a failure only settles PENDING. See src/services/payments.ts.
+  // PENDING -> PAID | FAILED | EXPIRED | FLAGGED. A success also settles FAILED/EXPIRED (money
+  // was taken); a failure only settles PENDING. A success whose amount or phone does not match
+  // makes it FLAGGED, which only an admin can settle. See src/services/payments.ts.
   status             String   @default("PENDING")
   failureReason      String?
   createdAt          DateTime @default(now())
@@ -136,6 +137,10 @@ model Payment {
   lastCheckedAt      DateTime?
   checkCount         Int      @default(0)
   lastCheckResult    String?
+  // Set when a success callback did not match this payment (src/services/payments.ts);
+  // status is then FLAGGED until an admin accepts or rejects it.
+  flaggedAt          DateTime?
+  flagReason         String?
 
   @@index([registrationId])
   @@index([checkoutRequestId])
@@ -424,4 +429,29 @@ model ReconciliationRun {
   details      Json?
 
   @@index([startedAt])
+}
+
+// A payment callback (or status answer) that did not match its Payment: wrong amount or phone.
+// Never paid automatically; an admin accepts or rejects it (POST /api/v1/admin/payments/:id/resolve).
+model PaymentFlag {
+  id         String    @id @default(uuid())
+  paymentId  String
+  createdAt  DateTime  @default(now())
+  // callback | reconciliation
+  source     String
+  // AMOUNT_MISMATCH | PHONE_MISMATCH (comma-separated when both)
+  kind       String
+  expected   Json
+  received   Json
+  // What the payment's status was when the callback arrived
+  statusWas  String
+  details    Json?
+  resolvedAt DateTime?
+  resolvedBy String?
+  // ACCEPTED | REJECTED | SUPERSEDED (the payment was settled some other way)
+  resolution String?
+  note       String?
+
+  @@index([paymentId])
+  @@index([resolvedAt])
 }

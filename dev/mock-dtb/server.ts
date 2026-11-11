@@ -19,6 +19,8 @@
  *   fail_after_success SUCCESS, then a late FAILURE
  *   reject             /stkpush itself answers 400 (prompt never sent)
  *   manual             no automatic callback; use the dashboard buttons
+ *   wrong_amount       SUCCESS callback reporting KES 1 less than was asked for
+ *                      (the server must flag it, not mark it paid)
  *   lost_callback      the payment succeeds but no callback is sent (only the
  *                      status API below knows; tests payment reconciliation)
  *
@@ -30,8 +32,8 @@
  */
 import express from 'express';
 
-type Mode = 'success' | 'fail' | 'timeout' | 'duplicate' | 'fail_after_success' | 'reject' | 'manual' | 'lost_callback';
-const MODES: Mode[] = ['success', 'fail', 'timeout', 'duplicate', 'fail_after_success', 'reject', 'manual', 'lost_callback'];
+type Mode = 'success' | 'fail' | 'timeout' | 'duplicate' | 'fail_after_success' | 'reject' | 'manual' | 'lost_callback' | 'wrong_amount';
+const MODES: Mode[] = ['success', 'fail', 'timeout', 'duplicate', 'fail_after_success', 'reject', 'manual', 'lost_callback', 'wrong_amount'];
 
 type Push = {
     ref: string;
@@ -58,8 +60,8 @@ function receipt() {
     return 'S' + Array.from({ length: 9 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
 }
 
-async function sendCallback(push: Push, outcome: 'success' | 'fail') {
-    const body = outcome === 'success'
+async function sendCallback(push: Push, outcome: 'success' | 'fail', extra: Record<string, unknown> = {}) {
+    const body: Record<string, unknown> = outcome === 'success'
         ? {
             status: 'SUCCESS',
             responseCode: '200',
@@ -78,6 +80,7 @@ async function sendCallback(push: Push, outcome: 'success' | 'fail') {
             cbsReference: '',
             transactionId: 'TX' + Date.now(),
         };
+    Object.assign(body, extra);
     // The first decided outcome is what really happened; later callbacks (duplicates,
     // a late failure) do not change what the status API reports.
     if (!push.outcome) {
@@ -106,6 +109,9 @@ function schedule(push: Push) {
         case 'fail': later(delayMs, 'fail'); break;
         case 'duplicate': later(delayMs, 'success'); later(delayMs + 1000, 'success'); break;
         case 'fail_after_success': later(delayMs, 'success'); later(delayMs + 1500, 'fail'); break;
+        case 'wrong_amount':
+            setTimeout(() => void sendCallback(push, 'success', { amount: push.amount - 1, phoneNumber: push.phone }), delayMs);
+            break;
         case 'lost_callback':
             setTimeout(() => { push.outcome = 'success'; push.receipt = receipt(); }, delayMs);
             break;
