@@ -5,7 +5,7 @@
  *
  * Needs a local test database (npm run test:db). Skipped otherwise.
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import supertest from 'supertest';
 import bcrypt from 'bcrypt';
 import { randomBytes, randomUUID } from 'crypto';
@@ -164,12 +164,11 @@ describe.skipIf(!hasDb)('Profile editing', () => {
             expect((await request.post('/api/v1/auth/contact/verify').set(me.auth).send({ identifier: 'new@example.com', code: wrong })).status).toBe(400);
             expect((await prisma.account.findUnique({ where: { id: me.accountId } }))?.email).toBe('old@example.com');
 
-            const log = vi.spyOn(console, 'log');
             const verify = await request.post('/api/v1/auth/contact/verify').set(me.auth).send({ identifier: 'new@example.com', code: start.body.devCode });
             expect(verify.status).toBe(200);
-            // Notice to the old address (suppressed in tests, so it shows in the messaging log).
-            expect(log.mock.calls.some((c) => String(c[0]).includes('email address was changed'))).toBe(true);
-            log.mockRestore();
+            // Notice to the old address, queued in the notification outbox.
+            const notice = await prisma.notification.findFirst({ where: { template: 'email:contact-changed', recipient: 'old@example.com' } });
+            expect((notice?.payload as { subject?: string } | undefined)?.subject).toMatch(/email address was changed/);
             expect(verify.body.account.email).toBe('new@example.com');
 
             const [row] = await audits({ accountId: me.accountId });

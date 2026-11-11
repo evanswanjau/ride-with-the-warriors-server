@@ -3,6 +3,7 @@ import { messagingDisabled, logSuppressed } from '../utils/messaging.js';
 import { prisma } from '../storage/prisma.js';
 import { calculateAge } from './pricing.js';
 import { generateRaffleTicketPdf } from './pdfService.js';
+import { enqueue, sendNow, registerDeliverer, setOutboxHooks, serializeMail, deserializeMail, type EmailPayload } from './outbox.js';
 
 // --- CONFIGURATION & CONSTANTS ---
 
@@ -104,6 +105,50 @@ const transporter = nodemailer.createTransport({
     return realSendMail(mail);
   };
 }
+
+// --- OUTBOX ---
+// Every email below is queued in the Notification outbox (src/services/outbox.ts) and sent
+// by the worker. Only login codes are sent at once.
+
+const RAFFLE_CONFIRMATION = 'email:raffle-confirmation';
+
+type QueueOpts = { template: string; dedupeKey?: string; meta?: Record<string, unknown> };
+
+const recipientOf = (to: unknown) => (Array.isArray(to) ? to.join(', ') : String(to ?? ''));
+
+/** Queues a fully built message. Returns true when it is queued (or was already queued). */
+async function queueMail(mail: Record<string, any>, opts: QueueOpts): Promise<boolean> {
+  await enqueue({
+    channel: 'EMAIL',
+    recipient: recipientOf(mail.to),
+    template: opts.template,
+    payload: serializeMail({ from: EMAIL_FROM, ...mail }),
+    dedupeKey: opts.dedupeKey,
+    meta: opts.meta,
+  });
+  return true;
+}
+
+registerDeliverer('EMAIL', async ({ payload, template }) => {
+  const mail = template === RAFFLE_CONFIRMATION
+    ? await renderRaffleConfirmation(payload as RaffleTicketData)
+    : deserializeMail(payload as EmailPayload);
+  await transporter.sendMail(mail);
+});
+
+// The admin email history (EmailLog) is written once the worker has sent (or given up).
+setOutboxHooks({
+  async onSettled(n, outcome, error) {
+    const ref = (n.meta as { emailLog?: { registrationId: string; type: string } } | null)?.emailLog;
+    if (!ref) return;
+    await prisma.emailLog.create({
+      data: { registrationId: ref.registrationId, type: ref.type, status: outcome === 'SENT' ? 'sent' : 'failed', error },
+    });
+  },
+});
+
+/** "2026-11-11": periodic reminders may be queued once per day. */
+const today = () => new Date().toISOString().slice(0, 10);
 
 // --- HELPERS ---
 
@@ -673,61 +718,54 @@ export async function sendRaffleEmail(
   }
  
   try {
-    await transporter.sendMail({
-      from: EMAIL_FROM,
-      to: data.email,
-      subject: emailContent.subject,
-      html: emailContent.html,
-    });
- 
-    await logEmail(ticketId, type, 'sent');
-    console.log(`[Email] Sent ${type} to Raffle ${data.email}`);
-    return true;
+    return await queueMail(
+      { to: data.email, subject: emailContent.subject, html: emailContent.html },
+      {
+        template: `email:${type}`,
+        dedupeKey: `email:${type}:${ticketId}${type.includes('periodic') ? `:${today()}` : ''}`,
+        meta: { emailLog: { registrationId: ticketId, type } },
+      },
+    );
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    await logEmail(ticketId, type, 'failed', errorMessage);
-    console.error(`[Email] Failed to send ${type} to Raffle ${data.email}:`, errorMessage);
+    console.error(`[Email] Could not queue ${type} for raffle ${ticketId}:`, error instanceof Error ? error.message : error);
     return false;
   }
 }
  
+/**
+ * Queues the raffle confirmation. The worker builds the email and its PDF when it sends,
+ * so the payment callback does no PDF work. `dedupeKey` (e.g. per payment) makes a
+ * repeated callback queue nothing; omit it for a deliberate resend.
+ */
 export async function sendRaffleConfirmationEmail(
-  ticket: RaffleTicketData
+  ticket: RaffleTicketData,
+  opts: { dedupeKey?: string } = {}
 ): Promise<boolean> {
   if (!ticket.email) {
     console.log(`[Email] Raffle ${ticket.id} - no email address, skipping`);
     return false;
   }
   try {
-    const { subject, html } = getRaffleConfirmationEmail(ticket);
-
-    // Generate PDF for all tickets in this purchase
-    const ticketsForPdf = ticket.ids.map(id => ({
-      id,
-      firstName: ticket.firstName,
-      lastName: ticket.lastName
-    }));
-    const pdfBuffer = await generateRaffleTicketPdf(ticketsForPdf);
-
-    await transporter.sendMail({
-      from: EMAIL_FROM,
-      to: ticket.email,
-      subject,
-      html,
-      attachments: [
-        {
-          filename: `RWTW_Raffle_Tickets_${ticket.id}.pdf`,
-          content: pdfBuffer
-        }
-      ]
-    });
-    console.log(`[Email] Raffle confirmation sent to ${ticket.email} (${ticket.id}) with PDF attachment`);
+    await enqueue({ channel: 'EMAIL', recipient: ticket.email, template: RAFFLE_CONFIRMATION, payload: ticket, dedupeKey: opts.dedupeKey });
     return true;
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
-    console.error(`[Email] Failed to send raffle confirmation to ${ticket.email}:`, msg);
+    console.error(`[Email] Could not queue raffle confirmation for ${ticket.id}:`, msg);
     return false;
   }
+}
+
+async function renderRaffleConfirmation(ticket: RaffleTicketData) {
+  const { subject, html } = getRaffleConfirmationEmail(ticket);
+  // One PDF with every ticket in this purchase
+  const pdfBuffer = await generateRaffleTicketPdf(ticket.ids.map(id => ({ id, firstName: ticket.firstName, lastName: ticket.lastName })));
+  return {
+    from: EMAIL_FROM,
+    to: ticket.email,
+    subject,
+    html,
+    attachments: [{ filename: `RWTW_Raffle_Tickets_${ticket.id}.pdf`, content: pdfBuffer }],
+  };
 }
 
 // --- ENQUIRY EMAILS ---
@@ -831,23 +869,16 @@ export function getEnquiryAckEmail(_data: EnquiryData): { subject: string; html:
 export async function sendEnquiryEmails(data: EnquiryData): Promise<{ success: boolean; error?: string }> {
   try {
     const adminEmail = getEnquiryAdminEmail(data);
-    await transporter.sendMail({
-      from: EMAIL_FROM,
-      to: SUPPORT_EMAIL,
-      replyTo: data.email,
-      subject: adminEmail.subject,
-      html: adminEmail.html,
-    });
+    await queueMail(
+      { to: SUPPORT_EMAIL, replyTo: data.email, subject: adminEmail.subject, html: adminEmail.html },
+      { template: 'email:enquiry-admin' },
+    );
 
     const ackEmail = getEnquiryAckEmail(data);
-    await transporter.sendMail({
-      from: EMAIL_FROM,
-      to: data.email,
-      subject: ackEmail.subject,
-      html: ackEmail.html,
-    });
-
-    console.log(`[Email] Enquiry emails sent successfully for ${data.email}`);
+    await queueMail(
+      { to: data.email, subject: ackEmail.subject, html: ackEmail.html },
+      { template: 'email:enquiry-ack' },
+    );
     return { success: true };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -872,18 +903,17 @@ async function wasEmailSent(registrationId: string, type: EmailType): Promise<bo
   return !!existing;
 }
 
-async function logEmail(registrationId: string, type: EmailType, status: 'sent' | 'failed', error?: string) {
-  await prisma.emailLog.create({
-    data: { registrationId, type, status, error },
-  });
-}
-
+/**
+ * Queues a registration email. Each (registration, type) is queued once; periodic reminders
+ * once per day. `force` queues it again (admin resend).
+ */
 export async function sendEmail(
   registrationId: string,
   type: EmailType,
-  data: RegistrationData
+  data: RegistrationData,
+  opts: { force?: boolean } = {}
 ): Promise<boolean> {
-  if (await wasEmailSent(registrationId, type)) {
+  if (!opts.force && await wasEmailSent(registrationId, type)) {
     console.log(`[Email] Skipping ${type} for ${registrationId} - already sent`);
     return true;
   }
@@ -916,21 +946,18 @@ export async function sendEmail(
       return false;
   }
 
+  const key = `email:${type}:${registrationId}${type.includes('periodic') ? `:${today()}` : ''}`;
   try {
-    await transporter.sendMail({
-      from: EMAIL_FROM,
-      to: data.email,
-      subject: emailContent.subject,
-      html: emailContent.html,
-    });
-
-    await logEmail(registrationId, type, 'sent');
-    console.log(`[Email] Sent ${type} to ${data.email}`);
-    return true;
+    return await queueMail(
+      { to: data.email, subject: emailContent.subject, html: emailContent.html },
+      {
+        template: `email:${type}`,
+        dedupeKey: opts.force ? `${key}:resend:${Date.now()}` : key,
+        meta: { emailLog: { registrationId, type } },
+      },
+    );
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    await logEmail(registrationId, type, 'failed', errorMessage);
-    console.error(`[Email] Failed to send ${type} to ${data.email}:`, errorMessage);
+    console.error(`[Email] Could not queue ${type} for ${registrationId}:`, error instanceof Error ? error.message : error);
     return false;
   }
 }
@@ -953,18 +980,15 @@ export async function sendAlertEmail(
     return false;
   }
   try {
-    await transporter.sendMail({
-      from: EMAIL_FROM,
+    return await queueMail({
       to,
       subject,
       text: message,
       html: `<pre style="font-family: ui-monospace, monospace; font-size: 14px; line-height: 1.5; white-space: pre-wrap;">${message}</pre>`,
-    });
-    console.log(`[Email] Alert sent to ${to}: ${subject}`);
-    return true;
+    }, { template: 'email:alert' });
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
-    console.error(`[Email] Failed to send alert to ${to}:`, msg);
+    console.error(`[Email] Could not queue alert to ${to}:`, msg);
     return false;
   }
 }
@@ -981,15 +1005,22 @@ export async function sendOtpEmail(to: string, code: string): Promise<boolean> {
     <p style="margin: 18px 0 0; font-size: 13px; line-height: 1.6; color: ${C.textMuted};">
       If you didn't try to log in, you can ignore this email.
     </p>`;
+  const subject = 'Your Ride With The Warriors login code';
   try {
-    await transporter.sendMail({
-      from: EMAIL_FROM,
-      to,
-      subject: 'Your Ride With The Warriors login code',
-      text: `${code} is your Ride With The Warriors login code. It expires in 10 minutes.`,
-      html: getEmailTemplate(content, 'Your login code', 'Your one-time login code'),
+    // Sent at once (codes expire in 10 minutes); the outbox row keeps no code.
+    return await sendNow({
+      channel: 'EMAIL',
+      recipient: to,
+      template: 'otp',
+      payload: serializeMail({
+        from: EMAIL_FROM,
+        to,
+        subject,
+        text: `${code} is your Ride With The Warriors login code. It expires in 10 minutes.`,
+        html: getEmailTemplate(content, 'Your login code', 'Your one-time login code'),
+      }),
+      storedPayload: { from: EMAIL_FROM, to, subject, text: '[one-time login code]' },
     });
-    return true;
   } catch (error) {
     console.error('[Email] Failed to send login code:', error instanceof Error ? error.message : error);
     return false;
@@ -1013,14 +1044,12 @@ export async function sendContactChangedEmail(to: string, kind: 'email' | 'phone
       If you didn't make this change, contact us straight away by replying to this email.
     </p>`;
   try {
-    await transporter.sendMail({
-      from: EMAIL_FROM,
+    return await queueMail({
       to,
       subject: `Your Ride With The Warriors ${what} was changed`,
       text: `The ${what} on your Ride With The Warriors account was changed to ${newContact}. If you didn't make this change, contact us straight away.`,
       html: getEmailTemplate(content, `Your ${what} was changed`, `Your ${what} was changed`),
-    });
-    return true;
+    }, { template: 'email:contact-changed' });
   } catch (error) {
     console.error('[Email] Failed to send contact change notice:', error instanceof Error ? error.message : error);
     return false;
@@ -1148,13 +1177,10 @@ export async function sendBulkCustomEmail(
     `;
 
     try {
-      await transporter.sendMail({
-        from: EMAIL_FROM,
-        to: recipient.email,
-        subject: subject,
-        text: compiledMessage,
-        html: htmlContent,
-      });
+      await queueMail(
+        { to: recipient.email, subject, text: compiledMessage, html: htmlContent },
+        { template: 'email:bulk' },
+      );
       successCount++;
     } catch (error: any) {
       failedCount++;

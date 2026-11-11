@@ -26,6 +26,7 @@ import { notifyRouter, adminNotifyRouter } from './routes/notify.js';
 import { feedbackRouter, adminFeedbackRouter } from './routes/feedback.js';
 import { bikeHiresRouter } from './routes/admin/bike-hires.js';
 import { adminBibsRouter } from './routes/admin/bibs.js';
+import { adminNotificationsRouter } from './routes/admin/notifications.js';
 import { authRouter as userAuthRouter } from './routes/auth.js';
 import { meRouter } from './routes/me.js';
 import { galleryRouter } from './routes/gallery.js';
@@ -88,6 +89,7 @@ app.use('/api/v1/admin/dashboard', adminDashboardRouter);
 app.use('/api/v1/admin/referrals', adminReferralsRouter);
 app.use('/api/v1/admin/bike-hires', bikeHiresRouter);
 app.use('/api/v1/admin/bibs', adminBibsRouter);
+app.use('/api/v1/admin/notifications', adminNotificationsRouter);
 app.use('/api/v1/admin/notify', adminNotifyRouter);
 app.use('/api/v1/admin/feedback', adminFeedbackRouter);
 
