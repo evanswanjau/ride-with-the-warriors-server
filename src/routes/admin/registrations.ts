@@ -6,7 +6,7 @@ import { prisma } from '../../storage/prisma.js';
 import { z } from 'zod';
 import { requireAdmin, AuthenticatedRequest } from '../../middleware/auth.js';
 import { writeAudit } from '../../middleware/adminAudit.js';
-import { updateRegistration } from '../../storage/memoryRegistrations.js';
+import { updateRegistration } from '../../storage/registrationStore.js';
 
 export const adminRegistrationsRouter = Router();
 

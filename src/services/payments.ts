@@ -22,7 +22,7 @@
  */
 import type { Payment, Prisma } from '../generated/client/index.js';
 import { prisma } from '../storage/prisma.js';
-import { getRegistration, updateRegistration } from '../storage/memoryRegistrations.js';
+import { getRegistration, updateRegistration } from '../storage/registrationStore.js';
 import { assignTicketNumbers } from './numbering.js';
 import { smsService } from './smsService.js';
 import { sendRaffleConfirmationEmail } from './emailService.js';

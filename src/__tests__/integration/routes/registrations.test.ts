@@ -127,8 +127,8 @@ vi.mock('../../../storage/prisma.js', () => ({
     },
 }));
 
-// Mock memoryRegistrations for tests
-vi.mock('../../../storage/memoryRegistrations.js', () => ({
+// Mock registrationStore for tests
+vi.mock('../../../storage/registrationStore.js', () => ({
     findExistingRegistrationsByEmails: vi.fn().mockResolvedValue([]),
     findExistingRegistrationsByIdNumbers: vi.fn().mockResolvedValue([]),
     createRegistration: vi.fn(),
