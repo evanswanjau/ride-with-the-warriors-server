@@ -9,8 +9,9 @@ import { paymentGateway } from '../services/paymentGateway.js';
 import { beginAttempt, recordAttempt } from '../services/payments.js';
 
 import { prisma } from '../storage/prisma.js';
-import { requireUser, UserRequest } from '../middleware/userAuth.js';
+import { requireUser, optionalUser, UserRequest } from '../middleware/userAuth.js';
 import { linkGroupParticipants } from '../services/accountService.js';
+import { quoteLimiter } from '../middleware/rateLimit.js';
 
 export const registrationsRouter = Router();
 
@@ -28,6 +29,11 @@ async function loadOwnedRegistration(id: string, accountId: string) {
   if (!reg || reg.accountId !== accountId) return null;
   const amountDue = Number((reg.pricing as any)?.totalAmount ?? reg.totalAmount ?? 0);
   return { reg, amountDue };
+}
+
+/** True when every registration belongs to this account. */
+function ownsAll(regs: { accountId?: string | null }[], accountId?: string | null) {
+  return !!accountId && regs.length > 0 && regs.every((r) => r.accountId === accountId);
 }
 
 function getEmailsFromPayload(type: string, payload: any): string[] {
@@ -78,7 +84,7 @@ function validateTeamRules(circuitId: 'blitz' | 'recon' | 'corporate' | 'family'
   return formErrors;
 }
 
-registrationsRouter.post('/quote', async (req, res, next) => {
+registrationsRouter.post('/quote', quoteLimiter, optionalUser, async (req: UserRequest, res, next) => {
   try {
     const base = quoteRequestSchema.parse(req.body);
 
@@ -141,7 +147,9 @@ registrationsRouter.post('/quote', async (req, res, next) => {
           message: 'One or more participants are already registered and paid.',
           details: {
             formErrors: ['One or more participants are already registered.'],
-            duplicates: [...new Set(duplicateInfo)]
+            // Which emails/ID numbers matched is shown only to the account that owns those
+            // registrations, so this endpoint cannot be used to check who is registered.
+            ...(ownsAll(blockingDuplicates, req.account?.id) ? { duplicates: [...new Set(duplicateInfo)] } : {})
           }
         }
       });
@@ -305,41 +313,28 @@ registrationsRouter.post('/', requireUser, async (req: UserRequest, res, next) =
         }
       });
 
-      console.log(`[Registration] Duplicate check failed for PAID entries: ${duplicateInfo.join(', ')}`);
+      console.log(`[Registration] Duplicate check failed: ${duplicateInfo.length} paid match(es)`);
       return res.status(400).json({
         error: {
           code: 'DUPLICATE',
           message: 'One or more participants are already registered and paid.',
           details: {
             formErrors: ['One or more participants are already registered.'],
-            duplicates: [...new Set(duplicateInfo)]
+            ...(ownsAll(paidDuplicates, accountId) ? { duplicates: [...new Set(duplicateInfo)] } : {})
           }
         }
       });
     }
 
     // AUTO-CLEANUP: replace this account's own earlier UNPAID attempts. Never
-    // delete unpaid registrations that belong to someone else.
+    // delete unpaid registrations that belong to someone else. The old drafts are
+    // removed in the same transaction that saves the new one (see createRegistration),
+    // and never when they have a payment in progress or made.
     const myUnpaidDuplicates = unpaidDuplicates.filter(reg => reg.accountId === accountId);
-    if (myUnpaidDuplicates.length > 0) {
-      const unpaidDuplicates = myUnpaidDuplicates;
-      const groupIds = [...new Set(unpaidDuplicates.map(reg => (reg as any).groupId).filter(Boolean))];
-      console.log(`[Registration] Cleaning up ${unpaidDuplicates.length} UNPAID records in groups: ${groupIds.join(', ')}`);
-
-      const prisma = (await import('../storage/prisma.js')).prisma;
-      if (groupIds.length > 0) {
-        await (prisma.registration as any).deleteMany({
-          where: { groupId: { in: groupIds } }
-        });
-      }
-      // Also catch any orphan records without groupIds
-      const orphanIds = unpaidDuplicates.filter(reg => !(reg as any).groupId).map(reg => reg.id);
-      if (orphanIds.length > 0) {
-        await (prisma.registration as any).deleteMany({
-          where: { id: { in: orphanIds } }
-        });
-      }
-    }
+    const replace = myUnpaidDuplicates.length > 0 ? {
+      groupIds: [...new Set(myUnpaidDuplicates.map(reg => (reg as any).groupId).filter(Boolean))] as string[],
+      ids: myUnpaidDuplicates.filter(reg => !(reg as any).groupId).map(reg => reg.id),
+    } : undefined;
 
     const quote = await buildQuote({ circuitId: base.circuitId, type: base.type, payload });
 
@@ -354,7 +349,7 @@ registrationsRouter.post('/', requireUser, async (req: UserRequest, res, next) =
         pricing: quote.pricing,
         classifications: quote.classifications,
         accountId,
-      });
+      }, replace);
     } else {
       console.log(`[Registration] Creating new ${type} record`);
       rec = await createRegistration({
@@ -366,7 +361,7 @@ registrationsRouter.post('/', requireUser, async (req: UserRequest, res, next) =
         status: quote.pricing.totalAmount === 0 ? 'PAID' : 'UNPAID',
         mpesaCode: base.mpesaCode || null,
         accountId,
-      });
+      }, replace);
     }
     // Team members / adult riders who already have accounts see their own entry.
     await linkGroupParticipants(rec.id, accountId);

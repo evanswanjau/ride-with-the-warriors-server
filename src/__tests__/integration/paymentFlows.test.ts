@@ -39,6 +39,7 @@ vi.mock('../../services/emailService.js', async (importOriginal) => {
 
 import app from '../../index.js';
 import { prisma } from '../../storage/prisma.js';
+import { ownerToken } from '../../utils/ownerToken.js';
 import { smsService } from '../../services/smsService.js';
 import { sendConfirmationEmail, sendRaffleConfirmationEmail } from '../../services/emailService.js';
 
@@ -302,7 +303,7 @@ describe.skipIf(!hasDb)('Payment flows (STK push → callback)', () => {
             const created = await request.post('/api/v1/donations').send({ amount, name: 'Kind Donor', email: 'donor@example.com', phone: PHONE });
             expect(created.status).toBe(201);
             const donationId = created.body.donationId as string;
-            const push = await request.post('/api/v1/donations/pay/stk-push').send({ donationId, phoneNumber: PHONE });
+            const push = await request.post('/api/v1/donations/pay/stk-push').send({ donationId, donationToken: ownerToken('donation', donationId), phoneNumber: PHONE });
             expect(push.status).toBe(200);
             return { donationId, ref: push.body.transactionReference as string };
         }
@@ -327,7 +328,7 @@ describe.skipIf(!hasDb)('Payment flows (STK push → callback)', () => {
 
         it('paying the first prompt after a retry still marks it PAID', async () => {
             const { donationId, ref: firstRef } = await donate();
-            await request.post('/api/v1/donations/pay/stk-push').send({ donationId, phoneNumber: PHONE });
+            await request.post('/api/v1/donations/pay/stk-push').send({ donationId, donationToken: ownerToken('donation', donationId), phoneNumber: PHONE });
             await callback(firstRef, 'success');
             expect((await prisma.donation.findUnique({ where: { id: donationId } }))?.status).toBe('PAID');
         });
@@ -335,13 +336,13 @@ describe.skipIf(!hasDb)('Payment flows (STK push → callback)', () => {
         it('refuses a new prompt for a donation that is already paid', async () => {
             const { donationId, ref } = await donate();
             await callback(ref, 'success');
-            const again = await request.post('/api/v1/donations/pay/stk-push').send({ donationId, phoneNumber: PHONE });
+            const again = await request.post('/api/v1/donations/pay/stk-push').send({ donationId, donationToken: ownerToken('donation', donationId), phoneNumber: PHONE });
             expect(again.status).toBe(400);
         });
 
         it('the public status endpoint does not expose contact details', async () => {
             const { donationId } = await donate();
-            const res = await request.get(`/api/v1/donations/${donationId}`);
+            const res = await request.get(`/api/v1/donations/${donationId}?token=${ownerToken('donation', donationId)}`);
             expect(res.body.donation.email).toBeUndefined();
             expect(res.body.donation.phone).toBeUndefined();
         });
@@ -410,7 +411,7 @@ describe.skipIf(!hasDb)('Payment flows (STK push → callback)', () => {
             const regId = await unpaidRegistration(accountId);
             const push = await pushRegistration(token, regId);
             const created = await request.post('/api/v1/donations').send({ amount: 500, name: 'Ledger Donor', email: 'ld@example.com' });
-            const don = await request.post('/api/v1/donations/pay/stk-push').send({ donationId: created.body.donationId, phoneNumber: PHONE });
+            const don = await request.post('/api/v1/donations/pay/stk-push').send({ donationId: created.body.donationId, donationToken: created.body.donationToken, phoneNumber: PHONE });
             const purposes = await prisma.payment.findMany({ where: { checkoutRequestId: { in: [push.body.transactionReference, don.body.transactionReference] } } });
             expect(purposes.map(p => p.purpose).sort()).toEqual(['DONATION', 'REGISTRATION']);
             expect(purposes.every(p => p.status === 'PENDING')).toBe(true);
@@ -469,7 +470,7 @@ describe.skipIf(!hasDb)('Payment flows (STK push → callback)', () => {
             }],
             ['donation', async () => {
                 const created = await request.post('/api/v1/donations').send({ amount: 500, name: 'Twice', email: 'twice@example.com' });
-                return () => request.post('/api/v1/donations/pay/stk-push').send({ donationId: created.body.donationId, phoneNumber: PHONE });
+                return () => request.post('/api/v1/donations/pay/stk-push').send({ donationId: created.body.donationId, donationToken: created.body.donationToken, phoneNumber: PHONE });
             }],
         ])('%s: refuses a second prompt while one is pending', async (_name, setup) => {
             const { token } = await login('ledger@example.com');
@@ -481,12 +482,12 @@ describe.skipIf(!hasDb)('Payment flows (STK push → callback)', () => {
         it('a failed donation can be paid again and goes back to PENDING', async () => {
             const created = await request.post('/api/v1/donations').send({ amount: 500, name: 'Retry Donor', email: 'rd@example.com' });
             const donationId = created.body.donationId as string;
-            const first = await request.post('/api/v1/donations/pay/stk-push').send({ donationId, phoneNumber: PHONE });
+            const first = await request.post('/api/v1/donations/pay/stk-push').send({ donationId, donationToken: ownerToken('donation', donationId), phoneNumber: PHONE });
             await callback(first.body.transactionReference, 'fail');
-            expect((await request.get(`/api/v1/donations/${donationId}`)).body.donation.status).toBe('FAILED');
-            const second = await request.post('/api/v1/donations/pay/stk-push').send({ donationId, phoneNumber: PHONE });
+            expect((await request.get(`/api/v1/donations/${donationId}?token=${ownerToken('donation', donationId)}`)).body.donation.status).toBe('FAILED');
+            const second = await request.post('/api/v1/donations/pay/stk-push').send({ donationId, donationToken: ownerToken('donation', donationId), phoneNumber: PHONE });
             expect(second.status).toBe(200);
-            expect((await request.get(`/api/v1/donations/${donationId}`)).body.donation).toEqual({ id: donationId, status: 'PENDING', amount: 500, failureReason: null });
+            expect((await request.get(`/api/v1/donations/${donationId}?token=${ownerToken('donation', donationId)}`)).body.donation).toEqual({ id: donationId, status: 'PENDING', amount: 500, failureReason: null });
         });
 
         it('settles a raffle prompt sent before the ledger existed (no Payment row)', async () => {
@@ -560,7 +561,7 @@ describe.skipIf(!hasDb)('Payment flows (STK push → callback)', () => {
         it('a Daraja success pays a donation', async () => {
             const created = await request.post('/api/v1/donations').send({ name: 'Sandbox Donor', email: 'donor@example.com', phone: PHONE, amount: 500 });
             const donationId = created.body.donationId as string;
-            const push = await request.post('/api/v1/donations/pay/stk-push').send({ donationId, phoneNumber: PHONE });
+            const push = await request.post('/api/v1/donations/pay/stk-push').send({ donationId, donationToken: ownerToken('donation', donationId), phoneNumber: PHONE });
             await darajaCallback(push.body.transactionReference, 0, 'SBX999');
             const d = await prisma.donation.findUnique({ where: { id: donationId } });
             expect(d?.status).toBe('PAID');

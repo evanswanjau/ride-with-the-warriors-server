@@ -27,6 +27,11 @@ describe('checkConfig', () => {
         expect(checkConfig(prodBase).errors).toEqual([]);
     });
 
+    it('warns when deployed without a CORS allowlist', () => {
+        expect(checkConfig(prodBase).warnings.join(' ')).toMatch(/CORS_ORIGINS/);
+        expect(checkConfig({ ...prodBase, CORS_ORIGINS: 'https://ridewiththewarriors.com' }).warnings.join(' ')).not.toMatch(/CORS_ORIGINS/);
+    });
+
     it.each([
         ['PAYMENT_MODE', 'simulate'],
         ['DTB_INSECURE', 'true'],

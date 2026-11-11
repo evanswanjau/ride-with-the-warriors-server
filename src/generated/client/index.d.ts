@@ -2686,6 +2686,8 @@ export namespace Prisma {
     eventYear: number | null
     accountId: string | null
     participantAccountId: string | null
+    cancelledAt: Date | null
+    cancelledBy: string | null
   }
 
   export type RegistrationMaxAggregateOutputType = {
@@ -2722,6 +2724,8 @@ export namespace Prisma {
     eventYear: number | null
     accountId: string | null
     participantAccountId: string | null
+    cancelledAt: Date | null
+    cancelledBy: string | null
   }
 
   export type RegistrationCountAggregateOutputType = {
@@ -2761,6 +2765,8 @@ export namespace Prisma {
     eventYear: number
     accountId: number
     participantAccountId: number
+    cancelledAt: number
+    cancelledBy: number
     _all: number
   }
 
@@ -2809,6 +2815,8 @@ export namespace Prisma {
     eventYear?: true
     accountId?: true
     participantAccountId?: true
+    cancelledAt?: true
+    cancelledBy?: true
   }
 
   export type RegistrationMaxAggregateInputType = {
@@ -2845,6 +2853,8 @@ export namespace Prisma {
     eventYear?: true
     accountId?: true
     participantAccountId?: true
+    cancelledAt?: true
+    cancelledBy?: true
   }
 
   export type RegistrationCountAggregateInputType = {
@@ -2884,6 +2894,8 @@ export namespace Prisma {
     eventYear?: true
     accountId?: true
     participantAccountId?: true
+    cancelledAt?: true
+    cancelledBy?: true
     _all?: true
   }
 
@@ -3010,6 +3022,8 @@ export namespace Prisma {
     eventYear: number
     accountId: string | null
     participantAccountId: string | null
+    cancelledAt: Date | null
+    cancelledBy: string | null
     _count: RegistrationCountAggregateOutputType | null
     _avg: RegistrationAvgAggregateOutputType | null
     _sum: RegistrationSumAggregateOutputType | null
@@ -3068,6 +3082,8 @@ export namespace Prisma {
     eventYear?: boolean
     accountId?: boolean
     participantAccountId?: boolean
+    cancelledAt?: boolean
+    cancelledBy?: boolean
     bikeHire?: boolean | Registration$bikeHireArgs<ExtArgs>
     account?: boolean | Registration$accountArgs<ExtArgs>
     participantAccount?: boolean | Registration$participantAccountArgs<ExtArgs>
@@ -3110,6 +3126,8 @@ export namespace Prisma {
     eventYear?: boolean
     accountId?: boolean
     participantAccountId?: boolean
+    cancelledAt?: boolean
+    cancelledBy?: boolean
     account?: boolean | Registration$accountArgs<ExtArgs>
     participantAccount?: boolean | Registration$participantAccountArgs<ExtArgs>
   }, ExtArgs["result"]["registration"]>
@@ -3151,6 +3169,8 @@ export namespace Prisma {
     eventYear?: boolean
     accountId?: boolean
     participantAccountId?: boolean
+    cancelledAt?: boolean
+    cancelledBy?: boolean
     account?: boolean | Registration$accountArgs<ExtArgs>
     participantAccount?: boolean | Registration$participantAccountArgs<ExtArgs>
   }, ExtArgs["result"]["registration"]>
@@ -3192,9 +3212,11 @@ export namespace Prisma {
     eventYear?: boolean
     accountId?: boolean
     participantAccountId?: boolean
+    cancelledAt?: boolean
+    cancelledBy?: boolean
   }
 
-  export type RegistrationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "createdAt" | "updatedAt" | "circuitId" | "type" | "status" | "firstName" | "lastName" | "email" | "phoneNumber" | "idNumber" | "dob" | "gender" | "groupId" | "teamName" | "isCaptain" | "guardianName" | "emergencyPhone" | "relationship" | "category" | "totalAmount" | "payload" | "pricing" | "classifications" | "emergencyContactName" | "tshirtSize" | "mpesaCode" | "isMilitary" | "rank" | "service" | "serviceNumber" | "unit" | "bibNumber" | "eventYear" | "accountId" | "participantAccountId", ExtArgs["result"]["registration"]>
+  export type RegistrationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "createdAt" | "updatedAt" | "circuitId" | "type" | "status" | "firstName" | "lastName" | "email" | "phoneNumber" | "idNumber" | "dob" | "gender" | "groupId" | "teamName" | "isCaptain" | "guardianName" | "emergencyPhone" | "relationship" | "category" | "totalAmount" | "payload" | "pricing" | "classifications" | "emergencyContactName" | "tshirtSize" | "mpesaCode" | "isMilitary" | "rank" | "service" | "serviceNumber" | "unit" | "bibNumber" | "eventYear" | "accountId" | "participantAccountId" | "cancelledAt" | "cancelledBy", ExtArgs["result"]["registration"]>
   export type RegistrationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     bikeHire?: boolean | Registration$bikeHireArgs<ExtArgs>
     account?: boolean | Registration$accountArgs<ExtArgs>
@@ -3253,6 +3275,8 @@ export namespace Prisma {
       eventYear: number
       accountId: string | null
       participantAccountId: string | null
+      cancelledAt: Date | null
+      cancelledBy: string | null
     }, ExtArgs["result"]["registration"]>
     composites: {}
   }
@@ -3715,6 +3739,8 @@ export namespace Prisma {
     readonly eventYear: FieldRef<"Registration", 'Int'>
     readonly accountId: FieldRef<"Registration", 'String'>
     readonly participantAccountId: FieldRef<"Registration", 'String'>
+    readonly cancelledAt: FieldRef<"Registration", 'DateTime'>
+    readonly cancelledBy: FieldRef<"Registration", 'String'>
   }
     
 
@@ -24303,7 +24329,9 @@ export namespace Prisma {
     bibNumber: 'bibNumber',
     eventYear: 'eventYear',
     accountId: 'accountId',
-    participantAccountId: 'participantAccountId'
+    participantAccountId: 'participantAccountId',
+    cancelledAt: 'cancelledAt',
+    cancelledBy: 'cancelledBy'
   };
 
   export type RegistrationScalarFieldEnum = (typeof RegistrationScalarFieldEnum)[keyof typeof RegistrationScalarFieldEnum]
@@ -24765,6 +24793,8 @@ export namespace Prisma {
     eventYear?: IntFilter<"Registration"> | number
     accountId?: StringNullableFilter<"Registration"> | string | null
     participantAccountId?: StringNullableFilter<"Registration"> | string | null
+    cancelledAt?: DateTimeNullableFilter<"Registration"> | Date | string | null
+    cancelledBy?: StringNullableFilter<"Registration"> | string | null
     bikeHire?: XOR<BikeHireNullableScalarRelationFilter, BikeHireWhereInput> | null
     account?: XOR<AccountNullableScalarRelationFilter, AccountWhereInput> | null
     participantAccount?: XOR<AccountNullableScalarRelationFilter, AccountWhereInput> | null
@@ -24807,6 +24837,8 @@ export namespace Prisma {
     eventYear?: SortOrder
     accountId?: SortOrderInput | SortOrder
     participantAccountId?: SortOrderInput | SortOrder
+    cancelledAt?: SortOrderInput | SortOrder
+    cancelledBy?: SortOrderInput | SortOrder
     bikeHire?: BikeHireOrderByWithRelationInput
     account?: AccountOrderByWithRelationInput
     participantAccount?: AccountOrderByWithRelationInput
@@ -24852,6 +24884,8 @@ export namespace Prisma {
     eventYear?: IntFilter<"Registration"> | number
     accountId?: StringNullableFilter<"Registration"> | string | null
     participantAccountId?: StringNullableFilter<"Registration"> | string | null
+    cancelledAt?: DateTimeNullableFilter<"Registration"> | Date | string | null
+    cancelledBy?: StringNullableFilter<"Registration"> | string | null
     bikeHire?: XOR<BikeHireNullableScalarRelationFilter, BikeHireWhereInput> | null
     account?: XOR<AccountNullableScalarRelationFilter, AccountWhereInput> | null
     participantAccount?: XOR<AccountNullableScalarRelationFilter, AccountWhereInput> | null
@@ -24894,6 +24928,8 @@ export namespace Prisma {
     eventYear?: SortOrder
     accountId?: SortOrderInput | SortOrder
     participantAccountId?: SortOrderInput | SortOrder
+    cancelledAt?: SortOrderInput | SortOrder
+    cancelledBy?: SortOrderInput | SortOrder
     _count?: RegistrationCountOrderByAggregateInput
     _avg?: RegistrationAvgOrderByAggregateInput
     _max?: RegistrationMaxOrderByAggregateInput
@@ -24941,6 +24977,8 @@ export namespace Prisma {
     eventYear?: IntWithAggregatesFilter<"Registration"> | number
     accountId?: StringNullableWithAggregatesFilter<"Registration"> | string | null
     participantAccountId?: StringNullableWithAggregatesFilter<"Registration"> | string | null
+    cancelledAt?: DateTimeNullableWithAggregatesFilter<"Registration"> | Date | string | null
+    cancelledBy?: StringNullableWithAggregatesFilter<"Registration"> | string | null
   }
 
   export type AdminWhereInput = {
@@ -26366,6 +26404,8 @@ export namespace Prisma {
     unit?: string | null
     bibNumber?: string | null
     eventYear?: number
+    cancelledAt?: Date | string | null
+    cancelledBy?: string | null
     bikeHire?: BikeHireCreateNestedOneWithoutRegistrationInput
     account?: AccountCreateNestedOneWithoutRegistrationsInput
     participantAccount?: AccountCreateNestedOneWithoutParticipationsInput
@@ -26408,6 +26448,8 @@ export namespace Prisma {
     eventYear?: number
     accountId?: string | null
     participantAccountId?: string | null
+    cancelledAt?: Date | string | null
+    cancelledBy?: string | null
     bikeHire?: BikeHireUncheckedCreateNestedOneWithoutRegistrationInput
   }
 
@@ -26446,6 +26488,8 @@ export namespace Prisma {
     unit?: NullableStringFieldUpdateOperationsInput | string | null
     bibNumber?: NullableStringFieldUpdateOperationsInput | string | null
     eventYear?: IntFieldUpdateOperationsInput | number
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
     bikeHire?: BikeHireUpdateOneWithoutRegistrationNestedInput
     account?: AccountUpdateOneWithoutRegistrationsNestedInput
     participantAccount?: AccountUpdateOneWithoutParticipationsNestedInput
@@ -26488,6 +26532,8 @@ export namespace Prisma {
     eventYear?: IntFieldUpdateOperationsInput | number
     accountId?: NullableStringFieldUpdateOperationsInput | string | null
     participantAccountId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
     bikeHire?: BikeHireUncheckedUpdateOneWithoutRegistrationNestedInput
   }
 
@@ -26528,6 +26574,8 @@ export namespace Prisma {
     eventYear?: number
     accountId?: string | null
     participantAccountId?: string | null
+    cancelledAt?: Date | string | null
+    cancelledBy?: string | null
   }
 
   export type RegistrationUpdateManyMutationInput = {
@@ -26565,6 +26613,8 @@ export namespace Prisma {
     unit?: NullableStringFieldUpdateOperationsInput | string | null
     bibNumber?: NullableStringFieldUpdateOperationsInput | string | null
     eventYear?: IntFieldUpdateOperationsInput | number
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type RegistrationUncheckedUpdateManyInput = {
@@ -26604,6 +26654,8 @@ export namespace Prisma {
     eventYear?: IntFieldUpdateOperationsInput | number
     accountId?: NullableStringFieldUpdateOperationsInput | string | null
     participantAccountId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type AdminCreateInput = {
@@ -28280,6 +28332,17 @@ export namespace Prisma {
     not?: NestedIntFilter<$PrismaModel> | number
   }
 
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
   export type BikeHireNullableScalarRelationFilter = {
     is?: BikeHireWhereInput | null
     isNot?: BikeHireWhereInput | null
@@ -28332,6 +28395,8 @@ export namespace Prisma {
     eventYear?: SortOrder
     accountId?: SortOrder
     participantAccountId?: SortOrder
+    cancelledAt?: SortOrder
+    cancelledBy?: SortOrder
   }
 
   export type RegistrationAvgOrderByAggregateInput = {
@@ -28373,6 +28438,8 @@ export namespace Prisma {
     eventYear?: SortOrder
     accountId?: SortOrder
     participantAccountId?: SortOrder
+    cancelledAt?: SortOrder
+    cancelledBy?: SortOrder
   }
 
   export type RegistrationMinOrderByAggregateInput = {
@@ -28409,6 +28476,8 @@ export namespace Prisma {
     eventYear?: SortOrder
     accountId?: SortOrder
     participantAccountId?: SortOrder
+    cancelledAt?: SortOrder
+    cancelledBy?: SortOrder
   }
 
   export type RegistrationSumOrderByAggregateInput = {
@@ -28542,7 +28611,7 @@ export namespace Prisma {
     _max?: NestedIntFilter<$PrismaModel>
   }
 
-  export type DateTimeNullableFilter<$PrismaModel = never> = {
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
     notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
@@ -28550,7 +28619,10 @@ export namespace Prisma {
     lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type AdminSessionListRelationFilter = {
@@ -28591,20 +28663,6 @@ export namespace Prisma {
     role?: SortOrder
     createdAt?: SortOrder
     lastLogin?: SortOrder
-  }
-
-  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedDateTimeNullableFilter<$PrismaModel>
-    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type IntNullableFilter<$PrismaModel = never> = {
@@ -29500,6 +29558,10 @@ export namespace Prisma {
     divide?: number
   }
 
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
+  }
+
   export type BikeHireUpdateOneWithoutRegistrationNestedInput = {
     create?: XOR<BikeHireCreateWithoutRegistrationInput, BikeHireUncheckedCreateWithoutRegistrationInput>
     connectOrCreate?: BikeHireCreateOrConnectWithoutRegistrationInput
@@ -29552,10 +29614,6 @@ export namespace Prisma {
     connectOrCreate?: AdminSessionCreateOrConnectWithoutAdminInput | AdminSessionCreateOrConnectWithoutAdminInput[]
     createMany?: AdminSessionCreateManyAdminInputEnvelope
     connect?: AdminSessionWhereUniqueInput | AdminSessionWhereUniqueInput[]
-  }
-
-  export type NullableDateTimeFieldUpdateOperationsInput = {
-    set?: Date | string | null
   }
 
   export type AdminSessionUpdateManyWithoutAdminNestedInput = {
@@ -30018,6 +30076,17 @@ export namespace Prisma {
     not?: NestedIntFilter<$PrismaModel> | number
   }
 
+  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
   export type NestedStringWithAggregatesFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -30148,17 +30217,6 @@ export namespace Prisma {
     _sum?: NestedIntFilter<$PrismaModel>
     _min?: NestedIntFilter<$PrismaModel>
     _max?: NestedIntFilter<$PrismaModel>
-  }
-
-  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
-    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
-    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
-    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
-    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
   export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -30728,6 +30786,8 @@ export namespace Prisma {
     unit?: string | null
     bibNumber?: string | null
     eventYear?: number
+    cancelledAt?: Date | string | null
+    cancelledBy?: string | null
     account?: AccountCreateNestedOneWithoutRegistrationsInput
     participantAccount?: AccountCreateNestedOneWithoutParticipationsInput
   }
@@ -30769,6 +30829,8 @@ export namespace Prisma {
     eventYear?: number
     accountId?: string | null
     participantAccountId?: string | null
+    cancelledAt?: Date | string | null
+    cancelledBy?: string | null
   }
 
   export type RegistrationCreateOrConnectWithoutBikeHireInput = {
@@ -30859,6 +30921,8 @@ export namespace Prisma {
     unit?: NullableStringFieldUpdateOperationsInput | string | null
     bibNumber?: NullableStringFieldUpdateOperationsInput | string | null
     eventYear?: IntFieldUpdateOperationsInput | number
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
     account?: AccountUpdateOneWithoutRegistrationsNestedInput
     participantAccount?: AccountUpdateOneWithoutParticipationsNestedInput
   }
@@ -30900,6 +30964,8 @@ export namespace Prisma {
     eventYear?: IntFieldUpdateOperationsInput | number
     accountId?: NullableStringFieldUpdateOperationsInput | string | null
     participantAccountId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type AccountUpsertWithoutBikeHiresInput = {
@@ -31004,6 +31070,8 @@ export namespace Prisma {
     unit?: string | null
     bibNumber?: string | null
     eventYear?: number
+    cancelledAt?: Date | string | null
+    cancelledBy?: string | null
     bikeHire?: BikeHireCreateNestedOneWithoutRegistrationInput
     participantAccount?: AccountCreateNestedOneWithoutParticipationsInput
   }
@@ -31044,6 +31112,8 @@ export namespace Prisma {
     bibNumber?: string | null
     eventYear?: number
     participantAccountId?: string | null
+    cancelledAt?: Date | string | null
+    cancelledBy?: string | null
     bikeHire?: BikeHireUncheckedCreateNestedOneWithoutRegistrationInput
   }
 
@@ -31092,6 +31162,8 @@ export namespace Prisma {
     unit?: string | null
     bibNumber?: string | null
     eventYear?: number
+    cancelledAt?: Date | string | null
+    cancelledBy?: string | null
     bikeHire?: BikeHireCreateNestedOneWithoutRegistrationInput
     account?: AccountCreateNestedOneWithoutRegistrationsInput
   }
@@ -31132,6 +31204,8 @@ export namespace Prisma {
     bibNumber?: string | null
     eventYear?: number
     accountId?: string | null
+    cancelledAt?: Date | string | null
+    cancelledBy?: string | null
     bikeHire?: BikeHireUncheckedCreateNestedOneWithoutRegistrationInput
   }
 
@@ -31356,6 +31430,8 @@ export namespace Prisma {
     eventYear?: IntFilter<"Registration"> | number
     accountId?: StringNullableFilter<"Registration"> | string | null
     participantAccountId?: StringNullableFilter<"Registration"> | string | null
+    cancelledAt?: DateTimeNullableFilter<"Registration"> | Date | string | null
+    cancelledBy?: StringNullableFilter<"Registration"> | string | null
   }
 
   export type RegistrationUpsertWithWhereUniqueWithoutParticipantAccountInput = {
@@ -31634,6 +31710,8 @@ export namespace Prisma {
     bibNumber?: string | null
     eventYear?: number
     participantAccountId?: string | null
+    cancelledAt?: Date | string | null
+    cancelledBy?: string | null
   }
 
   export type RegistrationCreateManyParticipantAccountInput = {
@@ -31672,6 +31750,8 @@ export namespace Prisma {
     bibNumber?: string | null
     eventYear?: number
     accountId?: string | null
+    cancelledAt?: Date | string | null
+    cancelledBy?: string | null
   }
 
   export type RaffleTicketCreateManyAccountInput = {
@@ -31779,6 +31859,8 @@ export namespace Prisma {
     unit?: NullableStringFieldUpdateOperationsInput | string | null
     bibNumber?: NullableStringFieldUpdateOperationsInput | string | null
     eventYear?: IntFieldUpdateOperationsInput | number
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
     bikeHire?: BikeHireUpdateOneWithoutRegistrationNestedInput
     participantAccount?: AccountUpdateOneWithoutParticipationsNestedInput
   }
@@ -31819,6 +31901,8 @@ export namespace Prisma {
     bibNumber?: NullableStringFieldUpdateOperationsInput | string | null
     eventYear?: IntFieldUpdateOperationsInput | number
     participantAccountId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
     bikeHire?: BikeHireUncheckedUpdateOneWithoutRegistrationNestedInput
   }
 
@@ -31858,6 +31942,8 @@ export namespace Prisma {
     bibNumber?: NullableStringFieldUpdateOperationsInput | string | null
     eventYear?: IntFieldUpdateOperationsInput | number
     participantAccountId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type RegistrationUpdateWithoutParticipantAccountInput = {
@@ -31895,6 +31981,8 @@ export namespace Prisma {
     unit?: NullableStringFieldUpdateOperationsInput | string | null
     bibNumber?: NullableStringFieldUpdateOperationsInput | string | null
     eventYear?: IntFieldUpdateOperationsInput | number
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
     bikeHire?: BikeHireUpdateOneWithoutRegistrationNestedInput
     account?: AccountUpdateOneWithoutRegistrationsNestedInput
   }
@@ -31935,6 +32023,8 @@ export namespace Prisma {
     bibNumber?: NullableStringFieldUpdateOperationsInput | string | null
     eventYear?: IntFieldUpdateOperationsInput | number
     accountId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
     bikeHire?: BikeHireUncheckedUpdateOneWithoutRegistrationNestedInput
   }
 
@@ -31974,6 +32064,8 @@ export namespace Prisma {
     bibNumber?: NullableStringFieldUpdateOperationsInput | string | null
     eventYear?: IntFieldUpdateOperationsInput | number
     accountId?: NullableStringFieldUpdateOperationsInput | string | null
+    cancelledAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cancelledBy?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type RaffleTicketUpdateWithoutAccountInput = {

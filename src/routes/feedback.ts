@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { publicFormLimiter } from '../middleware/rateLimit.js';
 import { z } from 'zod';
 import { prisma } from '../storage/prisma.js';
 import { requireAdmin } from '../middleware/auth.js';
@@ -16,7 +17,7 @@ const feedbackSchema = z.object({
 });
 
 // POST /api/v1/feedback — store event feedback from any stakeholder
-feedbackRouter.post('/', async (req, res, next) => {
+feedbackRouter.post('/', publicFormLimiter, async (req, res, next) => {
     try {
         const data = feedbackSchema.parse(req.body);
 

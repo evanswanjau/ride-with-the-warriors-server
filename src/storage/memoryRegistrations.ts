@@ -45,9 +45,58 @@ export type RegistrationRecord = {
 /** Statuses that count as "paid" and therefore get a bib. */
 export const PAID_STATUSES: RegistrationStatus[] = ['PAID', 'CONFIRMED', 'COMPLEMENTARY'];
 
+/** Earlier UNPAID drafts to remove in the same transaction that saves the new one. */
+export type ReplaceTarget = { groupIds?: string[]; ids?: string[] };
+
+/**
+ * Thrown when a draft that would be replaced has an M-Pesa prompt in progress
+ * or a successful payment. Replacing it would lose the payment, so the caller
+ * gets 409 and the old rows stay.
+ */
+export class RegistrationLockedError extends Error {
+  status = 409;
+  code = 'PAYMENT_IN_PROGRESS';
+  constructor() {
+    super('A payment for this registration is in progress or already made. Wait for it to finish, or contact support.');
+  }
+}
+
+function mergeReplace(a?: ReplaceTarget, b?: ReplaceTarget): ReplaceTarget | undefined {
+  if (!a && !b) return undefined;
+  return {
+    groupIds: [...new Set([...(a?.groupIds ?? []), ...(b?.groupIds ?? [])])],
+    ids: [...new Set([...(a?.ids ?? []), ...(b?.ids ?? [])])],
+  };
+}
+
+/**
+ * Saves all rows of a registration in one transaction. When `replace` is given,
+ * the earlier UNPAID drafts it names are deleted in the same transaction, so a
+ * failure leaves the old draft in place instead of losing it.
+ */
+async function persistRegistrationRows(rows: any[], replace?: ReplaceTarget) {
+  await prisma.$transaction(async (tx) => {
+    const groupIds = replace?.groupIds?.filter(Boolean) ?? [];
+    const ids = replace?.ids?.filter(Boolean) ?? [];
+    if (groupIds.length || ids.length) {
+      const victims = await tx.registration.findMany({
+        where: { status: 'UNPAID', OR: [{ groupId: { in: groupIds } }, { id: { in: ids } }] },
+        select: { id: true },
+      });
+      const victimIds = victims.map((v) => v.id);
+      if (victimIds.length) {
+        const locked = await tx.payment.count({ where: { registrationId: { in: victimIds }, status: { in: ['PENDING', 'PAID'] } } });
+        if (locked > 0) throw new RegistrationLockedError();
+        await tx.registration.deleteMany({ where: { id: { in: victimIds } } });
+      }
+    }
+    await tx.registration.createMany({ data: rows });
+  });
+}
+
 // Rows get random UUID ids. Bib numbers are assigned only once the group is paid
 // (see services/numbering.ts).
-export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 'createdAt' | 'updatedAt' | 'firstName' | 'lastName' | 'isCaptain' | 'totalAmount'>): Promise<RegistrationRecord> {
+export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 'createdAt' | 'updatedAt' | 'firstName' | 'lastName' | 'isCaptain' | 'totalAmount'>, replace?: ReplaceTarget): Promise<RegistrationRecord> {
   const payload = JSON.parse(JSON.stringify(input.payload)) as any;
   const recordsToCreate: any[] = [];
   const groupId = Math.random().toString(36).substring(2, 11).toUpperCase();
@@ -189,20 +238,11 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
     }
   }
 
-  // Use (prisma.registration as any) to bypass local type mismatch until user restarts server
-  console.time(`db-create-${input.type}`);
-  try {
-    if (recordsToCreate.length > 1 && (prisma.registration as any).createMany) {
-      await (prisma.registration as any).createMany({ data: recordsToCreate });
-    } else {
-      await Promise.all(recordsToCreate.map(data => (prisma.registration as any).create({ data })));
-    }
-  } finally {
-    console.timeEnd(`db-create-${input.type}`);
-  }
   if (recordsToCreate.length === 0) {
     throw new Error('No records to create');
   }
+  // All rows (and the removal of replaced drafts) commit together or not at all.
+  await persistRegistrationRows(recordsToCreate, replace);
 
   // Created already paid (e.g. military/zero-cost): assign bibs, then send confirmations.
   if (PAID_STATUSES.includes(input.status)) {
@@ -279,28 +319,25 @@ export async function getAllRegistrations(): Promise<RegistrationRecord[]> {
   return recs as any[];
 }
 
-export async function updateRegistration(id: string, input: Partial<Omit<RegistrationRecord, 'id' | 'createdAt' | 'updatedAt'>>): Promise<RegistrationRecord> {
+export async function updateRegistration(id: string, input: Partial<Omit<RegistrationRecord, 'id' | 'createdAt' | 'updatedAt'>>, replace?: ReplaceTarget): Promise<RegistrationRecord> {
   const existing = await prisma.registration.findUnique({ where: { id } });
   if (!existing) throw new Error('Registration not found');
 
   const groupId = (existing as any).groupId;
+
+  // Only perform a full delete-and-recreate if we have a type and circuitId (e.g. from the quote/register flow)
+  // and the registration is still UNPAID. Partial updates (like adding a checkoutRequestId) should be handled normally.
+  // The old rows are removed in the same transaction that saves the new ones.
+  if (existing.status === 'UNPAID' && input.payload && input.type && input.circuitId) {
+    const own: ReplaceTarget = groupId ? { groupIds: [groupId] } : { ids: [id] };
+    return createRegistration(input as any, mergeReplace(own, replace));
+  }
 
   if (input.status && groupId) {
     await (prisma.registration as any).updateMany({
       where: { groupId },
       data: { status: input.status }
     });
-  }
-
-  // Only perform a full delete-and-recreate if we have a type and circuitId (e.g. from the quote/register flow)
-  // and the registration is still UNPAID. Partial updates (like adding a checkoutRequestId) should be handled normally.
-  if (existing.status === 'UNPAID' && input.payload && input.type && input.circuitId) {
-    if (groupId) {
-      await (prisma.registration as any).deleteMany({ where: { groupId } });
-    } else {
-      await prisma.registration.delete({ where: { id } });
-    }
-    return createRegistration(input as any);
   }
 
   const updateData: any = {

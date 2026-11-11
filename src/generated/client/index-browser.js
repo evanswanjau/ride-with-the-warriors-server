@@ -156,7 +156,9 @@ exports.Prisma.RegistrationScalarFieldEnum = {
   bibNumber: 'bibNumber',
   eventYear: 'eventYear',
   accountId: 'accountId',
-  participantAccountId: 'participantAccountId'
+  participantAccountId: 'participantAccountId',
+  cancelledAt: 'cancelledAt',
+  cancelledBy: 'cancelledBy'
 };
 
 exports.Prisma.AdminScalarFieldEnum = {

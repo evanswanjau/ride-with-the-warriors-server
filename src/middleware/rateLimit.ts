@@ -46,6 +46,27 @@ export const sensitiveActionLimiter = rateLimit({
   skip: rateLimitsOff,
 });
 
+const limit = (windowMs: number, max: number, message: string) => rateLimit({
+  windowMs,
+  limit: max,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: { code: 'TOO_MANY_REQUESTS', message } },
+  skip: rateLimitsOff,
+});
+
+/** Contact form: 5 per hour per IP. */
+export const enquiryLimiter = limit(60 * 60 * 1000, 5, 'Too many messages. Please try again in an hour, or call 0703 752 118.');
+
+/** Donations (create and pay): 20 per 15 minutes per IP. */
+export const donationLimiter = limit(15 * 60 * 1000, 20, 'Too many donation attempts. Please try again later.');
+
+/** Price quotes and registration duplicate checks: 60 per 15 minutes per IP. */
+export const quoteLimiter = limit(15 * 60 * 1000, 60, 'Too many requests. Please wait a few minutes and try again.');
+
+/** Feedback and notify-me forms: 10 per hour per IP. */
+export const publicFormLimiter = limit(60 * 60 * 1000, 10, 'Too many submissions. Please try again later.');
+
 /**
  * Admin login: 10 failed attempts per 15 minutes for one email from one IP.
  * Successful logins do not count.

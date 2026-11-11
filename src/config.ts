@@ -91,6 +91,15 @@ export function checkConfig(env: NodeJS.ProcessEnv = process.env): ConfigReport 
     if (which === 'uat' && isTrue(env.DTB_INSECURE)) {
         warnings.push('DTB_INSECURE=true: TLS certificate checks are off for requests to DTB.');
     }
+    if (deployed && !env.CORS_ORIGINS) {
+        warnings.push('CORS_ORIGINS is not set: any website can call the API from a browser. Set it to the web app origin(s).');
+    }
+    if (deployed && !env.TURNSTILE_SECRET_KEY) {
+        warnings.push('TURNSTILE_SECRET_KEY is not set: the contact form has no bot check (rate limit only).');
+    }
+    if (deployed && !env.SMS_CALLBACK_SECRET) {
+        warnings.push('SMS_CALLBACK_SECRET is not set: SMS delivery webhooks are not authenticated.');
+    }
     if (deployed && !env.CRON_SECRET) {
         warnings.push('CRON_SECRET is not set: scheduled jobs (/api/cron/*) will refuse every call.');
     }

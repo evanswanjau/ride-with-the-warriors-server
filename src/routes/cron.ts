@@ -5,6 +5,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { timingSafeEqual } from 'crypto';
 import { expireStalePayments } from '../services/payments.js';
+import { cleanupExpiredLogins } from '../services/cleanup.js';
 
 export const cronRouter = Router();
 
@@ -17,6 +18,30 @@ function requireCronSecret(req: Request, res: Response, next: NextFunction) {
     }
     next();
 }
+
+/**
+ * The daily job (vercel.json): expires unanswered M-Pesa prompts and deletes
+ * expired login codes and sessions.
+ */
+cronRouter.get('/daily', requireCronSecret, async (_req, res, next) => {
+    try {
+        const expired = await expireStalePayments();
+        const cleaned = await cleanupExpiredLogins();
+        console.log(`[Cron] daily: expired ${expired} payment prompt(s); removed ${cleaned.otpCodes} code(s), ${cleaned.userSessions} rider session(s), ${cleaned.adminSessions} admin session(s)`);
+        res.json({ expired, ...cleaned });
+    } catch (err) {
+        next(err);
+    }
+});
+
+/** Deletes expired login codes and sessions. */
+cronRouter.get('/cleanup', requireCronSecret, async (_req, res, next) => {
+    try {
+        res.json(await cleanupExpiredLogins());
+    } catch (err) {
+        next(err);
+    }
+});
 
 /** Marks M-Pesa prompts nobody answered within 30 minutes as EXPIRED. */
 cronRouter.get('/expire-payments', requireCronSecret, async (_req, res, next) => {

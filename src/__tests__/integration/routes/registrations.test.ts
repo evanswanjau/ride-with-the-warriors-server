@@ -255,5 +255,12 @@ describe('Registrations API', () => {
             expect(response.body).toHaveProperty('ok', true);
             expect(response.body).toHaveProperty('database');
         });
+
+        it('does not reveal the database error when the database is down', async () => {
+            const { prisma } = await import('../../../storage/prisma.js');
+            vi.mocked(prisma.$queryRaw).mockRejectedValueOnce(new Error('connect ECONNREFUSED db.internal:5432'));
+            const response = await request(app).get('/health').expect(503);
+            expect(response.body).toEqual({ ok: false, database: 'disconnected' });
+        });
     });
 });

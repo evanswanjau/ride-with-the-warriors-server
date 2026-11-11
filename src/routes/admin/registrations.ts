@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../../storage/prisma.js';
-import { requireAdmin } from '../../middleware/auth.js';
+import { requireAdmin, AuthenticatedRequest } from '../../middleware/auth.js';
 import { updateRegistration } from '../../storage/memoryRegistrations.js';
 
 export const adminRegistrationsRouter = Router();
@@ -122,15 +122,19 @@ adminRegistrationsRouter.patch('/:id', requireAdmin, async (req, res) => {
     }
 });
 
-// Delete registration
-adminRegistrationsRouter.delete('/:id', requireAdmin, async (req, res) => {
+// "Delete" cancels the registration and its whole group (family / team).
+// Rows, bibs and payment history are kept for the records; nothing is removed.
+adminRegistrationsRouter.delete('/:id', requireAdmin, async (req: AuthenticatedRequest, res) => {
     const { id } = req.params;
-    try {
-        await prisma.registration.delete({ where: { id } });
-        res.json({ ok: true });
-    } catch (error) {
-        res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Registration not found' } });
+    const reg = await prisma.registration.findUnique({ where: { id }, select: { id: true, groupId: true } });
+    if (!reg) {
+        return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Registration not found' } });
     }
+    const { count } = await prisma.registration.updateMany({
+        where: { ...(reg.groupId ? { groupId: reg.groupId } : { id }), status: { not: 'CANCELLED' } },
+        data: { status: 'CANCELLED', cancelledAt: new Date(), cancelledBy: req.admin?.email ?? null },
+    });
+    res.json({ ok: true, cancelled: count });
 });
 
 // Statistics
