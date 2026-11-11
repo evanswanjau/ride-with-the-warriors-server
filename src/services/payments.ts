@@ -213,7 +213,7 @@ async function applySuccess(p: Payment, purpose: PaymentPurpose | null, receipt:
             });
             const fresh = await prisma.registration.findUnique({ where: { id: reg.id } });
             if (fresh?.phoneNumber) {
-                smsService.sendSMS([fresh.phoneNumber], `Hi ${fresh.firstName}, your payment of KES ${fresh.totalAmount} for Ride With The Warriors cycling registration (BIB: ${fresh.bibNumber ?? 'pending'}) is confirmed. Thank you!`, { template: 'sms:registration-paid', dedupeKey: `sms:registration-paid:${p.id}` });
+                await smsService.sendSMS([fresh.phoneNumber], `Hi ${fresh.firstName}, your payment of KES ${fresh.totalAmount} for Ride With The Warriors cycling registration (BIB: ${fresh.bibNumber ?? 'pending'}) is confirmed. Thank you!`, { template: 'sms:registration-paid', dedupeKey: `sms:registration-paid:${p.id}` });
             }
             return;
         }
@@ -228,10 +228,10 @@ async function applySuccess(p: Payment, purpose: PaymentPurpose | null, receipt:
             const numbers = numbered.map(t => t.ticketNumber ?? t.id);
             const first = await prisma.raffleTicket.findUnique({ where: { id: ids[0] } });
             if (first?.phoneNumber) {
-                smsService.sendSMS([first.phoneNumber], `Hi ${first.firstName}, payment received for your ${ids.length} raffle ticket(s) (Nos: ${numbers.join(', ')}). Thank you for supporting Ride With The Warriors!`, { template: 'sms:raffle-paid', dedupeKey: `sms:raffle-paid:${p.id}` });
+                await smsService.sendSMS([first.phoneNumber], `Hi ${first.firstName}, payment received for your ${ids.length} raffle ticket(s) (Nos: ${numbers.join(', ')}). Thank you for supporting Ride With The Warriors!`, { template: 'sms:raffle-paid', dedupeKey: `sms:raffle-paid:${p.id}` });
             }
             if (first?.email) {
-                sendRaffleConfirmationEmail({
+                await sendRaffleConfirmationEmail({
                     id: numbers[0], ids: numbers, firstName: first.firstName, lastName: first.lastName,
                     email: first.email, phoneNumber: first.phoneNumber, quantity: ids.length, totalAmount: p.amount,
                 }, { dedupeKey: `email:raffle-confirmation:${p.id}` }).catch(err => console.error(`[Payments] Raffle confirmation email failed for ${first.id}:`, err));
@@ -248,7 +248,7 @@ async function applySuccess(p: Payment, purpose: PaymentPurpose | null, receipt:
             const d = await prisma.donation.findUnique({ where: { id: p.donationId } });
             if (d?.phone) {
                 const hi = d.name ? `Hi ${d.name.split(' ')[0]}, t` : 'T';
-                smsService.sendSMS([d.phone], `${hi}hank you for your donation of KES ${d.amount} to Ride With The Warriors. Your support is deeply appreciated!`, { template: 'sms:donation-paid', dedupeKey: `sms:donation-paid:${p.id}` });
+                await smsService.sendSMS([d.phone], `${hi}hank you for your donation of KES ${d.amount} to Ride With The Warriors. Your support is deeply appreciated!`, { template: 'sms:donation-paid', dedupeKey: `sms:donation-paid:${p.id}` });
             }
             return;
         }
@@ -258,7 +258,7 @@ async function applySuccess(p: Payment, purpose: PaymentPurpose | null, receipt:
             if (paid.count === 0) return;
             const hire = await prisma.bikeHire.findUnique({ where: { id: p.bikeHireId }, include: { registration: true } });
             if (hire?.registration.phoneNumber) {
-                smsService.sendSMS([hire.registration.phoneNumber], `Hi ${hire.registration.firstName}, your bike hire payment of KES ${hire.amount} for Ride With The Warriors is confirmed. Thank you!`, { template: 'sms:bike-hire-paid', dedupeKey: `sms:bike-hire-paid:${p.id}` });
+                await smsService.sendSMS([hire.registration.phoneNumber], `Hi ${hire.registration.firstName}, your bike hire payment of KES ${hire.amount} for Ride With The Warriors is confirmed. Thank you!`, { template: 'sms:bike-hire-paid', dedupeKey: `sms:bike-hire-paid:${p.id}` });
             }
             return;
         }

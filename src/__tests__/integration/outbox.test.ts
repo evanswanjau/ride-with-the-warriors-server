@@ -5,7 +5,7 @@
  *
  * Needs DATABASE_URL (npm run test:db). Skipped otherwise.
  */
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import supertest from 'supertest';
 import { randomUUID } from 'crypto';
 
