@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../../storage/prisma.js';
-import { requireAdmin } from '../../middleware/auth.js';
+import { requireAdmin, type AuthenticatedRequest } from '../../middleware/auth.js';
+import { reconcilePayments } from '../../services/reconciliation.js';
 
 export const adminPaymentsRouter = Router();
 
@@ -111,5 +112,38 @@ adminPaymentsRouter.get('/registration/:id', requireAdmin, async (req, res) => {
         res.json({ payments });
     } catch (error) {
         res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to fetch payments' } });
+    }
+});
+
+// ─── Reconciliation (src/services/reconciliation.ts) ────────────────────────
+
+/** Recent reconciliation runs, newest first. `?details=1` includes the per-payment results. */
+adminPaymentsRouter.get('/reconciliation', requireAdmin, async (req, res, next) => {
+    try {
+        const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
+        const runs = await prisma.reconciliationRun.findMany({
+            orderBy: { startedAt: 'desc' },
+            take: limit,
+            ...(req.query.details ? {} : { omit: { details: true } }),
+        });
+        // PENDING payments the gateway could not settle yet (still pending, unknown or errors).
+        const unresolved = await prisma.payment.findMany({
+            where: { status: 'PENDING', checkCount: { gt: 0 } },
+            orderBy: { createdAt: 'asc' },
+            take: 100,
+            select: { id: true, purpose: true, amount: true, phone: true, checkoutRequestId: true, createdAt: true, lastCheckedAt: true, checkCount: true, lastCheckResult: true },
+        });
+        res.json({ runs, unresolved });
+    } catch (err) {
+        next(err);
+    }
+});
+
+/** Runs reconciliation now (admin role). Safe to repeat. */
+adminPaymentsRouter.post('/reconcile', requireAdmin, async (req: AuthenticatedRequest, res, next) => {
+    try {
+        res.json(await reconcilePayments({ trigger: `admin:${req.admin?.email ?? 'unknown'}` }));
+    } catch (err) {
+        next(err);
     }
 });

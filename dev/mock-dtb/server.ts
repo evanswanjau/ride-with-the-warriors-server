@@ -6,6 +6,9 @@
  * It speaks the same API as DTB:
  *   POST /auth/token   → { access_token, expires_in }
  *   POST /stkpush      → { status: "SUCCESS", responseCode: "200", externalReference }
+ *   POST /transactionstatus { TransactionRef }
+ *                      → { status, responseCode, externalReference, transactionStatus:
+ *                          "SUCCESS" | "FAILED" | "PENDING", mnoReference, amount, phoneNumber }
  * and then calls the `UserCallback` URL the way DTB does, according to the
  * current mode:
  *
@@ -16,6 +19,8 @@
  *   fail_after_success SUCCESS, then a late FAILURE
  *   reject             /stkpush itself answers 400 (prompt never sent)
  *   manual             no automatic callback; use the dashboard buttons
+ *   lost_callback      the payment succeeds but no callback is sent (only the
+ *                      status API below knows; tests payment reconciliation)
  *
  * Change the mode from the dashboard, or from tests:
  *   POST /__control { mode, delayMs?, once? }   (once=true → applies to the next push only)
@@ -25,8 +30,8 @@
  */
 import express from 'express';
 
-type Mode = 'success' | 'fail' | 'timeout' | 'duplicate' | 'fail_after_success' | 'reject' | 'manual';
-const MODES: Mode[] = ['success', 'fail', 'timeout', 'duplicate', 'fail_after_success', 'reject', 'manual'];
+type Mode = 'success' | 'fail' | 'timeout' | 'duplicate' | 'fail_after_success' | 'reject' | 'manual' | 'lost_callback';
+const MODES: Mode[] = ['success', 'fail', 'timeout', 'duplicate', 'fail_after_success', 'reject', 'manual', 'lost_callback'];
 
 type Push = {
     ref: string;
@@ -37,6 +42,9 @@ type Push = {
     mode: Mode;
     receivedAt: string;
     callbacks: { at: string; outcome: 'success' | 'fail'; httpStatus: number | string }[];
+    /** What the status API reports; set when the outcome is decided. */
+    outcome?: 'success' | 'fail';
+    receipt?: string;
 };
 
 const PORT = Number(process.env.MOCK_DTB_PORT ?? 4010);
@@ -70,6 +78,12 @@ async function sendCallback(push: Push, outcome: 'success' | 'fail') {
             cbsReference: '',
             transactionId: 'TX' + Date.now(),
         };
+    // The first decided outcome is what really happened; later callbacks (duplicates,
+    // a late failure) do not change what the status API reports.
+    if (!push.outcome) {
+        push.outcome = outcome;
+        if (outcome === 'success') push.receipt = (body as { mnoReference: string }).mnoReference;
+    }
     let httpStatus: number | string;
     try {
         const res = await fetch(push.callbackUrl, {
@@ -92,6 +106,9 @@ function schedule(push: Push) {
         case 'fail': later(delayMs, 'fail'); break;
         case 'duplicate': later(delayMs, 'success'); later(delayMs + 1000, 'success'); break;
         case 'fail_after_success': later(delayMs, 'success'); later(delayMs + 1500, 'fail'); break;
+        case 'lost_callback':
+            setTimeout(() => { push.outcome = 'success'; push.receipt = receipt(); }, delayMs);
+            break;
         default: break; // timeout, manual
     }
 }
@@ -136,6 +153,27 @@ app.post(['/stkpush', '/api/fiorano/mno/mpesa/stkpush'], (req, res) => {
         responseCode: '200',
         responseDescription: 'Success. Request accepted for processing',
         externalReference: push.ref,
+    });
+});
+
+app.post(['/transactionstatus', '/api/fiorano/mno/mpesa/transactionstatus'], (req, res) => {
+    if (req.headers.authorization !== 'Bearer mock-dtb-token') {
+        return res.status(401).json({ message: 'Invalid token' });
+    }
+    const ref = String(req.body?.TransactionRef ?? req.body?.externalReference ?? '');
+    const push = pushes.find(p => p.ref === ref);
+    if (!push) return res.status(404).json({ status: 'FAILURE', responseCode: '404', responseDescription: 'Transaction not found', externalReference: ref });
+    const transactionStatus = push.outcome === 'success' ? 'SUCCESS' : push.outcome === 'fail' ? 'FAILED' : 'PENDING';
+    res.json({
+        status: 'SUCCESS',
+        responseCode: '200',
+        responseDescription: 'Status retrieved',
+        externalReference: push.ref,
+        transactionStatus,
+        transactionStatusDescription: push.outcome === 'fail' ? 'Request cancelled by user' : undefined,
+        mnoReference: push.receipt ?? '',
+        amount: push.amount,
+        phoneNumber: push.phone,
     });
 });
 

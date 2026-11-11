@@ -3,6 +3,7 @@ import { messagingDisabled } from '../utils/messaging.js';
 import { prisma } from '../storage/prisma.js';
 import { sendEmail, EmailType, sendRaffleEmail } from './emailService.js';
 import { processOutbox } from './outbox.js';
+import { reconcilePayments } from './reconciliation.js';
 import { smsService } from './smsService.js';
 import { createShortLink, getLinkForEntity } from '../utils/shortLinkService.js';
 
@@ -263,6 +264,15 @@ export async function runScheduledTasks() {
 
 // Initialize cron jobs
 export function initializeScheduler() {
+    // Payment reconciliation (on Vercel, Vercel Cron calls /api/cron/reconcile-payments instead).
+    cron.schedule('*/5 * * * *', async () => {
+        try {
+            await reconcilePayments({ trigger: 'cron' });
+        } catch (err) {
+            console.error('[Reconcile] run failed:', err);
+        }
+    });
+
     // Notification outbox worker (on Vercel, Vercel Cron calls /api/cron/notifications instead).
     // Runs even with MESSAGING_DISABLED, so queued rows end as SUPPRESSED instead of piling up.
     cron.schedule('* * * * *', async () => {
