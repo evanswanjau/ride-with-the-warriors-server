@@ -33,6 +33,7 @@ const editableFields = {
     location: z.string().trim().max(200).nullable().optional(),
     rafflePrice: money.optional(),
     bikeHirePrice: money.optional(),
+    bikeStock: z.number().int().min(0).max(100_000).nullable().optional(),
     registrationOpensAt: optionalDate,
     registrationClosesAt: optionalDate,
     raffleOpensAt: optionalDate,
