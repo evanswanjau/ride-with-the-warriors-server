@@ -35,10 +35,11 @@ export type QuoteResult = {
   classifications: Classification[];
 };
 
-export function calculateAge(dob: string): number | null {
+/** Age in whole years on `asOf` (today by default; quotes use the event's ride day). */
+export function calculateAge(dob: string, asOf?: Date | null): number | null {
   if (!dob) return null;
   const birthDate = new Date(dob);
-  const today = new Date();
+  const today = asOf ?? new Date();
   let age = today.getFullYear() - birthDate.getFullYear();
   const m = today.getMonth() - birthDate.getMonth();
   if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
@@ -136,7 +137,7 @@ export function getClassification(
 
 export async function buildQuote(input: {
   /** The event being entered (its year picks the prices); the current event when omitted. */
-  event?: Pick<EventRow, 'year' | 'bikeHirePrice'>;
+  event?: Pick<EventRow, 'year' | 'bikeHirePrice'> & Partial<Pick<EventRow, 'date'>>;
   circuitId: QuoteRequest['circuitId'];
   type: QuoteRequest['type'];
   payload:
@@ -152,7 +153,8 @@ export async function buildQuote(input: {
 
   if (input.type === 'individual') {
     const rider = (input.payload as { riderDetails: { firstName: string; dob: string; isMilitary?: boolean; service?: string; rank?: string; serviceNumber?: string } }).riderDetails;
-    const age = calculateAge(rider.dob);
+    // Age categories are decided by the rider's age on the ride day.
+    const age = calculateAge(rider.dob, event.date ?? null);
     const classification = getClassification(categories, input.circuitId, 'individual', age);
 
     const isMilitary = rider.isMilitary || !!rider.service || !!rider.rank || !!rider.serviceNumber;

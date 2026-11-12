@@ -187,6 +187,14 @@ describe('Pricing Service', () => {
         });
     });
 
+    describe('calculateAge on the ride day', () => {
+        it('counts the age on the given date', () => {
+            const rideDay = new Date('2027-07-04T00:00:00Z');
+            expect(calculateAge('2009-07-04', rideDay)).toBe(18);
+            expect(calculateAge('2009-07-05', rideDay)).toBe(17);
+        });
+    });
+
     describe('buildQuote', () => {
         beforeEach(() => {
             vi.clearAllMocks();
