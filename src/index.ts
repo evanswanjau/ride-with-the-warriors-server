@@ -33,6 +33,7 @@ import { galleryRouter } from './routes/gallery.js';
 import { eventsRouter } from './routes/events.js';
 import { meRidersRouter } from './routes/meRiders.js';
 import { adminEventsRouter } from './routes/admin/events.js';
+import { adminExportsRouter } from './routes/admin/exports.js';
 import { prisma } from './storage/prisma.js';
 import { auditAdminChanges } from './middleware/adminAudit.js';
 import { corsOptions, securityHeaders, errorHandler } from './middleware/security.js';
@@ -98,6 +99,7 @@ app.use('/api/v1/admin/notifications', adminNotificationsRouter);
 app.use('/api/v1/admin/notify', adminNotifyRouter);
 app.use('/api/v1/admin/feedback', adminFeedbackRouter);
 app.use('/api/v1/admin/events', adminEventsRouter);
+app.use('/api/v1/admin/exports', adminExportsRouter);
 
 // Reports unhandled errors to Sentry (no-op when SENTRY_DSN is not set).
 Sentry.setupExpressErrorHandler(app);
