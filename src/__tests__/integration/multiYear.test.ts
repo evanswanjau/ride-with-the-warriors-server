@@ -192,3 +192,44 @@ describe.skipIf(!hasDb)('Events and per-year numbering', () => {
         expect((await request.post(`/api/v1/admin/events/${YEAR}/bikes/open`).set(admin)).status).toBe(404);
     });
 });
+
+describe.skipIf(!hasDb)('Bike stock and donations per event', () => {
+    let admin: Record<string, string>;
+    beforeAll(() => {
+        delete process.env.REGISTRATION_OPEN;
+    });
+    beforeEach(async () => {
+        await prisma.donation.deleteMany({});
+        await cleanup();
+        admin = await adminWith('admin');
+    });
+    afterAll(cleanup);
+
+    it('stops bike hires when the event stock is booked, and frees a bike on cancel', async () => {
+        await request.post('/api/v1/admin/events').set(admin).send({ year: YEAR, bikeStock: 1 });
+        await request.post(`/api/v1/admin/events/${YEAR}/registration/open`).set(admin);
+        expect((await request.get('/api/v1/events/current')).body.event).toMatchObject({ bikeStock: 1, bikesLeft: 1 });
+
+        const a = await login(`bikeA${uniq()}@example.com`);
+        const b = await login(`bikeB${uniq()}@example.com`);
+        const body = () => ({ circuitId: 'recon', type: 'individual', payload: { riderDetails: { ...rider(uniq().slice(-8)), hireBike: true } } });
+
+        const first = await request.post('/api/v1/registrations').set('Authorization', `Bearer ${a}`).send(body());
+        expect(first.status).toBe(201);
+        expect((await request.get('/api/v1/events/current')).body.event.bikesLeft).toBe(0);
+        const second = await request.post('/api/v1/registrations').set('Authorization', `Bearer ${b}`).send(body());
+        expect(second.status).toBe(409);
+        expect(second.body.error.code).toBe('BIKES_SOLD_OUT');
+
+        await request.delete(`/api/v1/admin/registrations/${first.body.registrationId}`).set(await adminWith('super_admin'));
+        expect((await request.get('/api/v1/events/current')).body.event.bikesLeft).toBe(1);
+        expect((await request.post('/api/v1/registrations').set('Authorization', `Bearer ${b}`).send(body())).status).toBe(201);
+    });
+
+    it('donations count towards the current event', async () => {
+        await request.post('/api/v1/admin/events').set(admin).send({ year: YEAR });
+        const res = await request.post('/api/v1/donations').send({ amount: 500, name: 'Kind Person', email: 'kind@example.com' });
+        expect(res.status).toBe(201);
+        expect((await prisma.donation.findUniqueOrThrow({ where: { id: res.body.donationId } })).eventYear).toBe(YEAR);
+    });
+});
