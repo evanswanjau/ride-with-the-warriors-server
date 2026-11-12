@@ -53,14 +53,84 @@ model Registration {
   // Set when an admin cancels the registration (rows are kept, never deleted).
   cancelledAt          DateTime?
   cancelledBy          String?
+  // Phase 4: the entry this row belongs to, and the reusable person record. The rider's details
+  // stay snapshotted on this row, so editing a profile later never changes past entries.
+  registrationGroupId  String?
+  registrationGroup    RegistrationGroup? @relation(fields: [registrationGroupId], references: [id], onDelete: SetNull)
+  riderProfileId       String?
+  riderProfile         RiderProfile?      @relation(fields: [riderProfileId], references: [id], onDelete: SetNull)
 
+  @@unique([eventYear, bibNumber])
+  // One entry per rider per event.
+  @@unique([eventYear, riderProfileId])
   @@index([groupId])
   @@index([email])
   @@index([phoneNumber])
   @@index([accountId])
   @@index([participantAccountId])
   @@index([eventYear])
-  @@unique([eventYear, bibNumber])
+  @@index([registrationGroupId])
+}
+
+// One per entry (individual, team or family): what was entered and paid for, per event year.
+model RegistrationGroup {
+  id              String             @id @default(uuid())
+  // Registration.groupId of the rows it was built from (backfill); new groups use it too.
+  legacyGroupId   String?            @unique
+  eventYear       Int
+  accountId       String?
+  account         Account?           @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  circuitId       String
+  type            String
+  teamName        String?
+  status          RegistrationStatus @default(UNPAID)
+  // Price quote at registration time (lineItems, totalAmount) and the categories it used.
+  pricing         Json?
+  classifications Json?
+  // Whole KES: the sum of the rows' amounts.
+  totalAmount     Int                @default(0)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  registrations   Registration[]
+
+  @@index([accountId, eventYear])
+  @@index([eventYear, status])
+}
+
+// The reusable person record ("My riders"), owned by an account: the account holder, their
+// children, team mates. Registrations copy these details when made.
+model RiderProfile {
+  id                   String         @id @default(uuid())
+  accountId            String
+  account              Account        @relation("RiderProfileOwner", fields: [accountId], references: [id], onDelete: Cascade)
+  // The rider's own account, when they have one and it is not the owner's.
+  riderAccountId       String?
+  riderAccount         Account?       @relation("RiderProfileRider", fields: [riderAccountId], references: [id], onDelete: SetNull)
+  // How the same person is recognised within an account (see services/riderProfiles.ts).
+  matchKey             String
+  firstName            String
+  lastName             String
+  dob                  DateTime?      @db.Date
+  gender               String?
+  // Locked once set (COD-130): only admins change it.
+  idNumber             String?
+  email                String?
+  phoneNumber          String?
+  tshirtSize           String?
+  emergencyContactName String?
+  emergencyPhone       String?
+  isMilitary           Boolean        @default(false)
+  rank                 String?
+  service              String?
+  serviceNumber        String?
+  unit                 String?
+  archivedAt           DateTime?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  registrations        Registration[]
+
+  @@unique([accountId, matchKey])
+  @@index([riderAccountId])
 }
 
 model Admin {
@@ -109,24 +179,24 @@ model AdminSession {
 }
 
 model Payment {
-  id                 String   @id @default(uuid())
+  id                 String    @id @default(uuid())
   // REGISTRATION | RAFFLE | DONATION | BIKE_HIRE. Every M-Pesa prompt is one row; callbacks
   // are matched on checkoutRequestId here, never on the item's own column.
   purpose            String?
   registrationId     String?
   raffleTicketIds    String[] // New: store array of ticket IDs for bulk payments
   donationId         String? // New: link to donation
-  checkoutRequestId  String?  @unique
+  checkoutRequestId  String?   @unique
   merchantRequestId  String?
   phone              String?
   amount             Float
   // PENDING -> PAID | FAILED | EXPIRED | FLAGGED. A success also settles FAILED/EXPIRED (money
   // was taken); a failure only settles PENDING. A success whose amount or phone does not match
   // makes it FLAGGED, which only an admin can settle. See src/services/payments.ts.
-  status             String   @default("PENDING")
+  status             String    @default("PENDING")
   failureReason      String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
   mpesaReceiptNumber String?
   transactionDate    String?
   mnoReference       String? // New: generic bank reference
@@ -136,7 +206,7 @@ model Payment {
   // Reconciliation (src/services/reconciliation.ts): when the gateway was last asked about this
   // payment, how often, and what it said (PAID | FAILED | PENDING | UNKNOWN | ERROR: ...).
   lastCheckedAt      DateTime?
-  checkCount         Int      @default(0)
+  checkCount         Int       @default(0)
   lastCheckResult    String?
   // Set when a success callback did not match this payment (src/services/payments.ts);
   // status is then FLAGGED until an admin accepts or rejects it.
@@ -207,10 +277,10 @@ model RaffleTicket {
   accountId         String?
   account           Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
 
+  @@unique([eventYear, ticketNumber])
   @@index([email])
   @@index([referralCode])
   @@index([accountId])
-  @@unique([eventYear, ticketNumber])
 }
 
 model Referral {
@@ -345,21 +415,24 @@ model Event {
 // ─── Participant accounts (passwordless, OTP login) ─────────────────────────
 
 model Account {
-  id             String         @id @default(uuid())
-  firstName      String
-  lastName       String
+  id                 String              @id @default(uuid())
+  firstName          String
+  lastName           String
   // Normalised: lowercase email, phone as 2547XXXXXXXX / 2541XXXXXXXX. At least one is set.
-  email          String?        @unique
-  phone          String?        @unique
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  lastLoginAt    DateTime?
-  sessions       UserSession[]
-  registrations  Registration[] @relation("RegistrationOwner")
-  participations Registration[] @relation("RegistrationParticipant")
-  raffleTickets  RaffleTicket[]
-  donations      Donation[]
-  bikeHires      BikeHire[]
+  email              String?             @unique
+  phone              String?             @unique
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  lastLoginAt        DateTime?
+  sessions           UserSession[]
+  registrations      Registration[]      @relation("RegistrationOwner")
+  participations     Registration[]      @relation("RegistrationParticipant")
+  raffleTickets      RaffleTicket[]
+  donations          Donation[]
+  bikeHires          BikeHire[]
+  riderProfiles      RiderProfile[]      @relation("RiderProfileOwner")
+  riderOf            RiderProfile[]      @relation("RiderProfileRider")
+  registrationGroups RegistrationGroup[]
 }
 
 model OtpCode {
