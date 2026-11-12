@@ -4,6 +4,9 @@
  *  - bibs: the PricingCategory.regRange for the rider's category
  *    (team members share a base: BASE-1..n)
  *  - raffle: AA001 → AZ999 → BA001 → BZ999
+ * Both are scoped by event year: each year has its own PricingCategory rows, and
+ * 2027 numbers start again from the bottom of each range. Bib ranges are compared
+ * as numbers, never as strings.
  *
  * Every allocation runs in a transaction holding a Postgres advisory lock, so
  * two payment callbacks landing at the same moment can never get the same
@@ -15,8 +18,9 @@ import { prisma } from '../storage/prisma.js';
 
 type Tx = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 
-const BIB_LOCK = 'rwtw:bib';
-const RAFFLE_LOCK = 'rwtw:raffle';
+// One lock per event year: numbering in one year never waits on another.
+const bibLock = (year: number) => `rwtw:bib:${year}`;
+const raffleLock = (year: number) => `rwtw:raffle:${year}`;
 
 async function lock(tx: Tx, key: string) {
     await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${key}))::text`;
@@ -24,49 +28,72 @@ async function lock(tx: Tx, key: string) {
 
 // ─── Bibs ────────────────────────────────────────────────────────────────────
 
+export type BibRange = { prefix: string; start: number; end: number };
+
+/** "7001–7999" -> { prefix: '', start: 7001, end: 7999 }; "T101-T199" -> { prefix: 'T', ... }. Null when malformed. */
+export function parseBibRange(regRange: string): BibRange | null {
+    const parts = regRange.split(/[–-]/); // en-dash or hyphen
+    if (parts.length !== 2) return null;
+    const startStr = parts[0].trim();
+    const endStr = parts[1].trim();
+    const prefix = startStr.match(/^[A-Z]+/)?.[0] || '';
+    if (prefix && !endStr.startsWith(prefix)) return null;
+    const start = Number(startStr.slice(prefix.length));
+    const end = Number(endStr.slice(prefix.length));
+    if (!Number.isInteger(start) || !Number.isInteger(end) || start > end) return null;
+    return { prefix, start, end };
+}
+
+/** The number a bib holds within a range: "7001-3" -> 7001, "T105" -> 105; NaN when it is not in that prefix. */
+export function bibNumberValue(bib: string, prefix: string): number {
+    if (prefix ? !bib.startsWith(prefix) : /^[A-Z]/.test(bib)) return NaN;
+    const digits = bib.slice(prefix.length).match(/^\d+/)?.[0];
+    return digits ? Number(digits) : NaN;
+}
+
+export function formatBib(n: number, prefix: string): string {
+    return prefix ? `${prefix}${n}` : n.toString().padStart(4, '0');
+}
+
+/** The lowest free number in the range, compared as numbers (never as strings). */
+export function lowestFreeBib(range: BibRange, taken: Iterable<string>): string | null {
+    const used = new Set<number>();
+    for (const b of taken) {
+        const n = bibNumberValue(b, range.prefix);
+        if (!isNaN(n) && n >= range.start && n <= range.end) used.add(n);
+    }
+    let n = range.start;
+    while (used.has(n) && n <= range.end) n++;
+    return n > range.end ? null : formatBib(n, range.prefix);
+}
+
 async function nextBibInRange(
     tx: Tx,
+    eventYear: number,
     categoryName: string,
     circuitId: string,
     type: string,
     reserved: Set<string>,
 ): Promise<string | null> {
-    const cat = await tx.pricingCategory.findFirst({ where: { categoryName, circuitId, type } });
+    const cat = await tx.pricingCategory.findFirst({ where: { eventYear, categoryName, circuitId, type } });
     if (!cat) {
-        console.error(`[Numbering] No bib range for ${type}/${circuitId}/${categoryName}`);
+        console.error(`[Numbering] No ${eventYear} bib range for ${type}/${circuitId}/${categoryName}`);
         return null;
     }
-
-    const parts = cat.regRange.split(/[–-]/); // en-dash or hyphen
-    if (parts.length !== 2) {
+    const range = parseBibRange(cat.regRange);
+    if (!range) {
         console.error(`[Numbering] Bad range "${cat.regRange}" for ${categoryName}`);
         return null;
     }
-    const startStr = parts[0].trim();
-    const endStr = parts[1].trim();
-    const prefix = startStr.match(/^[A-Z]+/)?.[0] || '';
-    const startNum = parseInt(startStr.slice(prefix.length), 10);
-    const endNum = parseInt(endStr.slice(prefix.length), 10);
-    const toNum = (bib: string) => parseInt(prefix ? bib.slice(prefix.length) : bib, 10); // "7001-3" -> 7001
 
+    // Only this event year's bibs count: 2027 reuses the same ranges as 2026.
     const taken = await tx.registration.findMany({
-        where: { bibNumber: { gte: startStr, lte: endStr, ...(prefix ? { startsWith: prefix } : {}) } },
+        where: { eventYear, bibNumber: range.prefix ? { startsWith: range.prefix } : { not: null } },
         select: { bibNumber: true },
     });
-    const used = new Set<number>();
-    for (const b of [...taken.map(t => t.bibNumber!), ...reserved]) {
-        if (prefix && !b.startsWith(prefix)) continue;
-        const n = toNum(b);
-        if (!isNaN(n) && n >= startNum && n <= endNum) used.add(n);
-    }
-
-    let n = startNum;
-    while (used.has(n) && n <= endNum) n++;
-    if (n > endNum) {
-        console.error(`[Numbering] Bib range ${cat.regRange} for ${categoryName} is full`);
-        return null;
-    }
-    return prefix ? `${prefix}${n}` : n.toString().padStart(4, '0');
+    const bib = lowestFreeBib(range, [...taken.map(t => t.bibNumber!), ...reserved]);
+    if (!bib) console.error(`[Numbering] ${eventYear} bib range ${cat.regRange} for ${categoryName} is full`);
+    return bib;
 }
 
 /**
@@ -75,10 +102,12 @@ async function nextBibInRange(
  */
 export async function assignBibs(registrationId: string) {
     return prisma.$transaction(async (tx) => {
-        await lock(tx, BIB_LOCK);
+        const found = await tx.registration.findUnique({ where: { id: registrationId }, select: { eventYear: true } });
+        if (!found) throw new Error('Registration not found');
+        await lock(tx, bibLock(found.eventYear));
 
-        const anchor = await tx.registration.findUnique({ where: { id: registrationId } });
-        if (!anchor) throw new Error('Registration not found');
+        // Read again under the lock.
+        const anchor = (await tx.registration.findUnique({ where: { id: registrationId } }))!;
 
         const rows = anchor.groupId
             ? await tx.registration.findMany({ where: { groupId: anchor.groupId }, orderBy: { createdAt: 'asc' } })
@@ -94,7 +123,7 @@ export async function assignBibs(registrationId: string) {
             const ordered = [...rows].sort((a, b) =>
                 ((a.payload as RegistrationPayload | null)?.memberIndex ?? 0) - ((b.payload as RegistrationPayload | null)?.memberIndex ?? 0));
             const existingBase = ordered.find(r => r.bibNumber)?.bibNumber?.split('-')[0];
-            const base = existingBase ?? await nextBibInRange(tx, anchor.category || 'Team', anchor.circuitId, 'team', reserved);
+            const base = existingBase ?? await nextBibInRange(tx, anchor.eventYear, anchor.category || 'Team', anchor.circuitId, 'team', reserved);
             if (base) {
                 ordered.forEach((r, i) => {
                     if (!r.bibNumber && r.status !== 'CANCELLED') assigned.set(r.id, `${base}-${i + 1}`);
@@ -102,7 +131,7 @@ export async function assignBibs(registrationId: string) {
             }
         } else {
             for (const r of pending) {
-                const bib = await nextBibInRange(tx, r.category || 'Individual', r.circuitId, r.type, reserved);
+                const bib = await nextBibInRange(tx, anchor.eventYear, r.category || 'Individual', r.circuitId, r.type, reserved);
                 if (bib) {
                     reserved.add(bib);
                     assigned.set(r.id, bib);
@@ -147,14 +176,22 @@ function ordinalToCode(ordinal: number): string | null {
  * Returns the tickets with their numbers.
  */
 export async function assignTicketNumbers(ticketIds: string[]) {
-    return prisma.$transaction(async (tx) => {
-        await lock(tx, RAFFLE_LOCK);
+    const years = await prisma.raffleTicket.findMany({ where: { id: { in: ticketIds } }, select: { eventYear: true }, distinct: ['eventYear'] });
+    const out = [];
+    for (const { eventYear } of years) out.push(...await assignTicketNumbersForYear(ticketIds, eventYear));
+    return out;
+}
 
-        const tickets = await tx.raffleTicket.findMany({ where: { id: { in: ticketIds } }, orderBy: { createdAt: 'asc' } });
+/** Numbers are unique per event year; every year starts again at AA001. */
+async function assignTicketNumbersForYear(ticketIds: string[], eventYear: number) {
+    return prisma.$transaction(async (tx) => {
+        await lock(tx, raffleLock(eventYear));
+
+        const tickets = await tx.raffleTicket.findMany({ where: { id: { in: ticketIds }, eventYear }, orderBy: { createdAt: 'asc' } });
         const pending = tickets.filter(t => !t.ticketNumber);
         if (pending.length === 0) return tickets;
 
-        const taken = await tx.raffleTicket.findMany({ where: { ticketNumber: { not: null } }, select: { ticketNumber: true } });
+        const taken = await tx.raffleTicket.findMany({ where: { eventYear, ticketNumber: { not: null } }, select: { ticketNumber: true } });
         const used = new Set(taken.map(t => codeToOrdinal(t.ticketNumber!)).filter(n => n > 0));
 
         const assigned = new Map<string, string>();

@@ -65,8 +65,14 @@ describe('checkDuplicates', () => {
 
   it('passes the excluded group and id to both lookups', async () => {
     await checkDuplicates('individual', rider(), { groupId: 'G1', id: 'R1' });
-    expect(byEmail).toHaveBeenCalledWith(['Jane@Example.com'], 'G1', 'R1');
-    expect(byId).toHaveBeenCalledWith(['12345678'], 'G1', 'R1');
+    expect(byEmail).toHaveBeenCalledWith(['Jane@Example.com'], 'G1', 'R1', undefined);
+    expect(byId).toHaveBeenCalledWith(['12345678'], 'G1', 'R1', undefined);
+  });
+
+  it('limits both lookups to the event year when given', async () => {
+    await checkDuplicates('individual', rider(), {}, 2027);
+    expect(byEmail).toHaveBeenCalledWith(['Jane@Example.com'], undefined, undefined, 2027);
+    expect(byId).toHaveBeenCalledWith(['12345678'], undefined, undefined, 2027);
   });
 
   it('matches team members case-insensitively on email', async () => {

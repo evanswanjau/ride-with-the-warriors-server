@@ -45,18 +45,20 @@ export type DuplicateCheck = {
 
 /**
  * Looks for existing registrations that share an email or ID number with `payload`.
- * `exclude` skips the draft being edited. Used by both POST /quote and POST /.
+ * `exclude` skips the draft being edited. Only registrations for the same event year count:
+ * a 2026 rider may enter 2027. Used by both POST /quote and POST /.
  */
 export async function checkDuplicates(
   type: string,
   payload: RegistrationPayload,
   exclude: { groupId?: string; id?: string } = {},
+  eventYear?: number,
 ): Promise<DuplicateCheck> {
   const emailsToCheck = getEmailsFromPayload(type, payload);
   const idNumbersToCheck = getIdNumbersFromPayload(type, payload);
 
-  const duplicateByEmail = emailsToCheck.length > 0 ? await findExistingRegistrationsByEmails(emailsToCheck, exclude.groupId, exclude.id) : [];
-  const duplicateById = idNumbersToCheck.length > 0 ? await findExistingRegistrationsByIdNumbers(idNumbersToCheck, exclude.groupId, exclude.id) : [];
+  const duplicateByEmail = emailsToCheck.length > 0 ? await findExistingRegistrationsByEmails(emailsToCheck, exclude.groupId, exclude.id, eventYear) : [];
+  const duplicateById = idNumbersToCheck.length > 0 ? await findExistingRegistrationsByIdNumbers(idNumbersToCheck, exclude.groupId, exclude.id, eventYear) : [];
 
   const uniqueDuplicates = new Map<string, RegistrationRecord>();
   [...duplicateByEmail, ...duplicateById].forEach((d) => uniqueDuplicates.set(d.id, d));

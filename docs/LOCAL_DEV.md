@@ -107,6 +107,7 @@ DTB does. On its dashboard you choose what happens to the next prompt:
 | `npm run db:migrate:new -- --name <name>` | creates a migration from schema changes |
 | `npm run db:studio` | Prisma Studio on `rwtw_dev` |
 | `npm run db:clone-anon -- <file.dump>` | anonymised production copy (below) |
+| `npm run check:data -- [--save f.json] [--compare f.json]` | read-only data checks: counts and PAID sums per year, unique bibs and tickets per year (prefix with `npx dotenv -e .env.stack --`) |
 
 Every command that wipes or reseeds checks that `DATABASE_URL` is on localhost first.
 

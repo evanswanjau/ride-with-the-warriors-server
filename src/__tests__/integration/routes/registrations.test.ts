@@ -117,6 +117,11 @@ vi.mock('../../../storage/prisma.js', () => ({
         pricingCategory: {
             findMany: vi.fn().mockResolvedValue(mockPricingCategories),
         },
+        // No Event rows: the 2026 fallback event applies.
+        event: {
+            findFirst: vi.fn().mockResolvedValue(null),
+            findUnique: vi.fn().mockResolvedValue(null),
+        },
         registration: {
             findUnique: vi.fn(),
             findMany: vi.fn().mockResolvedValue([]),
