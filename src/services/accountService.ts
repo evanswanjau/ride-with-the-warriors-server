@@ -2,6 +2,7 @@ import { randomBytes } from 'crypto';
 import type { RegistrationPayload } from '../validation/registrationSchemas.js';
 import { prisma } from '../storage/prisma.js';
 import { normalizeEmail, normalizePhone } from '../utils/identity.js';
+import { syncRiderModelForGroups } from './backfills/riderModel.js';
 
 const SESSION_DAYS = 30;
 
@@ -41,8 +42,10 @@ export async function claimUnlinkedRecords(accountId: string) {
             ],
         },
     });
+    const claimed: { id: string; groupId: string | null }[] = [];
     for (const r of candidates) {
         if (!matchesMe(r.email, r.phoneNumber)) continue;
+        claimed.push(r);
         const isPrimary = r.type === 'individual' || (r.payload as RegistrationPayload | null)?.isPrimary === true;
         if (isPrimary && r.groupId) {
             await prisma.registration.updateMany({ where: { groupId: r.groupId, accountId: null }, data: { accountId } });
@@ -63,6 +66,9 @@ export async function claimUnlinkedRecords(accountId: string) {
             if (normalizePhone(d.phone) === phone) await prisma.donation.update({ where: { id: d.id }, data: { accountId } });
         }
     }
+
+    // Claimed entries get their group owner and rider profiles.
+    if (claimed.length) await syncRiderModelForGroups(claimed);
 
     // Bike hires follow their registration's owner.
     const owned = await prisma.registration.findMany({ where: { accountId }, select: { id: true } });
@@ -86,6 +92,10 @@ export async function linkGroupParticipants(registrationId: string, ownerId: str
             null;
         if (acc && acc.id !== ownerId) {
             await prisma.registration.update({ where: { id: r.id }, data: { participantAccountId: acc.id } });
+            // The rider's profile points at their own account.
+            if (r.riderProfileId) {
+                await prisma.riderProfile.updateMany({ where: { id: r.riderProfileId, riderAccountId: null }, data: { riderAccountId: acc.id } });
+            }
         }
     }
 }

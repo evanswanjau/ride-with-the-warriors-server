@@ -7,6 +7,8 @@ import { z } from 'zod';
 import { requireAdmin, AuthenticatedRequest } from '../../middleware/auth.js';
 import { writeAudit } from '../../middleware/adminAudit.js';
 import { updateRegistration } from '../../storage/registrationStore.js';
+import { syncRiderModel } from '../../services/backfills/riderModel.js';
+import { yearParam } from '../../services/events.js';
 
 export const adminRegistrationsRouter = Router();
 
@@ -20,6 +22,9 @@ adminRegistrationsRouter.get('/', requireAdmin, async (req, res) => {
         const { search, circuitId, type, status, category, isMilitary, dateFrom } = req.query;
 
         const where: Prisma.RegistrationWhereInput = {};
+        // ?year=2026 limits the list to one event; every year by default.
+        const year = yearParam(req.query.year);
+        if (year) where.eventYear = year;
         if (circuitId) where.circuitId = circuitId as string;
         if (type) where.type = type as string;
         if (status) where.status = status as Prisma.RegistrationWhereInput['status'];
@@ -198,6 +203,7 @@ adminRegistrationsRouter.delete('/:id', requireAdmin, async (req: AuthenticatedR
         where: { ...(reg.groupId ? { groupId: reg.groupId } : { id }), status: { not: 'CANCELLED' } },
         data: { status: 'CANCELLED', cancelledAt: new Date(), cancelledBy: req.admin?.email ?? null },
     });
+    await syncRiderModel([id]);
     res.json({ ok: true, cancelled: count });
 });
 
