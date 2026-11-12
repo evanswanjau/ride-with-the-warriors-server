@@ -6,17 +6,23 @@ import { beginAttempt, recordAttempt } from '../services/payments.js';
 import { raffleRateLimiter } from '../middleware/rateLimit.js';
 import { assignTicketNumbers } from '../services/numbering.js';
 import { requireUser, UserRequest } from '../middleware/userAuth.js';
+import { currentEvent, eventForYear, raffleOpen } from '../services/events.js';
 
 const MAX_TICKETS_PER_PURCHASE = 20;
 
-/** The raffle opens per event via RAFFLE_OPEN=true; closed otherwise. */
-function raffleOpen() {
-  return process.env.RAFFLE_OPEN === 'true';
-}
-
 export const raffleRouter = Router();
 
-const RAFFLE_AMOUNT = 1000;
+/** What the listed tickets cost: each at its own event's raffle price. */
+async function ticketsTotal(ticketIds: string[]): Promise<number> {
+  const tickets = await prisma.raffleTicket.findMany({ where: { id: { in: ticketIds } }, select: { eventYear: true } });
+  const prices = new Map<number, number>();
+  let total = 0;
+  for (const t of tickets) {
+    if (!prices.has(t.eventYear)) prices.set(t.eventYear, (await eventForYear(t.eventYear)).rafflePrice);
+    total += prices.get(t.eventYear)!;
+  }
+  return total;
+}
 
 // Ticket numbers (AA001…) are assigned only once a ticket is paid —
 // see services/numbering.ts. Unpaid tickets only have a UUID id.
@@ -24,7 +30,9 @@ const RAFFLE_AMOUNT = 1000;
 // ─── POST / — Create raffle ticket(s) (UNPAID) ──────────────────────────────────
 raffleRouter.post('/', requireUser, raffleRateLimiter, async (req: UserRequest, res) => {
   try {
-    if (!raffleOpen()) {
+    // Tickets are always for the current (newest) event, at its price.
+    const event = await currentEvent();
+    if (!raffleOpen(event)) {
       return res.status(403).json({ error: { code: 'RAFFLE_CLOSED', message: 'The raffle is closed.' } });
     }
     const account = req.account!;
@@ -58,9 +66,9 @@ raffleRouter.post('/', requireUser, raffleRateLimiter, async (req: UserRequest, 
       return res.status(400).json({ error: { code: 'VALIDATION', message: `Choose between 1 and ${MAX_TICKETS_PER_PURCHASE} tickets.` } });
     }
 
-    // Block purchase if this account has unpaid tickets
+    // Block purchase if this account has unpaid tickets for this event
     const unpaidCount = await prisma.raffleTicket.count({
-      where: { accountId: account.id, status: 'UNPAID' },
+      where: { accountId: account.id, status: 'UNPAID', eventYear: event.year },
     });
 
     if (unpaidCount > 0) {
@@ -86,13 +94,14 @@ raffleRouter.post('/', requireUser, raffleRateLimiter, async (req: UserRequest, 
         status: 'UNPAID',
         referralCode: validatedRefCode,
         accountId: account.id,
+        eventYear: event.year,
       })),
     });
 
     console.log(`[Raffle] ${numTickets} Ticket(s) created UNPAID for ${email}: ${ticketIds.join(', ')}`);
     return res.status(201).json({
       ticketIds,
-      amount: RAFFLE_AMOUNT * numTickets,
+      amount: event.rafflePrice * numTickets,
       quantity: numTickets
     });
   } catch (err) {
@@ -115,7 +124,7 @@ raffleRouter.post('/pay/stk-push', requireUser, async (req: UserRequest, res) =>
     return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Unpaid tickets not found' } });
   }
 
-  const totalAmount = RAFFLE_AMOUNT * ticketIds.length;
+  const totalAmount = await ticketsTotal(ticketIds);
 
   // ── SIMULATION MODE ──────────────────────────────────────────────────────────
   if (process.env.PAYMENT_MODE === 'simulate') {

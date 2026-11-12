@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { prisma } from '../../storage/prisma.js';
 import { requireAdmin } from '../../middleware/auth.js';
+import { FALLBACK_EVENT } from '../../services/events.js';
 
 export const adminDashboardRouter = Router();
 
@@ -18,7 +19,12 @@ const GENDER_COLORS: Record<string, string> = {
     OTHER: '#6b7280',
 };
 
-const RAFFLE_TICKET_PRICE = 1000;
+/** Raffle price per event year (each ticket is charged at its own event's price). */
+async function rafflePrices(): Promise<Map<number, number>> {
+    const events = await prisma.event.findMany({ select: { year: true, rafflePrice: true } });
+    return new Map(events.map(e => [e.year, e.rafflePrice]));
+}
+const priceFor = (prices: Map<number, number>, year: number) => prices.get(year) ?? FALLBACK_EVENT.rafflePrice;
 
 adminDashboardRouter.get('/', requireAdmin, async (_req, res) => {
     try {
@@ -79,7 +85,11 @@ adminDashboardRouter.get('/', requireAdmin, async (_req, res) => {
         };
 
         const totalRevenue = totalRevenueResult._sum?.totalAmount || 0;
-        const raffleRevenue = paidRaffle * RAFFLE_TICKET_PRICE;
+        const [prices, paidRaffleByYear] = await Promise.all([
+            rafflePrices(),
+            prisma.raffleTicket.groupBy({ by: ['eventYear'], where: { status: 'PAID' }, _count: true }),
+        ]);
+        const raffleRevenue = paidRaffleByYear.reduce((sum, g) => sum + g._count * priceFor(prices, g.eventYear), 0);
 
         // ── 2. Daily stats (30-day: revenue + registration + paid counts) ─
         const dailyStatsRaw: { date: Date; revenue: unknown; registrations: unknown; paid: unknown }[] = await prisma.$queryRaw`
@@ -263,7 +273,7 @@ adminDashboardRouter.get('/', requireAdmin, async (_req, res) => {
             prisma.raffleTicket.findMany({
                 take: 10,
                 orderBy: { createdAt: 'desc' },
-                select: { id: true, firstName: true, lastName: true, createdAt: true, status: true },
+                select: { id: true, firstName: true, lastName: true, createdAt: true, status: true, eventYear: true },
             }),
         ]);
 
@@ -289,8 +299,8 @@ adminDashboardRouter.get('/', requireAdmin, async (_req, res) => {
             ...recentRaffle.map(r => ({
                 type: 'RAFFLE',
                 title: `${cap(r.firstName)} ${cap(r.lastName)} bought raffle ticket`,
-                subtitle: `Ticket ${r.id} · KES ${RAFFLE_TICKET_PRICE}`,
-                amount: RAFFLE_TICKET_PRICE,
+                subtitle: `Ticket ${r.id} · KES ${priceFor(prices, r.eventYear)}`,
+                amount: priceFor(prices, r.eventYear),
                 status: r.status,
                 date: r.createdAt,
             })),

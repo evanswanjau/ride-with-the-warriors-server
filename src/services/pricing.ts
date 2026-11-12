@@ -1,6 +1,7 @@
 import type { PricingCategory } from '../generated/client/index.js';
 import type { QuoteRequest, RegistrationPayload } from '../validation/registrationSchemas.js';
 import { prisma } from '../storage/prisma.js';
+import { currentEvent, type EventRow } from './events.js';
 
 /** A pricing category as the quote logic needs it (timestamps not required). */
 export type PricingCategoryRow = Omit<PricingCategory, 'createdAt' | 'updatedAt'>;
@@ -44,26 +45,31 @@ export function calculateAge(dob: string): number | null {
   return age;
 }
 
-// In-memory cache for pricing categories to avoid DB hits on every quote
-let categoryCache: PricingCategoryRow[] | null = null;
-let lastCacheUpdate: number = 0;
+// Per-year in-memory cache, so a quote does not hit the DB every time.
+const categoryCache = new Map<number, { rows: PricingCategoryRow[]; at: number }>();
 const CACHE_TTL = 60 * 1000; // 1 minute
 
-export async function getPricingCategories() {
+/** Forget cached categories (after an admin copies or edits pricing). */
+export function clearPricingCache() {
+  categoryCache.clear();
+}
+
+/** The pricing categories (prices and bib ranges) of one event year; the current event's by default. */
+export async function getPricingCategories(eventYear?: number): Promise<PricingCategoryRow[]> {
+  const year = eventYear ?? (await currentEvent()).year;
   const now = Date.now();
-  if (categoryCache && now - lastCacheUpdate < CACHE_TTL) {
-    return categoryCache;
+  const cached = categoryCache.get(year);
+  if (cached && now - cached.at < CACHE_TTL) {
+    return cached.rows;
   }
 
   try {
-    categoryCache = await prisma.pricingCategory.findMany();
-    lastCacheUpdate = now;
-    return categoryCache;
+    const rows = await prisma.pricingCategory.findMany({ where: { eventYear: year } });
+    categoryCache.set(year, { rows, at: now });
+    return rows;
   } catch (err) {
     console.error('[Pricing Service] Failed to fetch categories from DB:', err);
-    // Return empty or throw? For now let's hope it's not empty. 
-    // We could return a hardcoded fallback if needed.
-    return categoryCache || [];
+    return cached?.rows ?? [];
   }
 }
 
@@ -129,6 +135,8 @@ export function getClassification(
 }
 
 export async function buildQuote(input: {
+  /** The event being entered (its year picks the prices); the current event when omitted. */
+  event?: Pick<EventRow, 'year' | 'bikeHirePrice'>;
   circuitId: QuoteRequest['circuitId'];
   type: QuoteRequest['type'];
   payload:
@@ -136,7 +144,8 @@ export async function buildQuote(input: {
   | { teamDetails: { teamName: string } }
   | { familyDetails: { riders: Record<'cubs' | 'champs' | 'tigers', Array<unknown>> } };
 }): Promise<QuoteResult> {
-  const categories = await getPricingCategories();
+  const event = input.event ?? await currentEvent();
+  const categories = await getPricingCategories(event.year);
   const lineItems: PricingLineItem[] = [];
   const classifications: Classification[] = [];
   let totalAmount = 0;
@@ -216,7 +225,7 @@ export async function buildQuote(input: {
                      payload?.familyDetails?.guardian?.hireBike;
 
   if (shouldHire) {
-    const bikeHireFee = 1500;
+    const bikeHireFee = event.bikeHirePrice;
     totalAmount += bikeHireFee;
     lineItems.push({
       label: 'Bike Hire',

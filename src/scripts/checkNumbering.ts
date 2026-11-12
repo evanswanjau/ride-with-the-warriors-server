@@ -1,14 +1,55 @@
 import type { Prisma } from '../generated/client/index.js';
 /**
- * Exercises pay-first numbering against a COPY of the database:
- * clones existing paid rows as new unpaid ones, assigns numbers (including two
- * concurrent payments in the same range), checks the results, then deletes the clones.
+ * Data checks for numbering and the multi-year migration (Phase 4).
  *
+ * Read-only check (safe on any database, including staging):
+ *   tsx --env-file=<env> src/scripts/checkNumbering.ts --check [--save before.json] [--compare before.json]
+ *     Prints row counts and PAID sums per event year, and fails (exit 1) on a broken
+ *     invariant: duplicate bib or ticket numbers within a year, data for a year with no
+ *     Event row. --save writes the snapshot; --compare fails when any count or sum differs
+ *     from a saved one. Run --save before a migration or backfill and --compare after it.
+ *
+ * Exercise (writes, then deletes, test rows; only on a COPY of the database):
  *   tsx --env-file=.env.backfill.local src/scripts/checkNumbering.ts
+ *     Clones existing paid rows as new unpaid ones, assigns numbers (including two
+ *     concurrent payments in the same range), checks the results, then deletes the clones.
  */
 import { randomUUID } from 'crypto';
+import { readFileSync, writeFileSync } from 'fs';
 import { prisma } from '../storage/prisma.js';
 import { assignBibs, assignTicketNumbers } from '../services/numbering.js';
+import { compareSnapshots, runDataChecks, type Snapshot } from '../services/dataChecks.js';
+
+function argAfter(flag: string): string | undefined {
+    const i = process.argv.indexOf(flag);
+    return i >= 0 ? process.argv[i + 1] : undefined;
+}
+
+async function check(): Promise<boolean> {
+    const { snapshot, problems, notes } = await runDataChecks();
+    console.log('Counts:');
+    for (const [k, v] of Object.entries(snapshot.counts).sort()) console.log(`   ${k.padEnd(28)} ${v}`);
+    console.log('PAID sums (KES; raffle as a count):');
+    for (const [k, v] of Object.entries(snapshot.paidSums).sort()) console.log(`   ${k.padEnd(28)} ${v}`);
+    for (const n of notes) console.log(`note - ${n}`);
+
+    const save = argAfter('--save');
+    if (save) {
+        writeFileSync(save, JSON.stringify(snapshot, null, 2));
+        console.log(`saved snapshot to ${save}`);
+    }
+    const compareWith = argAfter('--compare');
+    if (compareWith) {
+        const before = JSON.parse(readFileSync(compareWith, 'utf8')) as Snapshot;
+        const diffs = compareSnapshots(before, snapshot);
+        for (const d of diffs) problems.push(`changed since ${compareWith}: ${d}`);
+        if (!diffs.length) console.log(`ok - counts and PAID sums match ${compareWith}`);
+    }
+
+    for (const p of problems) console.log(`FAILED - ${p}`);
+    if (!problems.length) console.log('ok - every check passed');
+    return problems.length === 0;
+}
 
 function assert(cond: unknown, msg: string) {
     if (!cond) throw new Error(`FAILED: ${msg}`);
@@ -77,4 +118,8 @@ async function main() {
     }
 }
 
-main().then(() => process.exit(0)).catch(err => { console.error(err); process.exit(1); });
+if (process.argv.includes('--check')) {
+    check().then(ok => process.exit(ok ? 0 : 1)).catch(err => { console.error(err); process.exit(1); });
+} else {
+    main().then(() => process.exit(0)).catch(err => { console.error(err); process.exit(1); });
+}
