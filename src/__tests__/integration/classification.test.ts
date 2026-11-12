@@ -34,7 +34,8 @@ const validFamilyRider = (id: string, dob = '2015-01-01') => ({
     tshirtSize: 'S'
 });
 
-describe('Classification Integration Tests', () => {
+// Needs a local test database with PricingCategory rows (DATABASE_URL); skipped otherwise.
+describe.skipIf(!process.env.DATABASE_URL)('Classification Integration Tests', () => {
     beforeEach(async () => {
         // Clear registrations before each test to avoid DUPLICATE errors
         await (prisma.registration as any).deleteMany({});

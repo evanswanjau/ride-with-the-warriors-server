@@ -1,5 +1,17 @@
 
 import { randomUUID } from 'crypto';
+import { Agent, fetch as undiciFetch } from 'undici';
+
+/**
+ * Appends DTB_CALLBACK_SECRET as a `key` query param so the callback route can
+ * reject requests that did not originate from a URL we handed to DTB.
+ */
+function withCallbackKey(url: string): string {
+    const secret = process.env.DTB_CALLBACK_SECRET;
+    if (!secret) return url;
+    const sep = url.includes('?') ? '&' : '?';
+    return `${url}${sep}key=${encodeURIComponent(secret)}`;
+}
 
 /**
  * DTB (Diamond Trust Bank) Payment Service
@@ -7,9 +19,16 @@ import { randomUUID } from 'crypto';
  * This service handles interactions with the DTB API via the Fiorano platform.
  */
 
-// Handle SSL verification for UAT environments (Equivalent to curl -k)
-if (process.env.DTB_INSECURE === 'true') {
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+// DTB UAT has served a certificate Node does not trust. DTB_INSECURE=true skips the
+// certificate check for requests to DTB only (never the whole process). config.ts
+// refuses it in production.
+const insecureAgent = process.env.DTB_INSECURE === 'true'
+    ? new Agent({ connect: { rejectUnauthorized: false } })
+    : null;
+
+function dtbFetch(url: string, init: RequestInit): Promise<Response> {
+    if (!insecureAgent) return fetch(url, init);
+    return undiciFetch(url, { ...(init as object), dispatcher: insecureAgent } as never) as unknown as Promise<Response>;
 }
 
 
@@ -20,11 +39,40 @@ interface DTBStkPushInitiation {
     callbackUrl?: string;
 }
 
+/** Fields we read from DTB Fiorano JSON bodies (names vary between endpoints, so all optional). */
+export interface DtbBody {
+    transactionStatus?: string;
+    TransactionStatus?: string;
+    paymentStatus?: string;
+    transactionStatusDescription?: string;
+    responseDescription?: string;
+    ResponseDescription?: string;
+    CustomerMessage?: string;
+    message?: string;
+    mnoReference?: string;
+    MnoReference?: string;
+    cbsReference?: string;
+    amount?: string | number | null;
+    Amount?: string | number | null;
+    phoneNumber?: string;
+    PhoneNumber?: string;
+    msisdn?: string;
+    status?: string;
+    responseCode?: string;
+    externalReference?: string;
+    CheckoutRequestID?: string;
+    MerchantRequestID?: string;
+    id?: string;
+    access_token?: string;
+    token?: string;
+    expires_in?: string | number;
+}
+
 interface DTBPaymentResponse {
     success: boolean;
     transactionReference?: string;
     message?: string;
-    rawResponse?: any;
+    rawResponse?: DtbBody;
 }
 
 const DTB_CONFIG = {
@@ -37,6 +85,42 @@ const DTB_CONFIG = {
     accountNumber: process.env.DTB_ACCOUNT_NUMBER || '0108346003',
     passKey: process.env.DTB_PASS_KEY || '',
 };
+
+/** What the gateway says about one payment. */
+export type GatewayStatus =
+    | { state: 'PAID'; receipt?: string | null; cbsReference?: string | null; amount?: number | null; phone?: string | null; raw?: unknown }
+    | { state: 'FAILED'; reason?: string | null; raw?: unknown }
+    | { state: 'PENDING' | 'UNKNOWN'; reason?: string | null; raw?: unknown }
+    | { state: 'UNSUPPORTED'; reason: string };
+
+const PAID_WORDS = ['SUCCESS', 'SUCCESSFUL', 'COMPLETED', 'COMPLETE', 'PAID'];
+const FAILED_WORDS = ['FAILED', 'FAILURE', 'CANCELLED', 'CANCELED', 'REJECTED', 'DECLINED', 'TIMEOUT', 'EXPIRED', 'REVERSED'];
+const PENDING_WORDS = ['PENDING', 'PROCESSING', 'IN_PROGRESS', 'INITIATED', 'SUBMITTED'];
+
+/**
+ * Reads a DTB transaction-status response. Only an explicit transaction status counts:
+ * `status`/`responseCode` describe the query call itself, so "SUCCESS" there alone never
+ * marks a payment paid. The field names follow the callback DTB sends (externalReference,
+ * mnoReference, cbsReference); confirm them against DTB's API document before relying on
+ * this in production (see DTB_STATUS_URL in .env.example).
+ */
+export function parseDtbStatus(data: DtbBody | null | undefined): GatewayStatus {
+    const tx = String(data?.transactionStatus ?? data?.TransactionStatus ?? data?.paymentStatus ?? '').trim().toUpperCase();
+    const receipt = data?.mnoReference || data?.MnoReference || null;
+    const reason = data?.transactionStatusDescription || data?.responseDescription || data?.message || null;
+    if (PAID_WORDS.includes(tx)) {
+        const amount = data?.amount ?? data?.Amount;
+        return {
+            state: 'PAID', receipt, cbsReference: data?.cbsReference || null,
+            amount: amount === undefined || amount === null || amount === '' ? null : Number(amount),
+            phone: data?.phoneNumber ?? data?.PhoneNumber ?? data?.msisdn ?? null,
+            raw: data,
+        };
+    }
+    if (FAILED_WORDS.includes(tx)) return { state: 'FAILED', reason, raw: data };
+    if (PENDING_WORDS.includes(tx)) return { state: 'PENDING', reason, raw: data };
+    return { state: 'UNKNOWN', reason: reason ?? (tx ? `Unrecognised status ${tx}` : 'No transaction status in response'), raw: data };
+}
 
 
 
@@ -66,7 +150,7 @@ export const dtbService = {
             params.append('username', process.env.DTB_USERNAME || '');
             params.append('password', process.env.DTB_PASSWORD || '');
 
-            const response = await fetch(DTB_CONFIG.authUrl, {
+            const response = await dtbFetch(DTB_CONFIG.authUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -81,13 +165,13 @@ export const dtbService = {
                 return null;
             }
 
-            const data = await response.json() as any;
+            const data = await response.json() as DtbBody;
             const token = data.access_token || data.token;
 
             if (token) {
                 cachedToken = token;
                 // Use expires_in if provided, otherwise default to 1 hour
-                const expiresId = data.expires_in ? parseInt(data.expires_in) : 3600;
+                const expiresId = data.expires_in ? parseInt(String(data.expires_in)) : 3600;
                 tokenExpiry = Date.now() + (expiresId * 1000) - 60000; // Subtract 1 minute for safety
                 console.log('[DTB Service] Authentication successful');
                 return token;
@@ -99,6 +183,33 @@ export const dtbService = {
             console.error('[DTB Service] Auth Error:', error);
             return null;
         }
+    },
+
+    /**
+     * Asks DTB for the status of a push we sent (TransactionRef = our Payment.checkoutRequestId).
+     * Needs DTB_STATUS_URL; without it returns UNSUPPORTED and reconciliation only expires.
+     * Throws on network errors, so the caller records an error and tries again next run.
+     */
+    async queryTransactionStatus(ref: string): Promise<GatewayStatus> {
+        const url = process.env.DTB_STATUS_URL;
+        if (!url) return { state: 'UNSUPPORTED', reason: 'DTB_STATUS_URL is not set' };
+        const token = await this.getAuthToken();
+        if (!token) throw new Error('DTB authentication failed');
+        const response = await dtbFetch(url, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ TransactionRef: ref, externalReference: ref }),
+        });
+        const text = await response.text();
+        let data: DtbBody;
+        try {
+            data = JSON.parse(text);
+        } catch {
+            throw new Error(`DTB status: invalid JSON (HTTP ${response.status})`);
+        }
+        if (response.status === 404) return { state: 'UNKNOWN', reason: 'DTB does not know this reference', raw: data };
+        if (!response.ok) throw new Error(`DTB status: HTTP ${response.status} ${String(data?.responseDescription ?? data?.message ?? '').slice(0, 100)}`);
+        return parseDtbStatus(data);
     },
 
     /**
@@ -128,10 +239,10 @@ export const dtbService = {
                 BusinessShortCode: DTB_CONFIG.shortCode,
                 TransactionDesc: `Ride With Warriors - ${details.registrationId}`,
                 PromptDisplayAccount: process.env.DTB_PROMPT_ACCOUNT || 'RideWithWarriors',
-                UserCallback: details.callbackUrl || `${process.env.APP_URL || process.env.BASE_URL}/api/dtb/stkpush`,
+                UserCallback: withCallbackKey(details.callbackUrl || `${process.env.APP_URL || process.env.BASE_URL}/api/dtb/stkpush`),
             };
 
-            const response = await fetch(DTB_CONFIG.stkPushUrl, {
+            const response = await dtbFetch(DTB_CONFIG.stkPushUrl, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -140,7 +251,7 @@ export const dtbService = {
                 body: JSON.stringify(payload),
             });
 
-            let data: any;
+            let data: DtbBody;
             const responseText = await response.text();
 
             try {

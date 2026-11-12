@@ -23,7 +23,7 @@ describe('Auth Middleware', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        mockReq = createMockRequest();
+        mockReq = createMockRequest({ method: 'GET', baseUrl: '/api/v1/admin/registrations' });
         mockRes = createMockResponse();
         mockNext = createMockNext();
     });
@@ -89,6 +89,17 @@ describe('Auth Middleware', () => {
             expect(mockNext).toHaveBeenCalled();
             expect(mockReq.admin).toEqual(mockAdmin);
             expect(mockRes.status).not.toHaveBeenCalled();
+        });
+
+        it('should return 403 when the role is too low for the method', async () => {
+            mockReq.method = 'DELETE';
+            mockReq.headers.authorization = 'Bearer valid-test-token';
+            mockFindUnique.mockResolvedValue({ ...mockAdminSession, admin: { ...mockAdmin, role: 'admin' } });
+
+            await requireAdmin(mockReq, mockRes, mockNext);
+
+            expect(mockRes.status).toHaveBeenCalledWith(403);
+            expect(mockNext).not.toHaveBeenCalled();
         });
 
         it('should return 500 on database error', async () => {

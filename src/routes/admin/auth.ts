@@ -3,11 +3,12 @@ import bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { prisma } from '../../storage/prisma.js';
 import { requireAdmin, AuthenticatedRequest } from '../../middleware/auth.js';
+import { adminLoginLimiter } from '../../middleware/rateLimit.js';
 
 export const authRouter = Router();
 
 // Login
-authRouter.post('/login', async (req, res) => {
+authRouter.post('/login', adminLoginLimiter, async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {

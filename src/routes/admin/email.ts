@@ -1,10 +1,15 @@
 import { Router } from 'express';
+import type { Prisma } from '../../generated/client/index.js';
+import { requireAdmin, requireRole } from '../../middleware/auth.js';
 import { prisma } from '../../storage/prisma.js';
-import { sendConfirmationEmail, verifyEmailConnection, getTemplatePreview, sendEmail, sendRaffleEmail, sendBulkCustomEmail } from '../../services/emailService.js';
+import { sendConfirmationEmail, verifyEmailConnection, getTemplatePreview, type EmailType, sendEmail, sendRaffleEmail, sendBulkCustomEmail } from '../../services/emailService.js';
 import { triggerReminderCheck } from '../../services/reminderScheduler.js';
 import { smsService } from '../../services/smsService.js';
 
 export const emailRouter = Router();
+
+// Every route in this router is admin-only.
+emailRouter.use(requireAdmin);
 
 // Preview email templates (returns HTML)
 emailRouter.get('/preview/:type', (req, res) => {
@@ -15,7 +20,7 @@ emailRouter.get('/preview/:type', (req, res) => {
         return res.status(400).json({ error: `Invalid type. Valid types: ${validTypes.join(', ')}` });
     }
 
-    const html = getTemplatePreview(type as any);
+    const html = getTemplatePreview(type as EmailType);
     res.setHeader('Content-Type', 'text/html');
     res.send(html);
 });
@@ -37,7 +42,7 @@ emailRouter.get('/test-connection', async (_req, res) => {
 });
 
 // Manually trigger reminder check
-emailRouter.post('/trigger-reminders', async (_req, res) => {
+emailRouter.post('/trigger-reminders', requireRole('super_admin'), async (_req, res) => {
     try {
         await triggerReminderCheck();
         res.json({ ok: true, message: 'Reminder check triggered' });
@@ -87,6 +92,7 @@ emailRouter.post('/send-confirmation/:registrationId', async (req, res) => {
 
         const sent = await sendConfirmationEmail({
             id: registration.id,
+            bibNumber: registration.bibNumber,
             firstName: registration.firstName,
             lastName: registration.lastName,
             email: registration.email,
@@ -96,7 +102,7 @@ emailRouter.post('/send-confirmation/:registrationId', async (req, res) => {
             category: registration.category || undefined,
         });
 
-        res.json({ ok: sent, message: sent ? 'Email sent' : 'Failed to send email' });
+        res.json({ ok: sent, message: sent ? 'Email queued' : 'Failed to queue email' });
     } catch (error) {
         res.status(500).json({
             ok: false,
@@ -161,6 +167,7 @@ emailRouter.post('/resend/:registrationId', async (req, res) => {
 
         const sent = await sendEmail(registrationId, 'confirmation', {
             id: registration.id,
+            bibNumber: registration.bibNumber,
             firstName: registration.firstName,
             lastName: registration.lastName,
             email: registration.email,
@@ -175,7 +182,7 @@ emailRouter.post('/resend/:registrationId', async (req, res) => {
             emergencyContactName: registration.emergencyContactName,
             emergencyPhone: registration.emergencyPhone,
             teamName: registration.teamName || undefined,
-        });
+        }, { force: true });
 
         res.json({
             ok: sent,
@@ -197,7 +204,7 @@ emailRouter.post('/resend/:registrationId', async (req, res) => {
 //   limit   - max to process (default: 2 for safe testing)
 //   dryRun  - "true" to preview without sending
 //   status  - registration status filter (default: PAID)
-emailRouter.post('/resend-military', async (req, res) => {
+emailRouter.post('/resend-military', requireRole('super_admin'), async (req, res) => {
     try {
         const limit = parseInt(String(req.query.limit || req.body.limit || '2'));
         const dryRun = String(req.query.dryRun || req.body.dryRun) === 'true';
@@ -207,7 +214,7 @@ emailRouter.post('/resend-military', async (req, res) => {
         const militaryRegs = await prisma.registration.findMany({
             where: {
                 isMilitary: true,
-                status: statusFilter as any,
+                status: statusFilter as Prisma.RegistrationWhereInput['status'],
                 email: { not: null },
             },
             orderBy: { createdAt: 'asc' },
@@ -260,6 +267,7 @@ emailRouter.post('/resend-military', async (req, res) => {
 
                 const sent = await sendEmail(reg.id, 'confirmation', {
                     id: reg.id,
+                    bibNumber: reg.bibNumber,
                     firstName: reg.firstName,
                     lastName: reg.lastName,
                     email: reg.email!,
@@ -274,7 +282,7 @@ emailRouter.post('/resend-military', async (req, res) => {
                     emergencyContactName: reg.emergencyContactName,
                     emergencyPhone: reg.emergencyPhone,
                     teamName: reg.teamName || undefined,
-                });
+                }, { force: true });
 
                 results.push({
                     id: reg.id,
@@ -318,7 +326,7 @@ emailRouter.post('/resend-military', async (req, res) => {
 //   limit   - max to process (default: 5)
 //   dryRun  - "true" to preview without sending
 //   minDays - only remind if older than X days (default: 1)
-emailRouter.post('/raffle-reminders', async (req, res) => {
+emailRouter.post('/raffle-reminders', requireRole('super_admin'), async (req, res) => {
     try {
         const limit = parseInt(String(req.query.limit || req.body.limit || '5'));
         const dryRun = String(req.query.dryRun || req.body.dryRun) === 'true';
@@ -328,7 +336,7 @@ emailRouter.post('/raffle-reminders', async (req, res) => {
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - minDays);
 
-        const whereClause: any = {
+        const whereClause: Prisma.RaffleTicketWhereInput = {
             status: 'UNPAID',
             createdAt: { lte: cutoffDate }
         };
@@ -412,7 +420,7 @@ emailRouter.post('/raffle-reminders', async (req, res) => {
                     ticketCount: group.tickets.length,
                     totalAmount,
                     profileUrl,
-                } as any);
+                });
 
                 // If sent, log for the REST of the tickets in the group (sendRaffleEmail logs for the first one)
                 if (sent && ticketIds.length > 1) {
@@ -463,7 +471,7 @@ emailRouter.post('/raffle-reminders', async (req, res) => {
 });
 
 // ── Admin: Send Unified Bulk Communications ──
-emailRouter.post('/bulk-send', async (req, res) => {
+emailRouter.post('/bulk-send', requireRole('super_admin'), async (req, res) => {
     try {
         const { mode, targetEntity, targetStatus, message, subject, customPhones, customEmails, csvRecipients, testMode } = req.body;
         if (!message) return res.status(400).json({ ok: false, error: 'Message is required' });
@@ -523,30 +531,30 @@ emailRouter.post('/bulk-send', async (req, res) => {
                 });
             }
         } else {
-            let whereClause: any = {};
+            const whereClause: { status?: 'PAID' | 'UNPAID' } = {};
             if (targetStatus === 'paid') whereClause.status = 'PAID';
             else if (targetStatus === 'unpaid') whereClause.status = 'UNPAID';
 
             if (targetEntity === 'cyclist') {
-                const regs = await prisma.registration.findMany({ where: whereClause, select: { id: true, firstName: true, lastName: true, phoneNumber: true, email: true } });
+                const regs = await prisma.registration.findMany({ where: whereClause, select: { id: true, bibNumber: true, firstName: true, lastName: true, phoneNumber: true, email: true } });
                 finalRecipients = regs.map(r => ({
                     firstName: r.firstName,
                     lastName: r.lastName,
                     name: `${r.firstName} ${r.lastName}`.trim(),
                     phone: r.phoneNumber || undefined,
                     email: r.email || undefined,
-                    bibNumber: r.id,
+                    bibNumber: r.bibNumber || '',
                     entityId: r.id
                 }));
             } else if (targetEntity === 'raffle') {
-                const raffles = await prisma.raffleTicket.findMany({ where: whereClause, select: { id: true, firstName: true, lastName: true, phoneNumber: true, email: true } });
+                const raffles = await prisma.raffleTicket.findMany({ where: whereClause, select: { id: true, ticketNumber: true, firstName: true, lastName: true, phoneNumber: true, email: true } });
                 finalRecipients = raffles.map(r => ({
                     firstName: r.firstName,
                     lastName: r.lastName,
                     name: `${r.firstName} ${r.lastName}`.trim(),
                     phone: r.phoneNumber || undefined,
                     email: r.email || undefined,
-                    bibNumber: r.id,
+                    bibNumber: r.ticketNumber || '',
                     entityId: r.id
                 }));
             } else if (targetEntity === 'donor') {
@@ -562,7 +570,7 @@ emailRouter.post('/bulk-send', async (req, res) => {
             }
         }
 
-        let validRecipients = finalRecipients.filter(r => {
+        const validRecipients = finalRecipients.filter(r => {
             if (mode === 'sms') return Boolean(r.phone);
             if (mode === 'email') return Boolean(r.email);
             if (mode === 'both') return Boolean(r.phone) || Boolean(r.email);
