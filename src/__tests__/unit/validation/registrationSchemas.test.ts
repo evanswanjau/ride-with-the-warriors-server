@@ -173,13 +173,14 @@ describe('Registration Validation Schemas', () => {
             expect(result.success).toBe(true);
         });
 
-        it('should reject family with no children', () => {
+        // A participating parent may register without children (commit 20959a1).
+        it('should allow a family registration with no children', () => {
             const noChildren = {
                 ...validFamilyDetails,
                 riders: { cubs: [], champs: [], tigers: [] },
             };
             const result = familyDetailsSchema.safeParse(noChildren);
-            expect(result.success).toBe(false);
+            expect(result.success).toBe(true);
         });
 
         it('should reject cub with age outside 4-8 range', () => {

@@ -1,3 +1,13 @@
+type MaskablePerson = { email?: string; phoneNumber?: string; idNumber?: string; emergencyPhone?: string };
+type MaskablePayload = {
+    riderDetails?: MaskablePerson;
+    teamDetails?: { members?: MaskablePerson[] };
+    familyDetails?: { guardian?: MaskablePerson; riders?: Record<string, MaskablePerson[] | undefined> };
+};
+type MaskableRegistration = {
+    email?: string | null; phoneNumber?: string | null; idNumber?: string | null; emergencyPhone?: string | null; payload?: unknown;
+};
+
 export function maskEmail(email: string) {
     if (!email) return email;
     const [name, domain] = email.split('@');
@@ -18,7 +28,7 @@ export function maskIdNumber(idStr: string) {
 export function maskPayload(payloadStr: string) {
     if (!payloadStr) return payloadStr;
     try {
-        const p = typeof payloadStr === 'string' ? JSON.parse(payloadStr) : payloadStr;
+        const p: MaskablePayload = typeof payloadStr === 'string' ? JSON.parse(payloadStr) : payloadStr;
 
         if (p.riderDetails) {
             if (p.riderDetails.email) p.riderDetails.email = maskEmail(p.riderDetails.email);
@@ -28,7 +38,7 @@ export function maskPayload(payloadStr: string) {
         }
 
         if (p.teamDetails && p.teamDetails.members) {
-            p.teamDetails.members.forEach((m: any) => {
+            p.teamDetails.members.forEach((m) => {
                 if (m.email) m.email = maskEmail(m.email);
                 if (m.phoneNumber) m.phoneNumber = maskPhone(m.phoneNumber);
                 if (m.idNumber) m.idNumber = maskIdNumber(m.idNumber);
@@ -44,9 +54,9 @@ export function maskPayload(payloadStr: string) {
                 if (p.familyDetails.guardian.emergencyPhone) p.familyDetails.guardian.emergencyPhone = maskPhone(p.familyDetails.guardian.emergencyPhone);
             }
             if (p.familyDetails.riders) {
-                Object.values(p.familyDetails.riders).forEach((categoryGroup: any) => {
+                Object.values(p.familyDetails.riders).forEach((categoryGroup) => {
                     if (Array.isArray(categoryGroup)) {
-                        categoryGroup.forEach((r: any) => {
+                        categoryGroup.forEach((r) => {
                             if (r.idNumber) r.idNumber = maskIdNumber(r.idNumber);
                         });
                     }
@@ -59,24 +69,24 @@ export function maskPayload(payloadStr: string) {
     }
 }
 
-export function maskRegistration(reg: any) {
+export function maskRegistration<T extends MaskableRegistration>(reg: T | null | undefined) {
     if (!reg) return reg;
     return {
         ...reg,
-        email: maskEmail(reg.email),
-        phoneNumber: maskPhone(reg.phoneNumber),
-        idNumber: maskIdNumber(reg.idNumber),
-        emergencyPhone: maskPhone(reg.emergencyPhone),
-        payload: maskPayload(reg.payload)
+        email: maskEmail(reg.email as string),
+        phoneNumber: maskPhone(reg.phoneNumber as string),
+        idNumber: maskIdNumber(reg.idNumber as string),
+        emergencyPhone: maskPhone(reg.emergencyPhone as string),
+        payload: maskPayload(reg.payload as string)
     };
 }
 
-export function maskRaffleTicket(ticket: any) {
+export function maskRaffleTicket<T extends { email?: string | null; phoneNumber?: string | null; idNumber?: string | null }>(ticket: T | null | undefined) {
     if (!ticket) return ticket;
     return {
         ...ticket,
-        email: maskEmail(ticket.email),
-        phoneNumber: maskPhone(ticket.phoneNumber),
-        idNumber: maskIdNumber(ticket.idNumber)
+        email: maskEmail(ticket.email as string),
+        phoneNumber: maskPhone(ticket.phoneNumber as string),
+        idNumber: maskIdNumber(ticket.idNumber as string)
     };
 }

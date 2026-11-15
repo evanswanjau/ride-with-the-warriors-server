@@ -10,7 +10,7 @@ async function main() {
     }
 
     // 1. Find the target ticket(s)
-    const tickets = await (prisma.raffleTicket as any).findMany({
+    const tickets = await prisma.raffleTicket.findMany({
         where: {
             status: 'PAID',
             OR: [
@@ -28,7 +28,7 @@ async function main() {
 
     // 2. Group by email to find all tickets in that participant's purchase
     const userEmail = tickets[0].email;
-    const allPaidForUser = await (prisma.raffleTicket as any).findMany({
+    const allPaidForUser = await prisma.raffleTicket.findMany({
         where: { email: userEmail, status: 'PAID' },
         orderBy: { id: 'asc' }
     });
@@ -38,7 +38,7 @@ async function main() {
 
     const result = await sendRaffleConfirmationEmail({
         id: allPaidForUser[0].id,
-        ids: allPaidForUser.map((t: any) => t.id),
+        ids: allPaidForUser.map((t) => t.id),
         firstName: allPaidForUser[0].firstName,
         lastName: allPaidForUser[0].lastName,
         email: userEmail,

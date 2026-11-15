@@ -1,7 +1,22 @@
 import nodemailer from 'nodemailer';
+import type Mail from 'nodemailer/lib/mailer/index.js';
+import type { Prisma } from '../generated/client/index.js';
+import type { RiderDetails } from '../validation/registrationSchemas.js';
+
+/** Payload fields the confirmation email reads, including ones only older rows carry. */
+type LegacyPayload = {
+  age?: number | string;
+  gender?: string;
+  idNumber?: string;
+  tshirtSize?: string;
+  emergencyContactPhone?: string;
+  riderDetails?: Partial<RiderDetails> & { emergencyContactPhone?: string };
+};
+import { messagingDisabled, logSuppressed, applyEmailAllowlist } from '../utils/messaging.js';
 import { prisma } from '../storage/prisma.js';
 import { calculateAge } from './pricing.js';
 import { generateRaffleTicketPdf } from './pdfService.js';
+import { enqueue, sendNow, registerDeliverer, setOutboxHooks, serializeMail, deserializeMail, type EmailPayload, type MailInput } from './outbox.js';
 
 // --- CONFIGURATION & CONSTANTS ---
 
@@ -40,6 +55,7 @@ export type EmailType =
 
 interface RegistrationData {
   id: string;
+  bibNumber?: string | null; // assigned once paid
   firstName: string;
   lastName: string;
   email: string;
@@ -47,7 +63,8 @@ interface RegistrationData {
   totalAmount: number;
   status: string;
   category?: string;
-  payload?: any;
+  /** Raw registration payload JSON; read through `LegacyPayload` (older rows have loose fields). */
+  payload?: unknown;
   teamName?: string;
   gender?: string | null;
   dob?: string | null;
@@ -78,17 +95,90 @@ export interface EnquiryData {
 
 // --- SMTP SETUP ---
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: process.env.SMTP_SECURE === 'true',
-  ignoreTLS: process.env.SMTP_SECURE !== 'true',
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-  tls: { rejectUnauthorized: false },
+const transporter = nodemailer.createTransport(smtpOptions());
+
+/**
+ * SMTP settings. STARTTLS is used whenever the server offers it (it used to be switched
+ * off, which sent the SMTP password in clear text on port 587), and certificates are
+ * checked. SMTP_TLS_INSECURE=true skips the certificate check (refused in production by
+ * src/config.ts); SMTP_IGNORE_TLS=true never upgrades (local Mailpit only).
+ * SMTP_REQUIRE_TLS=true makes the connection fail rather than fall back to plain text
+ * when the server does not offer STARTTLS.
+ */
+export function smtpOptions(env: NodeJS.ProcessEnv = process.env) {
+  return {
+    host: env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(env.SMTP_PORT || '587'),
+    secure: env.SMTP_SECURE === 'true',
+    requireTLS: env.SMTP_REQUIRE_TLS === 'true',
+    ignoreTLS: env.SMTP_IGNORE_TLS === 'true',
+    auth: {
+      user: env.SMTP_USER,
+      pass: env.SMTP_PASS,
+    },
+    tls: { rejectUnauthorized: env.SMTP_TLS_INSECURE !== 'true' },
+  };
+}
+
+// Kill switch: never contact anyone when messaging is disabled (see utils/messaging.ts).
+{
+  const realSendMail = transporter.sendMail.bind(transporter);
+  (transporter as { sendMail: (mail: Mail.Options | undefined) => Promise<unknown> }).sendMail = async (mail) => {
+    if (messagingDisabled()) {
+      const to = Array.isArray(mail?.to) ? mail.to.length : 1;
+      logSuppressed('email', to, mail?.subject);
+      return { messageId: 'suppressed', accepted: [], rejected: [] };
+    }
+    // MESSAGING_ALLOWLIST: drop recipients that are not on the list (see utils/messaging.ts).
+    const allowed = applyEmailAllowlist(mail ?? {});
+    if (!allowed) return { messageId: 'dropped', accepted: [], rejected: [] };
+    return realSendMail(allowed);
+  };
+}
+
+// --- OUTBOX ---
+// Every email below is queued in the Notification outbox (src/services/outbox.ts) and sent
+// by the worker. Only login codes are sent at once.
+
+const RAFFLE_CONFIRMATION = 'email:raffle-confirmation';
+
+type QueueOpts = { template: string; dedupeKey?: string; meta?: Record<string, unknown> };
+
+const recipientOf = (to: unknown) => (Array.isArray(to) ? to.join(', ') : String(to ?? ''));
+
+/** Queues a fully built message. Returns true when it is queued (or was already queued). */
+async function queueMail(mail: MailInput, opts: QueueOpts): Promise<boolean> {
+  await enqueue({
+    channel: 'EMAIL',
+    recipient: recipientOf(mail.to),
+    template: opts.template,
+    payload: serializeMail({ from: EMAIL_FROM, ...mail }),
+    dedupeKey: opts.dedupeKey,
+    meta: opts.meta,
+  });
+  return true;
+}
+
+registerDeliverer('EMAIL', async ({ payload, template }) => {
+  const mail = template === RAFFLE_CONFIRMATION
+    ? await renderRaffleConfirmation(payload as RaffleTicketData)
+    : deserializeMail(payload as EmailPayload);
+  await transporter.sendMail(mail);
 });
+
+// The admin email history (EmailLog) is written once the worker has sent (or given up).
+setOutboxHooks({
+  async onSettled(n, outcome, error) {
+    const ref = (n.meta as { emailLog?: { registrationId: string; type: string } } | null)?.emailLog;
+    if (!ref) return;
+    await prisma.emailLog.create({
+      data: { registrationId: ref.registrationId, type: ref.type, status: outcome === 'SENT' ? 'sent' : 'failed', error },
+    });
+  },
+});
+
+/** "2026-11-11": periodic reminders may be queued once per day. */
+const today = () => new Date().toISOString().slice(0, 10);
 
 // --- HELPERS ---
 
@@ -155,7 +245,7 @@ function renderIdBlock(label: string, value: string, sub?: string, danger = fals
 }
 
 function renderDetailsTable(data: RegistrationData): string {
-  const p = data.payload || {};
+  const p = (data.payload || {}) as LegacyPayload;
   const rider = p.riderDetails || {};
   const ageValue = data.dob ? calculateAge(data.dob) : (p.age || '—');
 
@@ -403,7 +493,7 @@ function getConfirmationEmail(data: RegistrationData): { subject: string; html: 
       Your registration is confirmed. Keep your ID handy &mdash; you'll need it at check-in.
     </p>
 
-    ${renderIdBlock('Registration ID', getNumericId(data.id), 'Present this at event check-in')}
+    ${renderIdBlock('Registration ID', getNumericId(data.bibNumber ?? data.id), 'Present this at event check-in')}
     ${renderDetailsTable(data)}
     ${renderEventMeta(data)}
 
@@ -424,7 +514,7 @@ function getConfirmationEmail(data: RegistrationData): { subject: string; html: 
 
   return {
     subject: `Registration Confirmed — ${EVENT_NAME}`,
-    html: getEmailTemplate(content, 'Registration Confirmed', `Your Registration ID is ${getNumericId(data.id)}`),
+    html: getEmailTemplate(content, 'Registration Confirmed', `Your Registration ID is ${getNumericId(data.bibNumber ?? data.id)}`),
   };
 }
 
@@ -515,7 +605,7 @@ function getEventReminderEmail(data: RegistrationData, daysUntil: number): { sub
       Hi <strong>${data.firstName}</strong> &mdash; ${cfg.sub}
     </p>
 
-    ${renderIdBlock('Your BIB Number', getNumericId(data.id), 'Present this at check-in')}
+    ${renderIdBlock('Your BIB Number', getNumericId(data.bibNumber ?? data.id), 'Present this at check-in')}
     ${renderEventMeta(data)}
     ${renderDetailsTable(data)}
 
@@ -601,7 +691,8 @@ function getRaffleConfirmationEmail(data: RaffleTicketData): { subject: string; 
     html: getEmailTemplate(content, 'Raffle Entry Confirmed', `Your ticket ${data.quantity === 1 ? 'code is' : 'codes:'} ${data.ids.join(', ')}`),
   };
 }
-function getRafflePaymentReminderEmail(data: { firstName: string; email: string; ticketCount: number; totalAmount: number; profileUrl: string }): { subject: string; html: string } {
+export type RafflePaymentReminderData = { firstName: string; email: string; ticketCount: number; totalAmount: number; profileUrl: string };
+function getRafflePaymentReminderEmail(data: RafflePaymentReminderData): { subject: string; html: string } {
   const profileUrl = data.profileUrl;
   const ticketText = data.ticketCount > 1 ? `${data.ticketCount} raffle tickets` : 'your raffle ticket';
 
@@ -634,7 +725,7 @@ function getRafflePaymentReminderEmail(data: { firstName: string; email: string;
 export async function sendRaffleEmail(
   ticketId: string,
   type: EmailType,
-  data: RaffleTicketData
+  data: RaffleTicketData | RafflePaymentReminderData
 ): Promise<boolean> {
   if (await wasEmailSent(ticketId, type)) {
     console.log(`[Email] Skipping ${type} for Raffle ${ticketId} - already sent`);
@@ -650,7 +741,7 @@ export async function sendRaffleEmail(
  
   switch (type) {
     case 'raffle_payment_reminder_periodic':
-      emailContent = getRafflePaymentReminderEmail(data as any);
+      emailContent = getRafflePaymentReminderEmail(data as RafflePaymentReminderData);
       break;
     default:
       console.error(`[Email] Unknown raffle email type: ${type}`);
@@ -658,66 +749,67 @@ export async function sendRaffleEmail(
   }
  
   try {
-    await transporter.sendMail({
-      from: EMAIL_FROM,
-      to: data.email,
-      subject: emailContent.subject,
-      html: emailContent.html,
-    });
- 
-    await logEmail(ticketId, type, 'sent');
-    console.log(`[Email] Sent ${type} to Raffle ${data.email}`);
-    return true;
+    return await queueMail(
+      { to: data.email, subject: emailContent.subject, html: emailContent.html },
+      {
+        template: `email:${type}`,
+        dedupeKey: `email:${type}:${ticketId}${type.includes('periodic') ? `:${today()}` : ''}`,
+        meta: { emailLog: { registrationId: ticketId, type } },
+      },
+    );
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    await logEmail(ticketId, type, 'failed', errorMessage);
-    console.error(`[Email] Failed to send ${type} to Raffle ${data.email}:`, errorMessage);
+    console.error(`[Email] Could not queue ${type} for raffle ${ticketId}:`, error instanceof Error ? error.message : error);
     return false;
   }
 }
  
+/**
+ * Queues the raffle confirmation. The worker builds the email and its PDF when it sends,
+ * so the payment callback does no PDF work. `dedupeKey` (e.g. per payment) makes a
+ * repeated callback queue nothing; omit it for a deliberate resend.
+ */
 export async function sendRaffleConfirmationEmail(
-  ticket: RaffleTicketData
+  ticket: RaffleTicketData,
+  opts: { dedupeKey?: string } = {}
 ): Promise<boolean> {
   if (!ticket.email) {
     console.log(`[Email] Raffle ${ticket.id} - no email address, skipping`);
     return false;
   }
   try {
-    const { subject, html } = getRaffleConfirmationEmail(ticket);
-
-    // Generate PDF for all tickets in this purchase
-    const ticketsForPdf = ticket.ids.map(id => ({
-      id,
-      firstName: ticket.firstName,
-      lastName: ticket.lastName
-    }));
-    const pdfBuffer = await generateRaffleTicketPdf(ticketsForPdf);
-
-    await transporter.sendMail({
-      from: EMAIL_FROM,
-      to: ticket.email,
-      subject,
-      html,
-      attachments: [
-        {
-          filename: `RWTW_Raffle_Tickets_${ticket.id}.pdf`,
-          content: pdfBuffer
-        }
-      ]
-    });
-    console.log(`[Email] Raffle confirmation sent to ${ticket.email} (${ticket.id}) with PDF attachment`);
+    await enqueue({ channel: 'EMAIL', recipient: ticket.email, template: RAFFLE_CONFIRMATION, payload: ticket, dedupeKey: opts.dedupeKey });
     return true;
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
-    console.error(`[Email] Failed to send raffle confirmation to ${ticket.email}:`, msg);
+    console.error(`[Email] Could not queue raffle confirmation for ${ticket.id}:`, msg);
     return false;
   }
 }
 
+async function renderRaffleConfirmation(ticket: RaffleTicketData) {
+  const { subject, html } = getRaffleConfirmationEmail(ticket);
+  // One PDF with every ticket in this purchase
+  const pdfBuffer = await generateRaffleTicketPdf(ticket.ids.map(id => ({ id, firstName: ticket.firstName, lastName: ticket.lastName })));
+  return {
+    from: EMAIL_FROM,
+    to: ticket.email,
+    subject,
+    html,
+    attachments: [{ filename: `RWTW_Raffle_Tickets_${ticket.id}.pdf`, content: pdfBuffer }],
+  };
+}
+
 // --- ENQUIRY EMAILS ---
 
-function getEnquiryAdminEmail(data: EnquiryData): { subject: string; html: string } {
+/** Email to support. Every visitor field is HTML-escaped. */
+export function getEnquiryAdminEmail(raw: EnquiryData): { subject: string; html: string } {
+  const data = {
+    name: escapeHtml(raw.name),
+    email: escapeHtml(raw.email),
+    phone: escapeHtml(raw.phone),
+    subject: escapeHtml(raw.subject),
+    message: escapeHtml(raw.message),
+  };
   const content = `
     <p style="margin: 0 0 5px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
       font-size: 10px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; color: ${C.primaryLight};">
@@ -743,7 +835,7 @@ function getEnquiryAdminEmail(data: EnquiryData): { subject: string; html: strin
           <p style="margin: 0; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: ${C.textMuted};">Email</p>
         </td>
         <td style="padding: 11px 14px; border-bottom: 1px solid ${C.borderLight};">
-          <a href="mailto:${data.email}" style="font-size: 14px; font-weight: 600; color: ${C.primary};">${data.email}</a>
+          <a href="mailto:${encodeURIComponent(raw.email)}" style="font-size: 14px; font-weight: 600; color: ${C.primary};">${data.email}</a>
         </td>
       </tr>
       <tr>
@@ -751,7 +843,7 @@ function getEnquiryAdminEmail(data: EnquiryData): { subject: string; html: strin
           <p style="margin: 0; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: ${C.textMuted};">Phone</p>
         </td>
         <td style="padding: 11px 14px; border-bottom: 1px solid ${C.borderLight};">
-          <a href="tel:${data.phone}" style="font-size: 14px; font-weight: 600; color: ${C.primary};">${data.phone}</a>
+          <a href="tel:${encodeURIComponent(raw.phone.replace(/[^0-9+]/g, ''))}" style="font-size: 14px; font-weight: 600; color: ${C.primary};">${data.phone}</a>
         </td>
       </tr>
       <tr>
@@ -771,12 +863,16 @@ function getEnquiryAdminEmail(data: EnquiryData): { subject: string; html: strin
     </table>`;
 
   return {
-    subject: `[Enquiry] ${data.subject} — ${data.name}`,
+    subject: `[Enquiry] ${oneLine(raw.subject)} — ${oneLine(raw.name)}`,
     html: getEmailTemplate(content, 'New Enquiry', `Enquiry from ${data.name}: ${data.subject}`),
   };
 }
 
-function getEnquiryAckEmail(data: EnquiryData): { subject: string; html: string } {
+/**
+ * Auto-reply to the visitor. It quotes nothing they typed, so the form cannot
+ * be used to send someone else an email with chosen text or links.
+ */
+export function getEnquiryAckEmail(_data: EnquiryData): { subject: string; html: string } {
   const content = `
     <p style="margin: 0 0 5px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
       font-size: 10px; font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase; color: ${C.primaryLight};">
@@ -784,31 +880,17 @@ function getEnquiryAckEmail(data: EnquiryData): { subject: string; html: string 
     </p>
     <h2 style="margin: 0 0 14px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
       font-size: 28px; font-weight: 900; letter-spacing: 0.04em; text-transform: uppercase; color: ${C.textMain}; line-height: 1.05;">
-      We'll be in touch, ${data.name.split(' ')[0]}.
+      We'll be in touch.
     </h2>
     <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.65; color: ${C.textMuted};">
-      We received your message regarding <strong>"${data.subject}"</strong> and will respond within 24–48 hours.
+      Thank you for contacting Ride With The Warriors. We received your message and will respond within 24–48 hours.
     </p>
-
-    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
-      style="border: 1px solid ${C.border}; border-left: 4px solid ${C.primary};">
-      <tr>
-        <td style="padding: 16px 18px;">
-          <p style="margin: 0 0 6px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
-            font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: ${C.textMuted};">Your Message</p>
-          <p style="margin: 0; font-size: 14px; color: ${C.textMuted}; line-height: 1.6; font-style: italic;">
-            "${data.message.substring(0, 150)}${data.message.length > 150 ? '...' : ''}"
-          </p>
-        </td>
-      </tr>
-    </table>
-
     <p style="margin: 20px 0 0; font-size: 13px; color: ${C.textMuted}; line-height: 1.6;">
       Need immediate help? Call <strong>0703 752 118</strong> or reply to this email.
     </p>`;
 
   return {
-    subject: `Message received: ${data.subject}`,
+    subject: 'We received your message',
     html: getEmailTemplate(content, 'Thanks for Contacting Us', 'We have received your enquiry and will be in touch shortly.'),
   };
 }
@@ -818,23 +900,16 @@ function getEnquiryAckEmail(data: EnquiryData): { subject: string; html: string 
 export async function sendEnquiryEmails(data: EnquiryData): Promise<{ success: boolean; error?: string }> {
   try {
     const adminEmail = getEnquiryAdminEmail(data);
-    await transporter.sendMail({
-      from: EMAIL_FROM,
-      to: SUPPORT_EMAIL,
-      replyTo: data.email,
-      subject: adminEmail.subject,
-      html: adminEmail.html,
-    });
+    await queueMail(
+      { to: SUPPORT_EMAIL, replyTo: data.email, subject: adminEmail.subject, html: adminEmail.html },
+      { template: 'email:enquiry-admin' },
+    );
 
     const ackEmail = getEnquiryAckEmail(data);
-    await transporter.sendMail({
-      from: EMAIL_FROM,
-      to: data.email,
-      subject: ackEmail.subject,
-      html: ackEmail.html,
-    });
-
-    console.log(`[Email] Enquiry emails sent successfully for ${data.email}`);
+    await queueMail(
+      { to: data.email, subject: ackEmail.subject, html: ackEmail.html },
+      { template: 'email:enquiry-ack' },
+    );
     return { success: true };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -844,7 +919,7 @@ export async function sendEnquiryEmails(data: EnquiryData): Promise<{ success: b
 }
 
 async function wasEmailSent(registrationId: string, type: EmailType): Promise<boolean> {
-  const where: any = { registrationId, type, status: 'sent' };
+  const where: Prisma.EmailLogWhereInput = { registrationId, type, status: 'sent' };
   
   // For periodic reminders, we only care if they were sent today
   if (type.includes('periodic')) {
@@ -859,18 +934,17 @@ async function wasEmailSent(registrationId: string, type: EmailType): Promise<bo
   return !!existing;
 }
 
-async function logEmail(registrationId: string, type: EmailType, status: 'sent' | 'failed', error?: string) {
-  await prisma.emailLog.create({
-    data: { registrationId, type, status, error },
-  });
-}
-
+/**
+ * Queues a registration email. Each (registration, type) is queued once; periodic reminders
+ * once per day. `force` queues it again (admin resend).
+ */
 export async function sendEmail(
   registrationId: string,
   type: EmailType,
-  data: RegistrationData
+  data: RegistrationData,
+  opts: { force?: boolean } = {}
 ): Promise<boolean> {
-  if (await wasEmailSent(registrationId, type)) {
+  if (!opts.force && await wasEmailSent(registrationId, type)) {
     console.log(`[Email] Skipping ${type} for ${registrationId} - already sent`);
     return true;
   }
@@ -898,29 +972,23 @@ export async function sendEmail(
     case 'reminder_day':
       emailContent = getEventReminderEmail(data, 0);
       break;
-    case 'payment_reminder_periodic':
-      emailContent = getPaymentReminderEmail(data, "Your registration is still pending payment. Complete it to secure your spot.");
-      break;
     default:
       console.error(`[Email] Unknown email type: ${type}`);
       return false;
   }
 
+  const key = `email:${type}:${registrationId}${type.includes('periodic') ? `:${today()}` : ''}`;
   try {
-    await transporter.sendMail({
-      from: EMAIL_FROM,
-      to: data.email,
-      subject: emailContent.subject,
-      html: emailContent.html,
-    });
-
-    await logEmail(registrationId, type, 'sent');
-    console.log(`[Email] Sent ${type} to ${data.email}`);
-    return true;
+    return await queueMail(
+      { to: data.email, subject: emailContent.subject, html: emailContent.html },
+      {
+        template: `email:${type}`,
+        dedupeKey: opts.force ? `${key}:resend:${Date.now()}` : key,
+        meta: { emailLog: { registrationId, type } },
+      },
+    );
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    await logEmail(registrationId, type, 'failed', errorMessage);
-    console.error(`[Email] Failed to send ${type} to ${data.email}:`, errorMessage);
+    console.error(`[Email] Could not queue ${type} for ${registrationId}:`, error instanceof Error ? error.message : error);
     return false;
   }
 }
@@ -943,18 +1011,78 @@ export async function sendAlertEmail(
     return false;
   }
   try {
-    await transporter.sendMail({
-      from: EMAIL_FROM,
+    return await queueMail({
       to,
       subject,
       text: message,
       html: `<pre style="font-family: ui-monospace, monospace; font-size: 14px; line-height: 1.5; white-space: pre-wrap;">${message}</pre>`,
-    });
-    console.log(`[Email] Alert sent to ${to}: ${subject}`);
-    return true;
+    }, { template: 'email:alert' });
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
-    console.error(`[Email] Failed to send alert to ${to}:`, msg);
+    console.error(`[Email] Could not queue alert to ${to}:`, msg);
+    return false;
+  }
+}
+
+/** One-time login code. The code itself is never logged. */
+export async function sendOtpEmail(to: string, code: string): Promise<boolean> {
+  const content = `
+    <h2 style="margin: 0 0 14px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
+      font-size: 26px; font-weight: 700; color: ${C.textMain};">Your login code</h2>
+    <p style="margin: 0 0 18px; font-size: 15px; line-height: 1.6; color: ${C.textMuted};">
+      Use this code to log in to your Ride With The Warriors account. It expires in 10 minutes.
+    </p>
+    ${renderIdBlock('Login code', code, 'Never share this code with anyone')}
+    <p style="margin: 18px 0 0; font-size: 13px; line-height: 1.6; color: ${C.textMuted};">
+      If you didn't try to log in, you can ignore this email.
+    </p>`;
+  const subject = 'Your Ride With The Warriors login code';
+  try {
+    // Sent at once (codes expire in 10 minutes); the outbox row keeps no code.
+    return await sendNow({
+      channel: 'EMAIL',
+      recipient: to,
+      template: 'otp',
+      payload: serializeMail({
+        from: EMAIL_FROM,
+        to,
+        subject,
+        text: `${code} is your Ride With The Warriors login code. It expires in 10 minutes.`,
+        html: getEmailTemplate(content, 'Your login code', 'Your one-time login code'),
+      }),
+      storedPayload: { from: EMAIL_FROM, to, subject, text: '[one-time login code]' },
+    });
+  } catch (error) {
+    console.error('[Email] Failed to send login code:', error instanceof Error ? error.message : error);
+    return false;
+  }
+}
+
+/**
+ * Tells the old email address that the account's email or phone was changed.
+ * `newContact` must already be masked.
+ */
+export async function sendContactChangedEmail(to: string, kind: 'email' | 'phone', newContact: string): Promise<boolean> {
+  const what = kind === 'email' ? 'email address' : 'phone number';
+  const content = `
+    <h2 style="margin: 0 0 14px; font-family: 'Barlow Condensed', Helvetica, Arial, sans-serif;
+      font-size: 26px; font-weight: 700; color: ${C.textMain};">Your ${what} was changed</h2>
+    <p style="margin: 0 0 18px; font-size: 15px; line-height: 1.6; color: ${C.textMuted};">
+      The ${what} on your Ride With The Warriors account was changed to ${newContact}.
+      ${kind === 'email' ? 'You will no longer be able to log in with this email address.' : ''}
+    </p>
+    <p style="margin: 18px 0 0; font-size: 13px; line-height: 1.6; color: ${C.textMuted};">
+      If you didn't make this change, contact us straight away by replying to this email.
+    </p>`;
+  try {
+    return await queueMail({
+      to,
+      subject: `Your Ride With The Warriors ${what} was changed`,
+      text: `The ${what} on your Ride With The Warriors account was changed to ${newContact}. If you didn't make this change, contact us straight away.`,
+      html: getEmailTemplate(content, `Your ${what} was changed`, `Your ${what} was changed`),
+    }, { template: 'email:contact-changed' });
+  } catch (error) {
+    console.error('[Email] Failed to send contact change notice:', error instanceof Error ? error.message : error);
     return false;
   }
 }
@@ -1011,7 +1139,12 @@ export function getTemplatePreview(type: EmailType): string {
   }
 }
 
-function escapeHtml(text: string): string {
+/** Removes line breaks (for email subjects). */
+function oneLine(text: string): string {
+  return text.replace(/\s+/g, ' ').trim().slice(0, 150);
+}
+
+export function escapeHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -1044,10 +1177,10 @@ export async function sendBulkCustomEmail(
   recipients: Array<{ email: string, firstName: string, lastName: string, bibNumber?: string, message?: string }>,
   subject: string,
   messageTemplate?: string
-): Promise<{ successCount: number; failedCount: number; errors: any[] }> {
+): Promise<{ successCount: number; failedCount: number; errors: { email: string; error: string }[] }> {
   let successCount = 0;
   let failedCount = 0;
-  const errors: any[] = [];
+  const errors: { email: string; error: string }[] = [];
 
   for (const recipient of recipients) {
     if (!recipient.email) continue;
@@ -1075,17 +1208,14 @@ export async function sendBulkCustomEmail(
     `;
 
     try {
-      await transporter.sendMail({
-        from: EMAIL_FROM,
-        to: recipient.email,
-        subject: subject,
-        text: compiledMessage,
-        html: htmlContent,
-      });
+      await queueMail(
+        { to: recipient.email, subject, text: compiledMessage, html: htmlContent },
+        { template: 'email:bulk' },
+      );
       successCount++;
-    } catch (error: any) {
+    } catch (error) {
       failedCount++;
-      errors.push({ email: recipient.email, error: error.message });
+      errors.push({ email: recipient.email, error: error instanceof Error ? error.message : String(error) });
     }
   }
 

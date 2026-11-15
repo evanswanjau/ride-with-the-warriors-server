@@ -95,6 +95,7 @@ const validFamilyDetails = {
         emergencyPhone: '0712345678',
         emergencyContactName: 'Other Parent',
         email: 'parent@example.com',
+        phoneNumber: '0712345670',
         relationship: 'parent',
         tshirtSize: 'M',
         participation: 'mom' as const,
@@ -126,10 +127,10 @@ vi.mock('../../../storage/prisma.js', () => ({
     },
 }));
 
-// Mock memoryRegistrations for tests
-vi.mock('../../../storage/memoryRegistrations.js', () => ({
+// Mock registrationStore for tests
+vi.mock('../../../storage/registrationStore.js', () => ({
     findExistingRegistrationsByEmails: vi.fn().mockResolvedValue([]),
-    generateNextId: vi.fn().mockResolvedValue('REG-2001'),
+    findExistingRegistrationsByIdNumbers: vi.fn().mockResolvedValue([]),
     createRegistration: vi.fn(),
     getRegistration: vi.fn(),
     updateRegistration: vi.fn(),
@@ -253,6 +254,13 @@ describe('Registrations API', () => {
 
             expect(response.body).toHaveProperty('ok', true);
             expect(response.body).toHaveProperty('database');
+        });
+
+        it('does not reveal the database error when the database is down', async () => {
+            const { prisma } = await import('../../../storage/prisma.js');
+            vi.mocked(prisma.$queryRaw).mockRejectedValueOnce(new Error('connect ECONNREFUSED db.internal:5432'));
+            const response = await request(app).get('/health').expect(503);
+            expect(response.body).toEqual({ ok: false, database: 'disconnected' });
         });
     });
 });

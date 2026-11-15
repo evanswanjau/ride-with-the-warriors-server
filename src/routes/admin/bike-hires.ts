@@ -1,7 +1,11 @@
 import { Router } from 'express';
+import { requireAdmin } from '../../middleware/auth.js';
 import { prisma } from '../../storage/prisma.js';
 
 export const bikeHiresRouter = Router();
+
+// Every route in this router is admin-only.
+bikeHiresRouter.use(requireAdmin);
 
 bikeHiresRouter.get('/', async (req, res, next) => {
     try {

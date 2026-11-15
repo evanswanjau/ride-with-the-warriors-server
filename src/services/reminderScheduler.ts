@@ -1,6 +1,9 @@
 import cron from 'node-cron';
+import { messagingDisabled } from '../utils/messaging.js';
 import { prisma } from '../storage/prisma.js';
 import { sendEmail, EmailType, sendRaffleEmail } from './emailService.js';
+import { processOutbox } from './outbox.js';
+import { reconcilePayments } from './reconciliation.js';
 import { smsService } from './smsService.js';
 import { createShortLink, getLinkForEntity } from '../utils/shortLinkService.js';
 
@@ -65,10 +68,9 @@ async function processPaymentReminders() {
 
         // Every 3 days (Day 3, 6, 9...)
         if (daysSinceRegistration > 0 && daysSinceRegistration % 3 === 0) {
-            const bib = getNumericId(reg.id);
             if (reg.phoneNumber) {
                 const link = await createShortLink(getLinkForEntity('cyclist', reg.id));
-                smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, your cycling registration (BIB: ${bib}) for RWTW is pending payment. Pay here: ${link}`);
+                smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, your cycling registration for RWTW is pending payment. Your BIB number is assigned once you pay. Pay here: ${link}`, { template: 'sms:payment-reminder', dedupeKey: `sms:payment-reminder:${reg.id}:${new Date().toISOString().slice(0, 10)}` });
             }
             await sendEmail(reg.id, 'payment_reminder_periodic', {
                 id: reg.id,
@@ -145,7 +147,7 @@ async function processRafflePaymentReminders() {
             if (phone) {
                 const tids = group.tickets.map(t => String(t.id).toUpperCase()).join(', ');
                 const link = await createShortLink(profileUrl);
-                smsService.sendSMS([phone], `Hi ${group.firstName}, you have unpaid raffle tickets for RWTW (Nos: ${tids}). Pay here: ${link}`);
+                smsService.sendSMS([phone], `Hi ${group.firstName}, you have unpaid raffle tickets for RWTW (Nos: ${tids}). Pay here: ${link}`, { template: 'sms:raffle-payment-reminder', dedupeKey: `sms:raffle-payment-reminder:${ticketIds[0]}:${new Date().toISOString().slice(0, 10)}` });
             }
 
             const sent = await sendRaffleEmail(ticketIds[0], 'raffle_payment_reminder_periodic', {
@@ -154,12 +156,12 @@ async function processRafflePaymentReminders() {
                 ticketCount: group.tickets.length,
                 totalAmount,
                 profileUrl,
-            } as any);
+            });
 
             if (sent && ticketIds.length > 1) {
                 const extraLogs = ticketIds.slice(1).map(id => ({
                     registrationId: id,
-                    type: 'raffle_payment_reminder_periodic' as any,
+                    type: 'raffle_payment_reminder_periodic',
                     status: 'sent' as const,
                 }));
                 await prisma.emailLog.createMany({ data: extraLogs });
@@ -212,18 +214,19 @@ async function processEventReminders() {
 
         if (reg.phoneNumber) {
             const times = getEventTime(reg.circuitId);
-            const bib = getNumericId(reg.id);
+            const bib = getNumericId(reg.bibNumber ?? reg.id);
             const isFamily = (reg.circuitId?.toLowerCase() || '') === 'family';
             const timeInfo = isFamily
                 ? `starts from ${times.flagOff}`
                 : `call to riders ${times.callToRiders}, flag off ${times.flagOff}`;
-            if (emailType === 'reminder_7d') smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, Ride With The Warriors is just 7 days away! Your BIB is ${bib}. ${timeInfo.charAt(0).toUpperCase() + timeInfo.slice(1)}. See you there!`);
-            if (emailType === 'reminder_1d') smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, Ride With The Warriors is tomorrow! Your BIB is ${bib}. ${timeInfo.charAt(0).toUpperCase() + timeInfo.slice(1)}. Get your gear ready!`);
-            if (emailType === 'reminder_day') smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, Ride With The Warriors is today! Your BIB is ${bib}. ${timeInfo.charAt(0).toUpperCase() + timeInfo.slice(1)}. Have an amazing ride!`);
+            if (emailType === 'reminder_7d') smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, Ride With The Warriors is just 7 days away! Your BIB is ${bib}. ${timeInfo.charAt(0).toUpperCase() + timeInfo.slice(1)}. See you there!`, { template: 'sms:reminder_7d', dedupeKey: `sms:reminder_7d:${reg.id}` });
+            if (emailType === 'reminder_1d') smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, Ride With The Warriors is tomorrow! Your BIB is ${bib}. ${timeInfo.charAt(0).toUpperCase() + timeInfo.slice(1)}. Get your gear ready!`, { template: 'sms:reminder_1d', dedupeKey: `sms:reminder_1d:${reg.id}` });
+            if (emailType === 'reminder_day') smsService.sendSMS([reg.phoneNumber], `Hi ${reg.firstName}, Ride With The Warriors is today! Your BIB is ${bib}. ${timeInfo.charAt(0).toUpperCase() + timeInfo.slice(1)}. Have an amazing ride!`, { template: 'sms:reminder_day', dedupeKey: `sms:reminder_day:${reg.id}` });
         }
 
         await sendEmail(reg.id, emailType, {
             id: reg.id,
+            bibNumber: reg.bibNumber,
             firstName: reg.firstName,
             lastName: reg.lastName,
             email: reg.email,
@@ -261,6 +264,30 @@ export async function runScheduledTasks() {
 
 // Initialize cron jobs
 export function initializeScheduler() {
+    // Payment reconciliation (on Vercel, Vercel Cron calls /api/cron/reconcile-payments instead).
+    cron.schedule('*/5 * * * *', async () => {
+        try {
+            await reconcilePayments({ trigger: 'cron' });
+        } catch (err) {
+            console.error('[Reconcile] run failed:', err);
+        }
+    });
+
+    // Notification outbox worker (on Vercel, Vercel Cron calls /api/cron/notifications instead).
+    // Runs even with MESSAGING_DISABLED, so queued rows end as SUPPRESSED instead of piling up.
+    cron.schedule('* * * * *', async () => {
+        try {
+            const r = await processOutbox();
+            if (r.claimed || r.reclaimed) console.log('[Outbox] worker:', JSON.stringify(r));
+        } catch (err) {
+            console.error('[Outbox] worker failed:', err);
+        }
+    });
+
+    if (messagingDisabled()) {
+        console.log('[Scheduler] MESSAGING_DISABLED: reminder cron jobs not started');
+        return;
+    }
     console.log('[Scheduler] Initializing cron jobs...');
 
     // Main job: payment reminders + 7d/1d event reminders at 8:00 AM daily

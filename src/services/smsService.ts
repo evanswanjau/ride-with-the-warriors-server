@@ -1,8 +1,13 @@
+import nodemailer from 'nodemailer';
+import type { Prisma } from '../generated/client/index.js';
 import { prisma } from '../storage/prisma.js';
+import { messagingDisabled, logSuppressed, filterAllowedPhones } from '../utils/messaging.js';
+import { enqueue, sendNow, registerDeliverer } from './outbox.js';
 
 const BASE_URL = 'https://sms.textsms.co.ke/api/services';
 
-console.log(`[SMS Service] Initializing TextSMS Service`);
+/** TextSMS send response: one entry per recipient, with hyphenated (and misspelt) keys. */
+type TextSmsResponse = { responses?: Record<string, unknown>[] };
 
 /**
  * Get credentials from environment
@@ -21,7 +26,7 @@ function getCredentials() {
  */
 function formatPhoneNumber(phone: string): string {
     // Remove all non-numeric characters
-    let cleanPhone = phone.trim().replace(/\D/g, '');
+    const cleanPhone = phone.trim().replace(/\D/g, '');
     
     // If it starts with 07... or 01... (Kenyan mobile formats)
     if (cleanPhone.startsWith('0')) {
@@ -41,11 +46,114 @@ function formatPhoneNumber(phone: string): string {
     return cleanPhone;
 }
 
+/**
+ * SMS_DRIVER=mailpit (local only): every SMS is delivered as an email to the
+ * local Mailpit inbox (http://localhost:8025), addressed to
+ * sms+<number>@sms.local, so emails, SMS and login codes all land in one place.
+ * Any other value (default "textsms") sends real SMS through TextSMS.
+ */
+function smsDriver(): 'mailpit' | 'textsms' {
+    return process.env.SMS_DRIVER === 'mailpit' ? 'mailpit' : 'textsms';
+}
+
+let mailpitTransport: nodemailer.Transporter | null = null;
+
+async function sendViaMailpit(recipients: string[], message: string, logMessage: string) {
+    mailpitTransport ??= nodemailer.createTransport({
+        host: process.env.SMTP_HOST || 'localhost',
+        port: Number(process.env.SMTP_PORT || 1025),
+        secure: false,
+        ignoreTLS: true,
+    });
+    const numbers = recipients.filter(r => r && r.trim().length > 5).map(formatPhoneNumber);
+    let successCount = 0;
+    let failedCount = 0;
+    for (const mobile of numbers) {
+        try {
+            await mailpitTransport.sendMail({
+                from: 'SMS Gateway <sms@sms.local>',
+                to: `sms+${mobile}@sms.local`,
+                subject: `SMS to +${mobile}: ${message.slice(0, 60)}`,
+                text: message,
+                headers: { 'X-RWTW-Channel': 'sms' },
+            });
+            successCount++;
+        } catch (err) {
+            console.error(`[SMS Service] Mailpit delivery failed for ${mobile}:`, (err as Error).message);
+            failedCount++;
+        }
+    }
+    if (numbers.length > 0) {
+        await prisma.smsLog.createMany({
+            data: numbers.map(phoneNumber => ({ phoneNumber, message: logMessage, status: 'Local (Mailpit)' })),
+        });
+    }
+    return { success: successCount > 0 || numbers.length === 0, successCount, failedCount };
+}
+
+type SendResult = { success: boolean; successCount: number; failedCount: number };
+
+export type SendSmsOptions = {
+    /** Text stored instead of the real message (one-time codes, which must never be stored). */
+    logAs?: string;
+    /** Outbox template name, e.g. "sms:payment-confirmed". */
+    template?: string;
+    /** Idempotency key; with several recipients each gets `<key>:<number>`. */
+    dedupeKey?: string;
+    /** Send now instead of queuing (login codes only). Not retried. */
+    immediate?: boolean;
+};
+
+const OTP_LOG_TEXT = '[one-time login code]';
+
 export const smsService = {
     /**
-     * Send an SMS to one or more recipients.
+     * Queues an SMS to each recipient in the notification outbox (src/services/outbox.ts);
+     * the worker sends it. With `immediate`, sends at once and records it.
+     * successCount is the number queued (or sent, when immediate).
      */
-    async sendSMS(recipients: string[], message: string): Promise<{ success: boolean; successCount: number; failedCount: number }> {
+    async sendSMS(recipients: string[], message: string, opts: SendSmsOptions = {}): Promise<SendResult> {
+        const numbers = [...new Set(recipients.filter(r => r && r.trim().length > 5).map(formatPhoneNumber))];
+        const template = opts.template ?? (opts.logAs ? 'otp' : 'sms');
+        const keyFor = (n: string) => opts.dedupeKey && (numbers.length > 1 ? `${opts.dedupeKey}:${n}` : opts.dedupeKey);
+        let successCount = 0;
+        let failedCount = 0;
+        for (const n of numbers) {
+            try {
+                if (opts.immediate) {
+                    const ok = await sendNow({
+                        channel: 'SMS', recipient: n, template, dedupeKey: keyFor(n),
+                        payload: { message }, storedPayload: { message: opts.logAs ?? message },
+                    });
+                    if (ok) successCount++; else failedCount++;
+                } else {
+                    await enqueue({ channel: 'SMS', recipient: n, template, payload: { message }, dedupeKey: keyFor(n) });
+                    successCount++;
+                }
+            } catch (err) {
+                console.error('[SMS Service] Could not queue SMS:', (err as Error).message);
+                failedCount++;
+            }
+        }
+        return { success: failedCount === 0, successCount, failedCount };
+    },
+
+    /**
+     * Sends right now through the configured driver and writes SmsLog. Used by the outbox
+     * worker; everything else calls sendSMS.
+     */
+    async deliverSMS(recipients: string[], message: string, opts: { logAs?: string } = {}): Promise<SendResult> {
+        const logMessage = opts.logAs ?? message;
+        if (messagingDisabled()) {
+            logSuppressed('sms', recipients.length);
+            return { success: true, successCount: 0, failedCount: 0 };
+        }
+        // MESSAGING_ALLOWLIST: drop numbers that are not on the list (see utils/messaging.ts).
+        recipients = filterAllowedPhones(recipients);
+        if (recipients.length === 0) return { success: true, successCount: 0, failedCount: 0 };
+        if (smsDriver() === 'mailpit') {
+            return sendViaMailpit(recipients, message, logMessage);
+        }
         const { apiKey, partnerId, shortcode } = getCredentials();
         if (!apiKey || !partnerId) {
             console.error("[SMS Service] Credentials not set.");
@@ -61,7 +169,7 @@ export const smsService = {
         try {
             let successCount = 0;
             let failedCount = 0;
-            const logsData: any[] = [];
+            const logsData: Prisma.SmsLogCreateManyInput[] = [];
 
             // If only one recipient, use the single send endpoint
             if (formattedRecipients.length === 1) {
@@ -77,7 +185,7 @@ export const smsService = {
                     })
                 });
 
-                const result = await response.json() as any;
+                const result = await response.json() as TextSmsResponse;
                 console.log(`[SMS Service] Response:`, JSON.stringify(result, null, 2));
 
                 if (result.responses && result.responses[0]) {
@@ -89,8 +197,8 @@ export const smsService = {
 
                     logsData.push({
                         phoneNumber: String(res.mobile),
-                        message: message,
-                        status: res['response-description'] || (isSuccess ? 'Success' : 'Failed'),
+                        message: logMessage,
+                        status: (res['response-description'] as string | undefined) || (isSuccess ? 'Success' : 'Failed'),
                         messageId: res.messageid ? String(res.messageid) : null,
                     });
                 }
@@ -118,11 +226,11 @@ export const smsService = {
                         })
                     });
 
-                    const result = await response.json() as any;
+                    const result = await response.json() as TextSmsResponse;
                     console.log(`[SMS Service] Batch Response:`, JSON.stringify(result, null, 2));
 
                     if (result.responses) {
-                        result.responses.forEach((res: any) => {
+                        result.responses.forEach((res) => {
                             const responseCode = res['response-code'] || res['respose-code'];
                             const isSuccess = responseCode === 200 || responseCode === "200";
                             if (isSuccess) successCount++;
@@ -130,8 +238,8 @@ export const smsService = {
 
                             logsData.push({
                                 phoneNumber: String(res.mobile),
-                                message: message,
-                                status: res['response-description'] || (isSuccess ? 'Success' : 'Failed'),
+                                message: logMessage,
+                                status: (res['response-description'] as string | undefined) || (isSuccess ? 'Success' : 'Failed'),
                                 messageId: res.messageid ? String(res.messageid) : null,
                             });
                         });
@@ -148,7 +256,7 @@ export const smsService = {
             console.error(`[SMS Service] Error sending SMS:`, (error as Error).message);
             const failedLogs = formattedRecipients.map(r => ({
                 phoneNumber: r,
-                message: message,
+                message: logMessage,
                 status: 'Error: ' + String((error as Error).message).substring(0, 50),
             }));
             await prisma.smsLog.createMany({ data: failedLogs });
@@ -160,7 +268,7 @@ export const smsService = {
     /**
      * Retrieves the current account balance from TextSMS
      */
-    async checkBalance(): Promise<any> {
+    async checkBalance(): Promise<unknown> {
         const { apiKey, partnerId } = getCredentials();
         if (!apiKey || !partnerId) {
             console.error("[SMS Service] Credentials not set.");
@@ -187,3 +295,11 @@ export const smsService = {
     }
 };
 
+
+// The outbox worker sends SMS rows through deliverSMS. A provider rejection counts as a failure,
+// so the row is retried.
+registerDeliverer('SMS', async ({ recipient, payload, template }) => {
+    const { message } = payload as { message: string };
+    const result = await smsService.deliverSMS([recipient], message, template === 'otp' ? { logAs: OTP_LOG_TEXT } : {});
+    if (!result.success) throw new Error('SMS provider did not accept the message');
+});

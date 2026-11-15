@@ -43,7 +43,7 @@ adminDashboardRouter.get('/', requireAdmin, async (_req, res) => {
             }),
             prisma.raffleTicket.count(),
             prisma.raffleTicket.count({ where: { status: 'PAID' } }),
-            (prisma.registration as any).aggregate({
+            prisma.registration.aggregate({
                 where: { status: { in: ['PAID', 'CONFIRMED'] } },
                 _sum: { totalAmount: true },
             }),
@@ -82,7 +82,7 @@ adminDashboardRouter.get('/', requireAdmin, async (_req, res) => {
         const raffleRevenue = paidRaffle * RAFFLE_TICKET_PRICE;
 
         // ── 2. Daily stats (30-day: revenue + registration + paid counts) ─
-        const dailyStatsRaw: any[] = await prisma.$queryRaw`
+        const dailyStatsRaw: { date: Date; revenue: unknown; registrations: unknown; paid: unknown }[] = await prisma.$queryRaw`
             SELECT
                 d.day                                        AS date,
                 COALESCE(p.revenue, 0)                       AS revenue,
@@ -119,7 +119,7 @@ adminDashboardRouter.get('/', requireAdmin, async (_req, res) => {
         }));
 
         // ── 3. Status trend (14-day: paid / unpaid / cancelled per day) ───
-        const statusTrendRaw: any[] = await prisma.$queryRaw`
+        const statusTrendRaw: { date: Date; paid: unknown; unpaid: unknown; cancelled: unknown }[] = await prisma.$queryRaw`
             SELECT
                 d.day AS date,
                 COALESCE(SUM(CASE WHEN r.status IN ('PAID', 'CONFIRMED') THEN 1 ELSE 0 END), 0)::int AS paid,
@@ -143,7 +143,7 @@ adminDashboardRouter.get('/', requireAdmin, async (_req, res) => {
         }));
 
         // ── 4. Hourly registration intensity (all-time, for pattern analysis)
-        const hourlyRaw: any[] = await prisma.$queryRaw`
+        const hourlyRaw: { hour: number; registrations: unknown }[] = await prisma.$queryRaw`
             SELECT EXTRACT(HOUR FROM "createdAt")::int AS hour,
                    COUNT(*)::int AS registrations
             FROM "Registration"
