@@ -26,7 +26,8 @@ async function main() {
     });
     type Row = (typeof photos)[number];
     if (fs.existsSync(out)) {
-        const known = new Set(photos.map(p => p.publicId));
+        // Hidden photos count as known, so they do not come back from the old file.
+        const known = new Set((await prisma.galleryPhoto.findMany({ select: { publicId: true } })).map(p => p.publicId));
         const old = (JSON.parse(fs.readFileSync(out, 'utf8')).photos ?? []) as Row[];
         photos.push(...old.filter(p => !known.has(p.publicId)));
     }
