@@ -31,6 +31,7 @@ import { authRouter as userAuthRouter } from './routes/auth.js';
 import { meRouter } from './routes/me.js';
 import { galleryRouter } from './routes/gallery.js';
 import { eventsRouter } from './routes/events.js';
+import { meRidersRouter } from './routes/meRiders.js';
 import { adminEventsRouter } from './routes/admin/events.js';
 import { prisma } from './storage/prisma.js';
 import { auditAdminChanges } from './middleware/adminAudit.js';
@@ -75,6 +76,7 @@ app.use('/api/v1/feedback', feedbackRouter);
 
 // Participant accounts (OTP login) and their own data
 app.use('/api/v1/auth', userAuthRouter);
+app.use('/api/v1/me/rider-profiles', meRidersRouter);
 app.use('/api/v1/me', meRouter);
 app.use('/api/v1/gallery', galleryRouter);
 app.use('/api/v1/events', eventsRouter);
