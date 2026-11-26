@@ -136,5 +136,49 @@ export async function runDataChecks(): Promise<CheckResult> {
     }
     if (outOfRange) notes.push(`${outOfRange} paid bib(s) are outside their category's range (set by hand or before ranges changed)`);
 
+    await checkRiderModel(problems, notes);
     return { snapshot, problems, notes };
 }
+
+/** Groups and profiles (Phase 4 step 2), once their tables exist. */
+async function checkRiderModel(problems: string[], notes: string[]) {
+    const [{ ready }] = await prisma.$queryRaw<{ ready: boolean }[]>`
+        SELECT to_regclass('"RegistrationGroup"') IS NOT NULL AS ready`;
+    if (!ready) {
+        notes.push('no RegistrationGroup table yet: group and profile checks skipped');
+        return;
+    }
+
+    const ungrouped = await prisma.registration.count({ where: { registrationGroupId: null } });
+    if (ungrouped) notes.push(`${ungrouped} registration(s) are not in a RegistrationGroup yet (npm run backfill:riders)`);
+    const withoutProfile = await prisma.registration.count({ where: { riderProfileId: null, accountId: { not: null } } });
+    if (withoutProfile) notes.push(`${withoutProfile} registration(s) with an account have no RiderProfile (backfill not run, or the same rider twice in a year)`);
+
+    // A row's year, owner and status agree with its group; a group's total is the sum of its rows.
+    const mismatched = await prisma.$queryRaw<{ id: string; why: string }[]>`
+        SELECT g.id, CASE
+            WHEN bool_or(r."eventYear" <> g."eventYear") THEN 'event year differs from its rows'
+            WHEN g."totalAmount" <> ROUND(COALESCE(SUM(r."totalAmount"), 0)) THEN 'total ' || g."totalAmount" || ' <> rows ' || ROUND(COALESCE(SUM(r."totalAmount"), 0))
+            WHEN COUNT(DISTINCT r.status) = 1 AND MIN(r.status::text) <> g.status::text THEN 'status ' || g.status || ' <> rows ' || MIN(r.status::text)
+          END AS why
+        FROM "RegistrationGroup" g JOIN "Registration" r ON r."registrationGroupId" = g.id
+        GROUP BY g.id
+        HAVING bool_or(r."eventYear" <> g."eventYear")
+            OR g."totalAmount" <> ROUND(COALESCE(SUM(r."totalAmount"), 0))
+            OR (COUNT(DISTINCT r.status) = 1 AND MIN(r.status::text) <> g.status::text)`;
+    for (const m of mismatched.slice(0, 20)) problems.push(`group ${m.id}: ${m.why}`);
+    if (mismatched.length > 20) problems.push(`... and ${mismatched.length - 20} more groups out of step with their rows`);
+
+    // Rows of one legacy groupId sit in one group.
+    const split = await prisma.$queryRaw<{ groupId: string }[]>`
+        SELECT "groupId" FROM "Registration" WHERE "groupId" IS NOT NULL AND "registrationGroupId" IS NOT NULL
+        GROUP BY 1 HAVING COUNT(DISTINCT "registrationGroupId") > 1`;
+    for (const s of split) problems.push(`legacy group ${s.groupId} is split over several RegistrationGroups`);
+
+    // A profile belongs to the account that owns its registrations.
+    const [{ n: foreign }] = await prisma.$queryRaw<{ n: bigint }[]>`
+        SELECT COUNT(*) AS n FROM "Registration" r JOIN "RiderProfile" p ON p.id = r."riderProfileId"
+        WHERE r."accountId" IS DISTINCT FROM p."accountId"`;
+    if (Number(foreign)) problems.push(`${foreign} registration(s) link a RiderProfile of another account`);
+}
+

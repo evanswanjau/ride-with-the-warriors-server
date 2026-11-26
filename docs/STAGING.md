@@ -106,6 +106,17 @@ npx dotenv -e <env file> -- npm run check:data -- --compare before.json
 It fails on duplicate bib or ticket numbers within a year, on data for a year with no `Event`
 row, and (with `--compare`) on any change in row counts or PAID sums per year.
 
+After the `RiderProfile` / `RegistrationGroup` migration deploys, fill them from the existing
+registrations (idempotent; `--dry-run` writes nothing):
+
+```bash
+npx dotenv -e <env file> -- npm run backfill:riders -- --dry-run
+npx dotenv -e <env file> -- npm run backfill:riders
+```
+
+Then `check:data -- --compare` must pass. It also checks that every group's year, status and
+total agree with its rows. Same-rider-twice-in-a-year rows are listed and left without a profile.
+
 ## Promoting to production later
 
 1. Merge `develop` into `main` (Phase 8 in `docs/PLATFORM_2027_PLAN.md`).
