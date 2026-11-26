@@ -144,7 +144,7 @@ export const smsService = {
      */
     async deliverSMS(recipients: string[], message: string, opts: { logAs?: string } = {}): Promise<SendResult> {
         const logMessage = opts.logAs ?? message;
-        if (messagingDisabled()) {
+        if (messagingDisabled('sms')) {
             logSuppressed('sms', recipients.length);
             return { success: true, successCount: 0, failedCount: 0 };
         }

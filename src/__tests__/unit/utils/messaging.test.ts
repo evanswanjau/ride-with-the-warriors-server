@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import {
     messagingAllowlist, isAllowedEmail, isAllowedPhone, filterAllowedPhones,
-    filterAllowedEmailField, applyEmailAllowlist,
+    filterAllowedEmailField, applyEmailAllowlist, messagingLock, messagingDisabled,
 } from '../../../utils/messaging.js';
 
 afterEach(() => { delete process.env.MESSAGING_ALLOWLIST; vi.restoreAllMocks(); });
@@ -84,5 +84,46 @@ describe('email allowlist', () => {
     it('passes the mail through when unset', () => {
         const mail = { to: 'anyone@example.com' };
         expect(applyEmailAllowlist(mail)).toBe(mail);
+    });
+});
+
+describe('messaging lock (outside production)', () => {
+    const gmail = { SMTP_HOST: 'smtp.gmail.com' };
+    const mailpit = { SMTP_HOST: 'localhost', SMS_DRIVER: 'mailpit' };
+
+    it.each(['local', 'test', 'uat'])('%s: locks email and SMS when nothing is configured', (APP_ENV) => {
+        expect(messagingLock('email', { APP_ENV })).toMatch(/SMTP_HOST/);
+        expect(messagingLock('sms', { APP_ENV })).toMatch(/SMS_DRIVER/);
+        expect(messagingDisabled('email', { APP_ENV, ...gmail })).toBe(true);
+        expect(messagingDisabled('sms', { APP_ENV, ...gmail })).toBe(true);
+        expect(messagingDisabled(undefined, { APP_ENV, ...gmail })).toBe(true);
+    });
+
+    it('a real SMTP server or the real SMS driver stays locked without an allowlist', () => {
+        expect(messagingDisabled('email', { APP_ENV: 'uat', ...gmail, SMS_DRIVER: 'mailpit' })).toBe(true);
+        expect(messagingDisabled('sms', { APP_ENV: 'uat', SMTP_HOST: 'localhost', SMS_DRIVER: 'textsms' })).toBe(true);
+        // Mailpit SMS would be relayed through the real SMTP server.
+        expect(messagingDisabled('sms', { APP_ENV: 'local', ...gmail, SMS_DRIVER: 'mailpit' })).toBe(true);
+    });
+
+    it('Mailpit unlocks each channel', () => {
+        expect(messagingDisabled('email', { APP_ENV: 'local', ...mailpit })).toBe(false);
+        expect(messagingDisabled('sms', { APP_ENV: 'local', ...mailpit })).toBe(false);
+        expect(messagingDisabled('email', { APP_ENV: 'local', SMTP_HOST: 'localhost' })).toBe(false);
+        expect(messagingDisabled('sms', { APP_ENV: 'local', SMTP_HOST: 'localhost' })).toBe(true);
+        // One open channel is enough for the schedulers to run; each sender still checks its own.
+        expect(messagingDisabled(undefined, { APP_ENV: 'local', SMTP_HOST: 'localhost' })).toBe(false);
+    });
+
+    it('an allowlist unlocks both (recipients are filtered instead)', () => {
+        const env = { APP_ENV: 'uat', ...gmail, MESSAGING_ALLOWLIST: 'tester@example.com' };
+        expect(messagingDisabled('email', env)).toBe(false);
+        expect(messagingDisabled('sms', env)).toBe(false);
+    });
+
+    it('production is never locked, and MESSAGING_DISABLED always wins', () => {
+        expect(messagingLock('email', { APP_ENV: 'production', ...gmail })).toBeNull();
+        expect(messagingLock('sms', { NODE_ENV: 'production' })).toBeNull();
+        expect(messagingDisabled('email', { APP_ENV: 'local', ...mailpit, MESSAGING_DISABLED: 'true' })).toBe(true);
     });
 });

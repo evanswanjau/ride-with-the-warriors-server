@@ -12,16 +12,50 @@
  * mobile number is ignored. If the variable is set but no entry is valid,
  * nothing is sent (fail closed). An empty or blank variable counts as unset.
  *
+ * Outside production, when neither is set, messages only go to the local Mailpit inbox
+ * (see messagingLock below).
+ *
  * Suppressed and dropped messages are logged without their content.
  */
+import { appEnv } from '../config.js';
 import { normalizeEmail, normalizePhone } from './identity.js';
 
-export function messagingDisabled(): boolean {
-    return process.env.MESSAGING_DISABLED === 'true';
+export type MessageKind = 'email' | 'sms';
+
+const LOCAL_HOSTS = ['localhost', '127.0.0.1', '::1', 'mailpit'];
+
+/**
+ * The lock: outside production nothing is sent unless it is certain no real person can be
+ * reached. That is the case when MESSAGING_ALLOWLIST is set (only the listed testers get
+ * messages), or when the channel delivers to the local Mailpit inbox: SMTP_HOST is this
+ * machine for email, SMS_DRIVER=mailpit for SMS. Forgetting to configure an environment
+ * therefore sends nothing, instead of emailing whoever is in its database.
+ *
+ * Returns why the channel is locked, or null when it may send. Without a kind it reports a
+ * lock only when both channels are locked.
+ */
+export function messagingLock(kind?: MessageKind, env: NodeJS.ProcessEnv = process.env): string | null {
+    if (appEnv(env) === 'production') return null;
+    if (messagingAllowlist(env)) return null;
+    const smtpLocal = LOCAL_HOSTS.includes((env.SMTP_HOST ?? '').trim().toLowerCase());
+    const emailLock = smtpLocal ? null : 'no MESSAGING_ALLOWLIST and SMTP_HOST is not the local Mailpit';
+    // The Mailpit SMS driver falls back to localhost when SMTP_HOST is not set.
+    const smsLock = env.SMS_DRIVER === 'mailpit' && (smtpLocal || !env.SMTP_HOST)
+        ? null
+        : 'no MESSAGING_ALLOWLIST and SMS_DRIVER is not mailpit';
+    if (kind === 'email') return emailLock;
+    if (kind === 'sms') return smsLock;
+    return emailLock && smsLock ? `${emailLock}; ${smsLock}` : null;
 }
 
-export function logSuppressed(kind: 'email' | 'sms', recipients: number, subject?: string) {
-    console.log(`[Messaging] MESSAGING_DISABLED: suppressed ${kind} to ${recipients} recipient(s)${subject ? ` — "${subject}"` : ''}`);
+/** True when nothing may be sent: MESSAGING_DISABLED=true, or the lock above. */
+export function messagingDisabled(kind?: MessageKind, env: NodeJS.ProcessEnv = process.env): boolean {
+    return env.MESSAGING_DISABLED === 'true' || messagingLock(kind, env) !== null;
+}
+
+export function logSuppressed(kind: MessageKind, recipients: number, subject?: string) {
+    const why = process.env.MESSAGING_DISABLED === 'true' ? 'MESSAGING_DISABLED' : `locked (${messagingLock(kind)})`;
+    console.log(`[Messaging] ${why}: suppressed ${kind} to ${recipients} recipient(s)${subject ? ` — "${subject}"` : ''}`);
 }
 
 export type Allowlist = { emails: Set<string>; phones: Set<string> };

@@ -3,6 +3,7 @@
 #
 #   npm run db:clone-anon -- path/to/prod.dump        # a pg_dump -Fc file
 #   SOURCE_DATABASE_URL='postgresql://…' npm run db:clone-anon
+#   npm run db:clone-anon                             # SOURCE_DATABASE_URL from .env.live-readonly
 #
 # Steps: restore into the local Docker Postgres → apply migrations (marking the
 # baseline as applied when the dump predates migrations) → anonymise every name,
@@ -20,6 +21,11 @@ case "$TARGET_DB" in rwtw_*) ;; *) echo "TARGET_DB must start with rwtw_" >&2; e
 export DATABASE_URL="postgresql://postgres:rwtw@localhost:54329/$TARGET_DB"
 PSQL=(docker compose --env-file dev/compose.env exec -T db psql -U postgres -v ON_ERROR_STOP=1)
 mkdir -p dev/dumps
+
+# The read-only login for the live database lives in an untracked file (docs/LIVE_DATA_COPY.md).
+if [ -z "${1:-}" ] && [ -z "${SOURCE_DATABASE_URL:-}" ] && [ -f .env.live-readonly ]; then
+  SOURCE_DATABASE_URL="$(grep -E '^SOURCE_DATABASE_URL=' .env.live-readonly | head -1 | cut -d= -f2- | tr -d '"')"
+fi
 
 if [ -n "${1:-}" ]; then
   echo "→ Copying $1 into the container volume"
@@ -55,6 +61,9 @@ npx dotenv -e .env.stack -- prisma migrate deploy
 
 echo "→ Anonymising"
 "${PSQL[@]}" -d "$TARGET_DB" < prisma/anonymise.sql
+
+echo "→ Checking that no real email or phone number is left"
+npx dotenv -e .env.stack -- tsx src/scripts/checkAnonymised.ts
 
 echo "→ Local admin and pricing"
 npx dotenv -e .env.stack -- tsx prisma/seed.ts

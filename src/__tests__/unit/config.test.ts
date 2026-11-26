@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { checkConfig, appEnv, shouldListen } from '../../config.js';
+import { checkConfig, appEnv, shouldListen, assertNotLiveDatabase, pointsAtLiveDatabase } from '../../config.js';
 
 const secret = 'x'.repeat(40);
 const prodBase = {
@@ -136,5 +136,33 @@ describe('shouldListen', () => {
     it('listens when not on Vercel', () => {
         expect(shouldListen({ NODE_ENV: 'development' })).toBe(true);
         expect(shouldListen({})).toBe(true);
+    });
+});
+
+describe('live database guard', () => {
+    const live = 'postgresql://postgres.nudwrbsnlqlqwavhniea:pw@aws-1-eu-west-1.pooler.supabase.com:5432/postgres';
+    const dev = 'postgresql://postgres.abcdefgh:pw@aws-1-eu-central-1.pooler.supabase.com:5432/postgres';
+
+    it('recognises the live project in any URL form', () => {
+        expect(pointsAtLiveDatabase(live)).toBe(true);
+        expect(pointsAtLiveDatabase('postgresql://postgres:pw@db.nudwrbsnlqlqwavhniea.supabase.co:5432/postgres')).toBe(true);
+        expect(pointsAtLiveDatabase(dev)).toBe(false);
+        expect(pointsAtLiveDatabase(undefined)).toBe(false);
+    });
+
+    it.each(['local', 'test', 'uat'])('refuses the live database in %s', (APP_ENV) => {
+        expect(() => assertNotLiveDatabase({ APP_ENV, DATABASE_URL: live })).toThrow(/live database/);
+        expect(checkConfig({ ...prodBase, APP_ENV, DATABASE_URL: live }).errors.join()).toMatch(/live database/);
+    });
+
+    it('refuses it when no environment is named (a script run from a laptop)', () => {
+        expect(() => assertNotLiveDatabase({ DATABASE_URL: live })).toThrow(/live database/);
+        expect(() => assertNotLiveDatabase({ NODE_ENV: 'development', DATABASE_URL: live })).toThrow(/live database/);
+    });
+
+    it('allows the production server, and any other database everywhere', () => {
+        expect(() => assertNotLiveDatabase({ APP_ENV: 'production', DATABASE_URL: live })).not.toThrow();
+        expect(checkConfig({ ...prodBase, DATABASE_URL: live }).errors).toEqual([]);
+        expect(() => assertNotLiveDatabase({ APP_ENV: 'local', DATABASE_URL: dev })).not.toThrow();
     });
 });
