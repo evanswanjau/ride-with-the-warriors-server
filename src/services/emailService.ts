@@ -124,7 +124,7 @@ export function smtpOptions(env: NodeJS.ProcessEnv = process.env) {
 {
   const realSendMail = transporter.sendMail.bind(transporter);
   (transporter as { sendMail: (mail: Mail.Options | undefined) => Promise<unknown> }).sendMail = async (mail) => {
-    if (messagingDisabled()) {
+    if (messagingDisabled('email')) {
       const to = Array.isArray(mail?.to) ? mail.to.length : 1;
       logSuppressed('email', to, mail?.subject);
       return { messageId: 'suppressed', accepted: [], rejected: [] };

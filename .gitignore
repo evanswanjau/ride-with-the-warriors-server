@@ -48,6 +48,7 @@ out/
 .env.local
 .env.development
 .env.production
+.env.live-readonly
 
 # next.js build output
 .next

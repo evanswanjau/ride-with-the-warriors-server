@@ -17,9 +17,14 @@ describe('GET /api/cron/reminders', () => {
         process.env.CRON_SECRET = 'test-cron-secret';
         process.env.CRON_REMINDERS_ENABLED = 'true';
         process.env.MESSAGING_DISABLED = 'false';
+        // Outside production reminders only run when messages land in Mailpit (or an allowlist is set).
+        process.env.SMTP_HOST = 'localhost';
+        process.env.SMS_DRIVER = 'mailpit';
     });
     afterEach(() => {
         delete process.env.CRON_REMINDERS_ENABLED;
+        delete process.env.SMTP_HOST;
+        delete process.env.SMS_DRIVER;
         process.env.MESSAGING_DISABLED = 'true';
         runScheduledTasks.mockClear();
     });
@@ -47,6 +52,14 @@ describe('GET /api/cron/reminders', () => {
         const res = await request(app).get('/api/cron/reminders').set(auth);
         expect(res.status).toBe(200);
         expect(res.body.skipped).toBeTruthy();
+        expect(runScheduledTasks).not.toHaveBeenCalled();
+    });
+
+    it('skips when nothing is configured to keep messages away from real people', async () => {
+        delete process.env.SMTP_HOST;
+        delete process.env.SMS_DRIVER;
+        const res = await request(app).get('/api/cron/reminders').set(auth);
+        expect(res.body.skipped).toBe('MESSAGING_DISABLED');
         expect(runScheduledTasks).not.toHaveBeenCalled();
     });
 

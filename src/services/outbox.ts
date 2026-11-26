@@ -128,7 +128,7 @@ export async function sendNow(input: EnqueueInput & { storedPayload: unknown }):
         },
         select: { id: true },
     });
-    if (messagingDisabled()) {
+    if (messagingDisabled(input.channel === 'EMAIL' ? 'email' : 'sms')) {
         logSuppressed(input.channel === 'EMAIL' ? 'email' : 'sms', 1, input.template);
         await prisma.notification.update({ where: { id: row.id }, data: { status: 'SUPPRESSED' } });
         return true;
@@ -198,7 +198,7 @@ export async function processOutbox(opts: { limit?: number; budgetMs?: number; n
         result.claimed++;
         const attempts = row.attempts + 1;
 
-        if (messagingDisabled()) {
+        if (messagingDisabled(row.channel === 'EMAIL' ? 'email' : 'sms')) {
             logSuppressed(row.channel === 'EMAIL' ? 'email' : 'sms', 1, row.template);
             await prisma.notification.update({ where: { id: row.id }, data: { status: 'SUPPRESSED' } });
             result.suppressed++;

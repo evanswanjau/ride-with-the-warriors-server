@@ -52,6 +52,10 @@ here touches it.
 | `CRON_REMINDERS_ENABLED` | `true` only when you want reminders on staging | Opt-in for `/api/cron/reminders`. |
 | `MESSAGING_ALLOWLIST` | tester emails and phones, comma separated | Only these get email or SMS. Everyone else is logged (no content) and dropped. Phones are matched after normalising (`0711 000 222` = `254711000222`). If set but no entry is valid, nothing is sent. |
 | `MESSAGING_DISABLED` | unset | `true` stops all email and SMS. |
+
+Without `MESSAGING_ALLOWLIST` the test website sends **nothing** (no login codes either): outside
+production, messages only go to allowlisted testers or to the local Mailpit inbox. `APP_ENV=uat` must
+be set, because Vercel sets `NODE_ENV=production` on every deployment. See `docs/LIVE_DATA_COPY.md`.
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` | per provider | `SMTP_SECURE=true` for implicit TLS (port 465). |
 | `SMTP_REQUIRE_TLS` | `true` | With `SMTP_SECURE=false` (STARTTLS, ports 587/25/26), refuses to send in plain text. STARTTLS is used whenever offered even without it. |
 | `SMTP_TLS_INSECURE` | unset; `true` only while `SMTP_HOST` is an IP address or has no valid certificate | Certificates are checked by default. `true` skips the check (warned in `uat`, refused in production). |

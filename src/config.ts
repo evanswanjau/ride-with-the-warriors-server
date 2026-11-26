@@ -35,6 +35,26 @@ export function shouldListen(env: NodeJS.ProcessEnv = process.env): boolean {
     return !onVercel(env);
 }
 
+/**
+ * Supabase project refs of the live database. Nothing but the production server may connect
+ * to it: a laptop, a script, the test website or a test run pointed at it by mistake could
+ * change real records or message real riders.
+ */
+export const LIVE_DATABASE_REFS = ['nudwrbsnlqlqwavhniea'] as const;
+
+export function pointsAtLiveDatabase(url: string | undefined): boolean {
+    return !!url && LIVE_DATABASE_REFS.some(ref => url.includes(ref));
+}
+
+export const LIVE_DATABASE_REFUSED = 'DATABASE_URL points at the live database. Only the production server may use it.';
+
+/** Throws unless this process is the production server. Called before any database connection. */
+export function assertNotLiveDatabase(env: NodeJS.ProcessEnv = process.env): void {
+    if (appEnv(env) !== 'production' && pointsAtLiveDatabase(env.DATABASE_URL)) {
+        throw new Error(`[config] ${LIVE_DATABASE_REFUSED}`);
+    }
+}
+
 const MIN_SECRET = 32;
 
 const schema = z.object({
@@ -66,6 +86,7 @@ export function checkConfig(env: NodeJS.ProcessEnv = process.env): ConfigReport 
     }
 
     if (!env.DATABASE_URL && which !== 'test') errors.push('DATABASE_URL must be set.');
+    if (which !== 'production' && pointsAtLiveDatabase(env.DATABASE_URL)) errors.push(LIVE_DATABASE_REFUSED);
 
     const deployed = which === 'uat' || which === 'production';
     const isTrue = (v?: string) => v === 'true';
@@ -130,7 +151,7 @@ export function checkConfig(env: NodeJS.ProcessEnv = process.env): ConfigReport 
         warnings.push('CRON_SECRET is not set: scheduled jobs (/api/cron/*) will refuse every call.');
     }
     if (which === 'uat' && !env.MESSAGING_ALLOWLIST && !isTrue(env.MESSAGING_DISABLED)) {
-        warnings.push('MESSAGING_ALLOWLIST is not set in uat: real riders in this database could be emailed or texted.');
+        warnings.push('MESSAGING_ALLOWLIST is not set in uat: no email or SMS will be sent (see src/utils/messaging.ts).');
     }
     if (deployed && env.SMTP_REQUIRE_TLS !== 'true' && env.SMTP_SECURE !== 'true') {
         warnings.push('Neither SMTP_SECURE nor SMTP_REQUIRE_TLS is true: email may be sent without TLS.');

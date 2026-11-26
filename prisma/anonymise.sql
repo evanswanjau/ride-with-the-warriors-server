@@ -28,6 +28,8 @@ INSERT INTO phone_src
     UNION ALL SELECT phone FROM "Payment"
     UNION ALL SELECT phone FROM "Account"
     UNION ALL SELECT "influencerPhone" FROM "Referral"
+    UNION ALL SELECT "phoneNumber" FROM "RiderProfile"
+    UNION ALL SELECT "emergencyPhone" FROM "RiderProfile"
     UNION ALL SELECT jsonb_path_query(payload, 'lax $.**.phoneNumber') #>> '{}' FROM "Registration" WHERE payload IS NOT NULL
     UNION ALL SELECT jsonb_path_query(payload, 'lax $.**.emergencyPhone') #>> '{}' FROM "Registration" WHERE payload IS NOT NULL
     UNION ALL SELECT jsonb_path_query(payload, 'lax $.**.phone') #>> '{}' FROM "Registration" WHERE payload IS NOT NULL
@@ -52,8 +54,13 @@ CREATE FUNCTION pg_temp.anon_id(v text) RETURNS text LANGUAGE sql IMMUTABLE AS $
     ELSE (20000000 + ('x' || substr(md5('id:' || btrim(v)), 1, 7))::bit(28)::int % 20000000)::text END
 $$;
 
+-- A pooled name plus a short hash of the original (compared the way the app compares names:
+-- trimmed, lower case, single spaces), so two different people never become the same fake
+-- person. Rider profiles are matched on name plus ID number or date of birth.
 CREATE FUNCTION pg_temp.pick(seed text, salt text, opts text[]) RETURNS text LANGUAGE sql IMMUTABLE AS $$
-  SELECT opts[1 + (('x' || substr(md5(salt || lower(btrim(seed))), 1, 7))::bit(28)::int % array_length(opts, 1))]
+  SELECT opts[1 + (('x' || substr(md5(salt || k), 1, 7))::bit(28)::int % array_length(opts, 1))]
+         || substr(md5(salt || 'x' || k), 1, 5)
+  FROM (SELECT regexp_replace(lower(btrim(seed)), '\s+', ' ', 'g') AS k) n
 $$;
 
 CREATE FUNCTION pg_temp.fake_first(v text) RETURNS text LANGUAGE sql IMMUTABLE AS $$
@@ -86,6 +93,11 @@ CREATE FUNCTION pg_temp.anon_value(key text, val text) RETURNS text LANGUAGE sql
     WHEN 'phone' THEN pg_temp.anon_phone(val)
     WHEN 'emergencyphone' THEN pg_temp.anon_phone(val)
     WHEN 'mobile' THEN pg_temp.anon_phone(val)
+    WHEN 'msisdn' THEN pg_temp.anon_phone(val)
+    WHEN 'mobilenumber' THEN pg_temp.anon_phone(val)
+    WHEN 'customername' THEN pg_temp.fake_full(val)
+    WHEN 'sendername' THEN pg_temp.fake_full(val)
+    WHEN 'payername' THEN pg_temp.fake_full(val)
     WHEN 'idnumber' THEN pg_temp.anon_id(val)
     WHEN 'servicenumber' THEN pg_temp.anon_id(val)
     WHEN 'firstname' THEN pg_temp.fake_first(val)
@@ -178,11 +190,40 @@ UPDATE "Referral" SET
   "influencerEmail" = pg_temp.anon_email("influencerEmail"),
   "influencerPhone" = pg_temp.anon_phone("influencerPhone");
 
-UPDATE "NotifyInterest" SET email = pg_temp.anon_email(email), "firstName" = pg_temp.fake_first("firstName");
-UPDATE "EventFeedback" SET "firstName" = pg_temp.fake_first("firstName"), "lastName" = pg_temp.fake_last("lastName");
+-- Rider profiles are copies of registration details; the match key is rebuilt from the fake
+-- values exactly as src/services/riderProfiles.ts builds it, so later registrations by the
+-- same (fake) rider still find their profile.
+UPDATE "RiderProfile" SET
+  "firstName" = pg_temp.fake_first("firstName"),
+  "lastName" = pg_temp.fake_last("lastName"),
+  email = pg_temp.anon_email(email),
+  "phoneNumber" = pg_temp.anon_phone("phoneNumber"),
+  "idNumber" = pg_temp.anon_id("idNumber"),
+  "emergencyPhone" = pg_temp.anon_phone("emergencyPhone"),
+  "emergencyContactName" = pg_temp.fake_full("emergencyContactName"),
+  "serviceNumber" = pg_temp.anon_id("serviceNumber");
+UPDATE "RiderProfile" SET "matchKey" =
+  CASE WHEN coalesce("idNumber", '') <> ''
+    THEN 'id:' || upper(regexp_replace("idNumber", '\s+', '', 'g'))
+    ELSE 'dob:' || coalesce(to_char(dob, 'YYYY-MM-DD'), '') END
+  || '|' || lower("firstName") || '|' || lower("lastName");
 
--- Logs, links and credentials carry personal data or secrets: drop them.
-TRUNCATE "SmsLog", "ShortLink", "OtpCode", "UserSession", "AdminSession";
+UPDATE "PaymentFlag" SET
+  expected = pg_temp.anon_json(expected),
+  received = pg_temp.anon_json(received),
+  details = pg_temp.anon_json(details);
+
+UPDATE "NotifyInterest" SET email = pg_temp.anon_email(email), "firstName" = pg_temp.fake_first("firstName");
+-- Free-text answers can name people.
+UPDATE "EventFeedback" SET
+  "firstName" = pg_temp.fake_first("firstName"),
+  "lastName" = pg_temp.fake_last("lastName"),
+  highlights = CASE WHEN highlights IS NULL THEN NULL ELSE '[removed]' END,
+  improvements = CASE WHEN improvements IS NULL THEN NULL ELSE '[removed]' END;
+
+-- Logs, queued messages, links and credentials carry personal data or secrets: drop them.
+-- The queue (Notification) must be empty so no worker can ever send a copied message.
+TRUNCATE "SmsLog", "ShortLink", "OtpCode", "UserSession", "AdminSession", "Notification", "AdminAuditLog";
 DELETE FROM "Admin";
 
 COMMIT;

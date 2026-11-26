@@ -44,10 +44,24 @@ describe.skipIf(!hasDb)('Notification outbox', () => {
         registerDeliverer('EMAIL', fake('EMAIL'));
         registerDeliverer('SMS', fake('SMS'));
         process.env.MESSAGING_DISABLED = 'false';
+        // The lock (utils/messaging.ts) only lets a non-production run send to Mailpit.
+        process.env.SMTP_HOST = 'localhost';
+        process.env.SMS_DRIVER = 'mailpit';
     });
 
     afterEach(() => {
         process.env.MESSAGING_DISABLED = 'true';
+        delete process.env.SMTP_HOST;
+        delete process.env.SMS_DRIVER;
+    });
+
+    it('without Mailpit or an allowlist the worker sends nothing (lock)', async () => {
+        delete process.env.SMTP_HOST;
+        delete process.env.SMS_DRIVER;
+        await smsService.sendSMS(['0711000111'], 'Hello', { template: 'sms:test' });
+        await processOutbox();
+        expect(sent).toHaveLength(0);
+        expect((await prisma.notification.findFirstOrThrow()).status).toBe('SUPPRESSED');
     });
 
     describe('queuing', () => {
