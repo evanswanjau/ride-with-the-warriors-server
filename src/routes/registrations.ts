@@ -13,13 +13,10 @@ import { prisma } from '../storage/prisma.js';
 import { requireUser, optionalUser, UserRequest } from '../middleware/userAuth.js';
 import { linkGroupParticipants } from '../services/accountService.js';
 import { quoteLimiter } from '../middleware/rateLimit.js';
+import { currentEvent, registrationOpen } from '../services/events.js';
 
 export const registrationsRouter = Router();
 
-/** Registration opens per event via REGISTRATION_OPEN=true; closed otherwise. */
-function registrationOpen() {
-  return process.env.REGISTRATION_OPEN === 'true';
-}
 
 /**
  * Loads a registration the logged-in account may act on (owner), plus the
@@ -91,14 +88,15 @@ registrationsRouter.post('/quote', quoteLimiter, optionalUser, async (req: UserR
       payload = { familyDetails: familyDetailsSchema.parse((base.payload as Record<string, unknown>).familyDetails ?? base.payload) };
     }
 
-    // CHECK FOR DUPLICATES (only PAID or CONFIRMED rows block a quote)
-    const { paidDuplicates: blockingDuplicates, duplicateInfo } = await checkDuplicates(base.type, payload);
+    // CHECK FOR DUPLICATES (only PAID or CONFIRMED rows of the current event block a quote)
+    const event = await currentEvent();
+    const { paidDuplicates: blockingDuplicates, duplicateInfo } = await checkDuplicates(base.type, payload, {}, event.year);
 
     if (blockingDuplicates.length > 0) {
       return res.status(400).json(duplicateError(blockingDuplicates, duplicateInfo, req.account?.id));
     }
 
-    const quote = await buildQuote({ circuitId: base.circuitId, type: base.type, payload });
+    const quote = await buildQuote({ event, circuitId: base.circuitId, type: base.type, payload });
 
     // Bib numbers are assigned only after payment, so there is no projected number.
     return res.json(quote);
@@ -184,11 +182,13 @@ registrationsRouter.post('/pay/stk-push', requireUser, async (req: UserRequest, 
 
 registrationsRouter.post('/', requireUser, async (req: UserRequest, res, next) => {
   const start = Date.now();
-  if (!registrationOpen()) {
-    return res.status(403).json({ error: { code: 'REGISTRATION_CLOSED', message: 'Registration is closed.' } });
-  }
   const accountId = req.account!.id;
   try {
+    // New registrations always enter the current (newest) event.
+    const event = await currentEvent();
+    if (!registrationOpen(event)) {
+      return res.status(403).json({ error: { code: 'REGISTRATION_CLOSED', message: 'Registration is closed.' } });
+    }
     const { registrationId: existingId } = req.body;
     const base = quoteRequestSchema.parse(req.body);
     const { type, circuitId } = base;
@@ -221,7 +221,7 @@ registrationsRouter.post('/', requireUser, async (req: UserRequest, res, next) =
       excludeGroupId = existing.groupId || (existing.payload as RegistrationPayload | null)?.groupId;
     }
 
-    const { paidDuplicates, unpaidDuplicates, duplicateInfo } = await checkDuplicates(type, payload, { groupId: excludeGroupId, id: existingId });
+    const { paidDuplicates, unpaidDuplicates, duplicateInfo } = await checkDuplicates(type, payload, { groupId: excludeGroupId, id: existingId }, event.year);
 
     if (paidDuplicates.length > 0) {
       console.log(`[Registration] Duplicate check failed: ${duplicateInfo.length} paid match(es)`);
@@ -238,7 +238,7 @@ registrationsRouter.post('/', requireUser, async (req: UserRequest, res, next) =
       ids: myUnpaidDuplicates.filter(reg => !reg.groupId).map(reg => reg.id),
     } : undefined;
 
-    const quote = await buildQuote({ circuitId: base.circuitId, type: base.type, payload });
+    const quote = await buildQuote({ event, circuitId: base.circuitId, type: base.type, payload });
 
     let rec: Awaited<ReturnType<typeof createRegistration>>;
     if (existingId) {
@@ -251,6 +251,8 @@ registrationsRouter.post('/', requireUser, async (req: UserRequest, res, next) =
         pricing: quote.pricing,
         classifications: quote.classifications,
         accountId,
+        eventYear: event.year,
+        bikeHirePrice: event.bikeHirePrice,
       }, replace);
     } else {
       console.log(`[Registration] Creating new ${type} record`);
@@ -263,6 +265,8 @@ registrationsRouter.post('/', requireUser, async (req: UserRequest, res, next) =
         status: quote.pricing.totalAmount === 0 ? 'PAID' : 'UNPAID',
         mpesaCode: base.mpesaCode || null,
         accountId,
+        eventYear: event.year,
+        bikeHirePrice: event.bikeHirePrice,
       }, replace);
     }
     // Team members / adult riders who already have accounts see their own entry.
@@ -329,9 +333,11 @@ registrationsRouter.get('/:id', requireUser, async (req: UserRequest, res) => {
   });
 });
 
-registrationsRouter.get('/config/categories', async (_req, res, next) => {
+// ?year=2026 for a past event's categories; the current event's by default.
+registrationsRouter.get('/config/categories', async (req, res, next) => {
   try {
-    const categories = await getPricingCategories();
+    const year = Number(req.query.year);
+    const categories = await getPricingCategories(Number.isInteger(year) && year > 2000 ? year : undefined);
     res.json({ categories });
   } catch (err) {
     next(err);

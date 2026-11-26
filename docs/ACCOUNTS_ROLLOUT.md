@@ -16,8 +16,8 @@ Branch `feat/accounts-overhaul` in both `server/` and `client/`. Deploy the
   |---|---|---|
   | `DTB_CALLBACK_SECRET` | long random string | Authenticates M-Pesa callbacks. Test one real payment after setting it. |
   | `OTP_PEPPER` | long random string | Hashes login codes. Changing it invalidates codes in flight (harmless). |
-  | `REGISTRATION_OPEN` | unset (closed) / `true` | Server-side switch; unset keeps 2026 registration closed. |
-  | `RAFFLE_OPEN` | unset (closed) / `true` | Same for the raffle. |
+  | `REGISTRATION_OPEN` | unset | Replaced by the `Event` table (Phase 4): admins open and close registration per event. Production ignores it. |
+  | `RAFFLE_OPEN` | unset | Same for the raffle. |
   | `CLOUDINARY_URL` | `cloudinary://key:secret@cloud` | Gallery uploads and image URLs. |
   | `MESSAGING_DISABLED` | **unset in production** | Set to `true` only on dev/test copies so nobody is emailed or texted. |
   | `OTP_DEV_ECHO` | **unset in production** | Dev only: returns login codes in API responses. Ignored when `NODE_ENV=production`. |

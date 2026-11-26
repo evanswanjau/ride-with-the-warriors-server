@@ -13,9 +13,8 @@ import { buildQuote, type PricingResult } from '../services/pricing.js';
 import { requireUser, UserRequest } from '../middleware/userAuth.js';
 import { paymentGateway } from '../services/paymentGateway.js';
 import { beginAttempt, recordAttempt } from '../services/payments.js';
+import { eventForYear } from '../services/events.js';
 
-// Same fee charged when a bike is hired during registration (services/pricing.ts).
-const BIKE_HIRE_FEE = 1500;
 
 export const meRouter = Router();
 meRouter.use(requireUser);
@@ -143,6 +142,8 @@ meRouter.post('/bike-hire', async (req: UserRequest, res, next) => {
         }
 
         const unpaid = reg.status === 'UNPAID';
+        // The fee is the registration's event's bike hire price.
+        const BIKE_HIRE_FEE = (await eventForYear(reg.eventYear)).bikeHirePrice;
         const bikeHire = await prisma.bikeHire.create({
             data: { registrationId: reg.id, amount: BIKE_HIRE_FEE, status: 'PENDING', accountId, eventYear: reg.eventYear },
         });
@@ -325,7 +326,7 @@ meRouter.patch('/riders/:id', async (req: UserRequest, res, next) => {
             update.payload = payload;
 
             if ('dob' in diff && !PAID_STATUSES.includes(reg.status)) {
-                const quote = await buildQuote({ circuitId: reg.circuitId as Parameters<typeof buildQuote>[0]['circuitId'], type: 'individual', payload: payload as Parameters<typeof buildQuote>[0]['payload'] });
+                const quote = await buildQuote({ event: await eventForYear(reg.eventYear), circuitId: reg.circuitId as Parameters<typeof buildQuote>[0]['circuitId'], type: 'individual', payload: payload as Parameters<typeof buildQuote>[0]['payload'] });
                 const pricing = quote.pricing;
                 // A bike added after registering is part of this payment but not of the payload.
                 if (reg.bikeHire && !pricing.lineItems.some((l) => l.label === 'Bike Hire')) {

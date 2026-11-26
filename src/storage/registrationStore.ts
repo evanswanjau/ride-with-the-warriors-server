@@ -43,6 +43,13 @@ export type RegistrationRecord = {
   bibNumber?: string | null;
   accountId?: string | null;
   participantAccountId?: string | null;
+  /** The event entered; the column defaults to 2026 when not given. */
+  eventYear?: number;
+};
+
+export type CreateRegistrationInput = Omit<RegistrationRecord, 'id' | 'createdAt' | 'updatedAt' | 'firstName' | 'lastName' | 'isCaptain' | 'totalAmount'> & {
+  /** Bike hire price of the event (whole KES); 1500 when not given. */
+  bikeHirePrice?: number;
 };
 
 /** A row as written by `createRegistration` (before it is read back from the DB). */
@@ -106,12 +113,14 @@ async function persistRegistrationRows(rows: Prisma.RegistrationCreateManyInput[
 
 // Rows get random UUID ids. Bib numbers are assigned only once the group is paid
 // (see services/numbering.ts).
-export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 'createdAt' | 'updatedAt' | 'firstName' | 'lastName' | 'isCaptain' | 'totalAmount'>, replace?: ReplaceTarget): Promise<RegistrationRecord> {
+export async function createRegistration(input: CreateRegistrationInput, replace?: ReplaceTarget): Promise<RegistrationRecord> {
   const payload = JSON.parse(JSON.stringify(input.payload)) as RegistrationPayload;
   const recordsToCreate: RegistrationRow[] = [];
   const pricing = input.pricing as PricingResult;
   const classifications = input.classifications as Classification[] | null | undefined;
   const groupId = Math.random().toString(36).substring(2, 11).toUpperCase();
+  const bikeHirePrice = input.bikeHirePrice ?? 1500;
+  const yearCol = input.eventYear !== undefined ? { eventYear: input.eventYear } : {};
 
   if (input.type === 'individual') {
     const category = classifications?.[0]?.category || 'Individual';
@@ -144,6 +153,7 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
       unit: rider.unit || null,
       payload: { ...payload, groupId },
       accountId: input.accountId ?? null,
+      ...yearCol,
       pricing: pricing as unknown as Prisma.InputJsonValue,
       classifications: classifications as unknown as Prisma.InputJsonValue,
     });
@@ -185,6 +195,7 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
         unit: m.unit || null,
         payload: { ...payload, groupId, isPrimary: i === 0, memberIndex: i },
         accountId: input.accountId ?? null,
+        ...yearCol,
         participantAccountId: i === 0 ? null : (m.participantAccountId ?? null),
         pricing: pricing as unknown as Prisma.InputJsonValue,
         classifications: classifications as unknown as Prisma.InputJsonValue,
@@ -247,6 +258,7 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
         unit: i === 0 ? guardian.unit : null,
         payload: { ...payload, groupId, isPrimary: i === 0, riderId: rider.id },
         accountId: input.accountId ?? null,
+        ...yearCol,
         pricing: pricing as unknown as Prisma.InputJsonValue,
         classifications: classifications as unknown as Prisma.InputJsonValue,
       });
@@ -310,7 +322,8 @@ export async function createRegistration(input: Omit<RegistrationRecord, 'id' | 
           await prisma.bikeHire.create({
             data: {
               registrationId: record.id,
-              amount: 1500,
+              amount: bikeHirePrice,
+              ...yearCol,
               status: record.status === 'PAID' ? 'PAID' : 'PENDING',
             }
           });
@@ -334,7 +347,7 @@ export async function getAllRegistrations(): Promise<RegistrationRecord[]> {
   return recs as unknown as RegistrationRecord[];
 }
 
-export async function updateRegistration(id: string, input: Partial<Omit<RegistrationRecord, 'id' | 'createdAt' | 'updatedAt'>>, replace?: ReplaceTarget): Promise<RegistrationRecord> {
+export async function updateRegistration(id: string, input: Partial<Omit<RegistrationRecord, 'id' | 'createdAt' | 'updatedAt'>> & { bikeHirePrice?: number }, replace?: ReplaceTarget): Promise<RegistrationRecord> {
   const existing = await prisma.registration.findUnique({ where: { id } });
   if (!existing) throw new Error('Registration not found');
 
@@ -448,12 +461,13 @@ export async function updateRegistration(id: string, input: Partial<Omit<Registr
   return rec as unknown as RegistrationRecord;
 }
 
-export async function findExistingRegistrationsByEmails(emails: string[], excludeGroupId?: string, excludeId?: string): Promise<RegistrationRecord[]> {
+export async function findExistingRegistrationsByEmails(emails: string[], excludeGroupId?: string, excludeId?: string, eventYear?: number): Promise<RegistrationRecord[]> {
   const lowerEmails = emails.map(e => e.toLowerCase());
   const matches = await prisma.registration.findMany({
     where: {
       email: { in: lowerEmails },
       status: { not: 'CANCELLED' },
+      ...(eventYear ? { eventYear } : {}),
       AND: [
         excludeGroupId ? { groupId: { not: excludeGroupId } } : {},
         excludeId ? { id: { not: excludeId } } : {}
@@ -464,11 +478,12 @@ export async function findExistingRegistrationsByEmails(emails: string[], exclud
   return matches as unknown as RegistrationRecord[];
 }
 
-export async function findExistingRegistrationsByIdNumbers(idNumbers: string[], excludeGroupId?: string, excludeId?: string): Promise<RegistrationRecord[]> {
+export async function findExistingRegistrationsByIdNumbers(idNumbers: string[], excludeGroupId?: string, excludeId?: string, eventYear?: number): Promise<RegistrationRecord[]> {
   const matches = await prisma.registration.findMany({
     where: {
       idNumber: { in: idNumbers },
       status: { not: 'CANCELLED' },
+      ...(eventYear ? { eventYear } : {}),
       AND: [
         excludeGroupId ? { groupId: { not: excludeGroupId } } : {},
         excludeId ? { id: { not: excludeId } } : {}

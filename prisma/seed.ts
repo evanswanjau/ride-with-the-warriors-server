@@ -170,8 +170,8 @@ async function main() {
         }
     ];
 
-    console.log('🗑️ Clearing existing pricing categories...');
-    await prisma.pricingCategory.deleteMany();
+    console.log('🗑️ Clearing existing 2026 pricing categories...');
+    await prisma.pricingCategory.deleteMany({ where: { eventYear: 2026 } });
 
     console.log(`⏳ Seeding ${categories.length} pricing categories...`);
     for (const cat of categories) {

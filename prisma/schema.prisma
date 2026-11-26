@@ -41,8 +41,8 @@ model Registration {
   serviceNumber        String?
   unit                 String?
   bikeHire             BikeHire?
-  // Assigned only once the registration is paid (or made complementary).
-  bibNumber            String?            @unique
+  // Assigned only once the registration is paid (or made complementary). Unique per event year.
+  bibNumber            String?
   eventYear            Int                @default(2026)
   // Account that registered and pays for this row (guardian / team captain / rider).
   accountId            String?
@@ -60,6 +60,7 @@ model Registration {
   @@index([accountId])
   @@index([participantAccountId])
   @@index([eventYear])
+  @@unique([eventYear, bibNumber])
 }
 
 model Admin {
@@ -162,11 +163,13 @@ model PricingCategory {
   colorCode      String
   hexColor       String
   remarks        String?
+  // Each event year has its own prices and bib ranges, so 2027 changes never touch 2026.
+  eventYear      Int      @default(2026)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  @@unique([circuitId, type, categoryName, familyCategory])
-  @@index([circuitId, type])
+  @@unique([eventYear, circuitId, type, categoryName, familyCategory])
+  @@index([eventYear, circuitId, type])
 }
 
 model EmailLog {
@@ -198,8 +201,8 @@ model RaffleTicket {
   mpesaCode         String? // New: store Receipt Number directly
   paymentDetails    Json? // New: store full callback payload
   referralCode      String? // Referral code used at purchase
-  // Assigned only once the ticket is paid.
-  ticketNumber      String?  @unique
+  // Assigned only once the ticket is paid. Unique per event year.
+  ticketNumber      String?
   eventYear         Int      @default(2026)
   accountId         String?
   account           Account? @relation(fields: [accountId], references: [id], onDelete: SetNull)
@@ -207,6 +210,7 @@ model RaffleTicket {
   @@index([email])
   @@index([referralCode])
   @@index([accountId])
+  @@unique([eventYear, ticketNumber])
 }
 
 model Referral {
@@ -315,6 +319,27 @@ model EventFeedback {
 
   @@index([role])
   @@index([createdAt])
+}
+
+// One row per yearly ride. Replaces the REGISTRATION_OPEN / RAFFLE_OPEN env flags and the
+// hard-coded raffle (1000) and bike hire (1500) prices. Registration or the raffle is open when
+// its opensAt has passed and its closesAt has not (see src/services/events.ts). The newest year
+// is the current event.
+model Event {
+  year                 Int       @id
+  name                 String
+  // The ride day (date only).
+  date                 DateTime? @db.Date
+  location             String?
+  registrationOpensAt  DateTime?
+  registrationClosesAt DateTime?
+  raffleOpensAt        DateTime?
+  raffleClosesAt       DateTime?
+  // Whole KES.
+  rafflePrice          Int       @default(1000)
+  bikeHirePrice        Int       @default(1500)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 }
 
 // ─── Participant accounts (passwordless, OTP login) ─────────────────────────

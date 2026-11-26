@@ -30,6 +30,8 @@ import { adminNotificationsRouter } from './routes/admin/notifications.js';
 import { authRouter as userAuthRouter } from './routes/auth.js';
 import { meRouter } from './routes/me.js';
 import { galleryRouter } from './routes/gallery.js';
+import { eventsRouter } from './routes/events.js';
+import { adminEventsRouter } from './routes/admin/events.js';
 import { prisma } from './storage/prisma.js';
 import { auditAdminChanges } from './middleware/adminAudit.js';
 import { corsOptions, securityHeaders, errorHandler } from './middleware/security.js';
@@ -75,6 +77,7 @@ app.use('/api/v1/feedback', feedbackRouter);
 app.use('/api/v1/auth', userAuthRouter);
 app.use('/api/v1/me', meRouter);
 app.use('/api/v1/gallery', galleryRouter);
+app.use('/api/v1/events', eventsRouter);
 
 
 // Admin Routes. Every successful change is written to AdminAuditLog.
@@ -92,6 +95,7 @@ app.use('/api/v1/admin/bibs', adminBibsRouter);
 app.use('/api/v1/admin/notifications', adminNotificationsRouter);
 app.use('/api/v1/admin/notify', adminNotifyRouter);
 app.use('/api/v1/admin/feedback', adminFeedbackRouter);
+app.use('/api/v1/admin/events', adminEventsRouter);
 
 // Reports unhandled errors to Sentry (no-op when SENTRY_DSN is not set).
 Sentry.setupExpressErrorHandler(app);

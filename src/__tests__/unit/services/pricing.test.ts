@@ -7,6 +7,7 @@ const mockPricingCategories = vi.hoisted(() => [
         id: 'cat-1',
         circuitId: 'blitz',
         type: 'individual',
+        eventYear: 2026,
         familyCategory: null,
         minAge: 19,
         maxAge: 49,
@@ -21,6 +22,7 @@ const mockPricingCategories = vi.hoisted(() => [
         id: 'cat-2',
         circuitId: 'blitz',
         type: 'individual',
+        eventYear: 2026,
         familyCategory: null,
         minAge: 50,
         maxAge: 999,
@@ -35,6 +37,7 @@ const mockPricingCategories = vi.hoisted(() => [
         id: 'cat-3',
         circuitId: 'recon',
         type: 'team',
+        eventYear: 2026,
         familyCategory: null,
         minAge: null,
         maxAge: null,
@@ -49,6 +52,7 @@ const mockPricingCategories = vi.hoisted(() => [
         id: 'cat-4',
         circuitId: 'family',
         type: 'family',
+        eventYear: 2026,
         familyCategory: 'cubs',
         minAge: 4,
         maxAge: 8,
@@ -63,6 +67,7 @@ const mockPricingCategories = vi.hoisted(() => [
         id: 'cat-5',
         circuitId: 'family',
         type: 'family',
+        eventYear: 2026,
         familyCategory: 'champs',
         minAge: 9,
         maxAge: 13,
@@ -80,6 +85,10 @@ vi.mock('../../../storage/prisma.js', () => ({
     prisma: {
         pricingCategory: {
             findMany: vi.fn().mockResolvedValue(mockPricingCategories),
+        },
+        // No Event rows: the 2026 fallback (bike hire 1500) applies.
+        event: {
+            findFirst: vi.fn().mockResolvedValue(null),
         },
     },
 }));

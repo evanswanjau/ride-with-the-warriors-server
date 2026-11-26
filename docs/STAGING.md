@@ -63,7 +63,9 @@ here touches it.
 Client project: `VITE_API_URL=https://ride-with-the-warriors-server.vercel.app/api/v1`.
 
 The `MESSAGING_ALLOWLIST`, TLS, and cron settings affect only email and SMS. Other variables
-(`TEXTSMS_*`, `EVENT_*`, `REGISTRATION_OPEN`, ...) keep working as before.
+(`TEXTSMS_*`, `EVENT_*`, ...) keep working as before. `REGISTRATION_OPEN` and `RAFFLE_OPEN` are
+ignored on staging: registration and the raffle open and close per event from admin (see
+"Events and data checks" below).
 
 ## Check staging after a deploy
 
@@ -76,6 +78,33 @@ curl -H "Authorization: Bearer $CRON_SECRET" https://ride-with-the-warriors-serv
 Then log in on https://rwtw.vercel.app with an allowlisted email or phone: the code arrives.
 Try an address that is not on the list: the request succeeds, nothing is delivered, and the
 function log shows `[Messaging] MESSAGING_ALLOWLIST: dropped 1 email recipient(s)`.
+
+## Events and data checks
+
+Each yearly ride is an `Event` row (`src/services/events.ts`). The newest year is the current event:
+new registrations, raffle tickets and bike hires go to it, at its prices and with its own pricing
+categories and bib ranges. Admin endpoints (role `admin`):
+
+```bash
+# Create 2027 (copies the 2026 pricing categories and bib ranges), then open registration
+curl -X POST -H "Authorization: Bearer $ADMIN_TOKEN" -H 'Content-Type: application/json'   -d '{"year":2027,"date":"2027-07-04","rafflePrice":1000,"bikeHirePrice":1500}' $API/api/v1/admin/events
+curl -X POST -H "Authorization: Bearer $ADMIN_TOKEN" $API/api/v1/admin/events/2027/registration/open
+curl -X POST -H "Authorization: Bearer $ADMIN_TOKEN" $API/api/v1/admin/events/2027/registration/close
+```
+
+`GET /api/v1/events/current` tells the web app what is open.
+
+Before and after every Phase 4 migration or backfill, run the read-only check against the database
+(it never writes):
+
+```bash
+npx dotenv -e <env file> -- npm run check:data -- --save before.json
+# ...deploy / migrate / backfill...
+npx dotenv -e <env file> -- npm run check:data -- --compare before.json
+```
+
+It fails on duplicate bib or ticket numbers within a year, on data for a year with no `Event`
+row, and (with `--compare`) on any change in row counts or PAID sums per year.
 
 ## Promoting to production later
 
