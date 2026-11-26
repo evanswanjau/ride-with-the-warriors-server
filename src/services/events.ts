@@ -27,6 +27,7 @@ export const FALLBACK_EVENT: EventRow = {
     raffleClosesAt: new Date('2026-07-05T00:00:00Z'),
     rafflePrice: 1000,
     bikeHirePrice: 1500,
+    bikeStock: null,
     createdAt: new Date(0),
     updatedAt: new Date(0),
 };
@@ -68,6 +69,20 @@ export async function eventForYear(year: number): Promise<EventRow> {
     return event ?? { ...FALLBACK_EVENT, year, name: `Ride With The Warriors ${year}` };
 }
 
+/**
+ * Bikes still free to hire for an event; null when it has no limit. Every hire holds a bike,
+ * paid or not, unless it or its registration is cancelled.
+ */
+export async function bikesLeft(event: Pick<EventRow, 'year' | 'bikeStock'>): Promise<number | null> {
+    if (event.bikeStock === null || event.bikeStock === undefined) return null;
+    const taken = await prisma.bikeHire.count({
+        where: { eventYear: event.year, status: { not: 'CANCELLED' }, registration: { status: { not: 'CANCELLED' } } },
+    });
+    return Math.max(0, event.bikeStock - taken);
+}
+
+export const BIKES_SOLD_OUT = { code: 'BIKES_SOLD_OUT', message: 'All hire bikes for this event are booked.' } as const;
+
 /** What the public site needs to know about an event. */
 export function publicEvent(event: EventRow, now: Date = new Date()) {
     return {
@@ -83,5 +98,6 @@ export function publicEvent(event: EventRow, now: Date = new Date()) {
         raffleClosesAt: event.raffleClosesAt,
         rafflePrice: event.rafflePrice,
         bikeHirePrice: event.bikeHirePrice,
+        bikeStock: event.bikeStock,
     };
 }

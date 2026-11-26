@@ -13,7 +13,7 @@ import { prisma } from '../storage/prisma.js';
 import { requireUser, optionalUser, UserRequest } from '../middleware/userAuth.js';
 import { linkGroupParticipants } from '../services/accountService.js';
 import { quoteLimiter } from '../middleware/rateLimit.js';
-import { currentEvent, registrationOpen } from '../services/events.js';
+import { BIKES_SOLD_OUT, bikesLeft, currentEvent, registrationOpen } from '../services/events.js';
 
 export const registrationsRouter = Router();
 
@@ -237,6 +237,11 @@ registrationsRouter.post('/', requireUser, async (req: UserRequest, res, next) =
       groupIds: [...new Set(myUnpaidDuplicates.map(reg => reg.groupId).filter(Boolean))] as string[],
       ids: myUnpaidDuplicates.filter(reg => !reg.groupId).map(reg => reg.id),
     } : undefined;
+
+    const p = payload as RegistrationPayload;
+    if ((p.riderDetails?.hireBike || p.teamDetails?.hireBike || p.familyDetails?.guardian?.hireBike) && await bikesLeft(event) === 0) {
+      return res.status(409).json({ error: BIKES_SOLD_OUT });
+    }
 
     const quote = await buildQuote({ event, circuitId: base.circuitId, type: base.type, payload });
 

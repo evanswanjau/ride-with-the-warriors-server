@@ -4,6 +4,7 @@ import { paymentGateway } from '../services/paymentGateway.js';
 import { optionalUser, UserRequest } from '../middleware/userAuth.js';
 import { beginAttempt, recordAttempt } from '../services/payments.js';
 import { ownerToken, checkOwnerToken } from '../utils/ownerToken.js';
+import { currentEvent } from '../services/events.js';
 import { donationLimiter } from '../middleware/rateLimit.js';
 
 const MIN_DONATION = 10;
@@ -53,6 +54,8 @@ donationsRouter.post('/', donationLimiter, optionalUser, async (req: UserRequest
                 phone: phone || null,
                 status: 'PENDING',
                 accountId: account?.id ?? null,
+                // Donations count towards the current event.
+                eventYear: (await currentEvent()).year,
             },
         });
 

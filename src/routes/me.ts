@@ -13,7 +13,7 @@ import { buildQuote, type PricingResult } from '../services/pricing.js';
 import { requireUser, UserRequest } from '../middleware/userAuth.js';
 import { paymentGateway } from '../services/paymentGateway.js';
 import { beginAttempt, recordAttempt } from '../services/payments.js';
-import { eventForYear } from '../services/events.js';
+import { BIKES_SOLD_OUT, bikesLeft, eventForYear } from '../services/events.js';
 import { syncRiderModel } from '../services/backfills/riderModel.js';
 
 
@@ -150,8 +150,10 @@ meRouter.post('/bike-hire', async (req: UserRequest, res, next) => {
         }
 
         const unpaid = reg.status === 'UNPAID';
-        // The fee is the registration's event's bike hire price.
-        const BIKE_HIRE_FEE = (await eventForYear(reg.eventYear)).bikeHirePrice;
+        // The fee is the registration's event's bike hire price; its stock may be limited.
+        const event = await eventForYear(reg.eventYear);
+        if (await bikesLeft(event) === 0) return res.status(409).json({ error: BIKES_SOLD_OUT });
+        const BIKE_HIRE_FEE = event.bikeHirePrice;
         const bikeHire = await prisma.bikeHire.create({
             data: { registrationId: reg.id, amount: BIKE_HIRE_FEE, status: 'PENDING', accountId, eventYear: reg.eventYear },
         });

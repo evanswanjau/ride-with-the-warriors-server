@@ -6,13 +6,14 @@
  */
 import { Router } from 'express';
 import { prisma } from '../storage/prisma.js';
-import { currentEvent, publicEvent } from '../services/events.js';
+import { bikesLeft, currentEvent, publicEvent } from '../services/events.js';
 
 export const eventsRouter = Router();
 
 eventsRouter.get('/current', async (_req, res, next) => {
     try {
-        res.json({ event: publicEvent(await currentEvent()) });
+        const event = await currentEvent();
+        res.json({ event: { ...publicEvent(event), bikesLeft: await bikesLeft(event) } });
     } catch (err) {
         next(err);
     }
@@ -23,7 +24,7 @@ eventsRouter.get('/:year', async (req, res, next) => {
         const year = Number(req.params.year);
         const event = Number.isInteger(year) ? await prisma.event.findUnique({ where: { year } }) : null;
         if (!event) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Event not found' } });
-        res.json({ event: publicEvent(event) });
+        res.json({ event: { ...publicEvent(event), bikesLeft: await bikesLeft(event) } });
     } catch (err) {
         next(err);
     }
