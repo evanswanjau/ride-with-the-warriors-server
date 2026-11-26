@@ -14,12 +14,14 @@ import { requireUser, UserRequest } from '../middleware/userAuth.js';
 import { paymentGateway } from '../services/paymentGateway.js';
 import { beginAttempt, recordAttempt } from '../services/payments.js';
 import { eventForYear } from '../services/events.js';
+import { syncRiderModel } from '../services/backfills/riderModel.js';
 
 
 export const meRouter = Router();
 meRouter.use(requireUser);
 
 type Reg = Prisma.RegistrationGetPayload<{ include: { bikeHire: true } }>;
+type GroupedReg = Prisma.RegistrationGetPayload<{ include: { bikeHire: true; registrationGroup: true } }>;
 
 function riderView(r: Reg) {
     return {
@@ -30,6 +32,7 @@ function riderView(r: Reg) {
         bibNumber: r.bibNumber,
         status: r.status,
         isCaptain: r.isCaptain,
+        riderProfileId: r.riderProfileId,
         gender: r.gender,
         dob: r.dob,
         tshirtSize: r.tshirtSize,
@@ -61,39 +64,44 @@ meRouter.get('/history', async (req: UserRequest, res, next) => {
         const year = Number.isInteger(yearParam) && yearParam > 2000 ? yearParam : (years[0] ?? new Date().getFullYear());
 
         const [owned, participating, tickets, donations] = await Promise.all([
-            prisma.registration.findMany({ where: { accountId, eventYear: year }, include: { bikeHire: true }, orderBy: { createdAt: 'asc' } }),
-            prisma.registration.findMany({ where: { participantAccountId: accountId, eventYear: year, NOT: { accountId } }, include: { bikeHire: true }, orderBy: { createdAt: 'asc' } }),
+            prisma.registration.findMany({ where: { accountId, eventYear: year }, include: { bikeHire: true, registrationGroup: true }, orderBy: { createdAt: 'asc' } }),
+            prisma.registration.findMany({ where: { participantAccountId: accountId, eventYear: year, NOT: { accountId } }, include: { bikeHire: true, registrationGroup: true }, orderBy: { createdAt: 'asc' } }),
             prisma.raffleTicket.findMany({ where: { accountId, eventYear: year }, orderBy: { createdAt: 'asc' } }),
             prisma.donation.findMany({ where: { accountId, eventYear: year }, orderBy: { createdAt: 'asc' } }),
         ]);
 
-        // Group the rows I own by registration (family / team / individual).
-        const groups = new Map<string, Reg[]>();
-        for (const r of owned as Reg[]) {
-            const key = r.groupId || r.id;
+        // Group the rows I own by entry (RegistrationGroup; family / team / individual).
+        const groups = new Map<string, GroupedReg[]>();
+        for (const r of owned) {
+            const key = r.registrationGroupId || r.groupId || r.id;
             groups.set(key, [...(groups.get(key) ?? []), r]);
         }
 
         const registrations = [
-            ...[...groups.entries()].map(([groupId, rows]) => {
+            ...[...groups.values()].map((rows) => {
                 const primary = rows.find(r => (r.payload as RegistrationPayload | null)?.isPrimary) ?? rows[0];
+                const group = primary.registrationGroup;
                 return {
-                    groupId,
+                    groupId: primary.groupId || primary.id,
+                    registrationGroupId: group?.id ?? null,
+                    eventYear: primary.eventYear,
                     role: 'owner' as const,
-                    type: primary.type,
-                    circuitId: primary.circuitId,
-                    teamName: primary.teamName,
-                    status: primary.status,
+                    type: group?.type ?? primary.type,
+                    circuitId: group?.circuitId ?? primary.circuitId,
+                    teamName: group?.teamName ?? primary.teamName,
+                    status: group?.status ?? primary.status,
                     // Payment is made against the primary row.
                     paymentRegistrationId: primary.id,
-                    totalAmount: rows.reduce((sum, r) => sum + (r.totalAmount || 0), 0),
+                    totalAmount: group?.totalAmount ?? rows.reduce((sum, r) => sum + (r.totalAmount || 0), 0),
                     createdAt: primary.createdAt,
                     riders: rows.map(riderView),
                 };
             }),
             // Team members / riders registered by someone else: only their own entry.
-            ...(participating as Reg[]).map(r => ({
+            ...participating.map(r => ({
                 groupId: r.groupId || r.id,
+                registrationGroupId: r.registrationGroupId,
+                eventYear: r.eventYear,
                 role: 'participant' as const,
                 type: r.type,
                 circuitId: r.circuitId,
@@ -156,6 +164,7 @@ meRouter.post('/bike-hire', async (req: UserRequest, res, next) => {
             const rows = reg.groupId ? { groupId: reg.groupId } : { id: reg.id };
             await prisma.registration.updateMany({ where: rows, data: { pricing } });
             await prisma.registration.update({ where: { id: reg.id }, data: { totalAmount: reg.totalAmount + BIKE_HIRE_FEE } });
+            await syncRiderModel([reg.id]);
         }
 
         res.status(201).json({ bikeHire, payWithRegistration: unpaid });
@@ -346,6 +355,7 @@ meRouter.patch('/riders/:id', async (req: UserRequest, res, next) => {
         // bibNumber and (for paid entries) category are never written here.
 
         const updated = await prisma.registration.update({ where: { id: reg.id }, data: update as Prisma.RegistrationUncheckedUpdateInput, include: { bikeHire: true } });
+        if (requoted) await syncRiderModel([reg.id]);
         await writeAccountAudit({
             account: req.account!,
             action: 'account:update-rider',

@@ -2,6 +2,7 @@ import { Router } from 'express';
 import type { Prisma } from '../../generated/client/index.js';
 import { prisma } from '../../storage/prisma.js';
 import { requireAdmin } from '../../middleware/auth.js';
+import { yearParam } from '../../services/events.js';
 
 export const adminRaffleRouter = Router();
 
@@ -15,6 +16,8 @@ adminRaffleRouter.get('/', requireAdmin, async (req, res) => {
         const { status, search, referralCode } = req.query;
 
         const where: Prisma.RaffleTicketWhereInput = {};
+        const year = yearParam(req.query.year);
+        if (year) where.eventYear = year;
         if (status) where.status = String(status).toUpperCase();
         if (referralCode) where.referralCode = String(referralCode).toUpperCase();
         if (search) {

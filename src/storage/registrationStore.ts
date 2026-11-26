@@ -5,6 +5,7 @@ import { sendConfirmationEmail } from '../services/emailService.js';
 import { assignBibs } from '../services/numbering.js';
 import type { RegistrationPayload, JuniorRider, TeamMember, FamilyDetails } from '../validation/registrationSchemas.js';
 import type { PricingResult, Classification } from '../services/pricing.js';
+import { syncRiderModel } from '../services/backfills/riderModel.js';
 
 export type RegistrationStatus = 'UNPAID' | 'PAID' | 'CONFIRMED' | 'COMPLEMENTARY' | 'CANCELLED';
 
@@ -105,9 +106,13 @@ async function persistRegistrationRows(rows: Prisma.RegistrationCreateManyInput[
         const locked = await tx.payment.count({ where: { registrationId: { in: victimIds }, status: { in: ['PENDING', 'PAID'] } } });
         if (locked > 0) throw new RegistrationLockedError();
         await tx.registration.deleteMany({ where: { id: { in: victimIds } } });
+        // Groups left without rows go too.
+        await tx.registrationGroup.deleteMany({ where: { registrations: { none: {} } } });
       }
     }
     await tx.registration.createMany({ data: rows });
+    // The new entry gets its RegistrationGroup and RiderProfiles in the same transaction.
+    await syncRiderModel(rows.map((r) => r.id as string), { tx, newEntry: true });
   });
 }
 
@@ -368,6 +373,7 @@ export async function updateRegistration(id: string, input: Partial<Omit<Registr
     });
   }
 
+
   const payloadIn = input.payload as RegistrationPayload | null | undefined;
   const classifications = input.classifications;
   const militarySrc = [payloadIn?.riderDetails, payloadIn?.teamDetails, payloadIn?.familyDetails?.guardian];
@@ -411,6 +417,8 @@ export async function updateRegistration(id: string, input: Partial<Omit<Registr
     where: { id },
     data: updateData,
   });
+  // The group's status and total follow its rows.
+  await syncRiderModel([id]);
 
   // Paid (or complementary): assign bibs, then send confirmation emails.
   if (input.status && PAID_STATUSES.includes(input.status)) {

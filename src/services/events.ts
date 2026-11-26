@@ -50,6 +50,12 @@ export function raffleOpen(event: EventRow, now: Date = new Date(), env: NodeJS.
     return envForcesOpen('RAFFLE_OPEN', env) || windowOpen(event.raffleOpensAt, event.raffleClosesAt, now);
 }
 
+/** ?year=2026 as a number; undefined when absent or not a plausible year. */
+export function yearParam(v: unknown): number | undefined {
+    const n = Number(v);
+    return Number.isInteger(n) && n >= 2000 && n <= 2100 ? n : undefined;
+}
+
 /** The newest event. */
 export async function currentEvent(): Promise<EventRow> {
     const event = await prisma.event.findFirst({ orderBy: { year: 'desc' } });

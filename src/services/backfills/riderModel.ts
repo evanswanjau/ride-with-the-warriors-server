@@ -47,8 +47,10 @@ type Row = Prisma.RegistrationGetPayload<{ select: typeof ROW_SELECT }>;
 const legacyKey = (r: Pick<Row, 'id' | 'groupId'>) => r.groupId ?? `row:${r.id}`;
 const isPrimary = (r: Row) => !!(r.payload as RegistrationPayload | null)?.isPrimary;
 
-async function backfillGroups(tx: Tx, report: RiderModelReport) {
-    const rows = await tx.registration.findMany({ where: { registrationGroupId: null }, select: ROW_SELECT, orderBy: { createdAt: 'asc' } });
+type RowFilter = Prisma.RegistrationWhereInput;
+
+async function backfillGroups(tx: Tx, report: RiderModelReport, only: RowFilter = {}) {
+    const rows = await tx.registration.findMany({ where: { ...only, registrationGroupId: null }, select: ROW_SELECT, orderBy: { createdAt: 'asc' } });
     const buckets = new Map<string, Row[]>();
     for (const r of rows) buckets.set(legacyKey(r), [...(buckets.get(legacyKey(r)) ?? []), r]);
 
@@ -77,24 +79,29 @@ async function backfillGroups(tx: Tx, report: RiderModelReport) {
     }
 }
 
-/** Status and total of every group, from its rows. */
-async function refreshGroups(tx: Tx, report: RiderModelReport) {
+/** Status, total and owner of groups (all, or the listed ones), from their rows. */
+async function refreshGroups(tx: Tx, report: RiderModelReport, groupIds?: string[]) {
     const groups = await tx.registrationGroup.findMany({
-        select: { id: true, status: true, totalAmount: true, registrations: { select: { status: true, totalAmount: true, createdAt: true } } },
+        where: groupIds ? { id: { in: groupIds } } : {},
+        select: {
+            id: true, status: true, totalAmount: true, accountId: true,
+            registrations: { select: { status: true, totalAmount: true, createdAt: true, accountId: true, payload: true }, orderBy: { createdAt: 'asc' } },
+        },
     });
     for (const g of groups) {
         if (g.registrations.length === 0) continue;
         const status = groupStatus(g.registrations);
         const totalAmount = Math.round(g.registrations.reduce((sum, r) => sum + (r.totalAmount || 0), 0));
-        if (status !== g.status || totalAmount !== g.totalAmount) {
-            await tx.registrationGroup.update({ where: { id: g.id }, data: { status, totalAmount } });
+        const primary = g.registrations.find(r => (r.payload as RegistrationPayload | null)?.isPrimary) ?? g.registrations[0];
+        if (status !== g.status || totalAmount !== g.totalAmount || primary.accountId !== g.accountId) {
+            await tx.registrationGroup.update({ where: { id: g.id }, data: { status, totalAmount, accountId: primary.accountId } });
             report.groupsRefreshed++;
         }
     }
 }
 
-async function backfillProfiles(tx: Tx, report: RiderModelReport) {
-    const rows = await tx.registration.findMany({ where: { riderProfileId: null }, select: ROW_SELECT, orderBy: { createdAt: 'asc' } });
+async function backfillProfiles(tx: Tx, report: RiderModelReport, only: RowFilter = {}, updateDetails = false) {
+    const rows = await tx.registration.findMany({ where: { ...only, riderProfileId: null }, select: ROW_SELECT, orderBy: { createdAt: 'asc' } });
     report.rowsWithoutAccount = rows.filter(r => !r.accountId).length;
 
     const people = new Map<string, Row[]>();
@@ -114,6 +121,14 @@ async function backfillProfiles(tx: Tx, report: RiderModelReport) {
         if (!profile) {
             profile = await tx.riderProfile.create({ data: { accountId, matchKey, riderAccountId, ...profileFieldsFrom(latest) } });
             report.profilesCreated++;
+        } else if (updateDetails) {
+            // A new registration carries the rider's latest details. The ID number never changes
+            // here: it is part of the match key (COD-130 lock).
+            const { idNumber: _locked, ...fields } = profileFieldsFrom(latest);
+            profile = await tx.riderProfile.update({
+                where: { id: profile.id },
+                data: { ...fields, archivedAt: null, ...(riderAccountId && !profile.riderAccountId ? { riderAccountId } : {}) },
+            });
         }
 
         const byYear = new Map<number, Row[]>();
@@ -130,11 +145,46 @@ async function backfillProfiles(tx: Tx, report: RiderModelReport) {
     }
 }
 
-export async function backfillRiderModel(opts: { dryRun?: boolean } = {}): Promise<RiderModelReport> {
-    const report: RiderModelReport = {
-        dryRun: !!opts.dryRun, groupsCreated: 0, rowsLinkedToGroups: 0, groupsRefreshed: 0,
-        profilesCreated: 0, rowsLinkedToProfiles: 0, sameYearDuplicates: [], rowsWithoutAccount: 0,
+const emptyReport = (dryRun: boolean): RiderModelReport => ({
+    dryRun, groupsCreated: 0, rowsLinkedToGroups: 0, groupsRefreshed: 0,
+    profilesCreated: 0, rowsLinkedToProfiles: 0, sameYearDuplicates: [], rowsWithoutAccount: 0,
+});
+
+/**
+ * Keeps the listed registrations' groups and profiles in step after a write: links new rows to
+ * a group and a profile (creating them when needed) and refreshes the groups' status, total and
+ * owner. With newEntry, profiles also take the rows' details (the rider's latest).
+ * Pass the caller's transaction when there is one.
+ */
+export async function syncRiderModel(registrationIds: string[], opts: { tx?: Tx; newEntry?: boolean } = {}): Promise<RiderModelReport> {
+    const report = emptyReport(false);
+    if (registrationIds.length === 0) return report;
+    const run = async (tx: Tx) => {
+        const only = { id: { in: registrationIds } };
+        await backfillGroups(tx, report, only);
+        await backfillProfiles(tx, report, only, !!opts.newEntry);
+        const groups = await tx.registration.findMany({ where: only, select: { registrationGroupId: true }, distinct: ['registrationGroupId'] });
+        await refreshGroups(tx, report, groups.map(g => g.registrationGroupId).filter((g): g is string => !!g));
     };
+    if (opts.tx) await run(opts.tx);
+    else await prisma.$transaction(run);
+    if (report.sameYearDuplicates.length) {
+        console.warn(`[RiderModel] Same rider entered twice in one year; left without a profile: ${report.sameYearDuplicates.join(', ')}`);
+    }
+    return report;
+}
+
+/** syncRiderModel for every row of the listed legacy groupIds (or row ids without one). */
+export async function syncRiderModelForGroups(keys: { groupId?: string | null; id: string }[], tx?: Tx) {
+    const groupIds = [...new Set(keys.map(k => k.groupId).filter((g): g is string => !!g))];
+    const ids = keys.filter(k => !k.groupId).map(k => k.id);
+    const client = tx ?? prisma;
+    const rows = await client.registration.findMany({ where: { OR: [{ groupId: { in: groupIds } }, { id: { in: ids } }] }, select: { id: true } });
+    return syncRiderModel(rows.map(r => r.id), { tx });
+}
+
+export async function backfillRiderModel(opts: { dryRun?: boolean } = {}): Promise<RiderModelReport> {
+    const report = emptyReport(!!opts.dryRun);
     try {
         await prisma.$transaction(async (tx) => {
             // One backfill at a time.

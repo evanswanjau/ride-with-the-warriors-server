@@ -18,6 +18,7 @@
  *   and writes one AdminAuditLog row per group. Running it twice changes nothing
  *   the second time.
  */
+import { syncRiderModel } from '../backfills/riderModel.js';
 import { prisma } from '../../storage/prisma.js';
 
 export const REPAIR_ACTION = 'script:repair-paid-registrations';
@@ -125,6 +126,7 @@ export async function applyPaidRepair(cases: RepairCase[], by: string, only?: st
             });
             if (count === 0) continue;
             updated += count;
+            await syncRiderModel(c.registrationIds, { tx });
             await tx.adminAuditLog.create({
                 data: {
                     adminEmail: by,
