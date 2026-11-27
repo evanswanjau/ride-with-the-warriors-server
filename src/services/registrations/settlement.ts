@@ -7,6 +7,16 @@
 import { prisma } from '../../storage/prisma.js';
 import { assignBibs } from '../numbering.js';
 import { sendConfirmationEmail } from '../emailService.js';
+import { paidRiders } from '../riderCap.js';
+
+/** A payment that lands after the event filled up is still settled (money was taken): say so. */
+async function warnOverCap(eventYear: number | undefined) {
+    if (eventYear === undefined) return;
+    const event = await prisma.event.findUnique({ where: { year: eventYear }, select: { riderCap: true } });
+    if (event?.riderCap == null) return;
+    const paid = await paidRiders(prisma, eventYear);
+    if (paid > event.riderCap) console.warn(`[RiderCap] ${eventYear} has ${paid} paid riders, over its cap of ${event.riderCap}`);
+}
 
 /**
  * Marks an UNPAID entry and its riders PAID (when `pay` is given: a successful payment), then
@@ -37,6 +47,7 @@ export async function settleEntryPaid(entryId: string, pay: { receipt?: string |
     const anchor = await prisma.registration.findFirst({ where: { registrationGroupId: entryId }, select: { id: true } });
     if (!anchor) return false;
     const riders = await assignBibs(anchor.id);
+    await warnOverCap(riders[0]?.eventYear);
     const entry = await prisma.registrationGroup.findUniqueOrThrow({ where: { id: entryId }, select: { circuitId: true, teamName: true } });
 
     await Promise.allSettled(riders.filter(r => r.email && r.status !== 'CANCELLED').map(r =>

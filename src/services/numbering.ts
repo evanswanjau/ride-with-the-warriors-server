@@ -26,6 +26,9 @@ async function lock(tx: Tx, key: string) {
     await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${key}))::text`;
 }
 
+/** Holds the bib lock of an event year until the transaction ends (bibs and the rider cap). */
+export const lockBibs = (tx: Tx, year: number) => lock(tx, bibLock(year));
+
 // ─── Bibs ────────────────────────────────────────────────────────────────────
 
 export type BibRange = { prefix: string; start: number; end: number };
@@ -107,7 +110,7 @@ export async function assignBibs(registrationId: string) {
     return prisma.$transaction(async (tx) => {
         const found = await tx.registration.findUnique({ where: { id: registrationId }, select: { eventYear: true } });
         if (!found) throw new Error('Registration not found');
-        await lock(tx, bibLock(found.eventYear));
+        await lockBibs(tx, found.eventYear);
 
         // Read again under the lock.
         const anchor = (await tx.registration.findUnique({ where: { id: registrationId }, include: { registrationGroup: true } }))!;
