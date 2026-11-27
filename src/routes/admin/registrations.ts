@@ -7,6 +7,7 @@ import { writeAudit } from '../../middleware/adminAudit.js';
 import { getRider, OLD_RIDER_COLUMNS, setEntryStatus } from '../../services/registrations/entries.js';
 import { syncRiderModel } from '../../services/backfills/riderModel.js';
 import { yearParam } from '../../services/events.js';
+import { registrationTotals } from '../../services/dashboardStats.js';
 
 export const adminRegistrationsRouter = Router();
 
@@ -23,8 +24,8 @@ adminRegistrationsRouter.get('/', requireAdmin, async (req, res) => {
         // ?year=2026 limits the list to one event; every year by default.
         const year = yearParam(req.query.year);
         if (year) where.eventYear = year;
-        if (circuitId) where.circuitId = circuitId as string;
-        if (type) where.type = type as string;
+        // Circuit, type and team name are the entry's.
+        if (circuitId || type) where.registrationGroup = { ...(circuitId ? { circuitId: String(circuitId) } : {}), ...(type ? { type: String(type) } : {}) };
         if (status) where.status = status as Prisma.RegistrationWhereInput['status'];
         if (category) where.category = category as string;
         if (isMilitary !== undefined && isMilitary !== '') {
@@ -45,7 +46,7 @@ adminRegistrationsRouter.get('/', requireAdmin, async (req, res) => {
                 { lastName: { contains: s, mode: 'insensitive' } },
                 { email: { contains: s, mode: 'insensitive' } },
                 { phoneNumber: { contains: s, mode: 'insensitive' } },
-                { teamName: { contains: s, mode: 'insensitive' } },
+                { registrationGroup: { teamName: { contains: s, mode: 'insensitive' } } },
                 { guardianName: { contains: s, mode: 'insensitive' } }
             ];
         }
@@ -162,48 +163,35 @@ adminRegistrationsRouter.delete('/:id', requireAdmin, async (req: AuthenticatedR
 });
 
 // Statistics
-adminRegistrationsRouter.get('/stats/summary', requireAdmin, async (_req, res) => {
+// ?year=2026 for one event's riders; every year by default. Counts are riders (rows);
+// circuit and type come from each rider's entry.
+adminRegistrationsRouter.get('/stats/summary', requireAdmin, async (req, res) => {
     try {
-        const [totalCount, regsGrouped] = await Promise.all([
-            prisma.registration.count(),
-            prisma.registration.groupBy({ by: ['status'], _count: true })
-        ]);
-
-        let paid = 0, unpaid = 0, cancelled = 0;
-        for (const g of regsGrouped) {
-            if (g.status === 'PAID') paid = g._count;
-            if (g.status === 'UNPAID') unpaid = g._count;
-            if (g.status === 'CANCELLED') cancelled = g._count;
-        }
-
-        // Efficient revenue calculation using flat columns
-        const revenueResult = await prisma.registration.aggregate({
-            where: { status: 'PAID' },
-            _sum: { totalAmount: true }
-        });
-
-        const totalRevenue = revenueResult._sum?.totalAmount || 0;
-
-        const byCircuit = await prisma.registration.groupBy({
-            by: ['circuitId'],
-            _count: true
-        });
-
-        const byType = await prisma.registration.groupBy({
-            by: ['type'],
-            _count: true
-        });
+        const year = yearParam(req.query.year);
+        const totals = await registrationTotals(year);
+        const perEntry = await prisma.$queryRaw<{ circuitId: string; type: string; n: number }[]>`
+            SELECT g."circuitId", g."type", COUNT(*)::int AS n
+            FROM "Registration" r JOIN "RegistrationGroup" g ON g."id" = r."registrationGroupId"
+            WHERE ${year ?? null}::int IS NULL OR r."eventYear" = ${year ?? null}::int
+            GROUP BY 1, 2`;
+        const count = (key: 'circuitId' | 'type') => {
+            const m = new Map<string, number>();
+            for (const row of perEntry) m.set(row[key], (m.get(row[key]) ?? 0) + row.n);
+            return [...m].map(([value, n]) => ({ [key]: value, _count: n }));
+        };
 
         res.json({
             summary: {
-                total: totalCount,
-                paid,
-                unpaid,
-                cancelled,
-                revenue: totalRevenue
+                total: totals.total,
+                // Riders who paid; complimentary riders are counted on their own.
+                paid: totals.paid - totals.complimentary - totals.confirmed,
+                unpaid: totals.unpaid,
+                cancelled: totals.cancelled,
+                complimentary: totals.complimentary,
+                revenue: totals.revenue
             },
-            byCircuit,
-            byType
+            byCircuit: count('circuitId'),
+            byType: count('type')
         });
     } catch (error) {
         console.error('Stats error:', error);

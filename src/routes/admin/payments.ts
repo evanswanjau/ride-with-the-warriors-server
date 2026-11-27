@@ -1,9 +1,25 @@
 import { Router } from 'express';
-import type { Prisma } from '../../generated/client/index.js';
+import type { PaymentState, Prisma } from '../../generated/client/index.js';
 import { prisma } from '../../storage/prisma.js';
 import { requireAdmin, type AuthenticatedRequest } from '../../middleware/auth.js';
 import { reconcilePayments, unresolvedExpired } from '../../services/reconciliation.js';
 import { resolveFlaggedPayment } from '../../services/payments.js';
+import { yearParam } from '../../services/events.js';
+
+const STATES: PaymentState[] = ['PENDING', 'PAID', 'FAILED', 'EXPIRED', 'FLAGGED'];
+
+/** Payments for items of one event year: its entries, donations, bike hires and raffle tickets. */
+function yearWhere(year: number | undefined): Prisma.PaymentWhereInput {
+    if (!year) return {};
+    return {
+        OR: [
+            { registrationGroup: { eventYear: year } },
+            { donation: { eventYear: year } },
+            { bikeHire: { eventYear: year } },
+            { raffleTickets: { some: { raffleTicket: { eventYear: year } } } },
+        ],
+    };
+}
 
 export const adminPaymentsRouter = Router();
 
@@ -16,8 +32,13 @@ adminPaymentsRouter.get('/', requireAdmin, async (req, res) => {
 
         const { status, registrationId, search, dateFrom, dateTo } = req.query;
 
-        const where: Prisma.PaymentWhereInput = {};
-        if (status) where.status = String(status).toUpperCase();
+        // ?year=2026 limits the list to one event; every year by default.
+        const where: Prisma.PaymentWhereInput = { AND: [yearWhere(yearParam(req.query.year))] };
+        if (status) {
+            const state = String(status).toUpperCase() as PaymentState;
+            // An unknown status matches nothing, as the text column did.
+            where.state = STATES.includes(state) ? state : { in: [] };
+        }
         if (registrationId) where.registrationId = String(registrationId);
         if (search) {
             const s = String(search).trim();
@@ -42,25 +63,21 @@ adminPaymentsRouter.get('/', requireAdmin, async (req, res) => {
                 skip,
                 take: limit,
                 orderBy: { createdAt: 'desc' },
+                include: { raffleTickets: { select: { raffleTicket: { select: { ticketNumber: true } } } } },
             }),
             prisma.payment.count({ where }),
         ]);
 
         // Show the numbers people know (bib / ticket number) next to each payment.
         const regIds = [...new Set(payments.map(p => p.registrationId).filter((id): id is string => !!id))];
-        const ticketIds = [...new Set(payments.flatMap(p => p.raffleTicketIds ?? []))];
-        const [regs, tickets] = await Promise.all([
-            regIds.length ? prisma.registration.findMany({ where: { id: { in: regIds } }, select: { id: true, bibNumber: true } }) : [],
-            ticketIds.length ? prisma.raffleTicket.findMany({ where: { id: { in: ticketIds } }, select: { id: true, ticketNumber: true } }) : [],
-        ]);
+        const regs = regIds.length ? await prisma.registration.findMany({ where: { id: { in: regIds } }, select: { id: true, bibNumber: true } }) : [];
         const bibById = new Map(regs.map(r => [r.id, r.bibNumber]));
-        const ticketById = new Map(tickets.map(t => [t.id, t.ticketNumber]));
 
         res.json({
-            payments: payments.map(p => ({
+            payments: payments.map(({ raffleTickets, ...p }) => ({
                 ...p,
                 bibNumber: p.registrationId ? bibById.get(p.registrationId) ?? null : null,
-                ticketNumbers: (p.raffleTicketIds ?? []).map(id => ticketById.get(id)).filter(Boolean),
+                ticketNumbers: raffleTickets.map(j => j.raffleTicket.ticketNumber).filter(Boolean),
             })),
             pagination: {
                 total,
@@ -76,20 +93,18 @@ adminPaymentsRouter.get('/', requireAdmin, async (req, res) => {
 });
 
 // Payment statistics for dashboard
-adminPaymentsRouter.get('/stats/summary', requireAdmin, async (_req, res) => {
+// ?year=2026 for one event's payments; every year by default.
+adminPaymentsRouter.get('/stats/summary', requireAdmin, async (req, res) => {
     try {
-        const [total, paid, failed, pending, revenueResult, flagged] = await Promise.all([
-            prisma.payment.count(),
-            prisma.payment.count({ where: { status: 'PAID' } }),
-            prisma.payment.count({ where: { status: 'FAILED' } }),
-            prisma.payment.count({ where: { status: 'PENDING' } }),
-            prisma.payment.aggregate({
-                where: { status: 'PAID' },
-                _sum: { amount: true },
-            }),
-            prisma.payment.count({ where: { status: 'FLAGGED' } }),
+        const inYear = yearWhere(yearParam(req.query.year));
+        const [byState, revenueResult] = await Promise.all([
+            prisma.payment.groupBy({ by: ['state'], where: inYear, _count: true }),
+            prisma.payment.aggregate({ where: { AND: [inYear, { state: 'PAID' }] }, _sum: { amountKes: true } }),
         ]);
-        const revenue = revenueResult._sum?.amount ?? 0;
+        const n = (s: PaymentState) => byState.find(g => g.state === s)?._count ?? 0;
+        const total = byState.reduce((sum, g) => sum + g._count, 0);
+        const [paid, failed, pending, flagged] = [n('PAID'), n('FAILED'), n('PENDING'), n('FLAGGED')];
+        const revenue = revenueResult._sum.amountKes ?? 0;
         res.json({
             summary: {
                 total,

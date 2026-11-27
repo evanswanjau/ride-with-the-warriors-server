@@ -12,6 +12,7 @@ import { prisma } from '../../storage/prisma.js';
 import { requireAdmin } from '../../middleware/auth.js';
 import { yearParam } from '../../services/events.js';
 import { toCsv, type CsvValue } from '../../utils/csv.js';
+import { entryCodeOf } from '../../services/registrations/entries.js';
 
 export const adminExportsRouter = Router();
 adminExportsRouter.use(requireAdmin);
@@ -28,16 +29,20 @@ adminExportsRouter.get('/registrations.csv', async (req, res, next) => {
         const regs = await prisma.registration.findMany({
             where: year ? { eventYear: year } : {},
             orderBy: [{ eventYear: 'desc' }, { createdAt: 'asc' }],
-            include: { bikeHire: { select: { status: true } } },
+            omit: { payload: true, pricing: true, classifications: true },
+            include: { bikeHire: { select: { status: true } }, registrationGroup: { select: { legacyGroupId: true, type: true, circuitId: true, teamName: true } } },
         });
+        // groupId is the entry code riders know; type, circuit and team are the entry's;
+        // totalAmount is the rider's share of the entry in whole KES.
         send(res, 'registrations', year, [
             'id', 'eventYear', 'groupId', 'registrationGroupId', 'riderProfileId', 'type', 'circuit', 'category', 'status', 'bib',
             'firstName', 'lastName', 'gender', 'dob', 'idNumber', 'email', 'phone', 'tshirtSize', 'teamName', 'isCaptain',
             'guardianName', 'emergencyContactName', 'emergencyPhone', 'isMilitary', 'totalAmount', 'bikeHire', 'mpesaCode', 'createdAt', 'cancelledAt',
         ], regs.map(r => [
-            r.id, r.eventYear, r.groupId, r.registrationGroupId, r.riderProfileId, r.type, r.circuitId, r.category, r.status, r.bibNumber,
-            r.firstName, r.lastName, r.gender, r.dob, r.idNumber, r.email, r.phoneNumber, r.tshirtSize, r.teamName, r.isCaptain,
-            r.guardianName, r.emergencyContactName, r.emergencyPhone, r.isMilitary, r.totalAmount, r.bikeHire?.status ?? '', r.mpesaCode, r.createdAt, r.cancelledAt,
+            r.id, r.eventYear, r.registrationGroup ? entryCodeOf({ id: r.registrationGroupId!, legacyGroupId: r.registrationGroup.legacyGroupId }, r.id) : r.id,
+            r.registrationGroupId, r.riderProfileId, r.registrationGroup?.type ?? '', r.registrationGroup?.circuitId ?? '', r.category, r.status, r.bibNumber,
+            r.firstName, r.lastName, r.gender, r.dob, r.idNumber, r.email, r.phoneNumber, r.tshirtSize, r.registrationGroup?.teamName ?? '', r.isCaptain,
+            r.guardianName, r.emergencyContactName, r.emergencyPhone, r.isMilitary, r.amountKes ?? 0, r.bikeHire?.status ?? '', r.mpesaCode, r.createdAt, r.cancelledAt,
         ]));
     } catch (err) {
         next(err);

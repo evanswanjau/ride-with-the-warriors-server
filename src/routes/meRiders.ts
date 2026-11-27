@@ -55,7 +55,7 @@ const updateSchema = z.object(fields).partial().strict();
 
 type Input = z.infer<typeof updateSchema>;
 
-function view(p: RiderProfile & { registrations?: { eventYear: number; circuitId: string; category: string | null; status: string; bibNumber: string | null }[] }) {
+function view(p: RiderProfile & { registrations?: { eventYear: number; category: string | null; status: string; bibNumber: string | null; registrationGroup: { circuitId: string } | null }[] }) {
     return {
         id: p.id,
         firstName: p.firstName,
@@ -78,7 +78,7 @@ function view(p: RiderProfile & { registrations?: { eventYear: number; circuitId
         hasOwnAccount: !!p.riderAccountId,
         archived: !!p.archivedAt,
         // Past and current entries, newest first.
-        entries: (p.registrations ?? []).map(r => ({ eventYear: r.eventYear, circuitId: r.circuitId, category: r.category, status: r.status, bibNumber: r.bibNumber })),
+        entries: (p.registrations ?? []).map(r => ({ eventYear: r.eventYear, circuitId: r.registrationGroup?.circuitId ?? null, category: r.category, status: r.status, bibNumber: r.bibNumber })),
     };
 }
 
@@ -98,7 +98,7 @@ const validation = (res: Response, err: z.ZodError) =>
 const duplicate = (res: Response) =>
     res.status(409).json({ error: { code: 'DUPLICATE_RIDER', message: 'You already have this rider (same name and ID number, or same name and date of birth).' } });
 
-const ENTRIES = { select: { eventYear: true, circuitId: true, category: true, status: true, bibNumber: true }, orderBy: { eventYear: 'desc' as const } };
+const ENTRIES = { select: { eventYear: true, category: true, status: true, bibNumber: true, registrationGroup: { select: { circuitId: true } } }, orderBy: { eventYear: 'desc' as const } };
 
 async function owned(req: UserRequest, id: string) {
     const p = await prisma.riderProfile.findUnique({ where: { id } });
