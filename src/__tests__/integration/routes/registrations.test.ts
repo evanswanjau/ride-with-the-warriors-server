@@ -114,8 +114,23 @@ const validFamilyDetails = {
 // Mock prisma for tests
 vi.mock('../../../storage/prisma.js', () => ({
     prisma: {
+        // As getPricingCategories selects them: whole-KES price and the circuit's slug.
         pricingCategory: {
-            findMany: vi.fn().mockResolvedValue(mockPricingCategories),
+            findMany: vi.fn().mockResolvedValue(mockPricingCategories.map(({ price, circuitId, ...c }) => ({ ...c, priceKes: price, eventCircuit: { slug: circuitId } }))),
+        },
+        // The 2026 circuits and team rules (migration 20261128000000_event_circuits_2026).
+        eventCircuit: {
+            findUnique: vi.fn(async ({ where }: { where: { eventYear_slug: { slug: string } } }) => {
+                const slug = where.eventYear_slug.slug;
+                if (!['blitz', 'recon', 'corporate', 'family'].includes(slug)) return null;
+                const team = slug === 'corporate' ? { min: 3, max: 5, female: false } : { min: 5, max: 5, female: true };
+                return {
+                    id: `circuit-${slug}`, eventYear: 2026, slug, title: `${slug.toUpperCase()} CIRCUIT`, distanceKm: slug === 'blitz' ? 120 : 60,
+                    entryTypes: slug === 'family' ? ['FAMILY'] : ['INDIVIDUAL', 'TEAM'],
+                    teamMinMembers: slug === 'family' ? null : team.min, teamMaxMembers: slug === 'family' ? null : team.max,
+                    teamRequiresFemale: slug !== 'family' && team.female,
+                };
+            }),
         },
         // No Event rows: the 2026 fallback event applies.
         event: {
@@ -194,7 +209,7 @@ describe('Registrations API', () => {
                 .expect(400);
 
             expect(response.body.error.message).toBe('Validation failed');
-            expect(response.body.error.details.formErrors).toContain('Competitive teams (120/60KM) must have at least one female rider.');
+            expect(response.body.error.details.formErrors).toContain('BLITZ CIRCUIT 120 KM teams must have at least one female rider.');
         });
 
         it('should return quote for valid family registration', async () => {

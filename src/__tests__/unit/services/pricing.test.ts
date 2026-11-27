@@ -84,7 +84,7 @@ const mockPricingCategories = vi.hoisted(() => [
 vi.mock('../../../storage/prisma.js', () => ({
     prisma: {
         pricingCategory: {
-            findMany: vi.fn().mockResolvedValue(mockPricingCategories),
+            findMany: vi.fn().mockResolvedValue(mockPricingCategories.map(({ price, circuitId, ...c }) => ({ ...c, priceKes: price, eventCircuit: { slug: circuitId } }))),
         },
         // No Event rows: the 2026 fallback (bike hire 1500) applies.
         event: {

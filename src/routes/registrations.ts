@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { ZodError } from 'zod';
 
-import { quoteRequestSchema, riderDetailsSchema, teamDetailsSchema, familyDetailsSchema, type RegistrationPayload, type ValidPayload } from '../validation/registrationSchemas.js';
+import { quoteRequestSchema, riderDetailsSchema, teamDetailsSchema, familyDetailsSchema, type QuoteRequest, type RegistrationPayload, type ValidPayload } from '../validation/registrationSchemas.js';
+import { entryTypeError, findCircuit, teamRuleErrors } from '../services/circuits.js';
 import { zodToApiError } from '../validation/zodError.js';
 import { buildQuote, getPricingCategories } from '../services/pricing.js';
 import { createRegistration, getRegistration, updateRegistration } from '../storage/registrationStore.js';
@@ -50,20 +51,27 @@ function duplicateError(paid: { accountId?: string | null }[], duplicateInfo: st
   };
 }
 
-function validateTeamRules(circuitId: 'blitz' | 'recon' | 'corporate' | 'family', team: { members: Array<{ gender: 'male' | 'female' }> }) {
-  // ... (keep existing implementation)
-  const numMembers = team.members.length;
-  const hasFemale = team.members.some(m => m.gender === 'female');
+type ParsedEntry = { payload: ValidPayload } | { error: { status: number; body: object } };
 
-  const formErrors: string[] = [];
-  if (circuitId === 'corporate') {
-    if (numMembers < 3 || numMembers > 5) formErrors.push(`Corporate teams must have 3-5 members (Currently: ${numMembers})`);
-  } else if (circuitId === 'blitz' || circuitId === 'recon') {
-    if (numMembers !== 5) formErrors.push(`Competitive teams (120/60KM) must have exactly 5 members (Currently: ${numMembers})`);
-    if (!hasFemale) formErrors.push(`Competitive teams (120/60KM) must have at least one female rider.`);
-  }
+/**
+ * Validates the details block for the entry type and the circuit's rules for the event year
+ * (EventCircuit: entry types taken, team size, female rider required).
+ */
+async function parseEntry(base: QuoteRequest, eventYear: number): Promise<ParsedEntry> {
+  const invalid = (message: string, formErrors?: string[]) =>
+    ({ error: { status: 400, body: { error: { code: 'VALIDATION', message, ...(formErrors ? { details: { formErrors } } : {}) } } } });
+  const raw = base.payload as Record<string, unknown>;
+  const circuit = await findCircuit(eventYear, base.circuitId);
+  if (!circuit) return invalid(`There is no ${base.circuitId} circuit in ${eventYear}`);
+  const refused = entryTypeError(circuit, base.type);
+  if (refused) return invalid(refused);
 
-  return formErrors;
+  if (base.type === 'individual') return { payload: { riderDetails: riderDetailsSchema.parse(raw.riderDetails ?? raw) } };
+  if (base.type === 'family') return { payload: { familyDetails: familyDetailsSchema.parse(raw.familyDetails ?? raw) } };
+  const teamDetails = teamDetailsSchema.parse(raw.teamDetails ?? raw);
+  const formErrors = teamRuleErrors(circuit, teamDetails.members);
+  if (formErrors.length) return invalid('Validation failed', formErrors);
+  return { payload: { teamDetails } };
 }
 
 registrationsRouter.post('/quote', quoteLimiter, optionalUser, async (req: UserRequest, res, next) => {
@@ -74,22 +82,12 @@ registrationsRouter.post('/quote', quoteLimiter, optionalUser, async (req: UserR
       return res.status(400).json({ error: { code: 'VALIDATION', message: 'Payload is required' } });
     }
 
-    let payload: ValidPayload;
-    if (base.type === 'individual') {
-      payload = { riderDetails: riderDetailsSchema.parse((base.payload as Record<string, unknown>).riderDetails ?? base.payload) };
-    } else if (base.type === 'team') {
-      if (base.circuitId === 'family') {
-        return res.status(400).json({ error: { code: 'VALIDATION', message: 'Family circuit does not support team registration' } });
-      }
-      payload = { teamDetails: teamDetailsSchema.parse((base.payload as Record<string, unknown>).teamDetails ?? base.payload) };
-      const formErrors = validateTeamRules(base.circuitId, payload.teamDetails);
-      if (formErrors.length) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Validation failed', details: { formErrors } } });
-    } else {
-      payload = { familyDetails: familyDetailsSchema.parse((base.payload as Record<string, unknown>).familyDetails ?? base.payload) };
-    }
+    const event = await currentEvent();
+    const parsed = await parseEntry(base, event.year);
+    if ('error' in parsed) return res.status(parsed.error.status).json(parsed.error.body);
+    const { payload } = parsed;
 
     // CHECK FOR DUPLICATES (only PAID or CONFIRMED rows of the current event block a quote)
-    const event = await currentEvent();
     const { paidDuplicates: blockingDuplicates, duplicateInfo } = await checkDuplicates(base.type, payload, {}, event.year);
 
     if (blockingDuplicates.length > 0) {
@@ -191,22 +189,12 @@ registrationsRouter.post('/', requireUser, async (req: UserRequest, res, next) =
     }
     const { registrationId: existingId } = req.body;
     const base = quoteRequestSchema.parse(req.body);
-    const { type, circuitId } = base;
+    const { type } = base;
     console.log(`[Registration] Starting ${type} registration${existingId ? ` (edit: ${existingId})` : ''}`);
 
-    let payload: ValidPayload;
-    if (type === 'individual') {
-      payload = { riderDetails: riderDetailsSchema.parse((base.payload as Record<string, unknown>).riderDetails ?? base.payload) };
-    } else if (type === 'team') {
-      if (circuitId === 'family') {
-        return res.status(400).json({ error: { code: 'VALIDATION', message: 'Family circuit does not support team registration' } });
-      }
-      payload = { teamDetails: teamDetailsSchema.parse((base.payload as Record<string, unknown>).teamDetails ?? base.payload) };
-      const formErrors = validateTeamRules(circuitId, payload.teamDetails);
-      if (formErrors.length) return res.status(400).json({ error: { code: 'VALIDATION', message: 'Validation failed', details: { formErrors } } });
-    } else {
-      payload = { familyDetails: familyDetailsSchema.parse((base.payload as Record<string, unknown>).familyDetails ?? base.payload) };
-    }
+    const parsed = await parseEntry(base, event.year);
+    if ('error' in parsed) return res.status(parsed.error.status).json(parsed.error.body);
+    const { payload } = parsed;
 
     // CHECK FOR DUPLICATES
     let excludeGroupId: string | undefined;

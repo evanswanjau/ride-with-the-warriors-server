@@ -2,8 +2,8 @@
  * Admin: yearly events (see services/events.ts).
  *
  *   GET    /api/v1/admin/events                         every event, newest first
- *   POST   /api/v1/admin/events                         create a year (copies the previous year's pricing)
- *   PATCH  /api/v1/admin/events/:year                   edit name, date, prices, open/close times
+ *   POST   /api/v1/admin/events                         create a year (copies the previous year's pricing and circuits)
+ *   PATCH  /api/v1/admin/events/:year                   edit name, date, prices, rider cap, open/close times
  *   POST   /api/v1/admin/events/:year/:what/open        what = registration | raffle; opens it now
  *   POST   /api/v1/admin/events/:year/:what/close       closes it now
  *
@@ -17,6 +17,7 @@ import { requireAdmin } from '../../middleware/auth.js';
 import { zodToApiError } from '../../validation/zodError.js';
 import { currentEvent, publicEvent, type EventRow } from '../../services/events.js';
 import { clearPricingCache } from '../../services/pricing.js';
+import { copyCircuits } from '../../services/circuits.js';
 
 export const adminEventsRouter = Router();
 adminEventsRouter.use(requireAdmin);
@@ -34,6 +35,9 @@ const editableFields = {
     rafflePrice: money.optional(),
     bikeHirePrice: money.optional(),
     bikeStock: z.number().int().min(0).max(100_000).nullable().optional(),
+    riderCap: z.number().int().min(1).max(100_000).nullable().optional(),
+    feedbackOpensAt: optionalDate,
+    feedbackClosesAt: optionalDate,
     registrationOpensAt: optionalDate,
     registrationClosesAt: optionalDate,
     raffleOpensAt: optionalDate,
@@ -43,7 +47,7 @@ const editableFields = {
 const createSchema = z.object({
     year: yearSchema,
     ...editableFields,
-    // Pricing categories (prices and bib ranges) to start from; the newest earlier year by default.
+    // Pricing categories (prices and bib ranges) and circuits to start from; the newest earlier year by default.
     copyPricingFrom: yearSchema.optional(),
 }).strict();
 
@@ -91,9 +95,12 @@ adminEventsRouter.post('/', async (req, res, next) => {
                 data: { year, name: fields.name ?? `Ride With The Warriors ${year}`, ...toData(fields) },
             });
             if (source !== undefined) {
+                // Circuits first: their trigger links the copied prices to them.
+                await copyCircuits(tx, source, year);
                 const categories = await tx.pricingCategory.findMany({ where: { eventYear: source } });
                 await tx.pricingCategory.createMany({
-                    data: categories.map(({ id: _id, createdAt: _c, updatedAt: _u, ...c }) => ({ ...c, eventYear: year })),
+                    // The database trigger links each to the new year's circuit.
+                    data: categories.map(({ id: _id, createdAt: _c, updatedAt: _u, eventCircuitId: _e, ...c }) => ({ ...c, eventYear: year })),
                     skipDuplicates: true,
                 });
             }
@@ -149,6 +156,9 @@ adminEventsRouter.post('/:year/:what/:action', async (req, res, next) => {
             }
             if (what === 'registration' && await prisma.pricingCategory.count({ where: { eventYear: event.year } }) === 0) {
                 return res.status(400).json({ error: { code: 'NO_PRICING', message: `The ${event.year} event has no pricing categories yet.` } });
+            }
+            if (what === 'registration' && await prisma.eventCircuit.count({ where: { eventYear: event.year } }) === 0) {
+                return res.status(400).json({ error: { code: 'NO_CIRCUITS', message: `The ${event.year} event has no circuits yet.` } });
             }
             const opensAt = event[opensKey];
             data = { [opensKey]: opensAt && opensAt <= now ? opensAt : now, [closesKey]: null };

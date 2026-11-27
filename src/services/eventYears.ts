@@ -4,14 +4,7 @@
  * row exists.
  */
 import { prisma } from '../storage/prisma.js';
-import { currentEvent } from './events.js';
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-/** True once the ride day (a date, UTC midnight) is over. */
-export function rideDayOver(date: Date | null, now: Date = new Date()): boolean {
-    return !!date && now.getTime() >= date.getTime() + DAY_MS;
-}
+import { currentEvent, rideDayOver } from './events.js';
 
 async function existing(year: number): Promise<number | null> {
     const event = await prisma.event.findUnique({ where: { year }, select: { year: true } });

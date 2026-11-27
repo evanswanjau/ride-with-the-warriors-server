@@ -3,9 +3,13 @@ import type { QuoteRequest, RegistrationPayload } from '../validation/registrati
 import { prisma } from '../storage/prisma.js';
 import { currentEvent, type EventRow } from './events.js';
 
-/** A pricing category as the quote logic needs it (no timestamps; the Phase 1 copies
- *  eventCircuitId and priceKes are not read until Phase 2). */
-export type PricingCategoryRow = Omit<PricingCategory, 'createdAt' | 'updatedAt' | 'eventCircuitId' | 'priceKes'>;
+/** A pricing category as the quote logic needs it. `price` is the whole-KES price (priceKes). */
+export type PricingCategoryRow = Omit<PricingCategory, 'createdAt' | 'updatedAt' | 'priceKes' | 'price' | 'eventCircuitId'> & { price: number; eventCircuitId?: string | null };
+
+const CATEGORY_SELECT = {
+  id: true, eventCircuitId: true, eventCircuit: { select: { slug: true } }, type: true, familyCategory: true, minAge: true, maxAge: true,
+  categoryName: true, regRange: true, priceKes: true, colorCode: true, hexColor: true, remarks: true, eventYear: true,
+} as const;
 
 export type Classification = {
   category: string;
@@ -66,7 +70,10 @@ export async function getPricingCategories(eventYear?: number): Promise<PricingC
   }
 
   try {
-    const rows = await prisma.pricingCategory.findMany({ where: { eventYear: year } });
+    const found = await prisma.pricingCategory.findMany({ where: { eventYear: year }, select: CATEGORY_SELECT, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] });
+    // priceKes and eventCircuitId are filled by a database trigger on every write; circuitId is
+    // the circuit's slug, as the API has always returned it.
+    const rows = found.map(({ priceKes, eventCircuit, ...c }) => ({ ...c, circuitId: eventCircuit?.slug ?? '', price: priceKes ?? 0 }));
     categoryCache.set(year, { rows, at: now });
     return rows;
   } catch (err) {
