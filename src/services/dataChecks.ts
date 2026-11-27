@@ -10,6 +10,7 @@
  */
 import { prisma } from '../storage/prisma.js';
 import { parseBibRange, bibNumberValue } from './numbering.js';
+import { checkRelationalModel } from './relationalChecks.js';
 
 const PAID_REGISTRATION = ['PAID', 'CONFIRMED', 'COMPLEMENTARY'] as const;
 
@@ -137,6 +138,7 @@ export async function runDataChecks(): Promise<CheckResult> {
     if (outOfRange) notes.push(`${outOfRange} paid bib(s) are outside their category's range (set by hand or before ranges changed)`);
 
     await checkRiderModel(problems, notes);
+    await checkRelationalModel(problems, notes);
     return { snapshot, problems, notes };
 }
 

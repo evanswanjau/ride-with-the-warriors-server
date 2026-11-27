@@ -3,6 +3,7 @@ import { publicFormLimiter } from '../middleware/rateLimit.js';
 import { z } from 'zod';
 import { prisma } from '../storage/prisma.js';
 import { requireAdmin } from '../middleware/auth.js';
+import { feedbackEventYear, notifyEventYear } from '../services/eventYears.js';
 
 export const feedbackRouter = Router();
 
@@ -32,6 +33,7 @@ feedbackRouter.post('/', publicFormLimiter, async (req, res, next) => {
                 lastName,
                 highlights: data.highlights?.trim() || null,
                 improvements: data.improvements?.trim() || null,
+                eventYear: await feedbackEventYear(),
             },
         });
 
@@ -42,6 +44,7 @@ feedbackRouter.post('/', publicFormLimiter, async (req, res, next) => {
                 create: {
                     email: data.notifyEmail.trim().toLowerCase(),
                     firstName,
+                    eventYear: await notifyEventYear(),
                 },
             });
             console.log(`[feedback] 2027 notify captured: ${data.notifyEmail}`);

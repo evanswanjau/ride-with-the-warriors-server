@@ -3,8 +3,9 @@ import type { QuoteRequest, RegistrationPayload } from '../validation/registrati
 import { prisma } from '../storage/prisma.js';
 import { currentEvent, type EventRow } from './events.js';
 
-/** A pricing category as the quote logic needs it (timestamps not required). */
-export type PricingCategoryRow = Omit<PricingCategory, 'createdAt' | 'updatedAt'>;
+/** A pricing category as the quote logic needs it (no timestamps; the Phase 1 copies
+ *  eventCircuitId and priceKes are not read until Phase 2). */
+export type PricingCategoryRow = Omit<PricingCategory, 'createdAt' | 'updatedAt' | 'eventCircuitId' | 'priceKes'>;
 
 export type Classification = {
   category: string;
