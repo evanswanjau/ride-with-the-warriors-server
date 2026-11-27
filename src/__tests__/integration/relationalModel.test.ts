@@ -43,6 +43,12 @@ async function cleanup() {
     await prisma.$executeRaw`UPDATE "PricingCategory" SET "price" = "price"`;
 }
 
+/** The payment target of a rider row's entry. */
+async function regTarget(registrationId: string) {
+    const { registrationGroupId } = await prisma.registration.findUniqueOrThrow({ where: { id: registrationId }, select: { registrationGroupId: true } });
+    return { purpose: 'REGISTRATION' as const, entryId: registrationGroupId!, registrationId };
+}
+
 let n = 0;
 function row(data: Partial<Prisma.RegistrationUncheckedCreateInput>): Prisma.RegistrationUncheckedCreateInput {
     n++;
@@ -135,7 +141,7 @@ describe.skipIf(!hasDb)('Relational model (Phase 1)', () => {
 
         it('keeps a registration payment typed and linked to its entry through every status change', async () => {
             const [captain] = await team(9000);
-            const payment = await recordAttempt({ purpose: 'REGISTRATION', registrationId: captain.id }, `ref-${randomUUID()}`, 9000, '254712345678');
+            const payment = await recordAttempt(await regTarget(captain.id), `ref-${randomUUID()}`, 9000, '254712345678');
             const group = await prisma.registration.findUniqueOrThrow({ where: { id: captain.id }, select: { registrationGroupId: true } });
             let p = await prisma.payment.findUniqueOrThrow({ where: { id: payment.id } });
             expect(p).toMatchObject({ state: 'PENDING', purposeType: 'REGISTRATION', amountKes: 9000, registrationGroupId: group.registrationGroupId });
@@ -146,7 +152,7 @@ describe.skipIf(!hasDb)('Relational model (Phase 1)', () => {
             expect(await prisma.registrationGroup.findUniqueOrThrow({ where: { id: group.registrationGroupId! } }))
                 .toMatchObject({ paymentFailed: true, paymentFailureReason: 'Cancelled by user' });
 
-            const retry = await recordAttempt({ purpose: 'REGISTRATION', registrationId: captain.id }, `ref-${randomUUID()}`, 9000, '254712345678');
+            const retry = await recordAttempt(await regTarget(captain.id), `ref-${randomUUID()}`, 9000, '254712345678');
             await settlePayment({ ref: retry.checkoutRequestId!, success: true, receipt: 'RCPT1' });
             expect((await prisma.payment.findUniqueOrThrow({ where: { id: retry.id } })).state).toBe('PAID');
             expect(await prisma.registrationGroup.findUniqueOrThrow({ where: { id: group.registrationGroupId! } }))
@@ -177,8 +183,7 @@ describe.skipIf(!hasDb)('Relational model (Phase 1)', () => {
             await restoreCircuits2026();
             await prisma.event.create({ data: { year: NEXT, name: 'RWTW 2027' } });
             const [captain] = await team(9000);
-            await prisma.registration.update({ where: { id: captain.id }, data: { payload: { isPrimary: true, memberIndex: 0, paymentFailed: true, paymentFailureReason: 'Insufficient funds' } } });
-            await recordAttempt({ purpose: 'REGISTRATION', registrationId: captain.id }, `ref-${randomUUID()}`, 9000, '254712345678');
+            await recordAttempt(await regTarget(captain.id), `ref-${randomUUID()}`, 9000, '254712345678');
             const ticket = randomUUID();
             await prisma.raffleTicket.create({ data: { id: ticket, firstName: 'Raf', lastName: 'Fle', email: 'raffle@example.com', status: 'PAID' } });
             await recordAttempt({ purpose: 'RAFFLE', raffleTicketIds: [ticket] }, `ref-${randomUUID()}`, 1000, '254712345678');
@@ -205,7 +210,7 @@ describe.skipIf(!hasDb)('Relational model (Phase 1)', () => {
             expect(await problems()).toEqual([]);
             expect(compareSnapshots(before, await takeSnapshot())).toEqual([]);
             const group = await prisma.registrationGroup.findFirstOrThrow({ where: { registrations: { some: { id: captain.id } } } });
-            expect(group).toMatchObject({ entryType: 'TEAM', paymentFailed: true, paymentFailureReason: 'Insufficient funds' });
+            expect(group).toMatchObject({ entryType: 'TEAM' });
             expect((await prisma.notifyInterest.findUniqueOrThrow({ where: { email: 'later@example.com' } })).eventYear).toBe(NEXT);
             expect((await prisma.eventFeedback.findFirstOrThrow()).eventYear).toBe(2026);
 

@@ -8,7 +8,7 @@ import bcrypt from 'bcrypt';
 import { randomBytes, randomUUID } from 'crypto';
 import app from '../../index.js';
 import { prisma } from '../../storage/prisma.js';
-import { updateRegistration } from '../../storage/registrationStore.js';
+import { setEntryStatus } from '../../services/registrations/entries.js';
 import { backfillRiderModel } from '../../services/backfills/riderModel.js';
 import { runDataChecks } from '../../services/dataChecks.js';
 import { clearPricingCache } from '../../services/pricing.js';
@@ -102,7 +102,7 @@ describe.skipIf(!hasDb)('Registrations on the new model', () => {
         expect((await prisma.registration.findUniqueOrThrow({ where: { id: old } })).tshirtSize).toBe('M');
 
         // Paying moves the group too.
-        await updateRegistration(row.id, { status: 'PAID' });
+        await setEntryStatus(row.registrationGroupId!, 'PAID');
         expect((await prisma.registrationGroup.findUniqueOrThrow({ where: { id: row.registrationGroupId! } })).status).toBe('PAID');
 
         // History, per year.

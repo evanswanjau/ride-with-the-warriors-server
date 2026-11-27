@@ -5,7 +5,6 @@
 import { Router, type Response } from 'express';
 import { z } from 'zod';
 import type { Prisma } from '../generated/client/index.js';
-import type { RegistrationPayload } from '../validation/registrationSchemas.js';
 import { prisma } from '../storage/prisma.js';
 import { writeAccountAudit } from '../middleware/adminAudit.js';
 import { publicAccount } from '../services/accountService.js';
@@ -15,13 +14,15 @@ import { paymentGateway } from '../services/paymentGateway.js';
 import { beginAttempt, recordAttempt } from '../services/payments.js';
 import { BIKES_SOLD_OUT, bikesLeft, eventForYear } from '../services/events.js';
 import { syncRiderModel } from '../services/backfills/riderModel.js';
+import { amountDue, entryCodeOf, getRider, OLD_RIDER_COLUMNS, PAID_STATUSES } from '../services/registrations/entries.js';
+import { parseDob } from '../services/riderProfiles.js';
 
 
 export const meRouter = Router();
 meRouter.use(requireUser);
 
-type Reg = Prisma.RegistrationGetPayload<{ include: { bikeHire: true } }>;
-type GroupedReg = Prisma.RegistrationGetPayload<{ include: { bikeHire: true; registrationGroup: true } }>;
+type Reg = Omit<Prisma.RegistrationGetPayload<{ include: { bikeHire: true } }>, 'payload' | 'pricing' | 'classifications'>;
+type GroupedReg = Reg & Prisma.RegistrationGetPayload<{ select: { registrationGroup: true } }>;
 
 function riderView(r: Reg) {
     return {
@@ -64,8 +65,8 @@ meRouter.get('/history', async (req: UserRequest, res, next) => {
         const year = Number.isInteger(yearParam) && yearParam > 2000 ? yearParam : (years[0] ?? new Date().getFullYear());
 
         const [owned, participating, tickets, donations] = await Promise.all([
-            prisma.registration.findMany({ where: { accountId, eventYear: year }, include: { bikeHire: true, registrationGroup: true }, orderBy: { createdAt: 'asc' } }),
-            prisma.registration.findMany({ where: { participantAccountId: accountId, eventYear: year, NOT: { accountId } }, include: { bikeHire: true, registrationGroup: true }, orderBy: { createdAt: 'asc' } }),
+            prisma.registration.findMany({ where: { accountId, eventYear: year }, omit: OLD_RIDER_COLUMNS, include: { bikeHire: true, registrationGroup: true }, orderBy: [{ createdAt: 'asc' }, { position: { sort: 'asc', nulls: 'last' } }] }),
+            prisma.registration.findMany({ where: { participantAccountId: accountId, eventYear: year, NOT: { accountId } }, omit: OLD_RIDER_COLUMNS, include: { bikeHire: true, registrationGroup: true }, orderBy: { createdAt: 'asc' } }),
             prisma.raffleTicket.findMany({ where: { accountId, eventYear: year }, orderBy: { createdAt: 'asc' } }),
             prisma.donation.findMany({ where: { accountId, eventYear: year }, orderBy: { createdAt: 'asc' } }),
         ]);
@@ -73,40 +74,42 @@ meRouter.get('/history', async (req: UserRequest, res, next) => {
         // Group the rows I own by entry (RegistrationGroup; family / team / individual).
         const groups = new Map<string, GroupedReg[]>();
         for (const r of owned) {
-            const key = r.registrationGroupId || r.groupId || r.id;
+            const key = r.registrationGroupId || r.id;
             groups.set(key, [...(groups.get(key) ?? []), r]);
         }
 
         const registrations = [
-            ...[...groups.values()].map((rows) => {
-                const primary = rows.find(r => (r.payload as RegistrationPayload | null)?.isPrimary) ?? rows[0];
+            ...[...groups.values()].map((unordered) => {
+                // Riders in entry order; the first (position 0) registered and pays.
+                const rows = [...unordered].sort((a, b) => (a.position ?? Infinity) - (b.position ?? Infinity));
+                const primary = rows[0];
                 const group = primary.registrationGroup;
                 return {
-                    groupId: primary.groupId || primary.id,
+                    groupId: group ? entryCodeOf(group, primary.id) : primary.id,
                     registrationGroupId: group?.id ?? null,
                     eventYear: primary.eventYear,
                     role: 'owner' as const,
                     type: group?.type ?? primary.type,
                     circuitId: group?.circuitId ?? primary.circuitId,
-                    teamName: group?.teamName ?? primary.teamName,
+                    teamName: group?.teamName ?? null,
                     status: group?.status ?? primary.status,
                     // Payment is made against the primary row.
                     paymentRegistrationId: primary.id,
-                    totalAmount: group?.totalAmount ?? rows.reduce((sum, r) => sum + (r.totalAmount || 0), 0),
+                    totalAmount: group?.totalAmount ?? rows.reduce((sum, r) => sum + (r.amountKes ?? 0), 0),
                     createdAt: primary.createdAt,
                     riders: rows.map(riderView),
                 };
             }),
             // Team members / riders registered by someone else: only their own entry.
             ...participating.map(r => ({
-                groupId: r.groupId || r.id,
+                groupId: r.registrationGroup ? entryCodeOf(r.registrationGroup, r.id) : r.id,
                 registrationGroupId: r.registrationGroupId,
                 eventYear: r.eventYear,
                 role: 'participant' as const,
-                type: r.type,
-                circuitId: r.circuitId,
-                teamName: r.teamName,
-                status: r.status,
+                type: r.registrationGroup?.type ?? r.type,
+                circuitId: r.registrationGroup?.circuitId ?? r.circuitId,
+                teamName: r.registrationGroup?.teamName ?? null,
+                status: r.registrationGroup?.status ?? r.status,
                 paymentRegistrationId: null,
                 totalAmount: null,
                 createdAt: r.createdAt,
@@ -138,18 +141,19 @@ meRouter.get('/history', async (req: UserRequest, res, next) => {
 meRouter.post('/bike-hire', async (req: UserRequest, res, next) => {
     try {
         const accountId = req.account!.id;
-        const reg = await prisma.registration.findUnique({ where: { id: String(req.body?.registrationId || '') }, include: { bikeHire: true } });
-        if (!reg || reg.accountId !== accountId) {
+        const reg = await getRider(String(req.body?.registrationId || ''));
+        const entry = reg?.registrationGroup;
+        if (!reg || !entry || entry.accountId !== accountId) {
             return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Registration not found' } });
         }
-        if (reg.status === 'CANCELLED') {
+        if (entry.status === 'CANCELLED' || reg.status === 'CANCELLED') {
             return res.status(400).json({ error: { code: 'CANCELLED', message: 'This registration is cancelled.' } });
         }
         if (reg.bikeHire) {
             return res.status(400).json({ error: { code: 'ALREADY_EXISTS', message: 'A bike is already booked for this registration.' } });
         }
 
-        const unpaid = reg.status === 'UNPAID';
+        const unpaid = entry.status === 'UNPAID';
         // The fee is the registration's event's bike hire price; its stock may be limited.
         const event = await eventForYear(reg.eventYear);
         if (await bikesLeft(event) === 0) return res.status(409).json({ error: BIKES_SOLD_OUT });
@@ -159,12 +163,12 @@ meRouter.post('/bike-hire', async (req: UserRequest, res, next) => {
         });
 
         if (unpaid) {
-            // Fold the fee into the registration's own payment.
-            const pricing: Partial<PricingResult> = { ...((reg.pricing as Partial<PricingResult> | null) ?? {}) };
-            pricing.totalAmount = Number(pricing.totalAmount ?? reg.totalAmount ?? 0) + BIKE_HIRE_FEE;
+            // Fold the fee into the entry's own payment. The rider's amount grows by the fee
+            // (totalAmount is the old copy; the database splits a team's over its members).
+            const pricing: Partial<PricingResult> = { ...((entry.pricing as Partial<PricingResult> | null) ?? {}) };
+            pricing.totalAmount = amountDue(entry) + BIKE_HIRE_FEE;
             pricing.lineItems = [...(pricing.lineItems ?? []), { label: 'Bike Hire', amount: BIKE_HIRE_FEE }];
-            const rows = reg.groupId ? { groupId: reg.groupId } : { id: reg.id };
-            await prisma.registration.updateMany({ where: rows, data: { pricing } });
+            await prisma.registrationGroup.update({ where: { id: entry.id }, data: { pricing: pricing as Prisma.InputJsonValue } });
             await prisma.registration.update({ where: { id: reg.id }, data: { totalAmount: reg.totalAmount + BIKE_HIRE_FEE } });
             await syncRiderModel([reg.id]);
         }
@@ -296,8 +300,6 @@ export const riderUpdateSchema = z.object({
     unit: optionalText(100),
 });
 
-const PAID_STATUSES = ['PAID', 'CONFIRMED', 'COMPLEMENTARY'];
-
 /**
  * PATCH /me/riders/:id — a registration row the account owns or rides on.
  * Until RiderProfile exists, a "rider" is a Registration row.
@@ -315,49 +317,54 @@ meRouter.patch('/riders/:id', async (req: UserRequest, res, next) => {
         const { idNumber: _locked, ...data } = body.data;
 
         const accountId = req.account!.id;
-        const reg = await prisma.registration.findUnique({ where: { id: req.params.id }, include: { bikeHire: true } });
+        const reg = await getRider(req.params.id);
         if (!reg || (reg.accountId !== accountId && reg.participantAccountId !== accountId)) {
             return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Rider not found' } });
         }
+        const entry = reg.registrationGroup;
         if (reg.status === 'CANCELLED') {
             return res.status(400).json({ error: { code: 'CANCELLED', message: 'This registration is cancelled.' } });
         }
 
         const diff = changes(reg, data);
-        if (Object.keys(diff).length === 0) return res.json({ rider: riderView(reg as Reg), requoted: false, totalAmount: reg.totalAmount });
+        if (Object.keys(diff).length === 0) return res.json({ rider: riderView(reg), requoted: false, totalAmount: reg.amountKes ?? 0 });
 
         const update: Record<string, unknown> = {};
         for (const k of Object.keys(diff)) update[k] = (data as Record<string, unknown>)[k];
         let requoted: { from: unknown; to: unknown } | null = null;
 
-        if (reg.type === 'individual') {
-            // Keep the original submission in step with the edited columns.
-            const payload: Record<string, unknown> & { riderDetails?: Record<string, unknown> } = { ...((reg.payload as Record<string, unknown> | null) ?? {}) };
-            payload.riderDetails = { ...(payload.riderDetails ?? {}), ...update };
-            update.payload = payload;
-
-            if ('dob' in diff && !PAID_STATUSES.includes(reg.status)) {
-                const quote = await buildQuote({ event: await eventForYear(reg.eventYear), circuitId: reg.circuitId as Parameters<typeof buildQuote>[0]['circuitId'], type: 'individual', payload: payload as Parameters<typeof buildQuote>[0]['payload'] });
-                const pricing = quote.pricing;
-                // A bike added after registering is part of this payment but not of the payload.
-                if (reg.bikeHire && !pricing.lineItems.some((l) => l.label === 'Bike Hire')) {
-                    pricing.lineItems.push({ label: 'Bike Hire', amount: reg.bikeHire.amount });
-                    pricing.totalAmount += reg.bikeHire.amount;
-                }
-                update.pricing = pricing;
-                update.classifications = quote.classifications;
-                update.category = quote.classifications[0]?.category ?? reg.category;
-                update.totalAmount = pricing.totalAmount;
-                requoted = {
-                    from: { category: reg.category, totalAmount: reg.totalAmount },
-                    to: { category: update.category, totalAmount: update.totalAmount },
-                };
+        const entryUpdate: Prisma.RegistrationGroupUpdateInput = {};
+        if (entry?.type === 'individual' && 'dob' in diff && !PAID_STATUSES.includes(entry.status)) {
+            const after = { ...reg, ...update } as typeof reg;
+            const riderDetails = {
+                firstName: after.firstName, dob: after.dob ?? '', isMilitary: after.isMilitary,
+                service: after.service ?? undefined, rank: after.rank ?? undefined, serviceNumber: after.serviceNumber ?? undefined,
+            };
+            const quote = await buildQuote({ event: await eventForYear(entry.eventYear), circuitId: entry.circuitId, type: 'individual', payload: { riderDetails } });
+            const pricing = quote.pricing;
+            // A bike booked with the entry (or added later) is part of this payment.
+            if (reg.bikeHire) {
+                pricing.lineItems.push({ label: 'Bike Hire', amount: reg.bikeHire.amount });
+                pricing.totalAmount += reg.bikeHire.amount;
             }
+            const category = quote.classifications[0]?.category ?? reg.category;
+            update.category = category;
+            update.totalAmount = pricing.totalAmount;
+            entryUpdate.pricing = pricing as unknown as Prisma.InputJsonValue;
+            entryUpdate.classifications = quote.classifications as unknown as Prisma.InputJsonValue;
+            requoted = {
+                from: { category: reg.category, totalAmount: amountDue(entry) },
+                to: { category, totalAmount: pricing.totalAmount },
+            };
         }
         // bibNumber and (for paid entries) category are never written here.
 
-        const updated = await prisma.registration.update({ where: { id: reg.id }, data: update as Prisma.RegistrationUncheckedUpdateInput, include: { bikeHire: true } });
-        if (requoted) await syncRiderModel([reg.id]);
+        if ('dob' in update) update.dobDate = parseDob(update.dob as string);
+        const updated = await prisma.registration.update({ where: { id: reg.id }, data: update as Prisma.RegistrationUncheckedUpdateInput, omit: OLD_RIDER_COLUMNS, include: { bikeHire: true } });
+        if (requoted && entry) {
+            await prisma.registrationGroup.update({ where: { id: entry.id }, data: entryUpdate });
+            await syncRiderModel([reg.id]);
+        }
         await writeAccountAudit({
             account: req.account!,
             action: 'account:update-rider',
@@ -365,7 +372,7 @@ meRouter.patch('/riders/:id', async (req: UserRequest, res, next) => {
             ip: req.ip ?? null,
             details: { changes: diff, status: reg.status, ...(requoted ? { requoted } : {}) },
         });
-        res.json({ rider: riderView(updated as Reg), requoted: !!requoted, totalAmount: updated.totalAmount });
+        res.json({ rider: riderView(updated), requoted: !!requoted, totalAmount: requoted ? Number(update.totalAmount) : (reg.amountKes ?? 0) });
     } catch (err) {
         next(err);
     }

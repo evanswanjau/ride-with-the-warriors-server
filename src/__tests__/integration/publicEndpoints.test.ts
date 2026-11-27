@@ -15,7 +15,8 @@ vi.mock('../../services/emailService.js', async (importOriginal) => {
 
 import app from '../../index.js';
 import { prisma } from '../../storage/prisma.js';
-import { sendEnquiryEmails, getEnquiryAdminEmail, getEnquiryAckEmail } from '../../services/emailService.js';
+import { sendEnquiryEmails } from '../../services/emailService.js';
+import { getEnquiryAdminEmail, getEnquiryAckEmail } from '../../services/emailTemplates.js';
 
 const request = supertest(app);
 const hasDb = !!process.env.DATABASE_URL;

@@ -79,6 +79,8 @@ vi.mock('../../../storage/prisma.js', () => ({
             }),
         },
         registration: {
+            findUnique: vi.fn().mockImplementation(({ where }: { where: { id: string } }) =>
+                Promise.resolve(mockRegistrations.some((r: { id: string }) => r.id === where.id) ? { registrationGroupId: `E-${where.id}` } : null)),
             findMany: vi.fn().mockResolvedValue(mockRegistrations),
             count: vi.fn().mockResolvedValue(2),
             delete: vi.fn().mockResolvedValue(mockRegistrations[0]),
@@ -92,17 +94,13 @@ vi.mock('../../../storage/prisma.js', () => ({
     },
 }));
 
-// Mock the memory registrations update
-vi.mock('../../../storage/registrationStore.js', () => ({
-    updateRegistration: vi.fn().mockImplementation((id: string, data: any) => {
-        const reg = mockRegistrations.find((r: any) => r.id === id);
-        if (!reg) throw new Error('Not found');
-        return Promise.resolve({ ...reg, ...data });
-    }),
-    createRegistration: vi.fn(),
-    getRegistration: vi.fn(),
-    findExistingRegistrationsByEmails: vi.fn().mockResolvedValue([]),
-    findExistingRegistrationsByIdNumbers: vi.fn().mockResolvedValue([]),
+// The entry takes the new status; its riders come back.
+vi.mock('../../../services/registrations/entries.js', () => ({
+    OLD_RIDER_COLUMNS: { payload: true, pricing: true, classifications: true },
+    getRider: vi.fn().mockImplementation((id: string) =>
+        Promise.resolve(mockRegistrations.some((r: { id: string }) => r.id === id) ? { id, registrationGroupId: `E-${id}` } : null)),
+    setEntryStatus: vi.fn().mockImplementation((entryId: string, status: string) =>
+        Promise.resolve(mockRegistrations.filter((r: { id: string }) => `E-${r.id}` === entryId).map((r: object) => ({ ...r, status })))),
 }));
 
 describe('Admin Registrations API', () => {

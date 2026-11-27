@@ -3,8 +3,10 @@
  * run by runDataChecks once its tables exist. Read-only.
  *
  *  - Every copy equals the old value it comes from (problems): typed statuses, whole-KES
- *    amounts, dob as a date, entry and circuit links, the raffle ticket join table, the
- *    entry's "payment failed" flag, per-rider amounts adding up to the entry's total.
+ *    amounts, dob as a date, entry and circuit links, the raffle ticket join table,
+ *    per-rider amounts adding up to the entry's total. (The entry's "payment failed" flag is
+ *    written by the app since Phase 2, so it has no old value to match.)
+ *  - Riders without a place on their entry (Registration.position, Phase 2) (notes).
  *  - Paid totals per year from the new columns equal the old ones (problems).
  *  - Old values with no new equivalent, e.g. an unknown status (problems: ask before mapping).
  *  - Old rows the new links cannot reach, e.g. payments for deleted rows, and years still
@@ -20,10 +22,6 @@ const DRIFT: { what: string; sql: string }[] = [
     { what: 'RegistrationGroup: team price not split evenly over its members', sql: `SELECT COUNT(*) AS n FROM (SELECT "registrationGroupId" FROM "Registration" WHERE "type" = 'team' AND "registrationGroupId" IS NOT NULL GROUP BY 1 HAVING MAX("amountKes") - MIN("amountKes") > 1) x` },
     { what: 'RegistrationGroup.entryType differs from type', sql: `SELECT COUNT(*) AS n FROM "RegistrationGroup" WHERE "entryType"::TEXT IS DISTINCT FROM UPPER("type")` },
     { what: 'RegistrationGroup.eventCircuitId differs from its year and circuit', sql: `SELECT COUNT(*) AS n FROM "RegistrationGroup" g WHERE g."eventCircuitId" IS DISTINCT FROM (SELECT c."id" FROM "EventCircuit" c WHERE c."eventYear" = g."eventYear" AND c."slug" = g."circuitId")` },
-    {
-        what: 'RegistrationGroup.paymentFailed differs from its rows', sql: `SELECT COUNT(*) AS n FROM "RegistrationGroup" g WHERE g."paymentFailed" IS DISTINCT FROM
-            COALESCE((SELECT BOOL_OR(r."payload"->'paymentFailed' = 'true'::JSONB) FROM "Registration" r WHERE r."registrationGroupId" = g."id"), FALSE)`,
-    },
     { what: 'PricingCategory.priceKes differs from price', sql: `SELECT COUNT(*) AS n FROM "PricingCategory" WHERE "priceKes" IS DISTINCT FROM ROUND("price")::INTEGER` },
     { what: 'PricingCategory.eventCircuitId differs from its year and circuit', sql: `SELECT COUNT(*) AS n FROM "PricingCategory" p WHERE p."eventCircuitId" IS DISTINCT FROM (SELECT c."id" FROM "EventCircuit" c WHERE c."eventYear" = p."eventYear" AND c."slug" = p."circuitId")` },
     { what: 'Payment.state differs from status', sql: `SELECT COUNT(*) AS n FROM "Payment" WHERE "status" = ANY (enum_range(NULL::"PaymentState")::TEXT[]) AND "state"::TEXT IS DISTINCT FROM "status"` },
@@ -37,6 +35,12 @@ const DRIFT: { what: string; sql: string }[] = [
     { what: 'Donation.amountKes differs from amount', sql: `SELECT COUNT(*) AS n FROM "Donation" WHERE "amountKes" IS DISTINCT FROM ROUND("amount")::INTEGER` },
     { what: 'BikeHire.state differs from status', sql: `SELECT COUNT(*) AS n FROM "BikeHire" WHERE "status" = ANY (enum_range(NULL::"BikeHireState")::TEXT[]) AND "state"::TEXT IS DISTINCT FROM "status"` },
     { what: 'BikeHire.amountKes differs from amount', sql: `SELECT COUNT(*) AS n FROM "BikeHire" WHERE "amountKes" IS DISTINCT FROM ROUND("amount")::INTEGER` },
+];
+
+/** Phase 2: riders without a place on their entry are ordered by createdAt instead (notes). */
+const PHASE2: { what: string; sql: string }[] = [
+    { what: 'rider row(s) have no position on their entry (written outside the app)', sql: `SELECT COUNT(*) AS n FROM "Registration" WHERE "position" IS NULL` },
+    { what: 'entry position(s) are held by more than one rider', sql: `SELECT COUNT(*) AS n FROM (SELECT 1 FROM "Registration" WHERE "registrationGroupId" IS NOT NULL GROUP BY "registrationGroupId", "position" HAVING COUNT(*) > 1) x` },
 ];
 
 /** Old values that have no new equivalent: someone decides how to map them. */
@@ -78,6 +82,12 @@ const NOTES: { what: string; sql: string }[] = [
     },
 ];
 
+/** True once migration 20261128010000_rider_position has run. */
+async function hasPosition(): Promise<boolean> {
+    const [{ ok }] = await prisma.$queryRaw<{ ok: boolean }[]>`SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'Registration' AND column_name = 'position') AS ok`;
+    return ok;
+}
+
 async function count(sql: string): Promise<number> {
     const [{ n }] = await prisma.$queryRawUnsafe<{ n: bigint }[]>(sql);
     return Number(n);
@@ -90,12 +100,14 @@ export async function checkRelationalModel(problems: string[], notes: string[]) 
         return;
     }
 
-    const [drift, unmapped, unreached, totals] = await Promise.all([
+    const [drift, unmapped, unreached, totals, phase2] = await Promise.all([
         Promise.all(DRIFT.map(d => count(d.sql))),
         Promise.all(UNMAPPED.map(u => count(u.sql))),
         Promise.all(NOTES.map(n => count(n.sql))),
         prisma.$queryRawUnsafe<{ t: string; y: number; old: bigint | null; new: bigint | null }[]>(TOTALS_SQL),
+        hasPosition().then(ok => ok ? Promise.all(PHASE2.map(p => count(p.sql))) : null),
     ]);
+    if (phase2) PHASE2.forEach((p, i) => { if (phase2[i]) notes.push(`${phase2[i]} ${p.what}`); });
     DRIFT.forEach((d, i) => { if (drift[i]) problems.push(`${drift[i]} row(s): ${d.what} (npm run backfill:relational)`); });
     UNMAPPED.forEach((u, i) => { if (unmapped[i]) problems.push(`${unmapped[i]} row(s): ${u.what}; decide how to map them before Phase 2`); });
     for (const t of totals) {

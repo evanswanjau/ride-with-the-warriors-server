@@ -123,10 +123,12 @@ describe.skipIf(!hasDb)('Profile editing', () => {
             const res = await request.patch(`/api/v1/me/riders/${id}`).set(me.auth).send({ dob: '1980-03-03' });
             expect(res.status).toBe(200);
             expect(res.body.requoted).toBe(true);
-            const row = await prisma.registration.findUnique({ where: { id } });
-            expect(row?.category).toBe('Commanders');
-            expect((row?.payload as any).riderDetails.dob).toBe('1980-03-03');
-            expect((row?.pricing as any).totalAmount).toBe(row?.totalAmount);
+            const row = await prisma.registration.findUnique({ where: { id }, include: { registrationGroup: true } });
+            expect(row).toMatchObject({ category: 'Commanders', dob: '1980-03-03' });
+            expect(row?.dobDate?.toISOString().slice(0, 10)).toBe('1980-03-03');
+            // The new price is on the entry; the rider's amount follows it.
+            expect((row?.registrationGroup?.pricing as any).totalAmount).toBe(row?.amountKes);
+            expect(row?.registrationGroup).toMatchObject({ totalAmount: row?.amountKes, classifications: [{ category: 'Commanders' }] });
             const [audit] = await audits({ entityId: id });
             expect((audit.details as any).requoted).toMatchObject({ from: { category: 'Airborne' }, to: { category: 'Commanders' } });
         });
@@ -221,7 +223,6 @@ describe.skipIf(!hasDb)('Profile editing', () => {
             expect(res.status).toBe(200);
             const row = await prisma.registration.findUnique({ where: { id } });
             expect(row?.idNumber).toBe('33334444');
-            expect((row?.payload as any).riderDetails.idNumber).toBe('33334444');
 
             const [audit] = await audits({ action: 'registration:change-id-number' });
             expect(audit).toMatchObject({ actorType: 'admin', adminId: a.id, entityId: id });

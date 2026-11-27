@@ -64,6 +64,8 @@ model Registration {
   registrationGroup    RegistrationGroup? @relation(fields: [registrationGroupId], references: [id], onDelete: SetNull)
   riderProfileId       String?
   riderProfile         RiderProfile?      @relation(fields: [riderProfileId], references: [id], onDelete: SetNull)
+  // Phase 2: the rider's place on the entry; 0 = the rider who registered. Team bibs follow it.
+  position             Int?
 
   @@unique([eventYear, bibNumber])
   // One entry per rider per event.
@@ -93,8 +95,8 @@ model RegistrationGroup {
   entryType            EntryType?
   teamName             String?
   status               RegistrationStatus @default(UNPAID)
-  // Phase 1: "Payment failed" for the entry, copied from its rows' payload.paymentFailed and
-  // paymentFailureReason (database trigger).
+  // "Payment failed" for the entry: set by services/payments.ts when the newest prompt fails,
+  // cleared when a new prompt starts or the entry is paid.
   paymentFailed        Boolean            @default(false)
   paymentFailureReason String?
   // Price quote at registration time (lineItems, totalAmount) and the categories it used.
