@@ -55,7 +55,7 @@ export function splitEvenly(total: number, n: number): number[] {
 }
 
 /** Price per rider of each family category, from the quote's line items. */
-function familyPrices(pricing: PricingResult): Record<'cubs' | 'champs' | 'tigers', number> {
+export function familyPrices(pricing: PricingResult): Record<'cubs' | 'champs' | 'tigers', number> {
     const out = { cubs: 0, champs: 0, tigers: 0 };
     for (const item of pricing.lineItems) {
         const cat = item.category?.toLowerCase();

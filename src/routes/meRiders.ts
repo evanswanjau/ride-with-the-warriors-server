@@ -17,12 +17,11 @@ import type { RiderProfile } from '../generated/client/index.js';
 import { prisma } from '../storage/prisma.js';
 import { requireUser, type UserRequest } from '../middleware/userAuth.js';
 import { writeAccountAudit } from '../middleware/adminAudit.js';
-import { normaliseIdNumber, parseDob, riderMatchKey } from '../services/riderProfiles.js';
+import { DUPLICATE_RIDER_MESSAGE, editProfile, normaliseIdNumber, parseDob, ProfileEditError, riderMatchKey } from '../services/riderProfiles.js';
 
 export const meRidersRouter = Router();
 meRidersRouter.use(requireUser);
 
-const ID_LOCKED = 'The ID or passport number can only be changed by the organisers. Contact support.';
 const kenyanPhone = /^(?:254|\+254|0)?(7|1)\d{8}$/;
 const text = (max: number) => z.string().trim().max(max).nullable().optional();
 const phone = z.string().transform((v) => v.replace(/\s+/g, ''))
@@ -96,7 +95,7 @@ function toData(input: Input) {
 const validation = (res: Response, err: z.ZodError) =>
     res.status(400).json({ error: { code: 'VALIDATION', message: err.issues[0]?.message ?? 'Invalid details', details: err.flatten() } });
 const duplicate = (res: Response) =>
-    res.status(409).json({ error: { code: 'DUPLICATE_RIDER', message: 'You already have this rider (same name and ID number, or same name and date of birth).' } });
+    res.status(409).json({ error: { code: 'DUPLICATE_RIDER', message: DUPLICATE_RIDER_MESSAGE } });
 
 const ENTRIES = { select: { eventYear: true, category: true, status: true, bibNumber: true, registrationGroup: { select: { circuitId: true } } }, orderBy: { eventYear: 'desc' as const } };
 
@@ -151,35 +150,12 @@ meRidersRouter.patch('/:id', async (req: UserRequest, res, next) => {
         const profile = await owned(req, req.params.id);
         if (!profile) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Rider not found' } });
 
-        const data = toData(body.data);
-        if (data.idNumber !== undefined && profile.idNumber && data.idNumber !== profile.idNumber) {
-            return res.status(400).json({ error: { code: 'ID_LOCKED', message: ID_LOCKED } });
-        }
-        if (data.idNumber === profile.idNumber) delete data.idNumber;
-
-        const before = profile as unknown as Record<string, unknown>;
-        const changed = Object.fromEntries(Object.entries(data).filter(([k, v]) => {
-            const was = before[k];
-            return was instanceof Date && v instanceof Date ? was.getTime() !== v.getTime() : (was ?? null) !== (v ?? null);
-        }));
-        if (Object.keys(changed).length === 0) return res.json({ rider: view(profile) });
-
-        const next_ = { ...profile, ...changed } as RiderProfile;
-        const matchKey = riderMatchKey({
-            firstName: next_.firstName, lastName: next_.lastName, idNumber: next_.idNumber,
-            dob: next_.dob ? next_.dob.toISOString().slice(0, 10) : null,
-        });
-        if (matchKey !== profile.matchKey && await prisma.riderProfile.findUnique({ where: { accountId_matchKey: { accountId: profile.accountId, matchKey } } })) {
-            return duplicate(res);
-        }
-
-        const updated = await prisma.riderProfile.update({ where: { id: profile.id }, data: { ...changed, matchKey } });
-        await writeAccountAudit({
-            account: req.account!, action: 'account:edit-rider', entityId: profile.id, ip: req.ip ?? null,
-            details: Object.fromEntries(Object.keys(changed).map(k => [k, { from: before[k] ?? null, to: (changed as Record<string, unknown>)[k] ?? null }])),
-        });
-        res.json({ rider: view(updated) });
+        const edit = await editProfile(prisma, profile, toData(body.data));
+        if (!edit) return res.json({ rider: view(profile) });
+        await writeAccountAudit({ account: req.account!, action: 'account:edit-rider', entityId: profile.id, ip: req.ip ?? null, details: edit.changed });
+        res.json({ rider: view(edit.profile) });
     } catch (err) {
+        if (err instanceof ProfileEditError) return res.status(err.status).json({ error: { code: err.code, message: err.message } });
         next(err);
     }
 });

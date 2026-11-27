@@ -5,7 +5,7 @@
  * AND the same name, or (without an ID number) the same name and date of birth. The name is
  * part of the key because 2026 team captains often typed one ID number for every member.
  */
-import type { Prisma } from '../generated/client/index.js';
+import type { Prisma, RiderProfile } from '../generated/client/index.js';
 
 export type RiderSource = {
     firstName: string;
@@ -77,4 +77,51 @@ export function preferredEntry<T extends { status: string; createdAt: Date }>(ro
 /** The status a group shows: its rows share one, otherwise the best of them. */
 export function groupStatus<T extends { status: string; createdAt: Date }>(rows: T[]): T['status'] {
     return preferredEntry(rows).status;
+}
+
+/** A change to a profile that cannot be made. */
+export class ProfileEditError extends Error {
+    constructor(public status: number, public code: 'ID_LOCKED' | 'DUPLICATE_RIDER', message: string) {
+        super(message);
+    }
+}
+
+export const ID_LOCKED_MESSAGE = 'The ID or passport number can only be changed by the organisers. Contact support.';
+export const DUPLICATE_RIDER_MESSAGE = 'You already have this rider (same name and ID number, or same name and date of birth).';
+
+/** Profile columns a rider's details can change; dob as a Date, the ID number normalised. */
+export type ProfileChanges = Partial<Omit<RiderProfile, 'id' | 'accountId' | 'riderAccountId' | 'matchKey' | 'archivedAt' | 'createdAt' | 'updatedAt'>>;
+
+const sameValue = (a: unknown, b: unknown) =>
+    a instanceof Date && b instanceof Date ? a.getTime() === b.getTime() : (a ?? null) === (b ?? null);
+
+/**
+ * Applies changes to a profile: the ID number is locked once set (COD-130), and the new name,
+ * ID number or date of birth must not make it the same person as another of the account's
+ * profiles. Returns the updated profile and what changed (from/to), or null when nothing did.
+ */
+export async function editProfile(
+    client: Pick<Prisma.TransactionClient, 'riderProfile'>,
+    profile: RiderProfile,
+    input: ProfileChanges,
+): Promise<{ profile: RiderProfile; changed: Record<string, { from: unknown; to: unknown }> } | null> {
+    const data = { ...input };
+    if (data.idNumber !== undefined) {
+        data.idNumber = normaliseIdNumber(data.idNumber) || null;
+        if (profile.idNumber && data.idNumber !== profile.idNumber) throw new ProfileEditError(400, 'ID_LOCKED', ID_LOCKED_MESSAGE);
+    }
+    const before = profile as unknown as Record<string, unknown>;
+    const changed = Object.fromEntries(Object.entries(data).filter(([k, v]) => v !== undefined && !sameValue(before[k], v)));
+    if (Object.keys(changed).length === 0) return null;
+
+    const next = { ...profile, ...changed } as RiderProfile;
+    const matchKey = riderMatchKey({
+        firstName: next.firstName, lastName: next.lastName, idNumber: next.idNumber,
+        dob: next.dob ? next.dob.toISOString().slice(0, 10) : null,
+    });
+    if (matchKey !== profile.matchKey && await client.riderProfile.findUnique({ where: { accountId_matchKey: { accountId: profile.accountId, matchKey } } })) {
+        throw new ProfileEditError(409, 'DUPLICATE_RIDER', DUPLICATE_RIDER_MESSAGE);
+    }
+    const updated = await client.riderProfile.update({ where: { id: profile.id }, data: { ...changed, matchKey } });
+    return { profile: updated, changed: Object.fromEntries(Object.keys(changed).map(k => [k, { from: before[k] ?? null, to: changed[k] ?? null }])) };
 }
