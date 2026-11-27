@@ -62,5 +62,9 @@ export const draftHeaderSchema = z.object({
     type: z.enum(['individual', 'team', 'family']),
     teamName: optionalText(100),
     hireBike: z.boolean().optional(),
+    /** Team captain or family guardian: the entry is military (free when declared, as in 2026). */
+    isMilitary: z.boolean().optional(),
+    /** Family entries: the guardian (the account holder). Children's emergency contact defaults to them. */
+    guardian: z.object({ relationship: optionalText(60), phone }).strict().optional(),
 }).strict();
 export type DraftHeaderInput = z.infer<typeof draftHeaderSchema>;

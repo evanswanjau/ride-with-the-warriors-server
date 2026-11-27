@@ -10,34 +10,16 @@ import { Prisma } from '../../generated/client/index.js';
 import { buildQuote, calculateAge, type Classification, type PricingResult } from '../pricing.js';
 import type { EventRow } from '../events.js';
 import { familyPrices, splitEvenly } from './riderRows.js';
+import { familyCategoryFor, type FamilyCategory } from './familyAges.js';
 
 type Tx = Prisma.TransactionClient;
-
-export type FamilyCategory = 'cubs' | 'champs' | 'tigers';
-
-/** Family age bands on ride day (the same as the 2026 form): Cubs 4-8, Champs 9-13, parents 18+. */
-export const FAMILY_AGE_BANDS: Record<FamilyCategory, { min: number; max: number }> = {
-    cubs: { min: 4, max: 8 },
-    champs: { min: 9, max: 13 },
-    tigers: { min: 18, max: 150 },
-};
-
-/** The family category of a rider aged `age` on ride day; null when no family category fits. */
-export function familyCategoryFor(age: number | null): FamilyCategory | null {
-    if (age === null) return null;
-    for (const cat of ['cubs', 'champs', 'tigers'] as const) {
-        const band = FAMILY_AGE_BANDS[cat];
-        if (age >= band.min && age <= band.max) return cat;
-    }
-    return null;
-}
 
 /** Age in whole years on the event's ride day (today when it has none). */
 export const ageOnRideDay = (dob: string | null, event: Pick<EventRow, 'date'>) => (dob ? calculateAge(dob, event.date) : null);
 
 export type PricedRider = { id: string; dob: string | null; isMilitary: boolean; service: string | null; rank: string | null; serviceNumber: string | null; firstName: string };
 
-type DraftEntry = { type: string; circuitId: string; teamName: string | null; hireBike: boolean; declaredMilitary?: boolean };
+type DraftEntry = { type: string; circuitId: string; teamName: string | null; hireBike: boolean; declaredMilitary: boolean };
 
 export type DraftPrice = {
     pricing: PricingResult | null;

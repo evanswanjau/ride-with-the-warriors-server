@@ -6,11 +6,13 @@ import { prisma } from '../../storage/prisma.js';
 import type { CircuitRow } from '../circuits.js';
 import { entryTypeError, teamRuleErrors } from '../circuits.js';
 import type { EventRow } from '../events.js';
-import { ageOnRideDay, familyCategoryFor } from './draftPricing.js';
+import { ageOnRideDay } from './draftPricing.js';
+import { FAMILY_AGE_BANDS, familyCategoryFor } from './familyAges.js';
 
 export type MissingCode =
     | 'NO_RIDERS' | 'TOO_MANY_RIDERS' | 'MISSING_FIELD' | 'MISSING_TEAM_NAME' | 'TEAM_RULES'
-    | 'TOO_YOUNG' | 'AGE_NOT_IN_FAMILY_RANGE' | 'ALREADY_REGISTERED' | 'CIRCUIT' | 'NOT_PRICED';
+    | 'TOO_YOUNG' | 'AGE_NOT_IN_FAMILY_RANGE' | 'ALREADY_REGISTERED' | 'CIRCUIT' | 'NOT_PRICED'
+    | 'MISSING_GUARDIAN_PHONE' | 'MISSING_RELATIONSHIP';
 
 export type Missing = { code: MissingCode; message: string; riderId?: string; field?: string };
 
@@ -20,7 +22,11 @@ export type CheckedRider = {
     emergencyContactName: string | null; emergencyPhone: string | null;
 };
 
-type CheckedEntry = { id: string; eventYear: number; type: string; teamName: string | null; pricing: unknown };
+type CheckedEntry = {
+    id: string; eventYear: number; type: string; teamName: string | null; pricing: unknown;
+    /** Family entries: the guardian (drafts.ts guardianOf). */
+    guardian?: { relationship: string | null; phone: string | null } | null;
+};
 
 const LABELS: Record<string, string> = {
     email: 'email', phoneNumber: 'phone number', idNumber: 'ID or passport number', dob: 'date of birth',
@@ -65,6 +71,11 @@ export function draftProblems(entry: CheckedEntry, riders: CheckedRider[], circu
         } else if (age < MIN_ADULT_CIRCUIT_AGE) {
             out.push({ code: 'TOO_YOUNG', riderId: r.id, field: 'dob', message: `${r.firstName} must be at least ${MIN_ADULT_CIRCUIT_AGE} on ride day for this circuit.` });
         }
+    }
+    if (entry.type === 'family') {
+        if (!entry.guardian?.phone) out.push({ code: 'MISSING_GUARDIAN_PHONE', message: 'Add your phone number: it is the emergency contact for the children.' });
+        const children = riders.some(r => (ageOnRideDay(r.dob, event) ?? 99) < FAMILY_AGE_BANDS.tigers.min);
+        if (children && !entry.guardian?.relationship) out.push({ code: 'MISSING_RELATIONSHIP', message: 'Say how you are related to the children.' });
     }
     if (entry.type === 'team' && circuit) {
         for (const message of teamRuleErrors(circuit, riders)) out.push({ code: 'TEAM_RULES', message });
