@@ -61,6 +61,7 @@ async function cleanup() {
     await prisma.registration.deleteMany({});
     await prisma.raffleTicket.deleteMany({});
     await prisma.pricingCategory.deleteMany({ where: { eventYear: YEAR } });
+    await prisma.eventCircuit.deleteMany({ where: { eventYear: YEAR } });
     await prisma.event.deleteMany({ where: { year: YEAR } });
     await prisma.adminSession.deleteMany({});
     await prisma.admin.deleteMany({ where: { email: { endsWith: '@test.local' } } });
@@ -106,6 +107,46 @@ describe.skipIf(!hasDb)('Events and per-year numbering', () => {
         expect(await prisma.pricingCategory.count({ where: { eventYear: 2026, price: 99 } })).toBe(0);
 
         expect((await request.post('/api/v1/admin/events').set(admin).send({ year: YEAR })).status).toBe(409);
+    });
+
+    it('circuits, team rules and states come from the database; a new year copies the circuits', async () => {
+        const res2026 = await request.get('/api/v1/events/2026');
+        expect(res2026.body.event).toMatchObject({ registrationState: 'finished', raffleState: 'finished', riderCap: null });
+        expect(res2026.body.event.circuits.map((c: { id: string }) => c.id)).toEqual(['blitz', 'recon', 'corporate', 'family']);
+        expect(res2026.body.event.circuits[0]).toMatchObject({ id: 'blitz', distanceKm: 120, startTime: '07:00', teamMinMembers: 5, teamMaxMembers: 5, teamRequiresFemale: true, entryTypes: ['INDIVIDUAL', 'TEAM'] });
+
+        const created = await request.post('/api/v1/admin/events').set(admin).send({ year: YEAR, date: '2027-05-09' });
+        expect(created.status).toBe(201);
+        expect(await prisma.eventCircuit.count({ where: { eventYear: YEAR } })).toBe(4);
+        // The copied prices link to the new year's circuits.
+        expect(await prisma.pricingCategory.count({ where: { eventYear: YEAR, eventCircuit: { eventYear: YEAR } } })).toBe(await prisma.pricingCategory.count({ where: { eventYear: YEAR } }));
+
+        const patched = await request.patch(`/api/v1/admin/events/${YEAR}`).set(admin).send({ riderCap: 2000 });
+        expect(patched.body.event).toMatchObject({ riderCap: 2000, registrationState: 'upcoming' });
+
+        // An admin tightens the 2027 corporate rule; 2026 keeps its own.
+        await prisma.eventCircuit.update({ where: { eventYear_slug: { eventYear: YEAR, slug: 'corporate' } }, data: { teamMinMembers: 4 } });
+        await request.post(`/api/v1/admin/events/${YEAR}/registration/open`).set(admin);
+        const current = await request.get('/api/v1/events/current');
+        expect(current.body.event).toMatchObject({ year: YEAR, registrationState: 'open', raffleState: 'upcoming' });
+        const team = { teamName: 'Three', members: [0, 1, 2].map(i => ({ ...rider(uniq().slice(-8)), id: `m${i}`, firstName: `M${i}`, isCaptain: i === 0 })) };
+        const quote = await request.post('/api/v1/registrations/quote').send({ circuitId: 'corporate', type: 'team', payload: { teamDetails: team } });
+        expect(quote.status).toBe(400);
+        expect(quote.body.error.details.formErrors).toEqual(['CORPORATE CHALLENGE RIDE 30 KM teams must have 4-5 members (Currently: 3)']);
+        expect((await prisma.eventCircuit.findUniqueOrThrow({ where: { eventYear_slug: { eventYear: 2026, slug: 'corporate' } } })).teamMinMembers).toBe(3);
+
+        const familyTeam = await request.post('/api/v1/registrations/quote').send({ circuitId: 'family', type: 'team', payload: { teamDetails: team } });
+        expect(familyTeam.body.error.message).toBe('FAMILY FUN RIDE does not take team entries');
+
+        const list = await request.get('/api/v1/circuits');
+        expect(list.body.circuits[2]).toMatchObject({ id: 'corporate', title: 'CORPORATE CHALLENGE RIDE 30 KM', time: '08:30 AM', date: '9th May 2027', price: 2000 });
+    });
+
+    it('registration cannot open for a year without circuits', async () => {
+        await request.post('/api/v1/admin/events').set(admin).send({ year: YEAR });
+        await prisma.eventCircuit.deleteMany({ where: { eventYear: YEAR } });
+        const res = await request.post(`/api/v1/admin/events/${YEAR}/registration/open`).set(admin);
+        expect(res.body.error.code).toBe('NO_CIRCUITS');
     });
 
     it('registration opens and closes from admin; only the current event can open', async () => {

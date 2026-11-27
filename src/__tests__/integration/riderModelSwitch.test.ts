@@ -50,6 +50,7 @@ async function cleanup() {
     await prisma.otpCode.deleteMany({});
     await prisma.account.deleteMany({});
     await prisma.pricingCategory.deleteMany({ where: { eventYear: YEAR } });
+    await prisma.eventCircuit.deleteMany({ where: { eventYear: YEAR } });
     await prisma.event.deleteMany({ where: { year: YEAR } });
     await prisma.adminSession.deleteMany({});
     await prisma.admin.deleteMany({ where: { email: { endsWith: '@test.local' } } });

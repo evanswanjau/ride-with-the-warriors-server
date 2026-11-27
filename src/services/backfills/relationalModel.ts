@@ -2,8 +2,9 @@
  * Phase 1 backfill: fills the clean relational model beside the old columns (migration
  * 20261127000000_relational_model_add). Safe to run any number of times.
  *
- *  - EventCircuit: every event year without circuits gets the 2026 circuits and team rules
- *    (circuits2026.ts). Its trigger links that year's entries and prices to them.
+ *  - EventCircuit: every event year without circuits gets a copy of the circuits and team rules
+ *    of the newest earlier year that has them (2026's come from migration
+ *    20261128000000_event_circuits_2026). Their trigger links that year's entries and prices.
  *  - Copies of old columns (enum statuses, whole-KES amounts, dob as a date, payment links,
  *    PaymentRaffleTicket): the database triggers compute them; this rewrites each row's own
  *    old value onto itself so the triggers run for rows written before the migration. No old
@@ -17,7 +18,7 @@
  */
 import type { Prisma } from '../../generated/client/index.js';
 import { prisma } from '../../storage/prisma.js';
-import { CIRCUITS_2026 } from './circuits2026.js';
+import { copyCircuits } from '../circuits.js';
 
 type Tx = Prisma.TransactionClient;
 
@@ -63,12 +64,17 @@ async function count(tx: Tx, sql: string): Promise<number> {
 
 async function seedCircuits(tx: Tx, report: RelationalReport) {
     const [events, withCircuits] = await Promise.all([
-        tx.event.findMany({ select: { year: true } }),
+        tx.event.findMany({ select: { year: true }, orderBy: { year: 'asc' } }),
         tx.eventCircuit.groupBy({ by: ['eventYear'] }),
     ]);
     const done = new Set(withCircuits.map(c => c.eventYear));
-    const data = events.filter(e => !done.has(e.year)).flatMap(e => CIRCUITS_2026.map(c => ({ ...c, eventYear: e.year })));
-    if (data.length) report.circuitsCreated = (await tx.eventCircuit.createMany({ data })).count;
+    for (const { year } of events) {
+        if (done.has(year)) continue;
+        const source = [...done].filter(y => y < year).sort((a, b) => b - a)[0];
+        if (source === undefined) continue;
+        report.circuitsCreated += await copyCircuits(tx, source, year);
+        done.add(year);
+    }
 }
 
 async function countMissing(tx: Tx, report: RelationalReport) {

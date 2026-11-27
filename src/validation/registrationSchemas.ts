@@ -168,12 +168,9 @@ export const familyDetailsSchema = z
     }
   });
 
-export const circuitIdSchema = z.union([
-  z.literal('blitz'),
-  z.literal('recon'),
-  z.literal('corporate'),
-  z.literal('family'),
-]);
+// A circuit's slug; which circuits exist, and the entry types each takes, is in EventCircuit
+// (checked by the registration routes).
+const circuitIdSchema = z.string().trim().min(1).max(40);
 
 export const registrationTypeSchema = z.union([
   z.literal('individual'),
@@ -213,14 +210,6 @@ export const quoteRequestSchema = z
           });
         }
       }
-    }
-
-    if (val.circuitId === 'family' && val.type === 'team') {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Family circuit does not support team registration',
-        path: ['type'],
-      });
     }
   });
 

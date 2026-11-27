@@ -3,18 +3,27 @@
  * (dual writes), the backfill fills rows written before the migration without changing any
  * old value, and the data check catches drift. Needs a local test database (npm run test:db).
  */
-import { describe, it, expect, beforeEach, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import { randomUUID } from 'crypto';
-import type { Prisma } from '../../generated/client/index.js';
+import type { EventCircuit, Prisma } from '../../generated/client/index.js';
 import { prisma } from '../../storage/prisma.js';
 import { recordAttempt, settlePayment } from '../../services/payments.js';
 import { backfillRelationalModel } from '../../services/backfills/relationalModel.js';
 import { syncRiderModel } from '../../services/backfills/riderModel.js';
 import { runDataChecks, takeSnapshot, compareSnapshots } from '../../services/dataChecks.js';
-import { feedbackEventYear, notifyEventYear, rideDayOver } from '../../services/eventYears.js';
+import { feedbackEventYear, notifyEventYear } from '../../services/eventYears.js';
+import { rideDayOver } from '../../services/events.js';
 
 const hasDb = !!process.env.DATABASE_URL;
 const NEXT = 2027;
+
+// The 2026 circuits (migration 20261128000000_event_circuits_2026). Tests here remove them to
+// see entries link to a circuit added later; they are put back for the other test files.
+let circuits2026: EventCircuit[] = [];
+const restoreCircuits2026 = async () => {
+    await prisma.eventCircuit.deleteMany({ where: { eventYear: 2026 } });
+    await prisma.eventCircuit.createMany({ data: circuits2026 });
+};
 
 async function cleanup() {
     await prisma.paymentRaffleTicket.deleteMany({});
@@ -85,8 +94,13 @@ async function problems() {
 }
 
 describe.skipIf(!hasDb)('Relational model (Phase 1)', () => {
+    beforeAll(async () => { circuits2026 = await prisma.eventCircuit.findMany({ where: { eventYear: 2026 } }); });
     beforeEach(cleanup);
-    afterAll(cleanup);
+    afterAll(async () => {
+        await cleanup();
+        await restoreCircuits2026();
+        await prisma.$executeRaw`UPDATE "PricingCategory" SET "price" = "price"`;
+    });
 
     describe('dual writes', () => {
         it('copies a registration: dob as a date, the team price split per rider, the entry type', async () => {
@@ -160,6 +174,7 @@ describe.skipIf(!hasDb)('Relational model (Phase 1)', () => {
 
     describe('backfill', () => {
         it('fills every copy of old rows, changes no old value, and is safe to run twice', async () => {
+            await restoreCircuits2026();
             await prisma.event.create({ data: { year: NEXT, name: 'RWTW 2027' } });
             const [captain] = await team(9000);
             await prisma.registration.update({ where: { id: captain.id }, data: { payload: { isPrimary: true, memberIndex: 0, paymentFailed: true, paymentFailureReason: 'Insufficient funds' } } });
@@ -178,15 +193,15 @@ describe.skipIf(!hasDb)('Relational model (Phase 1)', () => {
             expect((await problems()).length).toBeGreaterThan(0);
 
             const dry = await backfillRelationalModel({ dryRun: true });
-            expect(dry.circuitsCreated).toBe(8); // 2026 and 2027
+            expect(dry.circuitsCreated).toBe(4); // 2027, copied from 2026
             expect(dry.copies['Registration.amountKes'].missingBefore).toBe(3);
             expect(dry.copies['PaymentRaffleTicket'].missingBefore).toBe(1);
             expect(Object.values(dry.copies).every(c => c.missingAfter === 0)).toBe(true);
-            expect(await prisma.eventCircuit.count()).toBe(0);
+            expect(await prisma.eventCircuit.count({ where: { eventYear: NEXT } })).toBe(0);
             expect((await problems()).length).toBeGreaterThan(0);
 
             const run = await backfillRelationalModel();
-            expect(run).toMatchObject({ circuitsCreated: 8, notifyYearsSet: 1, notifyWaitingForEvent: 1, feedbackYearsSet: 1, feedbackWaitingForEvent: 0 });
+            expect(run).toMatchObject({ circuitsCreated: 4, notifyYearsSet: 1, notifyWaitingForEvent: 1, feedbackYearsSet: 1, feedbackWaitingForEvent: 0 });
             expect(await problems()).toEqual([]);
             expect(compareSnapshots(before, await takeSnapshot())).toEqual([]);
             const group = await prisma.registrationGroup.findFirstOrThrow({ where: { registrations: { some: { id: captain.id } } } });

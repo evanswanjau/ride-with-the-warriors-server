@@ -15,6 +15,9 @@ import { prisma } from '../storage/prisma.js';
 
 export type EventRow = Event;
 
+/** Where registration (or the raffle) stands, as the public pages show it (docs/EVENT_LIFECYCLE_PLAN.md). */
+export type LifecycleState = 'upcoming' | 'open' | 'closed' | 'finished';
+
 /** Used only when the Event table is empty (a fresh database before migrations seed it). */
 export const FALLBACK_EVENT: EventRow = {
     year: 2026,
@@ -52,6 +55,29 @@ export function registrationOpen(event: EventRow, now: Date = new Date(), env: N
 
 export function raffleOpen(event: EventRow, now: Date = new Date(), env: NodeJS.ProcessEnv = process.env): boolean {
     return envForcesOpen('RAFFLE_OPEN', env) || windowOpen(event.raffleOpensAt, event.raffleClosesAt, now);
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** True once the ride day (a date, UTC midnight) is over. */
+export function rideDayOver(date: Date | null, now: Date = new Date()): boolean {
+    return !!date && now.getTime() >= date.getTime() + DAY_MS;
+}
+
+/**
+ * finished once the ride day is over; open inside the window (or when forced open locally);
+ * closed after closesAt; upcoming before opensAt or without one.
+ */
+export function lifecycleState(
+    open: boolean,
+    closesAt: Date | null,
+    rideDay: Date | null,
+    now: Date = new Date(),
+): LifecycleState {
+    if (rideDayOver(rideDay, now)) return 'finished';
+    if (open) return 'open';
+    if (closesAt && closesAt.getTime() <= now.getTime()) return 'closed';
+    return 'upcoming';
 }
 
 /** ?year=2026 as a number; undefined when absent or not a plausible year. */
@@ -94,13 +120,17 @@ export function publicEvent(event: EventRow, now: Date = new Date()) {
         date: event.date ? event.date.toISOString().slice(0, 10) : null,
         location: event.location,
         registrationOpen: registrationOpen(event, now),
+        registrationState: lifecycleState(registrationOpen(event, now), event.registrationClosesAt, event.date, now),
         registrationOpensAt: event.registrationOpensAt,
         registrationClosesAt: event.registrationClosesAt,
         raffleOpen: raffleOpen(event, now),
+        raffleState: lifecycleState(raffleOpen(event, now), event.raffleClosesAt, event.date, now),
         raffleOpensAt: event.raffleOpensAt,
         raffleClosesAt: event.raffleClosesAt,
         rafflePrice: event.rafflePrice,
         bikeHirePrice: event.bikeHirePrice,
         bikeStock: event.bikeStock,
+        riderCap: event.riderCap,
+        feedbackOpen: windowOpen(event.feedbackOpensAt, event.feedbackClosesAt, now),
     };
 }

@@ -239,20 +239,12 @@ describe('Registration Validation Schemas', () => {
             expect(result.success).toBe(true);
         });
 
-        it('should reject invalid circuit ID', () => {
+        // Which circuits exist and which entry types each takes is in the database
+        // (EventCircuit; see multiYear.test.ts). The schema only needs a slug.
+        it('should reject an empty circuit ID', () => {
             const request = {
-                circuitId: 'invalid',
+                circuitId: ' ',
                 type: 'individual',
-                payload: {},
-            };
-            const result = quoteRequestSchema.safeParse(request);
-            expect(result.success).toBe(false);
-        });
-
-        it('should reject team type for family circuit', () => {
-            const request = {
-                circuitId: 'family',
-                type: 'team',
                 payload: {},
             };
             const result = quoteRequestSchema.safeParse(request);
