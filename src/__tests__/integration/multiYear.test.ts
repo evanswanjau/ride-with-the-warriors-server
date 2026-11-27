@@ -59,6 +59,8 @@ async function cleanup() {
     await prisma.payment.deleteMany({});
     await prisma.bikeHire.deleteMany({});
     await prisma.registration.deleteMany({});
+    await prisma.registrationGroup.deleteMany({});
+    await prisma.donation.deleteMany({});
     await prisma.raffleTicket.deleteMany({});
     await prisma.pricingCategory.deleteMany({ where: { eventYear: YEAR } });
     await prisma.eventCircuit.deleteMany({ where: { eventYear: YEAR } });

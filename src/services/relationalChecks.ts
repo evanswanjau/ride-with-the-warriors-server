@@ -74,7 +74,7 @@ const NOTES: { what: string; sql: string }[] = [
     { what: 'notify sign-up(s) have no event year yet (their Event row does not exist, or the backfill has not run)', sql: `SELECT COUNT(*) AS n FROM "NotifyInterest" WHERE "eventYear" IS NULL` },
     { what: 'feedback entries have no event year yet', sql: `SELECT COUNT(*) AS n FROM "EventFeedback" WHERE "eventYear" IS NULL` },
     {
-        what: 'row(s) have an eventYear with no Event row (foreign key added NOT VALID)', sql: `SELECT COUNT(*) AS n FROM (
+        what: 'row(s) have an eventYear with no Event row (older than its foreign key; new rows cannot)', sql: `SELECT COUNT(*) AS n FROM (
             SELECT "eventYear" FROM "Registration" UNION ALL SELECT "eventYear" FROM "RegistrationGroup"
             UNION ALL SELECT "eventYear" FROM "PricingCategory" UNION ALL SELECT "eventYear" FROM "RaffleTicket"
             UNION ALL SELECT "eventYear" FROM "Donation" UNION ALL SELECT "eventYear" FROM "BikeHire"

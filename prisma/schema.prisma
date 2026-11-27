@@ -49,6 +49,7 @@ model Registration {
   // Assigned only once the registration is paid (or made complementary). Unique per event year.
   bibNumber            String?
   eventYear            Int                @default(2026)
+  event                Event              @relation(fields: [eventYear], references: [year], onDelete: Restrict)
   // Account that registered and pays for this row (guardian / team captain / rider).
   accountId            String?
   account              Account?           @relation("RegistrationOwner", fields: [accountId], references: [id], onDelete: SetNull)
@@ -85,6 +86,7 @@ model RegistrationGroup {
   // Registration.groupId of the rows it was built from (backfill); new groups use it too.
   legacyGroupId        String?            @unique
   eventYear            Int
+  event                Event              @relation(fields: [eventYear], references: [year], onDelete: Restrict)
   accountId            String?
   account              Account?           @relation(fields: [accountId], references: [id], onDelete: SetNull)
   circuitId            String
@@ -279,6 +281,7 @@ model PricingCategory {
   remarks        String?
   // Each event year has its own prices and bib ranges, so 2027 changes never touch 2026.
   eventYear      Int           @default(2026)
+  event          Event         @relation(fields: [eventYear], references: [year], onDelete: Restrict)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
@@ -321,6 +324,7 @@ model RaffleTicket {
   // Assigned only once the ticket is paid. Unique per event year.
   ticketNumber      String?
   eventYear         Int                   @default(2026)
+  event             Event                 @relation(fields: [eventYear], references: [year], onDelete: Restrict)
   accountId         String?
   account           Account?              @relation(fields: [accountId], references: [id], onDelete: SetNull)
   payments          PaymentRaffleTicket[]
@@ -329,6 +333,7 @@ model RaffleTicket {
   @@index([email])
   @@index([referralCode])
   @@index([accountId])
+  @@index([eventYear])
 }
 
 model Referral {
@@ -362,6 +367,7 @@ model Donation {
   mpesaCode         String? // New
   paymentDetails    Json? // New
   eventYear         Int            @default(2026)
+  event             Event          @relation(fields: [eventYear], references: [year], onDelete: Restrict)
   // Optional: donations can be anonymous.
   accountId         String?
   account           Account?       @relation(fields: [accountId], references: [id], onDelete: SetNull)
@@ -370,6 +376,7 @@ model Donation {
   @@index([email])
   @@index([checkoutRequestId])
   @@index([accountId])
+  @@index([eventYear])
 }
 
 enum RegistrationStatus {
@@ -416,12 +423,14 @@ model BikeHire {
   updatedAt         DateTime       @updatedAt
   checkoutRequestId String?        @unique
   eventYear         Int            @default(2026)
+  event             Event          @relation(fields: [eventYear], references: [year], onDelete: Restrict)
   accountId         String?
   account           Account?       @relation(fields: [accountId], references: [id], onDelete: SetNull)
   payments          Payment[]
 
   @@index([registrationId])
   @@index([accountId])
+  @@index([eventYear])
 }
 
 model NotifyInterest {
@@ -460,18 +469,18 @@ model EventFeedback {
 // its opensAt has passed and its closesAt has not (see src/services/events.ts). The newest year
 // is the current event.
 model Event {
-  year                 Int              @id
+  year                 Int                 @id
   name                 String
   // The ride day (date only).
-  date                 DateTime?        @db.Date
+  date                 DateTime?           @db.Date
   location             String?
   registrationOpensAt  DateTime?
   registrationClosesAt DateTime?
   raffleOpensAt        DateTime?
   raffleClosesAt       DateTime?
   // Whole KES.
-  rafflePrice          Int              @default(1000)
-  bikeHirePrice        Int              @default(1500)
+  rafflePrice          Int                 @default(1000)
+  bikeHirePrice        Int                 @default(1500)
   // Bikes available to hire for this event; null = no limit.
   bikeStock            Int?
   // Most riders this event takes; null = no limit.
@@ -479,9 +488,16 @@ model Event {
   // The feedback form is open between these (docs/EVENT_LIFECYCLE_PLAN.md); null = not set.
   feedbackOpensAt      DateTime?
   feedbackClosesAt     DateTime?
-  createdAt            DateTime         @default(now())
-  updatedAt            DateTime         @updatedAt
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
   circuits             EventCircuit[]
+  registrations        Registration[]
+  registrationGroups   RegistrationGroup[]
+  pricingCategories    PricingCategory[]
+  raffleTickets        RaffleTicket[]
+  donations            Donation[]
+  bikeHires            BikeHire[]
+  galleryPhotos        GalleryPhoto[]
   notifyInterests      NotifyInterest[]
   feedback             EventFeedback[]
 }
@@ -613,6 +629,7 @@ model UserSession {
 model GalleryPhoto {
   id          String   @id @default(uuid())
   eventYear   Int
+  event       Event    @relation(fields: [eventYear], references: [year], onDelete: Restrict)
   album       String
   publicId    String   @unique // Cloudinary public_id
   width       Int

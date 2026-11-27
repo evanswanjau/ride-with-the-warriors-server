@@ -37,8 +37,10 @@ async function cleanup() {
     await prisma.payment.deleteMany({});
     await prisma.bikeHire.deleteMany({});
     await prisma.registration.deleteMany({});
+    await prisma.registrationGroup.deleteMany({});
     await prisma.raffleTicket.deleteMany({});
     await prisma.donation.deleteMany({});
+    await prisma.event.deleteMany({ where: { year: 2027 } });
     await prisma.adminSession.deleteMany({});
     await prisma.admin.deleteMany({ where: { email: { endsWith: '@test.local' } } });
 }
@@ -48,6 +50,8 @@ describe.skipIf(!hasDb)('Admin exports', () => {
     afterAll(cleanup);
 
     it('exports registrations, raffle and donations per year, for any admin role', async () => {
+        // Every row's year has its Event (foreign key since Phase 2).
+        await prisma.event.create({ data: { year: 2027, name: 'RWTW 2027' } });
         await prisma.registration.createMany({
             data: [
                 { id: randomUUID(), eventYear: 2026, circuitId: 'recon', type: 'individual', status: 'PAID', firstName: 'Old', lastName: 'Year', totalAmount: 2000, bibNumber: '2001' },
