@@ -56,24 +56,24 @@ adminDonationsRouter.get('/', requireAdmin, async (req, res) => {
 });
 
 // Statistics for donations
-adminDonationsRouter.get('/stats/summary', requireAdmin, async (_req, res) => {
+// ?year=2026 for one event's donations; every year by default.
+adminDonationsRouter.get('/stats/summary', requireAdmin, async (req, res) => {
     try {
-        const [totalCount, paidCount, unpaidCount, revenueResult] = await Promise.all([
-            prisma.donation.count(),
-            prisma.donation.count({ where: { status: 'PAID' } }),
-            prisma.donation.count({ where: { status: { not: 'PAID' } } }),
-            prisma.donation.aggregate({
-                where: { status: 'PAID' },
-                _sum: { amount: true },
-            }),
+        const year = yearParam(req.query.year);
+        const where = year ? { eventYear: year } : {};
+        const [totalCount, paidCount, revenueResult] = await Promise.all([
+            prisma.donation.count({ where }),
+            prisma.donation.count({ where: { ...where, state: 'PAID' } }),
+            prisma.donation.aggregate({ where: { ...where, state: 'PAID' }, _sum: { amountKes: true } }),
         ]);
+        const unpaidCount = totalCount - paidCount;
 
         res.json({
             summary: {
                 totalCount,
                 paidCount,
                 unpaidCount,
-                totalAmount: revenueResult._sum?.amount ?? 0,
+                totalAmount: revenueResult._sum.amountKes ?? 0,
             },
         });
     } catch (error) {

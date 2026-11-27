@@ -34,8 +34,8 @@ async function buildBibs(query: Record<string, unknown>): Promise<{ bibs: BibEnt
 
     // Only rows that have been paid (or made complementary) have a bib to print.
     const where: Prisma.RegistrationWhereInput = { bibNumber: { not: null } };
-    if (circuitId) where.circuitId = circuitId as string;
-    if (type)      where.type = type as string;
+    // Circuit, type and team name are the entry's.
+    if (circuitId || type) where.registrationGroup = { ...(circuitId ? { circuitId: String(circuitId) } : {}), ...(type ? { type: String(type) } : {}) };
     if (status)    where.status = status as Prisma.RegistrationWhereInput['status'];
     if (category)  where.category = category as string;
     if (isMilitary !== undefined && isMilitary !== '') {
@@ -49,6 +49,8 @@ async function buildBibs(query: Record<string, unknown>): Promise<{ bibs: BibEnt
     const regsRaw = await prisma.registration.findMany({
         where,
         orderBy: [{ category: 'asc' }, { bibNumber: 'asc' }],
+        select: { bibNumber: true, firstName: true, lastName: true, category: true, eventYear: true, registrationGroup: { select: { circuitId: true, type: true, teamName: true } } },
+        take: 5000,
     });
 
     if (!regsRaw.length) return { error: 'No registrations match the current filters.', code: 'NOT_FOUND' };
@@ -61,11 +63,11 @@ async function buildBibs(query: Record<string, unknown>): Promise<{ bibs: BibEnt
         lastName:  reg.lastName  || '',
         category:  reg.category  || '',
         hexColor:  pricingCats.find(
-            (c) => c.categoryName === reg.category && c.circuitId === reg.circuitId
+            (c) => c.categoryName === reg.category && c.circuitId === reg.registrationGroup?.circuitId
         )?.hexColor || '#000000',
-        circuitId: reg.circuitId || '',
-        teamName:  reg.teamName  || null,
-        type:      reg.type      || 'individual',
+        circuitId: reg.registrationGroup?.circuitId || '',
+        teamName:  reg.registrationGroup?.teamName || null,
+        type:      reg.registrationGroup?.type || 'individual',
     }));
 
     const statusLabel  = status === 'PAID' ? 'Paid' : status === 'UNPAID' ? 'Unpaid' : 'All';

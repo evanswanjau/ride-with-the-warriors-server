@@ -42,6 +42,7 @@ const rider = (over: Record<string, unknown> = {}) => ({
 
 async function cleanup() {
     await prisma.payment.deleteMany({});
+    await prisma.donation.deleteMany({});
     await prisma.bikeHire.deleteMany({});
     await prisma.registration.deleteMany({});
     await prisma.registrationGroup.deleteMany({});
