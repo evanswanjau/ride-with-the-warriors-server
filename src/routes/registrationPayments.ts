@@ -10,6 +10,8 @@ import { paymentGateway } from '../services/paymentGateway.js';
 import { beginAttempt, recordAttempt } from '../services/payments.js';
 import { amountDue, getRider } from '../services/registrations/entries.js';
 import { settleEntryPaid } from '../services/registrations/settlement.js';
+import { assertRoom, RiderCapReachedError } from '../services/riderCap.js';
+import { eventForYear } from '../services/events.js';
 
 export const registrationPaymentsRouter = Router();
 
@@ -27,6 +29,15 @@ registrationPaymentsRouter.post('/pay/stk-push', requireUser, async (req: UserRe
   }
   if (entry.status !== 'UNPAID') {
     return res.status(400).json({ error: { code: 'ALREADY_PAID', message: 'This registration is already paid.' } });
+  }
+  // No money is asked for riders who no longer fit (another entry took the last places).
+  const event = await eventForYear(entry.eventYear);
+  try {
+    const riders = await prisma.registration.count({ where: { registrationGroupId: entry.id, status: { not: 'CANCELLED' } } });
+    await prisma.$transaction(tx => assertRoom(tx, event, riders));
+  } catch (err) {
+    if (err instanceof RiderCapReachedError) return res.status(409).json({ error: { code: err.code, message: err.message } });
+    throw err;
   }
   const amount = amountDue(entry);
   const target = { purpose: 'REGISTRATION' as const, entryId: entry.id, registrationId: rider.id };

@@ -152,6 +152,7 @@ registrationsRouter.post('/', requireUser, async (req: UserRequest, res, next) =
       classifications: quote.classifications,
       accountId,
       bikeHirePrice: event.bikeHirePrice,
+      riderCap: event.riderCap,
       mpesaCode: base.mpesaCode || null,
     }, replace);
     // Team members / adult riders who already have accounts see their own entry.

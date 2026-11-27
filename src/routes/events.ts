@@ -9,14 +9,16 @@ import { Router } from 'express';
 import { prisma } from '../storage/prisma.js';
 import { bikesLeft, currentEvent, publicEvent, type EventRow } from '../services/events.js';
 import { circuitsForYear } from '../services/circuits.js';
+import { ridersLeft } from '../services/riderCap.js';
 
 export const eventsRouter = Router();
 
 async function eventView(event: EventRow) {
-    const [left, circuits] = await Promise.all([bikesLeft(event), circuitsForYear(event.year)]);
+    const [left, places, circuits] = await Promise.all([bikesLeft(event), ridersLeft(event), circuitsForYear(event.year)]);
     return {
         ...publicEvent(event),
         bikesLeft: left,
+        ridersLeft: places,
         circuits: circuits.map(({ id: _id, eventYear: _y, slug, ...c }) => ({ id: slug, ...c })),
     };
 }

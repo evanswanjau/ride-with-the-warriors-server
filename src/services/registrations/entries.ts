@@ -16,6 +16,7 @@ import { linkLegacyRow, syncRiderModel } from '../backfills/riderModel.js';
 import { entryTypeOf } from '../circuits.js';
 import { buildEntryDraft, dobDateOf } from './riderRows.js';
 import { settleEntryPaid } from './settlement.js';
+import { assertRoom } from '../riderCap.js';
 
 type Tx = Prisma.TransactionClient;
 
@@ -45,6 +46,8 @@ export type CreateEntryInput = {
     accountId: string;
     /** Whole KES; the event's bike hire price. */
     bikeHirePrice: number;
+    /** The event's rider cap (null = no limit), checked under the bib lock. */
+    riderCap: number | null;
     mpesaCode?: string | null;
 };
 
@@ -79,6 +82,8 @@ export async function createEntry(input: CreateEntryInput, replaceEntryIds: stri
     const isTeam = input.type === 'team';
 
     await prisma.$transaction(async (tx) => {
+        // Refused once the event is full; an entry created paid must also fit.
+        await assertRoom(tx, { year: input.eventYear, riderCap: input.riderCap }, PAID_STATUSES.includes(input.status) ? draft.riders.length : 0);
         await removeDrafts(tx, replaceEntryIds);
         const circuit = await tx.eventCircuit.findUnique({ where: { eventYear_slug: { eventYear: input.eventYear, slug: input.circuitId } }, select: { id: true } });
         await tx.registrationGroup.create({
