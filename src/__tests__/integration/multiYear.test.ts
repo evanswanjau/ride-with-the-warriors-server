@@ -82,7 +82,7 @@ describe.skipIf(!hasDb)('Events and per-year numbering', () => {
 
     beforeEach(async () => {
         await cleanup();
-        admin = await adminWith('admin');
+        admin = await adminWith('super_admin');
     });
 
     afterAll(cleanup);
@@ -244,7 +244,7 @@ describe.skipIf(!hasDb)('Bike stock and donations per event', () => {
     beforeEach(async () => {
         await prisma.donation.deleteMany({});
         await cleanup();
-        admin = await adminWith('admin');
+        admin = await adminWith('super_admin');
     });
     afterAll(cleanup);
 
