@@ -221,6 +221,19 @@ describe.skipIf(!hasDb)('Relational model (Phase 1)', () => {
         });
     });
 
+    describe('event-year keys (Phase 2)', () => {
+        it('every eventYear needs its Event row, and an Event with rows cannot be deleted', async () => {
+            const orphan = () => prisma.donation.create({ data: { amount: 100, status: 'PENDING', eventYear: 2031 } });
+            await expect(orphan()).rejects.toThrow(/foreign key/i);
+            await expect(prisma.registration.create({ data: row({ eventYear: 2031 }) })).rejects.toThrow(/foreign key/i);
+            await expect(prisma.galleryPhoto.create({ data: { eventYear: 2031, album: 'x', publicId: `p-${randomUUID()}`, width: 1, height: 1 } })).rejects.toThrow(/foreign key/i);
+
+            await prisma.event.create({ data: { year: NEXT, name: 'RWTW 2027' } });
+            await prisma.raffleTicket.create({ data: { id: randomUUID(), firstName: 'K', lastName: 'Y', email: 'k@example.com', eventYear: NEXT } });
+            await expect(prisma.event.delete({ where: { year: NEXT } })).rejects.toThrow(/foreign key/i);
+        });
+    });
+
     describe('data check', () => {
         it('reports a copy that drifted from its old value, and a paid total that no longer matches', async () => {
             await prisma.donation.create({ data: { amount: 500, status: 'PAID' } });
