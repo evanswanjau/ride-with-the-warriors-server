@@ -1,11 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const byEmail = vi.fn();
-const byId = vi.fn();
-vi.mock('../../../storage/registrationStore.js', () => ({
-  findExistingRegistrationsByEmails: (...a: unknown[]) => byEmail(...a),
-  findExistingRegistrationsByIdNumbers: (...a: unknown[]) => byId(...a),
-}));
+const findMany = vi.fn();
+vi.mock('../../../storage/prisma.js', () => ({ prisma: { registration: { findMany: (...a: unknown[]) => findMany(...a) } } }));
 
 import { checkDuplicates, getEmailsFromPayload, getIdNumbersFromPayload } from '../../../services/registrationDuplicates.js';
 import type { RegistrationPayload } from '../../../validation/registrationSchemas.js';
@@ -29,56 +25,46 @@ describe('payload keys', () => {
   });
 });
 
+const row = (id: string, status: string, email: string | null = 'jane@example.com', idNumber: string | null = '12345678') =>
+  ({ id, status, accountId: null, registrationGroupId: `E-${id}`, email, idNumber });
+
 describe('checkDuplicates', () => {
   beforeEach(() => {
-    byEmail.mockReset().mockResolvedValue([]);
-    byId.mockReset().mockResolvedValue([]);
+    findMany.mockReset().mockResolvedValue([]);
   });
 
-  it('skips the lookups when there is nothing to check', async () => {
-    const r = await checkDuplicates('family', { familyDetails: { guardian: { participation: 'none' } } } as unknown as RegistrationPayload);
+  it('skips the lookup when there is nothing to check', async () => {
+    const r = await checkDuplicates('family', { familyDetails: { guardian: { participation: 'none' } } } as unknown as RegistrationPayload, undefined, 2026);
     expect(r).toEqual({ paidDuplicates: [], unpaidDuplicates: [], duplicateInfo: [] });
-    expect(byEmail).not.toHaveBeenCalled();
-    expect(byId).not.toHaveBeenCalled();
+    expect(findMany).not.toHaveBeenCalled();
   });
 
-  it('splits paid and unpaid, de-duplicates by id, and reports the matched values', async () => {
-    const paid = { id: 'r1', status: 'PAID', type: 'individual', payload: rider() };
-    const unpaid = { id: 'r2', status: 'UNPAID', type: 'individual', payload: rider() };
-    byEmail.mockResolvedValue([paid, unpaid]);
-    byId.mockResolvedValue([paid]);
-    const r = await checkDuplicates('individual', rider());
+  it('splits paid and unpaid and reports the matched values from the rider columns', async () => {
+    findMany.mockResolvedValue([row('r1', 'PAID'), row('r2', 'UNPAID')]);
+    const r = await checkDuplicates('individual', rider(), undefined, 2026);
     expect(r.paidDuplicates.map((d) => d.id)).toEqual(['r1']);
     expect(r.unpaidDuplicates.map((d) => d.id)).toEqual(['r2']);
-    expect(r.duplicateInfo).toEqual(['Jane@Example.com', '12345678']);
+    expect(r.duplicateInfo).toEqual(['jane@example.com', '12345678']);
   });
 
   it('counts CONFIRMED as paid and ignores other statuses', async () => {
-    byId.mockResolvedValue([
-      { id: 'c', status: 'CONFIRMED', type: 'individual', payload: rider() },
-      { id: 'x', status: 'COMPLEMENTARY', type: 'individual', payload: rider() },
-    ]);
-    const r = await checkDuplicates('individual', rider());
+    findMany.mockResolvedValue([row('c', 'CONFIRMED'), row('x', 'COMPLEMENTARY')]);
+    const r = await checkDuplicates('individual', rider(), undefined, 2026);
     expect(r.paidDuplicates.map((d) => d.id)).toEqual(['c']);
     expect(r.unpaidDuplicates).toEqual([]);
   });
 
-  it('passes the excluded group and id to both lookups', async () => {
-    await checkDuplicates('individual', rider(), { groupId: 'G1', id: 'R1' });
-    expect(byEmail).toHaveBeenCalledWith(['Jane@Example.com'], 'G1', 'R1', undefined);
-    expect(byId).toHaveBeenCalledWith(['12345678'], 'G1', 'R1', undefined);
-  });
-
-  it('limits both lookups to the event year when given', async () => {
-    await checkDuplicates('individual', rider(), {}, 2027);
-    expect(byEmail).toHaveBeenCalledWith(['Jane@Example.com'], undefined, undefined, 2027);
-    expect(byId).toHaveBeenCalledWith(['12345678'], undefined, undefined, 2027);
+  it('looks in one event year, outside the entry being edited, with lower-cased emails', async () => {
+    await checkDuplicates('individual', rider(), 'E1', 2027);
+    const where = findMany.mock.calls[0][0].where;
+    expect(where).toMatchObject({ eventYear: 2027, status: { not: 'CANCELLED' }, NOT: { registrationGroupId: 'E1' } });
+    expect(where.OR).toEqual([{ email: { in: ['jane@example.com'] } }, { idNumber: { in: ['12345678'] } }]);
   });
 
   it('matches team members case-insensitively on email', async () => {
     const payload = { teamDetails: { members: [{ email: 'Mem@X.com', idNumber: '9999' }] } } as unknown as RegistrationPayload;
-    byEmail.mockResolvedValue([{ id: 't', status: 'PAID', type: 'team', payload: { teamDetails: { members: [{ email: 'mem@x.com', idNumber: '0000' }] } } }]);
-    const r = await checkDuplicates('team', payload);
+    findMany.mockResolvedValue([row('t', 'PAID', 'mem@x.com', '0000')]);
+    const r = await checkDuplicates('team', payload, undefined, 2026);
     expect(r.duplicateInfo).toEqual(['mem@x.com']);
   });
 });

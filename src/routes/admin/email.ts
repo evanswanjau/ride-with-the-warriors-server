@@ -2,7 +2,9 @@ import { Router } from 'express';
 import type { Prisma } from '../../generated/client/index.js';
 import { requireAdmin, requireRole } from '../../middleware/auth.js';
 import { prisma } from '../../storage/prisma.js';
-import { sendConfirmationEmail, verifyEmailConnection, getTemplatePreview, type EmailType, sendEmail, sendRaffleEmail, sendBulkCustomEmail } from '../../services/emailService.js';
+import { sendConfirmationEmail, verifyEmailConnection, sendEmail, sendRaffleEmail, sendBulkCustomEmail } from '../../services/emailService.js';
+import { getTemplatePreview } from '../../services/emailTemplates.js';
+import type { EmailType } from '../../services/emailLayout.js';
 import { triggerReminderCheck } from '../../services/reminderScheduler.js';
 import { smsService } from '../../services/smsService.js';
 

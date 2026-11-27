@@ -79,20 +79,24 @@ async function backfillGroups(tx: Tx, report: RiderModelReport, only: RowFilter 
     }
 }
 
-/** Status, total and owner of groups (all, or the listed ones), from their rows. */
+/** Status, total and owner of groups (all, or the listed ones), from their riders. */
 async function refreshGroups(tx: Tx, report: RiderModelReport, groupIds?: string[]) {
     const groups = await tx.registrationGroup.findMany({
         where: groupIds ? { id: { in: groupIds } } : {},
         select: {
             id: true, status: true, totalAmount: true, accountId: true,
-            registrations: { select: { status: true, totalAmount: true, createdAt: true, accountId: true, payload: true }, orderBy: { createdAt: 'asc' } },
+            registrations: {
+                select: { status: true, amountKes: true, createdAt: true, accountId: true },
+                orderBy: [{ position: { sort: 'asc', nulls: 'last' } }, { createdAt: 'asc' }, { id: 'asc' }],
+            },
         },
     });
     for (const g of groups) {
         if (g.registrations.length === 0) continue;
         const status = groupStatus(g.registrations);
-        const totalAmount = Math.round(g.registrations.reduce((sum, r) => sum + (r.totalAmount || 0), 0));
-        const primary = g.registrations.find(r => (r.payload as RegistrationPayload | null)?.isPrimary) ?? g.registrations[0];
+        const totalAmount = g.registrations.reduce((sum, r) => sum + (r.amountKes ?? 0), 0);
+        // The first rider (position 0) is the one who registered.
+        const primary = g.registrations[0];
         if (status !== g.status || totalAmount !== g.totalAmount || primary.accountId !== g.accountId) {
             await tx.registrationGroup.update({ where: { id: g.id }, data: { status, totalAmount, accountId: primary.accountId } });
             report.groupsRefreshed++;
@@ -174,12 +178,25 @@ export async function syncRiderModel(registrationIds: string[], opts: { tx?: Tx;
     return report;
 }
 
-/** syncRiderModel for every row of the listed legacy groupIds (or row ids without one). */
-export async function syncRiderModelForGroups(keys: { groupId?: string | null; id: string }[], tx?: Tx) {
-    const groupIds = [...new Set(keys.map(k => k.groupId).filter((g): g is string => !!g))];
-    const ids = keys.filter(k => !k.groupId).map(k => k.id);
+/**
+ * Gives a row written outside the app (a script, an older release, raw SQL) its entry: the
+ * row and every row with the same old groupId, as the backfill would.
+ */
+export async function linkLegacyRow(registrationId: string) {
+    const row = await prisma.registration.findUnique({ where: { id: registrationId }, select: { groupId: true } });
+    if (!row) return;
+    const rows = row.groupId
+        ? await prisma.registration.findMany({ where: { groupId: row.groupId, registrationGroupId: null }, select: { id: true } })
+        : [{ id: registrationId }];
+    await syncRiderModel(rows.map(r => r.id));
+}
+
+/** syncRiderModel for the listed rows and every other rider of their entries. */
+export async function syncRiderModelForEntries(registrationIds: string[], tx?: Tx) {
     const client = tx ?? prisma;
-    const rows = await client.registration.findMany({ where: { OR: [{ groupId: { in: groupIds } }, { id: { in: ids } }] }, select: { id: true } });
+    const own = await client.registration.findMany({ where: { id: { in: registrationIds } }, select: { registrationGroupId: true } });
+    const entryIds = [...new Set(own.map(r => r.registrationGroupId).filter((g): g is string => !!g))];
+    const rows = await client.registration.findMany({ where: { OR: [{ id: { in: registrationIds } }, { registrationGroupId: { in: entryIds } }] }, select: { id: true } });
     return syncRiderModel(rows.map(r => r.id), { tx });
 }
 

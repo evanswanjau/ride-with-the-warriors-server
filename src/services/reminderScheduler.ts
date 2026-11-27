@@ -1,7 +1,9 @@
 import cron from 'node-cron';
 import { messagingDisabled } from '../utils/messaging.js';
 import { prisma } from '../storage/prisma.js';
-import { sendEmail, EmailType, sendRaffleEmail } from './emailService.js';
+import { OLD_RIDER_COLUMNS } from './registrations/entries.js';
+import { sendEmail, sendRaffleEmail } from './emailService.js';
+import type { EmailType } from './emailLayout.js';
 import { processOutbox } from './outbox.js';
 import { reconcilePayments } from './reconciliation.js';
 import { smsService } from './smsService.js';
@@ -47,6 +49,7 @@ async function processPaymentReminders() {
             status: 'UNPAID',
             email: { not: null },
         },
+        omit: OLD_RIDER_COLUMNS,
     });
 
     const today = getToday();
@@ -78,10 +81,9 @@ async function processPaymentReminders() {
                 lastName: reg.lastName,
                 email: reg.email,
                 circuitId: reg.circuitId,
-                totalAmount: reg.totalAmount,
+                totalAmount: reg.amountKes ?? 0,
                 status: reg.status,
                 category: reg.category || undefined,
-                payload: reg.payload,
                 teamName: reg.teamName || undefined,
                 gender: reg.gender,
                 dob: reg.dob,
@@ -192,6 +194,7 @@ async function processEventReminders() {
             status: { in: ['PAID', 'CONFIRMED'] },
             email: { not: null },
         },
+        omit: OLD_RIDER_COLUMNS,
     });
 
     let emailType: EmailType | null = null;
@@ -231,10 +234,9 @@ async function processEventReminders() {
             lastName: reg.lastName,
             email: reg.email,
             circuitId: reg.circuitId,
-            totalAmount: reg.totalAmount,
+            totalAmount: reg.amountKes ?? 0,
             status: reg.status,
             category: reg.category || undefined,
-            payload: reg.payload,
             teamName: reg.teamName || undefined,
             gender: reg.gender,
             dob: reg.dob,

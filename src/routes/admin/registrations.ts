@@ -1,12 +1,10 @@
 import { Router } from 'express';
 import type { Prisma } from '../../generated/client/index.js';
-import type { RegistrationPayload } from '../../validation/registrationSchemas.js';
-import type { PricingResult } from '../../services/pricing.js';
 import { prisma } from '../../storage/prisma.js';
 import { z } from 'zod';
 import { requireAdmin, AuthenticatedRequest } from '../../middleware/auth.js';
 import { writeAudit } from '../../middleware/adminAudit.js';
-import { updateRegistration } from '../../storage/registrationStore.js';
+import { getRider, OLD_RIDER_COLUMNS, setEntryStatus } from '../../services/registrations/entries.js';
 import { syncRiderModel } from '../../services/backfills/riderModel.js';
 import { yearParam } from '../../services/events.js';
 
@@ -52,54 +50,24 @@ adminRegistrationsRouter.get('/', requireAdmin, async (req, res) => {
             ];
         }
 
-        const [registrationsRaw, total] = await Promise.all([
+        // Rider rows with their entry's price and categories (the entry holds them now). The
+        // stored form (payload) is not returned.
+        const [rows, total] = await Promise.all([
             prisma.registration.findMany({
                 where,
                 skip,
                 take: limit,
-                orderBy: { createdAt: 'desc' }
+                orderBy: { createdAt: 'desc' },
+                omit: OLD_RIDER_COLUMNS,
+                include: { registrationGroup: { select: { pricing: true, classifications: true } } },
             }),
             prisma.registration.count({ where })
         ]);
-
-        // Fallback: Inflate flat columns from payload if they are missing/null
-        // This handles cases where Prisma Client hasn't been generated yet
-        const registrations = registrationsRaw.map((reg) => {
-            const p = reg.payload as RegistrationPayload | null;
-            if (!p) return reg;
-
-            const inflated: { [K in keyof typeof reg]: (typeof reg)[K] | undefined } = { ...reg };
-
-            // Only override if flat column is actually missing/null
-            if (!inflated.firstName) {
-                if (reg.type === 'individual') {
-                    inflated.firstName = p.riderDetails?.firstName;
-                    inflated.lastName = p.riderDetails?.lastName;
-                    inflated.email = p.riderDetails?.email;
-                    inflated.phoneNumber = p.riderDetails?.phoneNumber;
-                } else if (reg.type === 'team') {
-                    const m = p.teamDetails?.members?.[p.memberIndex || 0];
-                    inflated.firstName = m?.firstName;
-                    inflated.lastName = m?.lastName;
-                    inflated.email = m?.email;
-                    inflated.phoneNumber = m?.phoneNumber;
-                    inflated.teamName = p.teamDetails?.teamName;
-                } else if (reg.type === 'family') {
-                    const r = Object.values(p.familyDetails?.riders || {}).flat().find((x) => x.id === p.riderId);
-                    inflated.firstName = r?.firstName || p.familyDetails?.guardian?.fullName;
-                    inflated.lastName = r?.lastName || '';
-                    inflated.email = p.familyDetails?.guardian?.email;
-                    inflated.phoneNumber = p.familyDetails?.guardian?.emergencyPhone;
-                }
-            }
-
-            const pricing = reg.pricing as PricingResult | null;
-            if (inflated.totalAmount == null && pricing?.totalAmount) {
-                inflated.totalAmount = pricing.totalAmount;
-            }
-
-            return inflated;
-        });
+        const registrations = rows.map(({ registrationGroup, ...reg }) => ({
+            ...reg,
+            pricing: registrationGroup?.pricing ?? null,
+            classifications: registrationGroup?.classifications ?? null,
+        }));
 
         res.json({
             registrations,
@@ -132,7 +100,7 @@ adminRegistrationsRouter.patch('/:id/id-number', requireAdmin, async (req: Authe
     }
     const { idNumber, reason } = body.data;
     try {
-        const reg = await prisma.registration.findUnique({ where: { id: req.params.id } });
+        const reg = await prisma.registration.findUnique({ where: { id: req.params.id }, select: { id: true, idNumber: true, eventYear: true } });
         if (!reg) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Registration not found' } });
         if (reg.idNumber === idNumber) return res.json({ registration: { id: reg.id, idNumber: reg.idNumber } });
 
@@ -144,21 +112,7 @@ adminRegistrationsRouter.patch('/:id/id-number', requireAdmin, async (req: Authe
             return res.status(409).json({ error: { code: 'ID_IN_USE', message: `Another ${reg.eventYear} registration (${clash.id}) already uses that ID number.` } });
         }
 
-        // Keep the original submission in step (individual rider / team member).
-        const payload = (reg.payload as RegistrationPayload | null) ?? null;
-        let newPayload = payload;
-        if (payload?.riderDetails) {
-            newPayload = { ...payload, riderDetails: { ...payload.riderDetails, idNumber } };
-        } else if (payload?.teamDetails?.members && typeof payload.memberIndex === 'number' && Number.isInteger(payload.memberIndex) && payload.teamDetails.members[payload.memberIndex]) {
-            const members = [...payload.teamDetails.members];
-            members[payload.memberIndex] = { ...members[payload.memberIndex], idNumber };
-            newPayload = { ...payload, teamDetails: { ...payload.teamDetails, members } };
-        }
-
-        const updated = await prisma.registration.update({
-            where: { id: reg.id },
-            data: { idNumber, ...(newPayload !== payload ? { payload: newPayload as Prisma.InputJsonValue } : {}) },
-        });
+        const updated = await prisma.registration.update({ where: { id: reg.id }, data: { idNumber } });
         await writeAudit({
             adminId: req.admin!.id,
             adminEmail: req.admin!.email,
@@ -183,26 +137,26 @@ adminRegistrationsRouter.patch('/:id', requireAdmin, async (req, res) => {
         return res.status(400).json({ error: { code: 'VALIDATION', message: 'Invalid status' } });
     }
 
-    try {
-        const registration = await updateRegistration(id, { status });
-        res.json({ registration });
-    } catch (error) {
-        res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Registration not found' } });
-    }
+    // The whole entry (team / family) takes the status.
+    const row = await getRider(id);
+    if (!row?.registrationGroupId) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Registration not found' } });
+    const riders = await setEntryStatus(row.registrationGroupId, status);
+    res.json({ registration: riders.find(r => r.id === id) ?? riders[0] });
 });
 
 // "Delete" cancels the registration and its whole group (family / team).
 // Rows, bibs and payment history are kept for the records; nothing is removed.
 adminRegistrationsRouter.delete('/:id', requireAdmin, async (req: AuthenticatedRequest, res) => {
     const { id } = req.params;
-    const reg = await prisma.registration.findUnique({ where: { id }, select: { id: true, groupId: true } });
+    const reg = await getRider(id);
     if (!reg) {
         return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Registration not found' } });
     }
     const { count } = await prisma.registration.updateMany({
-        where: { ...(reg.groupId ? { groupId: reg.groupId } : { id }), status: { not: 'CANCELLED' } },
+        where: { ...(reg.registrationGroupId ? { registrationGroupId: reg.registrationGroupId } : { id }), status: { not: 'CANCELLED' } },
         data: { status: 'CANCELLED', cancelledAt: new Date(), cancelledBy: req.admin?.email ?? null },
     });
+    // The entry's status follows its riders.
     await syncRiderModel([id]);
     res.json({ ok: true, cancelled: count });
 });

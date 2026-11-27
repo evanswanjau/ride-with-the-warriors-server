@@ -1,8 +1,7 @@
 import { randomBytes } from 'crypto';
-import type { RegistrationPayload } from '../validation/registrationSchemas.js';
 import { prisma } from '../storage/prisma.js';
 import { normalizeEmail, normalizePhone } from '../utils/identity.js';
-import { syncRiderModelForGroups } from './backfills/riderModel.js';
+import { syncRiderModelForEntries } from './backfills/riderModel.js';
 
 const SESSION_DAYS = 30;
 
@@ -42,13 +41,14 @@ export async function claimUnlinkedRecords(accountId: string) {
             ],
         },
     });
-    const claimed: { id: string; groupId: string | null }[] = [];
+    const claimed: { id: string }[] = [];
     for (const r of candidates) {
         if (!matchesMe(r.email, r.phoneNumber)) continue;
         claimed.push(r);
-        const isPrimary = r.type === 'individual' || (r.payload as RegistrationPayload | null)?.isPrimary === true;
-        if (isPrimary && r.groupId) {
-            await prisma.registration.updateMany({ where: { groupId: r.groupId, accountId: null }, data: { accountId } });
+        // The rider who registered (position 0) claims the whole entry.
+        const isPrimary = r.position === 0;
+        if (isPrimary && r.registrationGroupId) {
+            await prisma.registration.updateMany({ where: { registrationGroupId: r.registrationGroupId, accountId: null }, data: { accountId } });
         } else if (!r.accountId) {
             await prisma.registration.update({ where: { id: r.id }, data: { accountId } });
         } else if (r.accountId !== accountId && !r.participantAccountId) {
@@ -68,7 +68,7 @@ export async function claimUnlinkedRecords(accountId: string) {
     }
 
     // Claimed entries get their group owner and rider profiles.
-    if (claimed.length) await syncRiderModelForGroups(claimed);
+    if (claimed.length) await syncRiderModelForEntries(claimed.map(c => c.id));
 
     // Bike hires follow their registration's owner.
     const owned = await prisma.registration.findMany({ where: { accountId }, select: { id: true } });
@@ -76,13 +76,14 @@ export async function claimUnlinkedRecords(accountId: string) {
 }
 
 /**
- * After a registration is created: rows whose own email/phone belongs to an
- * existing account other than the owner's get that account as participant.
+ * After an entry is created: riders whose own email/phone belongs to an existing account
+ * other than the owner's get that account as participant.
  */
-export async function linkGroupParticipants(registrationId: string, ownerId: string) {
-    const anchor = await prisma.registration.findUnique({ where: { id: registrationId } });
-    if (!anchor) return;
-    const rows = anchor.groupId ? await prisma.registration.findMany({ where: { groupId: anchor.groupId } }) : [anchor];
+export async function linkGroupParticipants(entryId: string, ownerId: string) {
+    const rows = await prisma.registration.findMany({
+        where: { registrationGroupId: entryId },
+        select: { id: true, email: true, phoneNumber: true, riderProfileId: true },
+    });
     for (const r of rows) {
         const email = normalizeEmail(r.email);
         const phone = normalizePhone(r.phoneNumber);

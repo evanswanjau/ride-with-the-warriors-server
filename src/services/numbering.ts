@@ -13,8 +13,8 @@
  * number. Rows that already have a number are left alone, so repeated or late
  * callbacks are harmless.
  */
-import type { RegistrationPayload } from '../validation/registrationSchemas.js';
 import { prisma } from '../storage/prisma.js';
+import { linkLegacyRow } from './backfills/riderModel.js';
 
 type Tx = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 
@@ -71,13 +71,13 @@ async function nextBibInRange(
     tx: Tx,
     eventYear: number,
     categoryName: string,
-    circuitId: string,
+    eventCircuitId: string | null,
     type: string,
     reserved: Set<string>,
 ): Promise<string | null> {
-    const cat = await tx.pricingCategory.findFirst({ where: { eventYear, categoryName, circuitId, type } });
+    const cat = eventCircuitId ? await tx.pricingCategory.findFirst({ where: { eventYear, categoryName, eventCircuitId, type }, select: { regRange: true } }) : null;
     if (!cat) {
-        console.error(`[Numbering] No ${eventYear} bib range for ${type}/${circuitId}/${categoryName}`);
+        console.error(`[Numbering] No ${eventYear} bib range for ${type}/${eventCircuitId ?? 'no circuit'}/${categoryName}`);
         return null;
     }
     const range = parseBibRange(cat.regRange);
@@ -97,41 +97,47 @@ async function nextBibInRange(
 }
 
 /**
- * Assigns bibs to every row in the registration's group that doesn't have one.
- * Returns the group's rows (with bibNumber filled where possible).
+ * Assigns bibs to every rider of the registration's entry that doesn't have one.
+ * Returns the entry's riders in position order (with bibNumber filled where possible).
  */
 export async function assignBibs(registrationId: string) {
+    // A row written before the entry model (or by a script) gets its entry first.
+    const linked = await prisma.registration.findUnique({ where: { id: registrationId }, select: { registrationGroupId: true } });
+    if (linked && !linked.registrationGroupId) await linkLegacyRow(registrationId);
     return prisma.$transaction(async (tx) => {
         const found = await tx.registration.findUnique({ where: { id: registrationId }, select: { eventYear: true } });
         if (!found) throw new Error('Registration not found');
         await lock(tx, bibLock(found.eventYear));
 
         // Read again under the lock.
-        const anchor = (await tx.registration.findUnique({ where: { id: registrationId } }))!;
-
-        const rows = anchor.groupId
-            ? await tx.registration.findMany({ where: { groupId: anchor.groupId }, orderBy: { createdAt: 'asc' } })
+        const anchor = (await tx.registration.findUnique({ where: { id: registrationId }, include: { registrationGroup: true } }))!;
+        const entry = anchor.registrationGroup;
+        const rows = entry
+            ? await tx.registration.findMany({
+                where: { registrationGroupId: entry.id },
+                orderBy: [{ position: { sort: 'asc', nulls: 'last' } }, { createdAt: 'asc' }, { id: 'asc' }],
+            })
             : [anchor];
         const pending = rows.filter(r => !r.bibNumber && r.status !== 'CANCELLED');
         if (pending.length === 0) return rows;
 
+        const type = entry?.type ?? anchor.type;
+        const eventCircuitId = entry?.eventCircuitId ?? null;
         const reserved = new Set<string>();
         const assigned = new Map<string, string>();
 
-        if (anchor.type === 'team') {
-            // One base number for the whole team; members are BASE-1..n in member order.
-            const ordered = [...rows].sort((a, b) =>
-                ((a.payload as RegistrationPayload | null)?.memberIndex ?? 0) - ((b.payload as RegistrationPayload | null)?.memberIndex ?? 0));
-            const existingBase = ordered.find(r => r.bibNumber)?.bibNumber?.split('-')[0];
-            const base = existingBase ?? await nextBibInRange(tx, anchor.eventYear, anchor.category || 'Team', anchor.circuitId, 'team', reserved);
+        if (type === 'team') {
+            // One base number for the whole team; members are BASE-1..n in position order.
+            const existingBase = rows.find(r => r.bibNumber)?.bibNumber?.split('-')[0];
+            const base = existingBase ?? await nextBibInRange(tx, anchor.eventYear, anchor.category || 'Team', eventCircuitId, 'team', reserved);
             if (base) {
-                ordered.forEach((r, i) => {
+                rows.forEach((r, i) => {
                     if (!r.bibNumber && r.status !== 'CANCELLED') assigned.set(r.id, `${base}-${i + 1}`);
                 });
             }
         } else {
             for (const r of pending) {
-                const bib = await nextBibInRange(tx, anchor.eventYear, r.category || 'Individual', r.circuitId, r.type, reserved);
+                const bib = await nextBibInRange(tx, anchor.eventYear, r.category || 'Individual', eventCircuitId, type, reserved);
                 if (bib) {
                     reserved.add(bib);
                     assigned.set(r.id, bib);

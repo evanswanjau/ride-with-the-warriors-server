@@ -81,6 +81,12 @@ async function unpaidRegistration(accountId: string, amount = 3500) {
     return id;
 }
 
+/** The entry (RegistrationGroup) a rider row belongs to. */
+async function entryOf(registrationId: string) {
+    const row = await prisma.registration.findUniqueOrThrow({ where: { id: registrationId }, include: { registrationGroup: true } });
+    return row.registrationGroup!;
+}
+
 // ─── Suite ───────────────────────────────────────────────────────────────────
 
 describe.skipIf(!hasDb)('Payment flows (STK push → callback)', () => {
@@ -172,7 +178,7 @@ describe.skipIf(!hasDb)('Payment flows (STK push → callback)', () => {
             const reg = await prisma.registration.findUnique({ where: { id: regId } });
             expect(reg?.status).toBe('UNPAID');
             expect(reg?.bibNumber).toBeNull();
-            expect((reg?.payload as Record<string, unknown>)?.paymentFailed).toBe(true);
+            expect((await entryOf(regId)).paymentFailed).toBe(true);
             expect((await prisma.payment.findFirst({ where: { checkoutRequestId: ref } }))?.status).toBe('FAILED');
         });
 
@@ -446,8 +452,7 @@ describe.skipIf(!hasDb)('Payment flows (STK push → callback)', () => {
             await pushRegistration(token, regId);
             // The old prompt is EXPIRED, so its failure is ignored; even a PENDING old one would not flag.
             await callback(first.body.transactionReference, 'fail');
-            const reg = await prisma.registration.findUnique({ where: { id: regId } });
-            expect((reg?.payload as Record<string, unknown>)?.paymentFailed).not.toBe(true);
+            expect((await entryOf(regId)).paymentFailed).toBe(false);
         });
 
         it('a failure for the newest prompt flags it; the next prompt clears the flag', async () => {
@@ -455,10 +460,10 @@ describe.skipIf(!hasDb)('Payment flows (STK push → callback)', () => {
             const regId = await unpaidRegistration(accountId);
             const first = await pushRegistration(token, regId);
             await callback(first.body.transactionReference, 'fail');
-            expect(((await prisma.registration.findUnique({ where: { id: regId } }))?.payload as Record<string, unknown>).paymentFailed).toBe(true);
+            expect((await entryOf(regId)).paymentFailed).toBe(true);
             const second = await pushRegistration(token, regId);
             expect(second.status).toBe(200);
-            expect(((await prisma.registration.findUnique({ where: { id: regId } }))?.payload as Record<string, unknown>).paymentFailed).toBe(false);
+            expect((await entryOf(regId)).paymentFailed).toBe(false);
             await callback(second.body.transactionReference, 'success');
             expect((await prisma.registration.findUnique({ where: { id: regId } }))?.status).toBe('PAID');
         });
