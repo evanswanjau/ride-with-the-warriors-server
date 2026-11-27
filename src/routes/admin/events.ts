@@ -4,16 +4,18 @@
  *   GET    /api/v1/admin/events                         every event, newest first
  *   POST   /api/v1/admin/events                         create a year (copies the previous year's pricing and circuits)
  *   PATCH  /api/v1/admin/events/:year                   edit name, date, prices, rider cap, open/close times
- *   POST   /api/v1/admin/events/:year/:what/open        what = registration | raffle; opens it now
+ *   POST   /api/v1/admin/events/:year/:what/open        what = registration | raffle | feedback; opens it now
  *   POST   /api/v1/admin/events/:year/:what/close       closes it now
  *
- * Only the current (newest) event can be opened: new entries always go to it.
+ * Reading needs any admin role; every change needs super_admin.
+ * Only the current (newest) event can open registration or the raffle: new entries always go to it.
+ * Feedback can be opened for any year (it follows a ride that is over).
  * Every change is written to the admin audit log by auditAdminChanges.
  */
 import { Router, type Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../../storage/prisma.js';
-import { requireAdmin } from '../../middleware/auth.js';
+import { requireAdmin, requireRole } from '../../middleware/auth.js';
 import { zodToApiError } from '../../validation/zodError.js';
 import { currentEvent, publicEvent, type EventRow } from '../../services/events.js';
 import { clearPricingCache } from '../../services/pricing.js';
@@ -54,13 +56,24 @@ const createSchema = z.object({
 const updateSchema = z.object(editableFields).strict();
 
 function adminView(event: EventRow, pricingCategories: number, current: boolean) {
-    return { ...publicEvent(event), current, pricingCategories, createdAt: event.createdAt, updatedAt: event.updatedAt };
+    return {
+        ...publicEvent(event), current, pricingCategories,
+        feedbackOpensAt: event.feedbackOpensAt, feedbackClosesAt: event.feedbackClosesAt,
+        createdAt: event.createdAt, updatedAt: event.updatedAt,
+    };
 }
 
 function toData(input: z.infer<typeof updateSchema>) {
     const { date, ...rest } = input;
     return { ...rest, ...(date !== undefined ? { date: date ? new Date(`${date}T00:00:00Z`) : null } : {}) };
 }
+
+type Window = 'registration' | 'raffle' | 'feedback';
+const WINDOW_KEYS = {
+    registration: ['registrationOpensAt', 'registrationClosesAt'],
+    raffle: ['raffleOpensAt', 'raffleClosesAt'],
+    feedback: ['feedbackOpensAt', 'feedbackClosesAt'],
+} as const satisfies Record<Window, readonly [string, string]>;
 
 const notFound = (res: Response, year: number) =>
     res.status(404).json({ error: { code: 'NOT_FOUND', message: `There is no ${year} event.` } });
@@ -78,7 +91,7 @@ adminEventsRouter.get('/', async (_req, res, next) => {
     }
 });
 
-adminEventsRouter.post('/', async (req, res, next) => {
+adminEventsRouter.post('/', requireRole('super_admin'), async (req, res, next) => {
     try {
         const parsed = createSchema.safeParse(req.body ?? {});
         if (!parsed.success) return res.status(400).json(zodToApiError(parsed.error));
@@ -116,7 +129,7 @@ adminEventsRouter.post('/', async (req, res, next) => {
     }
 });
 
-adminEventsRouter.patch('/:year', async (req, res, next) => {
+adminEventsRouter.patch('/:year', requireRole('super_admin'), async (req, res, next) => {
     try {
         const year = yearSchema.safeParse(req.params.year);
         if (!year.success) return res.status(400).json(zodToApiError(year.error));
@@ -132,12 +145,12 @@ adminEventsRouter.patch('/:year', async (req, res, next) => {
     }
 });
 
-adminEventsRouter.post('/:year/:what/:action', async (req, res, next) => {
+adminEventsRouter.post('/:year/:what/:action', requireRole('super_admin'), async (req, res, next) => {
     try {
         const year = yearSchema.safeParse(req.params.year);
         const what = req.params.what;
         const action = req.params.action;
-        if (!year.success || (what !== 'registration' && what !== 'raffle') || (action !== 'open' && action !== 'close')) {
+        if (!year.success || !(what in WINDOW_KEYS) || (action !== 'open' && action !== 'close')) {
             return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Not found' } });
         }
 
@@ -145,13 +158,12 @@ adminEventsRouter.post('/:year/:what/:action', async (req, res, next) => {
         if (!event) return notFound(res, year.data);
         const current = await currentEvent();
 
-        const opensKey = what === 'registration' ? 'registrationOpensAt' : 'raffleOpensAt';
-        const closesKey = what === 'registration' ? 'registrationClosesAt' : 'raffleClosesAt';
+        const [opensKey, closesKey] = WINDOW_KEYS[what as Window];
         const now = new Date();
         let data: Partial<Record<typeof opensKey | typeof closesKey, Date | null>>;
 
         if (action === 'open') {
-            if (current.year !== event.year) {
+            if (what !== 'feedback' && current.year !== event.year) {
                 return res.status(400).json({ error: { code: 'NOT_CURRENT', message: `Only the current event (${current.year}) can be opened.` } });
             }
             if (what === 'registration' && await prisma.pricingCategory.count({ where: { eventYear: event.year } }) === 0) {
