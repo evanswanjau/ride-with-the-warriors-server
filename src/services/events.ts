@@ -28,6 +28,9 @@ export const FALLBACK_EVENT: EventRow = {
     rafflePrice: 1000,
     bikeHirePrice: 1500,
     bikeStock: null,
+    riderCap: null,
+    feedbackOpensAt: null,
+    feedbackClosesAt: null,
     createdAt: new Date(0),
     updatedAt: new Date(0),
 };
