@@ -118,6 +118,10 @@ model RegistrationGroup {
   // defaults to the guardian and this phone (else the account's phone).
   guardianRelationship String?
   guardianPhone        String?
+  // Phase 3: hash of the entry's pay-later link token (the link is only in the message); a new
+  // link replaces it (services/registrations/payLater.ts).
+  payLinkHash          String?            @unique
+  payLinkSentAt        DateTime?
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
   registrations        Registration[]
