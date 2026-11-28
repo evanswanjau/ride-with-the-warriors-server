@@ -172,6 +172,23 @@ model Admin {
   sessions     AdminSession[]
 }
 
+// Race-day check-in: what a rider was handed at the desk, by whom (admin email) and when.
+// One row per rider, created on the first mark; a mark can be taken back (both fields null).
+model RiderCheckIn {
+  registrationId String    @id
+  eventYear      Int
+  bibGivenAt     DateTime?
+  bibGivenBy     String?
+  tshirtGivenAt  DateTime?
+  tshirtGivenBy  String?
+  bikeGivenAt    DateTime?
+  bikeGivenBy    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([eventYear])
+}
+
 // An admin's note about a refund on an entry (amount optional). Kept for the records: plain ids,
 // no foreign keys. The money itself is returned outside the app.
 model RefundNote {
