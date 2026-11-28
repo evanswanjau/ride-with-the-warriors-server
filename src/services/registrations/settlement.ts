@@ -72,5 +72,7 @@ export async function settleEntryPaid(entryId: string, pay: { receipt?: string |
         }).catch(err => console.error(`[Email] Failed to send confirmation to ${r.id}:`, err))));
 
     await prisma.bikeHire.updateMany({ where: { registration: { registrationGroupId: entryId }, status: 'PENDING' }, data: { status: 'PAID' } });
+    // Paid after all (places freed up): no longer on the waitlist (services/registrations/waitlist.ts).
+    await prisma.waitlistEntry.updateMany({ where: { entryId, status: 'WAITING' }, data: { status: 'PAID' } });
     return true;
 }

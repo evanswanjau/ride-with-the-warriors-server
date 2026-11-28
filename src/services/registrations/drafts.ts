@@ -20,6 +20,7 @@ import { priceDraft, writeDraftPrice, ageOnRideDay } from './draftPricing.js';
 import { checkDraft, type Missing } from './draftCheck.js';
 import type { DraftHeaderInput } from '../../validation/draftSchemas.js';
 import { invitesOf, pendingInvitesOf } from './teamInviteViews.js';
+import { waitlistPlace } from './waitlist.js';
 
 type Tx = Prisma.TransactionClient;
 
@@ -223,6 +224,7 @@ export async function entryView(entryId: string, event: EventRow) {
         isMilitary: entry.declaredMilitary,
         guardian,
         invites: entry.type === 'team' ? await invitesOf(entry.id) : [],
+        waitlist: entry.status === 'UNPAID' ? await waitlistPlace(entry.id) : null,
         paymentFailed: entry.paymentFailed,
         paymentFailureReason: entry.paymentFailureReason,
         pricing: pricing ? { currency: pricing.currency ?? 'KES', totalAmount: Math.round(Number(pricing.totalAmount ?? 0)), lineItems: pricing.lineItems ?? [] } : null,

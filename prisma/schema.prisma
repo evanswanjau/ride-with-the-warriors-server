@@ -127,6 +127,7 @@ model RegistrationGroup {
   registrations        Registration[]
   payments             Payment[]
   invites              TeamInvite[]
+  waitlist             WaitlistEntry?
 
   @@index([accountId, eventYear])
   @@index([eventYear, status])
@@ -159,6 +160,24 @@ model TeamInvite {
 
   @@index([entryId, status])
   @@index([entryId, position])
+}
+
+// Phase 3: an entry waiting for a place once the event is full (services/registrations/waitlist.ts).
+// No payment is taken; organisers contact people in the order they joined.
+model WaitlistEntry {
+  id        String            @id @default(uuid())
+  eventYear Int
+  entryId   String            @unique
+  entry     RegistrationGroup @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  accountId String?
+  // Riders on the entry when it joined.
+  riders    Int
+  // WAITING -> LEFT (the account left) | PAID (the entry was paid after all)
+  status    String            @default("WAITING")
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([eventYear, status, createdAt])
 }
 
 // The reusable person record ("My riders"), owned by an account: the account holder, their
