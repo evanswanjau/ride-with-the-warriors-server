@@ -172,6 +172,21 @@ model Admin {
   sessions     AdminSession[]
 }
 
+// An admin's note about a refund on an entry (amount optional). Kept for the records: plain ids,
+// no foreign keys. The money itself is returned outside the app.
+model RefundNote {
+  id                  String   @id @default(uuid())
+  registrationGroupId String
+  registrationId      String?
+  amountKes           Int?
+  note                String
+  adminId             String?
+  adminEmail          String
+  createdAt           DateTime @default(now())
+
+  @@index([registrationGroupId])
+}
+
 // An invitation to become an admin. The link carries a random token; only its SHA-256 is kept.
 // Valid once, for 48 hours; the invitee sets their own password.
 model AdminInvite {

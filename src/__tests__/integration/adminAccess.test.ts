@@ -57,11 +57,13 @@ describe.skipIf(!hasDb)('Admin access', () => {
             expect((await prisma.registration.findUnique({ where: { id } }))?.status).toBe('UNPAID');
         });
 
-        it('an admin can change but not delete', async () => {
+        it('an admin can change and cancel, but nothing can be deleted', async () => {
             const { auth } = await adminWith('admin');
             const id = await registration();
-            expect((await request.patch(`/api/v1/admin/registrations/${id}`).set(auth).send({ status: 'CANCELLED' })).status).toBe(200);
-            expect((await request.delete(`/api/v1/admin/registrations/${id}`).set(auth)).status).toBe(403);
+            expect((await request.patch(`/api/v1/admin/registrations/${id}`).set(auth).send({ status: 'UNPAID' })).status).toBe(200);
+            expect((await request.post(`/api/v1/admin/registrations/${id}/cancel`).set(auth).send({ reason: 'Rider asked' })).status).toBe(200);
+            // There is no delete: rows are kept for the records.
+            expect((await request.delete(`/api/v1/admin/registrations/${id}`).set(auth)).status).toBe(404);
             expect(await prisma.registration.findUnique({ where: { id } })).not.toBeNull();
         });
 

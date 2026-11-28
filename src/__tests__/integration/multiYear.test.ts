@@ -264,7 +264,7 @@ describe.skipIf(!hasDb)('Bike stock and donations per event', () => {
         expect(second.status).toBe(409);
         expect(second.body.error.code).toBe('BIKES_SOLD_OUT');
 
-        await request.delete(`/api/v1/admin/registrations/${first.body.registrationId}`).set(await adminWith('super_admin'));
+        await request.post(`/api/v1/admin/registrations/${first.body.registrationId}/cancel`).set(await adminWith('super_admin')).send({ reason: 'Test cancel' });
         expect((await request.get('/api/v1/events/current')).body.event.bikesLeft).toBe(1);
         expect((await request.post('/api/v1/registrations').set('Authorization', `Bearer ${b}`).send(body())).status).toBe(201);
     });
