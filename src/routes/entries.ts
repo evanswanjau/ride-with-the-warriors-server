@@ -7,6 +7,8 @@
  *   PATCH  /api/v1/entries/draft/riders/:riderId    change a rider's details
  *   DELETE /api/v1/entries/draft/riders/:riderId    take a rider off
  *   POST   /api/v1/entries/draft/confirm            confirm a draft that costs nothing
+ *   POST   /api/v1/entries/draft/waitlist           join the waitlist (only when the event is full; no payment)
+ *   DELETE /api/v1/entries/draft/waitlist           leave it
  *   POST   /api/v1/entries/draft/copy               start from an earlier entry { fromEntryId } (same team as last year)
  *   POST   /api/v1/entries/draft/invites            invite team members { members, send? }
  *   POST   /api/v1/entries/draft/invites/send       send invites (again) { inviteIds? }
@@ -25,6 +27,7 @@ import { zodToApiError } from '../validation/zodError.js';
 import { addDraftRiderSchema, copyEntrySchema, payLinkSchema, draftHeaderSchema, draftRiderPatchSchema, inviteMembersSchema, sendInvitesSchema } from '../validation/draftSchemas.js';
 import { copyFromEntry } from '../services/registrations/draftCopy.js';
 import { sendPayLink } from '../services/registrations/payLater.js';
+import { joinWaitlist, leaveWaitlist } from '../services/registrations/waitlist.js';
 import { inviteMembers, revokeInvite, sendInvites } from '../services/registrations/teamInvites.js';
 import { DraftError, entryView, findDraft, saveDraftHeader } from '../services/registrations/drafts.js';
 import { addDraftRider, editDraftRider, removeDraftRider } from '../services/registrations/draftRiders.js';
@@ -120,6 +123,19 @@ entriesRouter.post('/draft/confirm', async (req: UserRequest, res, next) => {
         fail(res, next, err);
     }
 });
+
+for (const [method, action] of [['post', joinWaitlist], ['delete', leaveWaitlist]] as const) {
+    entriesRouter[method]('/draft/waitlist', async (req: UserRequest, res, next) => {
+        try {
+            const event = await openEvent(res);
+            if (!event) return;
+            const entryId = await action(req.account!.id, event);
+            res.json({ draft: await entryView(entryId, event) });
+        } catch (err) {
+            fail(res, next, err);
+        }
+    });
+}
 
 entriesRouter.post('/draft/copy', async (req: UserRequest, res, next) => {
     try {
