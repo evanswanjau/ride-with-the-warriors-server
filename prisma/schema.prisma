@@ -161,7 +161,27 @@ model Admin {
   role         String         @default("admin")
   createdAt    DateTime       @default(now())
   lastLogin    DateTime?
+  // Set when a super admin disables the account: no login, sessions removed. Never deleted,
+  // so audit rows stay readable.
+  disabledAt   DateTime?
   sessions     AdminSession[]
+}
+
+// An invitation to become an admin. The link carries a random token; only its SHA-256 is kept.
+// Valid once, for 48 hours; the invitee sets their own password.
+model AdminInvite {
+  id          String    @id @default(uuid())
+  email       String
+  name        String
+  role        String
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  revokedAt   DateTime?
+  invitedById String?
+  createdAt   DateTime  @default(now())
+
+  @@index([email])
 }
 
 // One row per admin change (every successful non-GET admin request, plus data repair scripts),

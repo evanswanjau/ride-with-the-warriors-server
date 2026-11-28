@@ -115,6 +115,16 @@ describe('Auth Middleware', () => {
             expect(mockNext).not.toHaveBeenCalled();
         });
 
+        it('refuses a disabled admin even with a live session', async () => {
+            mockReq.headers.authorization = 'Bearer my-token-123';
+            mockFindUnique.mockResolvedValue({ ...mockAdminSession, admin: { ...mockAdmin, disabledAt: new Date() } });
+
+            await requireAdmin(mockReq, mockRes, mockNext);
+
+            expect(mockRes.status).toHaveBeenCalledWith(401);
+            expect(mockNext).not.toHaveBeenCalled();
+        });
+
         it('should strip Bearer prefix correctly', async () => {
             mockReq.headers.authorization = 'Bearer my-token-123';
             mockFindUnique.mockResolvedValue({
@@ -134,6 +144,7 @@ describe('Auth Middleware', () => {
                             email: true,
                             name: true,
                             role: true,
+                            disabledAt: true,
                         },
                     },
                 },

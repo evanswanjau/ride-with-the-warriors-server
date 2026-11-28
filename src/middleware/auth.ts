@@ -57,16 +57,19 @@ export async function requireAdmin(req: AuthenticatedRequest, res: Response, nex
                         email: true,
                         name: true,
                         role: true,
+                        disabledAt: true,
                     }
                 }
             }
         });
 
-        if (!session || session.expiresAt < new Date()) {
+        // Disabling removes sessions; checking here as well closes any gap.
+        if (!session || session.expiresAt < new Date() || session.admin.disabledAt) {
             return res.status(401).json({ error: { code: 'SESSION_EXPIRED', message: 'Session expired or invalid' } });
         }
 
-        req.admin = session.admin;
+        const { disabledAt: _disabled, ...admin } = session.admin;
+        req.admin = admin;
 
         const isAuthRoute = (req.baseUrl ?? '').endsWith('/admin/auth');
         const needed = minimumRoleFor(req.method);

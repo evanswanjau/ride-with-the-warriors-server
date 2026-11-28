@@ -11,6 +11,7 @@ import { adminPaymentsRouter } from './routes/admin/payments.js';
 import { adminRaffleRouter } from './routes/admin/raffle.js';
 import { adminDonationsRouter } from './routes/admin/donations.js';
 import { authRouter } from './routes/admin/auth.js';
+import { adminAdminsRouter } from './routes/admin/admins.js';
 import { emailRouter } from './routes/admin/email.js';
 import { adminDashboardRouter } from './routes/admin/dashboard.js';
 import { raffleRouter } from './routes/raffle.js';
@@ -86,6 +87,7 @@ app.use('/api/v1/events', eventsRouter);
 // Admin Routes. Every successful change is written to AdminAuditLog.
 app.use('/api/v1/admin', auditAdminChanges);
 app.use('/api/v1/admin/auth', authRouter);
+app.use('/api/v1/admin/admins', adminAdminsRouter);
 app.use('/api/v1/admin/registrations', adminRegistrationsRouter);
 app.use('/api/v1/admin/payments', adminPaymentsRouter);
 app.use('/api/v1/admin/raffle', adminRaffleRouter);
