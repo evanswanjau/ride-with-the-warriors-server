@@ -54,7 +54,7 @@ function rowFromProfile(p: RiderProfile) {
  * The account's saved rider for these details: the one with the same match key (brought back
  * from the archive and given the new details), else a new one.
  */
-async function profileFor(tx: Tx, accountId: string, input: DraftRiderInput & { firstName: string; lastName: string }): Promise<RiderProfile> {
+export async function profileFor(tx: Tx, accountId: string, input: DraftRiderInput & { firstName: string; lastName: string }): Promise<RiderProfile> {
     const matchKey = riderMatchKey({ firstName: input.firstName, lastName: input.lastName, idNumber: input.idNumber, dob: input.dob });
     const found = await tx.riderProfile.findUnique({ where: { accountId_matchKey: { accountId, matchKey } } });
     if (!found) {
@@ -64,14 +64,21 @@ async function profileFor(tx: Tx, accountId: string, input: DraftRiderInput & { 
     return tx.riderProfile.update({ where: { id: found.id }, data: { ...details, archivedAt: null } });
 }
 
-async function insertRider(tx: Tx, entry: RegistrationGroup, profile: RiderProfile) {
+/**
+ * Adds the rider row for a profile at the end of the draft. `participantAccountId` is the rider's
+ * own account when it is not the owner's (a team member who joined by invite).
+ */
+export async function insertRider(tx: Tx, entry: RegistrationGroup, profile: RiderProfile, participantAccountId = profile.riderAccountId) {
+    // A clear answer before the database refuses it.
+    const taken = await tx.registration.findFirst({ where: { eventYear: entry.eventYear, riderProfileId: profile.id }, select: { id: true } });
+    if (taken) throw alreadyEntered(profile, entry.eventYear);
     const count = await tx.registration.count({ where: { registrationGroupId: entry.id } });
     const id = randomUUID();
     try {
         await tx.registration.create({
             data: {
                 id, registrationGroupId: entry.id, riderProfileId: profile.id, position: count, eventYear: entry.eventYear,
-                accountId: entry.accountId, participantAccountId: profile.riderAccountId, status: 'UNPAID',
+                accountId: entry.accountId, participantAccountId, status: 'UNPAID',
                 circuitId: entry.circuitId, type: entry.type, teamName: entry.teamName, groupId: entry.legacyGroupId,
                 ...rowFromProfile(profile),
             },
@@ -93,9 +100,6 @@ export async function addDraftRider(accountId: string, event: EventRow, input: {
         } else {
             profile = await profileFor(tx, accountId, input.rider);
         }
-        // A clear answer before the database refuses it.
-        const taken = await tx.registration.findFirst({ where: { eventYear: entry.eventYear, riderProfileId: profile.id }, select: { id: true } });
-        if (taken) throw alreadyEntered(profile, entry.eventYear);
         return insertRider(tx, entry, profile);
     });
     return { entryId, riderId: result };
@@ -128,6 +132,8 @@ export async function editDraftRider(accountId: string, event: EventRow, riderId
 export async function removeDraftRider(accountId: string, event: EventRow, riderId: string) {
     return withDraft(accountId, event, async (tx, entry) => {
         const row = await draftRider(tx, entry, riderId);
+        // A team member who joined by invite: the invite is withdrawn with them.
+        await tx.teamInvite.updateMany({ where: { registrationId: row.id }, data: { status: 'REVOKED', registrationId: null } });
         await tx.registration.delete({ where: { id: row.id } });
     });
 }

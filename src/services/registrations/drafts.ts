@@ -19,6 +19,7 @@ import { entryCode, entryRiders } from './entries.js';
 import { priceDraft, writeDraftPrice, ageOnRideDay } from './draftPricing.js';
 import { checkDraft, type Missing } from './draftCheck.js';
 import type { DraftHeaderInput } from '../../validation/draftSchemas.js';
+import { invitesOf, pendingInvitesOf } from './teamInviteViews.js';
 
 type Tx = Prisma.TransactionClient;
 
@@ -107,21 +108,31 @@ export async function refreshDraft(tx: Tx, entryId: string, event: EventRow) {
 
 /** What the draft still needs (services/registrations/draftCheck.ts). */
 export async function draftMissing(entry: RegistrationGroup, event: Pick<EventRow, 'date'>): Promise<Missing[]> {
-    const [riders, circuit, guardian] = await Promise.all([
+    const [riders, circuit, guardian, pendingInvites] = await Promise.all([
         entryRiders(entry.id), findCircuit(entry.eventYear, entry.circuitId),
         entry.type === 'family' ? guardianOf(prisma, entry) : Promise.resolve(null),
+        entry.type === 'team' ? pendingInvitesOf(entry.id) : Promise.resolve([]),
     ]);
-    return checkDraft({ ...entry, guardian }, riders, circuit, event);
+    return checkDraft({ ...entry, guardian, pendingInvites }, riders, circuit, event);
 }
 
 /**
  * Runs `change` on the account's draft inside a transaction that holds the draft's row lock,
  * then re-prices it. Throws NO_DRAFT when there is none.
  */
-export async function withDraft<T>(accountId: string, event: EventRow, change: (tx: Tx, entry: RegistrationGroup) => Promise<T>): Promise<{ entryId: string; result: T }> {
+export function withDraft<T>(accountId: string, event: EventRow, change: (tx: Tx, entry: RegistrationGroup) => Promise<T>): Promise<{ entryId: string; result: T }> {
+    const key = draftKeyOf(accountId, event.year);
+    return lockedDraft(tx => tx.$queryRaw<{ id: string }[]>`SELECT "id" FROM "RegistrationGroup" WHERE "draftKey" = ${key} FOR UPDATE`, event, change);
+}
+
+/** withDraft for a draft known by its id (a team member joining the captain's draft). */
+export function withDraftById<T>(entryId: string, event: EventRow, change: (tx: Tx, entry: RegistrationGroup) => Promise<T>): Promise<{ entryId: string; result: T }> {
+    return lockedDraft(tx => tx.$queryRaw<{ id: string }[]>`SELECT "id" FROM "RegistrationGroup" WHERE "id" = ${entryId} AND "draftKey" IS NOT NULL FOR UPDATE`, event, change);
+}
+
+async function lockedDraft<T>(lock: (tx: Tx) => Promise<{ id: string }[]>, event: EventRow, change: (tx: Tx, entry: RegistrationGroup) => Promise<T>) {
     return prisma.$transaction(async (tx) => {
-        const key = draftKeyOf(accountId, event.year);
-        const locked = await tx.$queryRaw<{ id: string }[]>`SELECT "id" FROM "RegistrationGroup" WHERE "draftKey" = ${key} FOR UPDATE`;
+        const locked = await lock(tx);
         if (locked.length === 0) throw new DraftError(404, 'NO_DRAFT', 'Start your entry first: choose a circuit and the entry type.');
         const entry = await tx.registrationGroup.findUniqueOrThrow({ where: { id: locked[0].id } });
         await assertEditable(tx, entry);
@@ -166,6 +177,8 @@ export async function saveDraftHeader(accountId: string, event: EventRow, input:
             // Riders whose emergency phone was the guardian's take the new one.
             const before = await guardianOf(tx, entry);
             const updated = await tx.registrationGroup.update({ where: { id: entry.id }, data: header });
+            // No longer a team: members still to join are not.
+            if (updated.type !== 'team') await tx.teamInvite.updateMany({ where: { entryId: entry.id, status: 'PENDING' }, data: { status: 'REVOKED' } });
             const after = await guardianOf(tx, updated);
             if (before.phone && before.phone !== after.phone) {
                 await tx.registration.updateMany({ where: { registrationGroupId: entry.id, emergencyPhone: before.phone }, data: { emergencyPhone: null } });
@@ -209,6 +222,7 @@ export async function entryView(entryId: string, event: EventRow) {
         hireBike: entry.hireBike,
         isMilitary: entry.declaredMilitary,
         guardian,
+        invites: entry.type === 'team' ? await invitesOf(entry.id) : [],
         paymentFailed: entry.paymentFailed,
         paymentFailureReason: entry.paymentFailureReason,
         pricing: pricing ? { currency: pricing.currency ?? 'KES', totalAmount: Math.round(Number(pricing.totalAmount ?? 0)), lineItems: pricing.lineItems ?? [] } : null,
