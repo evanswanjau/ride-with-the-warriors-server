@@ -90,5 +90,8 @@ export const acceptInviteSchema = draftRiderSchema.required({
     dob: true, gender: true, idNumber: true, email: true, phoneNumber: true, tshirtSize: true, emergencyContactName: true, emergencyPhone: true,
 }).refine((r) => !!(r.dob && r.gender && r.idNumber && r.email && r.phoneNumber && r.tshirtSize && r.emergencyContactName && r.emergencyPhone), 'Fill in every detail');
 
+/** POST /entries/:id/pay-link: where to send the pay-later link (the account's phone by default). */
+export const payLinkSchema = z.object({ phone, send: z.boolean().optional() }).strict();
+
 /** POST /entries/draft/copy: start from an earlier entry ("same team as last year"). */
 export const copyEntrySchema = z.object({ fromEntryId: z.string().min(1).max(64) }).strict();

@@ -12,6 +12,7 @@
  *   POST   /api/v1/entries/draft/invites/send       send invites (again) { inviteIds? }
  *   DELETE /api/v1/entries/draft/invites/:inviteId  withdraw an invite (a member who joined is taken off)
  *   GET    /api/v1/entries/:id                      one of the account's entries (draft or paid)
+ *   POST   /api/v1/entries/:id/pay-link             send a pay-later link { phone?, send? } -> { link, sentTo }
  *
  * Every answer that changes the draft returns it as { draft }, with `missing` (what it still
  * needs) and `ready`. Paying: POST /api/v1/registrations/pay/stk-push { entryId, phoneNumber }.
@@ -21,8 +22,9 @@ import { ZodError } from 'zod';
 import { requireUser, type UserRequest } from '../middleware/userAuth.js';
 import { currentEvent, eventForYear, registrationOpen, type EventRow } from '../services/events.js';
 import { zodToApiError } from '../validation/zodError.js';
-import { addDraftRiderSchema, copyEntrySchema, draftHeaderSchema, draftRiderPatchSchema, inviteMembersSchema, sendInvitesSchema } from '../validation/draftSchemas.js';
+import { addDraftRiderSchema, copyEntrySchema, payLinkSchema, draftHeaderSchema, draftRiderPatchSchema, inviteMembersSchema, sendInvitesSchema } from '../validation/draftSchemas.js';
 import { copyFromEntry } from '../services/registrations/draftCopy.js';
+import { sendPayLink } from '../services/registrations/payLater.js';
 import { inviteMembers, revokeInvite, sendInvites } from '../services/registrations/teamInvites.js';
 import { DraftError, entryView, findDraft, saveDraftHeader } from '../services/registrations/drafts.js';
 import { addDraftRider, editDraftRider, removeDraftRider } from '../services/registrations/draftRiders.js';
@@ -171,6 +173,15 @@ entriesRouter.get('/:id', async (req: UserRequest, res, next) => {
         const entry = await prisma.registrationGroup.findUnique({ where: { id: req.params.id }, select: { id: true, accountId: true, eventYear: true } });
         if (!entry || entry.accountId !== req.account!.id) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Entry not found' } });
         res.json({ entry: await entryView(entry.id, await eventForYear(entry.eventYear)) });
+    } catch (err) {
+        fail(res, next, err);
+    }
+});
+
+entriesRouter.post('/:id/pay-link', async (req: UserRequest, res, next) => {
+    try {
+        const body = payLinkSchema.parse(req.body ?? {});
+        res.json(await sendPayLink(req.account!.id, req.params.id, body));
     } catch (err) {
         fail(res, next, err);
     }
