@@ -111,6 +111,13 @@ model RegistrationGroup {
   draftKey             String?            @unique
   // Phase 3: the draft asks for a hire bike (held on its first rider's BikeHire row).
   hireBike             Boolean            @default(false)
+  // Phase 3: the team captain or family guardian declared the entry military (priced by the
+  // existing rule in services/pricing.ts: free when declared).
+  declaredMilitary     Boolean            @default(false)
+  // Phase 3, family entries: the guardian is the account holder; children's emergency contact
+  // defaults to the guardian and this phone (else the account's phone).
+  guardianRelationship String?
+  guardianPhone        String?
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
   registrations        Registration[]

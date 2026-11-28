@@ -13,11 +13,10 @@ import { paymentGateway } from '../paymentGateway.js';
 import { beginAttempt, recordAttempt } from '../payments.js';
 import { eventForYear, type EventRow } from '../events.js';
 import { assertRoom, RiderCapReachedError } from '../riderCap.js';
-import { findCircuit } from '../circuits.js';
-import { amountDue, entryRiders } from './entries.js';
+import { amountDue } from './entries.js';
 import { settleEntryPaid } from './settlement.js';
-import { checkDraft, type Missing } from './draftCheck.js';
-import { DraftError } from './drafts.js';
+import type { Missing } from './draftCheck.js';
+import { DraftError, draftMissing } from './drafts.js';
 
 export type PaymentReply = { status: number; body: Record<string, unknown> };
 
@@ -26,9 +25,7 @@ const refusal = (status: number, code: string, message: string, details?: Record
 
 /** What a saved draft still needs; empty for an entry made by the old form (checked when it was made). */
 export async function missingForPayment(entry: RegistrationGroup, event: EventRow): Promise<Missing[]> {
-    if (!entry.draftKey) return [];
-    const [riders, circuit] = await Promise.all([entryRiders(entry.id), findCircuit(entry.eventYear, entry.circuitId)]);
-    return checkDraft(entry, riders, circuit, event);
+    return entry.draftKey ? draftMissing(entry, event) : [];
 }
 
 const incomplete = (missing: Missing[]) =>

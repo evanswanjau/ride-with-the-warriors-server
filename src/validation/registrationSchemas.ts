@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { FAMILY_AGE_BANDS } from '../services/registrations/familyAges.js';
 
 const kenyanPhoneRegex = /^(?:254|\+254|0)?(7|1)\d{8}$/;
 
@@ -124,10 +125,11 @@ export const familyDetailsSchema = z
     // Validate Cubs
     val.riders.cubs.forEach((rider, index) => {
       const age = getAge(rider.dob);
-      if (age < 4 || age > 8) {
+      const { min, max } = FAMILY_AGE_BANDS.cubs;
+      if (age < min || age > max) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `Cubs must be 4-8 years old (Rider ${index + 1} is ${age})`,
+          message: `Cubs must be ${min}-${max} years old (Rider ${index + 1} is ${age})`,
           path: ['riders', 'cubs', index, 'dob'],
         });
       }
@@ -136,10 +138,11 @@ export const familyDetailsSchema = z
     // Validate Champs
     val.riders.champs.forEach((rider, index) => {
       const age = getAge(rider.dob);
-      if (age < 9 || age > 13) {
+      const { min, max } = FAMILY_AGE_BANDS.champs;
+      if (age < min || age > max) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `Champs must be 9-13 years old (Rider ${index + 1} is ${age})`,
+          message: `Champs must be ${min}-${max} years old (Rider ${index + 1} is ${age})`,
           path: ['riders', 'champs', index, 'dob'],
         });
       }
@@ -158,10 +161,10 @@ export const familyDetailsSchema = z
     // Validate Participating Parents (must be 18+)
     if (val.guardian.participation === 'mom' && val.guardian.dob) {
       const age = getAge(val.guardian.dob);
-      if (age < 18) {
+      if (age < FAMILY_AGE_BANDS.tigers.min) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'Parents must be at least 18 years old',
+          message: `Parents must be at least ${FAMILY_AGE_BANDS.tigers.min} years old`,
           path: ['guardian', 'dob'],
         });
       }

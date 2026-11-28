@@ -70,16 +70,48 @@ async function syncBikeHire(tx: Tx, entry: RegistrationGroup, rows: Awaited<Retu
     else await tx.bikeHire.create({ data: { registrationId: first.id, amount: event.bikeHirePrice, eventYear: event.year, accountId: entry.accountId, status: 'PENDING' } });
 }
 
-/** Re-prices the draft and keeps its bike hire on its first rider. */
+export type Guardian = { name: string; relationship: string | null; phone: string | null };
+
+/** A family entry's guardian: the account holder, with the phone given on the draft (else the account's). */
+export async function guardianOf(client: Pick<Tx, 'account'>, entry: Pick<RegistrationGroup, 'accountId' | 'guardianRelationship' | 'guardianPhone'>): Promise<Guardian> {
+    const account = entry.accountId ? await client.account.findUnique({ where: { id: entry.accountId }, select: { firstName: true, lastName: true, phone: true } }) : null;
+    return {
+        name: account ? `${account.firstName} ${account.lastName}`.trim() : '',
+        relationship: entry.guardianRelationship,
+        phone: entry.guardianPhone ?? account?.phone ?? null,
+    };
+}
+
+/**
+ * Family riders carry the guardian on their rows (as in 2026): guardian name and relationship,
+ * and the guardian as emergency contact where the rider has none of their own.
+ */
+async function applyGuardian(tx: Tx, entry: RegistrationGroup) {
+    if (entry.type !== 'family') return;
+    const g = await guardianOf(tx, entry);
+    const rows = { registrationGroupId: entry.id };
+    await tx.registration.updateMany({ where: rows, data: { guardianName: g.name || null, relationship: g.relationship } });
+    await tx.registration.updateMany({ where: { ...rows, emergencyContactName: null }, data: { emergencyContactName: g.name || null } });
+    if (g.phone) await tx.registration.updateMany({ where: { ...rows, emergencyPhone: null }, data: { emergencyPhone: g.phone } });
+}
+
+/** Re-prices the draft, fills in the family guardian, and keeps its bike hire on its first rider. */
 export async function refreshDraft(tx: Tx, entryId: string, event: EventRow) {
     const entry = await tx.registrationGroup.findUniqueOrThrow({ where: { id: entryId } });
+    await applyGuardian(tx, entry);
     const rows = await draftRows(tx, entryId);
-    const price = await priceDraft(
-        { ...entry, declaredMilitary: entry.type !== 'individual' && !!rows[0]?.isMilitary },
-        rows, event,
-    );
+    const price = await priceDraft(entry, rows, event);
     await writeDraftPrice(tx, entry, rows.map(r => r.id), price);
     await syncBikeHire(tx, entry, rows, event);
+}
+
+/** What the draft still needs (services/registrations/draftCheck.ts). */
+export async function draftMissing(entry: RegistrationGroup, event: Pick<EventRow, 'date'>): Promise<Missing[]> {
+    const [riders, circuit, guardian] = await Promise.all([
+        entryRiders(entry.id), findCircuit(entry.eventYear, entry.circuitId),
+        entry.type === 'family' ? guardianOf(prisma, entry) : Promise.resolve(null),
+    ]);
+    return checkDraft({ ...entry, guardian }, riders, circuit, event);
 }
 
 /**
@@ -113,10 +145,14 @@ async function validateHeader(event: EventRow, input: DraftHeaderInput) {
  */
 export async function saveDraftHeader(accountId: string, event: EventRow, input: DraftHeaderInput): Promise<{ entryId: string; created: boolean }> {
     const circuit = await validateHeader(event, input);
+    const family = input.type === 'family';
     const header = {
         circuitId: input.circuitId, eventCircuitId: circuit.id, type: input.type, entryType: entryTypeOf(input.type),
         teamName: input.type === 'team' ? (input.teamName ?? null) : null,
         ...(input.hireBike !== undefined ? { hireBike: input.hireBike } : {}),
+        ...(input.isMilitary !== undefined ? { declaredMilitary: input.isMilitary } : {}),
+        ...(family && input.guardian?.relationship !== undefined ? { guardianRelationship: input.guardian.relationship } : {}),
+        ...(family && input.guardian?.phone !== undefined ? { guardianPhone: input.guardian.phone } : {}),
     };
     const wantsBike = async (entry: Pick<RegistrationGroup, 'id' | 'hireBike'> | null) => {
         if (!input.hireBike || entry?.hireBike) return;
@@ -126,7 +162,15 @@ export async function saveDraftHeader(accountId: string, event: EventRow, input:
     const existing = await findDraft(accountId, event.year);
     if (existing) {
         await wantsBike(existing);
-        const { entryId } = await withDraft(accountId, event, (tx, entry) => tx.registrationGroup.update({ where: { id: entry.id }, data: header }));
+        const { entryId } = await withDraft(accountId, event, async (tx, entry) => {
+            // Riders whose emergency phone was the guardian's take the new one.
+            const before = await guardianOf(tx, entry);
+            const updated = await tx.registrationGroup.update({ where: { id: entry.id }, data: header });
+            const after = await guardianOf(tx, updated);
+            if (before.phone && before.phone !== after.phone) {
+                await tx.registration.updateMany({ where: { registrationGroupId: entry.id, emergencyPhone: before.phone }, data: { emergencyPhone: null } });
+            }
+        });
         return { entryId, created: false };
     }
     await wantsBike(null);
@@ -149,8 +193,9 @@ export async function saveDraftHeader(accountId: string, event: EventRow, input:
 /** What the screens show of an entry (a draft or a paid one). */
 export async function entryView(entryId: string, event: EventRow) {
     const entry = await prisma.registrationGroup.findUniqueOrThrow({ where: { id: entryId } });
-    const [riders, circuit] = await Promise.all([entryRiders(entry.id), findCircuit(entry.eventYear, entry.circuitId)]);
-    const missing: Missing[] = entry.status === 'UNPAID' ? await checkDraft(entry, riders, circuit, event) : [];
+    const riders = await entryRiders(entry.id);
+    const missing: Missing[] = entry.status === 'UNPAID' ? await draftMissing(entry, event) : [];
+    const guardian = entry.type === 'family' ? await guardianOf(prisma, entry) : null;
     const pricing = entry.pricing as { totalAmount?: number; currency?: string; lineItems?: unknown[] } | null;
     return {
         id: entry.id,
@@ -162,6 +207,8 @@ export async function entryView(entryId: string, event: EventRow) {
         type: entry.type,
         teamName: entry.teamName,
         hireBike: entry.hireBike,
+        isMilitary: entry.declaredMilitary,
+        guardian,
         paymentFailed: entry.paymentFailed,
         paymentFailureReason: entry.paymentFailureReason,
         pricing: pricing ? { currency: pricing.currency ?? 'KES', totalAmount: Math.round(Number(pricing.totalAmount ?? 0)), lineItems: pricing.lineItems ?? [] } : null,
