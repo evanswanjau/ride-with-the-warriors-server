@@ -141,7 +141,7 @@ describe.skipIf(!hasDb)('Registrations on the new model', () => {
         expect(groups[0].registrations).toHaveLength(1);
         expect(await prisma.riderProfile.count()).toBe(1);
 
-        const del = await request.delete(`/api/v1/admin/registrations/${edited.body.registrationId}`).set(admin);
+        const del = await request.post(`/api/v1/admin/registrations/${edited.body.registrationId}/cancel`).set(admin).send({ reason: 'Test cancel' });
         expect(del.status).toBe(200);
         expect((await prisma.registrationGroup.findUniqueOrThrow({ where: { id: groups[0].id } })).status).toBe('CANCELLED');
         expect((await runDataChecks()).problems).toEqual([]);

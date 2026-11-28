@@ -1,11 +1,13 @@
-import { Router } from 'express';
+import { Router, type Response } from 'express';
 import type { Prisma } from '../../generated/client/index.js';
 import { prisma } from '../../storage/prisma.js';
 import { z } from 'zod';
 import { requireAdmin, AuthenticatedRequest } from '../../middleware/auth.js';
 import { writeAudit } from '../../middleware/adminAudit.js';
 import { getRider, OLD_RIDER_COLUMNS, setEntryStatus } from '../../services/registrations/entries.js';
-import { syncRiderModel } from '../../services/backfills/riderModel.js';
+import {
+    RegistrationActionError, addRefundNote, cancelEntry, editRiderDetails, moveRider, registrationHistory,
+} from '../../services/adminRegistrations.js';
 import { yearParam } from '../../services/events.js';
 import { registrationTotals } from '../../services/dashboardStats.js';
 
@@ -145,22 +147,80 @@ adminRegistrationsRouter.patch('/:id', requireAdmin, async (req, res) => {
     res.json({ registration: riders.find(r => r.id === id) ?? riders[0] });
 });
 
-// "Delete" cancels the registration and its whole group (family / team).
-// Rows, bibs and payment history are kept for the records; nothing is removed.
-adminRegistrationsRouter.delete('/:id', requireAdmin, async (req: AuthenticatedRequest, res) => {
-    const { id } = req.params;
-    const reg = await getRider(id);
-    if (!reg) {
-        return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Registration not found' } });
+// Detail drawer actions (services/adminRegistrations.ts). Each writes an audit row with the
+// reason and the old and new values, on top of the generic admin audit row.
+const reason = z.string().trim().min(3, 'Give a reason').max(500);
+const optionalText = (max: number) => z.string().trim().max(max).transform(v => v || null).nullable().optional();
+const detailsSchema = z.object({
+    firstName: z.string().trim().min(1).max(80).optional(),
+    lastName: z.string().trim().min(1).max(80).optional(),
+    email: z.string().trim().toLowerCase().email().max(200).nullable().optional(),
+    phoneNumber: optionalText(30),
+    dob: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD').nullable().optional(),
+    gender: z.enum(['male', 'female']).nullable().optional(),
+    tshirtSize: optionalText(10),
+    emergencyContactName: optionalText(120),
+    emergencyPhone: optionalText(30),
+    reason,
+}).strict();
+const moveSchema = z.object({ toRegistrationId: z.string().trim().min(1), reason }).strict();
+const cancelSchema = z.object({ reason }).strict();
+const refundSchema = z.object({ note: z.string().trim().min(3, 'Write the note').max(1000), amountKes: z.number().int().min(0).max(10_000_000).nullable().optional() }).strict();
+
+type Handler = (req: AuthenticatedRequest, res: Response) => Promise<unknown>;
+/** Runs an action, turning RegistrationActionError into its own status. */
+const action = (fn: Handler) => async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        await fn(req, res);
+    } catch (err) {
+        if (err instanceof RegistrationActionError) return res.status(err.status).json({ error: { code: err.code, message: err.message } });
+        console.error('[Admin] Registration action failed:', err);
+        res.status(500).json({ error: { code: 'INTERNAL', message: 'Something went wrong. Try again.' } });
     }
-    const { count } = await prisma.registration.updateMany({
-        where: { ...(reg.registrationGroupId ? { registrationGroupId: reg.registrationGroupId } : { id }), status: { not: 'CANCELLED' } },
-        data: { status: 'CANCELLED', cancelledAt: new Date(), cancelledBy: req.admin?.email ?? null },
-    });
-    // The entry's status follows its riders.
-    await syncRiderModel([id]);
-    res.json({ ok: true, cancelled: count });
+};
+const audit = (req: AuthenticatedRequest, what: string, entityId: string, details: unknown) => writeAudit({
+    adminId: req.admin!.id, adminEmail: req.admin!.email, action: `registration:${what}`, entityId, status: 200, ip: req.ip ?? null, details,
 });
+const invalid = (res: Response, error: z.ZodError) =>
+    res.status(400).json({ error: { code: 'VALIDATION', message: error.issues[0]?.message ?? 'Invalid details' } });
+
+adminRegistrationsRouter.patch('/:id/details', requireAdmin, action(async (req, res) => {
+    const body = detailsSchema.safeParse(req.body ?? {});
+    if (!body.success) return invalid(res, body.error);
+    const { reason: why, ...edit } = body.data;
+    const { rider, changes } = await editRiderDetails(req.params.id, edit);
+    if (Object.keys(changes).length) await audit(req, 'edit-details', rider.id, { changes, reason: why });
+    res.json({ registration: rider, changed: Object.keys(changes) });
+}));
+
+adminRegistrationsRouter.post('/:id/move', requireAdmin, action(async (req, res) => {
+    const body = moveSchema.safeParse(req.body ?? {});
+    if (!body.success) return invalid(res, body.error);
+    const moved = await moveRider(req.params.id, body.data.toRegistrationId);
+    await audit(req, 'move', req.params.id, { from: moved.fromEntryId, to: moved.toEntryId, reason: body.data.reason });
+    res.json({ registration: moved.rider });
+}));
+
+// Cancels the rider's whole entry (family / team). Rows, bibs and payment history are kept.
+adminRegistrationsRouter.post('/:id/cancel', requireAdmin, action(async (req, res) => {
+    const body = cancelSchema.safeParse(req.body ?? {});
+    if (!body.success) return invalid(res, body.error);
+    const result = await cancelEntry(req.params.id, req.admin?.email ?? 'admin');
+    await audit(req, 'cancel', req.params.id, { entry: result.entryId, cancelled: result.cancelled, reason: body.data.reason });
+    res.json({ ok: true, cancelled: result.cancelled });
+}));
+
+adminRegistrationsRouter.post('/:id/refund-notes', requireAdmin, action(async (req, res) => {
+    const body = refundSchema.safeParse(req.body ?? {});
+    if (!body.success) return invalid(res, body.error);
+    const note = await addRefundNote(req.params.id, body.data, req.admin!);
+    await audit(req, 'refund-note', req.params.id, { note: note.note, amountKes: note.amountKes });
+    res.status(201).json({ note });
+}));
+
+adminRegistrationsRouter.get('/:id/history', requireAdmin, action(async (req, res) => {
+    res.json(await registrationHistory(req.params.id));
+}));
 
 // Statistics
 // ?year=2026 for one event's riders; every year by default. Counts are riders (rows);

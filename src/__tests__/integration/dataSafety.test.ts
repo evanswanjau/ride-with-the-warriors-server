@@ -64,7 +64,7 @@ describe.skipIf(!hasDb)('data safety', () => {
             await prisma.payment.create({ data: { purpose: 'REGISTRATION', registrationId: ids[0], status: 'PAID', amount: 4000 } });
 
             const { admin, auth } = await adminAuth('super_admin');
-            const res = await request.delete(`/api/v1/admin/registrations/${ids[1]}`).set(auth);
+            const res = await request.post(`/api/v1/admin/registrations/${ids[1]}/cancel`).set(auth).send({ reason: 'Family withdrew' });
             expect(res.status).toBe(200);
             expect(res.body).toEqual({ ok: true, cancelled: 2 });
 
@@ -81,7 +81,7 @@ describe.skipIf(!hasDb)('data safety', () => {
 
         it('returns 404 for an unknown registration', async () => {
             const { auth } = await adminAuth('super_admin');
-            expect((await request.delete('/api/v1/admin/registrations/REG-missing').set(auth)).status).toBe(404);
+            expect((await request.post('/api/v1/admin/registrations/REG-missing/cancel').set(auth).send({ reason: 'Not there' })).status).toBe(404);
         });
     });
 
