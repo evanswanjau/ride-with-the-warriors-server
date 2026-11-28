@@ -33,6 +33,7 @@ import { meRouter } from './routes/me.js';
 import { galleryRouter } from './routes/gallery.js';
 import { eventsRouter } from './routes/events.js';
 import { meRidersRouter } from './routes/meRiders.js';
+import { entriesRouter } from './routes/entries.js';
 import { adminEventsRouter } from './routes/admin/events.js';
 import { adminExportsRouter } from './routes/admin/exports.js';
 import { prisma } from './storage/prisma.js';
@@ -79,6 +80,7 @@ app.use('/api/v1/feedback', feedbackRouter);
 // Participant accounts (OTP login) and their own data
 app.use('/api/v1/auth', userAuthRouter);
 app.use('/api/v1/me/rider-profiles', meRidersRouter);
+app.use('/api/v1/entries', entriesRouter);
 app.use('/api/v1/me', meRouter);
 app.use('/api/v1/gallery', galleryRouter);
 app.use('/api/v1/events', eventsRouter);

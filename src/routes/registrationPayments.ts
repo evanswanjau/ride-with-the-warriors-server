@@ -1,91 +1,41 @@
 /**
- * POST /api/v1/registrations/pay/stk-push { registrationId, phoneNumber }: the M-Pesa prompt
- * for an entry. registrationId is any rider row of an entry the account owns; the amount is
- * always the entry's, never the client's. The callback settles it (services/payments.ts).
+ * POST /api/v1/registrations/pay/stk-push { registrationId | entryId, phoneNumber }: the M-Pesa
+ * prompt for an entry the account owns. registrationId is any rider row of the entry; entryId is
+ * the entry itself (a saved draft's id). The rules are in services/registrations/entryPayment.ts.
  */
 import { Router } from 'express';
 import { prisma } from '../storage/prisma.js';
 import { requireUser, UserRequest } from '../middleware/userAuth.js';
-import { paymentGateway } from '../services/paymentGateway.js';
-import { beginAttempt, recordAttempt } from '../services/payments.js';
-import { amountDue, getRider } from '../services/registrations/entries.js';
-import { settleEntryPaid } from '../services/registrations/settlement.js';
-import { assertRoom, RiderCapReachedError } from '../services/riderCap.js';
-import { eventForYear } from '../services/events.js';
+import { getRider } from '../services/registrations/entries.js';
+import { startEntryPayment } from '../services/registrations/entryPayment.js';
 
 export const registrationPaymentsRouter = Router();
 
-registrationPaymentsRouter.post('/pay/stk-push', requireUser, async (req: UserRequest, res) => {
-  const { registrationId, phoneNumber } = req.body;
+/** The entry and the rider row to record the payment on; null when the account does not own it. */
+async function ownedEntry(accountId: string, body: { registrationId?: unknown; entryId?: unknown }) {
+  if (body.entryId) {
+    const entry = await prisma.registrationGroup.findUnique({ where: { id: String(body.entryId) } });
+    if (!entry || entry.accountId !== accountId) return null;
+    const first = await prisma.registration.findFirst({
+      where: { registrationGroupId: entry.id },
+      orderBy: [{ position: { sort: 'asc', nulls: 'last' } }, { createdAt: 'asc' }],
+      select: { id: true },
+    });
+    // A draft without riders is refused by its check (NO_RIDERS) before a rider id is needed.
+    return { entry, riderId: first?.id ?? '' };
+  }
+  const rider = await getRider(String(body.registrationId));
+  const entry = rider?.registrationGroup;
+  return rider && entry && entry.accountId === accountId ? { entry, riderId: rider.id } : null;
+}
 
-  if (!registrationId || !phoneNumber) {
+registrationPaymentsRouter.post('/pay/stk-push', requireUser, async (req: UserRequest, res) => {
+  const { registrationId, entryId, phoneNumber } = req.body ?? {};
+  if ((!registrationId && !entryId) || !phoneNumber) {
     return res.status(400).json({ error: { code: 'VALIDATION', message: 'Missing required payment details' } });
   }
-
-  const rider = await getRider(String(registrationId));
-  const entry = rider?.registrationGroup;
-  if (!rider || !entry || entry.accountId !== req.account!.id) {
-    return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Registration not found' } });
-  }
-  if (entry.status !== 'UNPAID') {
-    return res.status(400).json({ error: { code: 'ALREADY_PAID', message: 'This registration is already paid.' } });
-  }
-  // No money is asked for riders who no longer fit (another entry took the last places).
-  const event = await eventForYear(entry.eventYear);
-  try {
-    const riders = await prisma.registration.count({ where: { registrationGroupId: entry.id, status: { not: 'CANCELLED' } } });
-    await prisma.$transaction(tx => assertRoom(tx, event, riders));
-  } catch (err) {
-    if (err instanceof RiderCapReachedError) return res.status(409).json({ error: { code: err.code, message: err.message } });
-    throw err;
-  }
-  const amount = amountDue(entry);
-  const target = { purpose: 'REGISTRATION' as const, entryId: entry.id, registrationId: rider.id };
-
-  // ── SIMULATION MODE ──────────────────────────────────────────────────────────
-  if (process.env.PAYMENT_MODE === 'simulate') {
-    console.log(`[STK Push SIM] Simulating payment for registration ${rider.id} — KES ${amount}`);
-    await new Promise(r => setTimeout(r, 800));
-    const simRef = `SIM-${Date.now()}`;
-    try {
-      await prisma.payment.create({
-        data: { purpose: 'REGISTRATION', registrationId: rider.id, registrationGroupId: entry.id, checkoutRequestId: simRef, phone: phoneNumber, amount, status: 'PAID', mpesaReceiptNumber: simRef },
-      });
-      await settleEntryPaid(entry.id, { receipt: simRef });
-    } catch (dbErr) { console.error('[STK Push SIM] DB error:', dbErr); }
-    return res.json({ success: true, transactionReference: simRef, message: 'Payment simulated successfully.' });
-  }
-  // ─────────────────────────────────────────────────────────────────────────────
-
-  if (await beginAttempt(target) === 'busy') {
-    return res.status(409).json({ error: { code: 'PAYMENT_IN_PROGRESS', message: 'An M-Pesa prompt was just sent. Complete it on your phone, or wait a minute and try again.' } });
-  }
-
-  try {
-    const result = await paymentGateway.initiateStkPush({
-      registrationId: rider.id,
-      amount,
-      phoneNumber,
-      callbackUrl: `${process.env.APP_URL || process.env.BASE_URL}/api/dtb/stkpush`,
-    });
-
-    if (result.success && result.transactionReference) {
-      const ref = result.transactionReference;
-      await recordAttempt(target, ref, amount, phoneNumber);
-      return res.json({ success: true, transactionReference: ref, message: result.message || 'M-Pesa prompt sent to your phone.' });
-    }
-    console.error('[STK Push] Payment Failed Response:', result);
-    // Record the failed attempt with no checkoutRequestId
-    try {
-      await prisma.payment.create({
-        data: { purpose: 'REGISTRATION', registrationId: rider.id, registrationGroupId: entry.id, phone: phoneNumber, amount, status: 'FAILED', failureReason: result.message || 'STK push rejected' },
-      });
-    } catch (dbErr) {
-      console.error('[STK Push] Failed to create failure Payment record:', dbErr);
-    }
-    return res.status(500).json({ error: { code: 'PAYMENT_FAILED', message: result.message || 'Failed to trigger M-Pesa prompt.' } });
-  } catch (err) {
-    console.error('[STK Push] Error:', err);
-    return res.status(500).json({ error: { code: 'INTERNAL', message: (err as Error).message || 'Payment initiation failed' } });
-  }
+  const owned = await ownedEntry(req.account!.id, { registrationId, entryId });
+  if (!owned) return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Registration not found' } });
+  const reply = await startEntryPayment(owned.entry, owned.riderId, String(phoneNumber));
+  return res.status(reply.status).json(reply.body);
 });

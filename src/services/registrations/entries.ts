@@ -54,11 +54,12 @@ export type CreateEntryInput = {
 export type CreatedEntry = { entryId: string; registrationId: string; status: RegistrationStatus };
 
 /** "K3J9X2QAB": the short entry code riders and admins have always seen (Registration.groupId). */
-const entryCode = () => Math.random().toString(36).substring(2, 11).toUpperCase();
+export const entryCode = () => Math.random().toString(36).substring(2, 11).toUpperCase();
 
-/** Removes the account's own UNPAID draft entries (never ones with a payment in progress or made). */
+/** Removes the account's own UNPAID entries made by the old form (never ones with a payment in progress or made). */
 async function removeDrafts(tx: Tx, entryIds: string[]) {
-    const drafts = await tx.registrationGroup.findMany({ where: { id: { in: entryIds }, status: 'UNPAID' }, select: { id: true } });
+    // A saved draft (draftKey) is kept: it is edited in place, never replaced.
+    const drafts = await tx.registrationGroup.findMany({ where: { id: { in: entryIds }, status: 'UNPAID', draftKey: null }, select: { id: true } });
     const ids = drafts.map(d => d.id);
     if (ids.length === 0) return;
     const locked = await tx.payment.count({ where: { registrationGroupId: { in: ids }, status: { in: ['PENDING', 'PAID'] } } });
@@ -167,7 +168,8 @@ export function entryCodeOf(entry: { id: string; legacyGroupId: string | null },
  */
 export async function setEntryStatus(entryId: string, status: RegistrationStatus) {
     await prisma.$transaction(async (tx) => {
-        await tx.registrationGroup.update({ where: { id: entryId }, data: { status } });
+        // An entry that is paid or cancelled is no longer the account's saved draft.
+        await tx.registrationGroup.update({ where: { id: entryId }, data: { status, ...(status !== 'UNPAID' ? { draftKey: null } : {}) } });
         await tx.registration.updateMany({ where: { registrationGroupId: entryId }, data: { status } });
     });
     if (PAID_STATUSES.includes(status)) await settleEntryPaid(entryId, {});

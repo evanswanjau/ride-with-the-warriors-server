@@ -27,7 +27,8 @@ export async function settleEntryPaid(entryId: string, pay: { receipt?: string |
         const moved = await prisma.$transaction(async (tx) => {
             const entry = await tx.registrationGroup.updateMany({
                 where: { id: entryId, status: 'UNPAID' },
-                data: { status: 'PAID', paymentFailed: false, paymentFailureReason: null },
+                // A paid draft is no longer the account's draft (services/registrations/drafts.ts).
+                data: { status: 'PAID', paymentFailed: false, paymentFailureReason: null, draftKey: null },
             });
             if (entry.count === 0) return false;
             await tx.registration.updateMany({ where: { registrationGroupId: entryId, status: 'UNPAID' }, data: { status: 'PAID' } });
