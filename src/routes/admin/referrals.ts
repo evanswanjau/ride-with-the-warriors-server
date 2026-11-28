@@ -2,6 +2,7 @@ import { Router } from 'express';
 import type { Prisma } from '../../generated/client/index.js';
 import { requireAdmin } from '../../middleware/auth.js';
 import { prisma } from '../../storage/prisma.js';
+import { yearParam } from '../../services/events.js';
 
 export const adminReferralsRouter = Router();
 
@@ -37,16 +38,18 @@ adminReferralsRouter.get('/', async (req, res) => {
       prisma.referral.count({ where }),
     ]);
 
-    // Get ticket counts for each referral code
+    // Ticket counts for each referral code; ?year=2027 counts that event's tickets only.
+    const year = yearParam(req.query.year);
+    const ofYear = year ? { eventYear: year } : {};
     const codes = referrals.map((r) => r.code);
     const ticketCounts = await prisma.raffleTicket.groupBy({
       by: ['referralCode'],
-      where: { referralCode: { in: codes } },
+      where: { referralCode: { in: codes }, ...ofYear },
       _count: { id: true },
     });
     const paidTicketCounts = await prisma.raffleTicket.groupBy({
       by: ['referralCode'],
-      where: { referralCode: { in: codes }, status: 'PAID' },
+      where: { referralCode: { in: codes }, status: 'PAID', ...ofYear },
       _count: { id: true },
     });
 
@@ -65,8 +68,8 @@ adminReferralsRouter.get('/', async (req, res) => {
     const totalReferrals = await prisma.referral.count();
     const activeReferrals = await prisma.referral.count({ where: { isActive: true } });
     const totalClicks = await prisma.referral.aggregate({ _sum: { clicks: true } });
-    const totalTicketsReferred = await prisma.raffleTicket.count({ where: { referralCode: { not: null } } });
-    const totalPaidReferred = await prisma.raffleTicket.count({ where: { referralCode: { not: null }, status: 'PAID' } });
+    const totalTicketsReferred = await prisma.raffleTicket.count({ where: { referralCode: { not: null }, ...ofYear } });
+    const totalPaidReferred = await prisma.raffleTicket.count({ where: { referralCode: { not: null }, status: 'PAID', ...ofYear } });
 
     return res.json({
       referrals: enriched,
@@ -176,9 +179,10 @@ adminReferralsRouter.get('/export', async (req, res) => {
   try {
     const referrals = await prisma.referral.findMany({ orderBy: { createdAt: 'desc' } });
 
-    // Get all raffle tickets with referral codes
+    // Raffle tickets with referral codes; ?year=2027 for one event.
+    const year = yearParam(req.query.year);
     const tickets = await prisma.raffleTicket.findMany({
-      where: { referralCode: { not: null } },
+      where: { referralCode: { not: null }, ...(year ? { eventYear: year } : {}) },
       orderBy: { createdAt: 'desc' },
     });
 

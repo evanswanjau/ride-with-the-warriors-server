@@ -7,6 +7,7 @@ import { getTemplatePreview } from '../../services/emailTemplates.js';
 import type { EmailType } from '../../services/emailLayout.js';
 import { triggerReminderCheck } from '../../services/reminderScheduler.js';
 import { smsService } from '../../services/smsService.js';
+import { yearParam } from '../../services/events.js';
 
 export const emailRouter = Router();
 
@@ -533,7 +534,10 @@ emailRouter.post('/bulk-send', requireRole('super_admin'), async (req, res) => {
                 });
             }
         } else {
-            const whereClause: { status?: 'PAID' | 'UNPAID' } = {};
+            const whereClause: { status?: 'PAID' | 'UNPAID'; eventYear?: number } = {};
+            // body.year: only that event's riders, ticket buyers or donors (every year when absent).
+            const year = yearParam(req.body?.year);
+            if (year) whereClause.eventYear = year;
             if (targetStatus === 'paid') whereClause.status = 'PAID';
             else if (targetStatus === 'unpaid') whereClause.status = 'UNPAID';
 
