@@ -122,10 +122,39 @@ model RegistrationGroup {
   updatedAt            DateTime           @updatedAt
   registrations        Registration[]
   payments             Payment[]
+  invites              TeamInvite[]
 
   @@index([accountId, eventYear])
   @@index([eventYear, status])
   @@index([eventCircuitId])
+}
+
+// Phase 3: a team captain's invite to a member, who opens the link, logs in and fills in their
+// own details (services/registrations/teamInvites.ts). Only a hash of the link's token is kept;
+// sending the invite again makes a new link.
+model TeamInvite {
+  id                String            @id @default(uuid())
+  entryId           String
+  entry             RegistrationGroup @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  // What the captain typed, to greet the member and send the link.
+  firstName         String?
+  lastName          String?
+  // Order the captain listed them in.
+  position          Int               @default(0)
+  phone             String?
+  email             String?
+  tokenHash         String            @unique
+  // PENDING -> ACCEPTED (the member's rider row is registrationId) | REVOKED
+  status            String            @default("PENDING")
+  registrationId    String?           @unique
+  acceptedAccountId String?
+  sentAt            DateTime?
+  sendCount         Int               @default(0)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([entryId, status])
+  @@index([entryId, position])
 }
 
 // The reusable person record ("My riders"), owned by an account: the account holder, their

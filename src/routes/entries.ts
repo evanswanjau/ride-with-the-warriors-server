@@ -7,6 +7,10 @@
  *   PATCH  /api/v1/entries/draft/riders/:riderId    change a rider's details
  *   DELETE /api/v1/entries/draft/riders/:riderId    take a rider off
  *   POST   /api/v1/entries/draft/confirm            confirm a draft that costs nothing
+ *   POST   /api/v1/entries/draft/copy               start from an earlier entry { fromEntryId } (same team as last year)
+ *   POST   /api/v1/entries/draft/invites            invite team members { members, send? }
+ *   POST   /api/v1/entries/draft/invites/send       send invites (again) { inviteIds? }
+ *   DELETE /api/v1/entries/draft/invites/:inviteId  withdraw an invite (a member who joined is taken off)
  *   GET    /api/v1/entries/:id                      one of the account's entries (draft or paid)
  *
  * Every answer that changes the draft returns it as { draft }, with `missing` (what it still
@@ -17,7 +21,9 @@ import { ZodError } from 'zod';
 import { requireUser, type UserRequest } from '../middleware/userAuth.js';
 import { currentEvent, eventForYear, registrationOpen, type EventRow } from '../services/events.js';
 import { zodToApiError } from '../validation/zodError.js';
-import { addDraftRiderSchema, draftHeaderSchema, draftRiderPatchSchema } from '../validation/draftSchemas.js';
+import { addDraftRiderSchema, copyEntrySchema, draftHeaderSchema, draftRiderPatchSchema, inviteMembersSchema, sendInvitesSchema } from '../validation/draftSchemas.js';
+import { copyFromEntry } from '../services/registrations/draftCopy.js';
+import { inviteMembers, revokeInvite, sendInvites } from '../services/registrations/teamInvites.js';
 import { DraftError, entryView, findDraft, saveDraftHeader } from '../services/registrations/drafts.js';
 import { addDraftRider, editDraftRider, removeDraftRider } from '../services/registrations/draftRiders.js';
 import { confirmFreeDraft } from '../services/registrations/entryPayment.js';
@@ -37,7 +43,7 @@ async function openEvent(res: Response): Promise<EventRow | null> {
 }
 
 /** Sends a refusal the services raise; anything else goes to the error handler. */
-function fail(res: Response, next: (err: unknown) => void, err: unknown) {
+export function fail(res: Response, next: (err: unknown) => void, err: unknown) {
     if (err instanceof ZodError) return res.status(400).json(zodToApiError(err));
     if (err instanceof DraftError) return res.status(err.status).json({ error: { code: err.code, message: err.message, ...(err.details ? { details: err.details } : {}) } });
     next(err);
@@ -108,6 +114,53 @@ entriesRouter.post('/draft/confirm', async (req: UserRequest, res, next) => {
         if (!draft) throw new DraftError(404, 'NO_DRAFT', 'Draft not found');
         await confirmFreeDraft(req.account!.id, event, draft.id);
         res.json({ entry: await entryView(draft.id, event) });
+    } catch (err) {
+        fail(res, next, err);
+    }
+});
+
+entriesRouter.post('/draft/copy', async (req: UserRequest, res, next) => {
+    try {
+        const event = await openEvent(res);
+        if (!event) return;
+        const body = copyEntrySchema.parse(req.body ?? {});
+        const { entryId, skipped, invited } = await copyFromEntry(req.account!.id, event, body.fromEntryId);
+        res.json({ skipped, invited, draft: await entryView(entryId, event) });
+    } catch (err) {
+        fail(res, next, err);
+    }
+});
+
+entriesRouter.post('/draft/invites', async (req: UserRequest, res, next) => {
+    try {
+        const event = await openEvent(res);
+        if (!event) return;
+        const body = inviteMembersSchema.parse(req.body ?? {});
+        const { entryId, invites } = await inviteMembers(req.account!, event, body.members, body.send ?? true);
+        res.status(201).json({ invites, draft: await entryView(entryId, event) });
+    } catch (err) {
+        fail(res, next, err);
+    }
+});
+
+entriesRouter.post('/draft/invites/send', async (req: UserRequest, res, next) => {
+    try {
+        const event = await openEvent(res);
+        if (!event) return;
+        const body = sendInvitesSchema.parse(req.body ?? {});
+        const { entryId, invites } = await sendInvites(req.account!, event, body.inviteIds);
+        res.json({ invites, draft: await entryView(entryId, event) });
+    } catch (err) {
+        fail(res, next, err);
+    }
+});
+
+entriesRouter.delete('/draft/invites/:inviteId', async (req: UserRequest, res, next) => {
+    try {
+        const event = await openEvent(res);
+        if (!event) return;
+        const { entryId } = await revokeInvite(req.account!.id, event, req.params.inviteId);
+        res.json({ draft: await entryView(entryId, event) });
     } catch (err) {
         fail(res, next, err);
     }

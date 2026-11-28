@@ -12,9 +12,9 @@ import { FAMILY_AGE_BANDS, familyCategoryFor } from './familyAges.js';
 export type MissingCode =
     | 'NO_RIDERS' | 'TOO_MANY_RIDERS' | 'MISSING_FIELD' | 'MISSING_TEAM_NAME' | 'TEAM_RULES'
     | 'TOO_YOUNG' | 'AGE_NOT_IN_FAMILY_RANGE' | 'ALREADY_REGISTERED' | 'CIRCUIT' | 'NOT_PRICED'
-    | 'MISSING_GUARDIAN_PHONE' | 'MISSING_RELATIONSHIP';
+    | 'MISSING_GUARDIAN_PHONE' | 'MISSING_RELATIONSHIP' | 'INVITE_PENDING';
 
-export type Missing = { code: MissingCode; message: string; riderId?: string; field?: string };
+export type Missing = { code: MissingCode; message: string; riderId?: string; field?: string; inviteId?: string };
 
 export type CheckedRider = {
     id: string; firstName: string; lastName: string; dob: string | null; gender: string | null;
@@ -26,6 +26,8 @@ type CheckedEntry = {
     id: string; eventYear: number; type: string; teamName: string | null; pricing: unknown;
     /** Family entries: the guardian (drafts.ts guardianOf). */
     guardian?: { relationship: string | null; phone: string | null } | null;
+    /** Team entries: members invited who have not filled in their details yet. */
+    pendingInvites?: { id: string; firstName: string | null }[];
 };
 
 const LABELS: Record<string, string> = {
@@ -78,7 +80,13 @@ export function draftProblems(entry: CheckedEntry, riders: CheckedRider[], circu
         if (children && !entry.guardian?.relationship) out.push({ code: 'MISSING_RELATIONSHIP', message: 'Say how you are related to the children.' });
     }
     if (entry.type === 'team' && circuit) {
-        for (const message of teamRuleErrors(circuit, riders)) out.push({ code: 'TEAM_RULES', message });
+        const pending = entry.pendingInvites ?? [];
+        for (const inv of pending) {
+            out.push({ code: 'INVITE_PENDING', inviteId: inv.id, message: `Waiting for ${inv.firstName || 'an invited member'} to fill in their details.` });
+        }
+        // Until every member has joined, only the team size is checked (counting the invited).
+        const members = pending.length ? [...riders, ...pending.map(() => ({ gender: 'female' }))] : riders;
+        for (const message of teamRuleErrors(circuit, members)) out.push({ code: 'TEAM_RULES', message });
     }
     if (out.length === 0 && !entry.pricing) out.push({ code: 'NOT_PRICED', message: 'The price could not be worked out yet.' });
     return out;
