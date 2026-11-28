@@ -5,6 +5,7 @@ import { prisma } from '../../storage/prisma.js';
 import { requireAdmin, AuthenticatedRequest } from '../../middleware/auth.js';
 import { getPricingCategories } from '../../services/pricing.js';
 import { generateBibPdf, BibEntry } from '../../services/bibPdfService.js';
+import { yearParam } from '../../services/events.js';
 
 export const adminBibsRouter = Router();
 
@@ -34,6 +35,9 @@ async function buildBibs(query: Record<string, unknown>): Promise<{ bibs: BibEnt
 
     // Only rows that have been paid (or made complementary) have a bib to print.
     const where: Prisma.RegistrationWhereInput = { bibNumber: { not: null } };
+    // ?year=2027 prints one event's bibs (bib numbers start again each year).
+    const year = yearParam(query.year);
+    if (year) where.eventYear = year;
     // Circuit, type and team name are the entry's.
     if (circuitId || type) where.registrationGroup = { ...(circuitId ? { circuitId: String(circuitId) } : {}), ...(type ? { type: String(type) } : {}) };
     if (status)    where.status = status as Prisma.RegistrationWhereInput['status'];

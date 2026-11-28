@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { publicFormLimiter } from '../middleware/rateLimit.js';
 import { z } from 'zod';
 import { prisma } from '../storage/prisma.js';
-import { requireAdmin } from '../middleware/auth.js';
 import { feedbackEventYear, notifyEventYear } from '../services/eventYears.js';
 
 export const feedbackRouter = Router();
@@ -60,24 +59,6 @@ feedbackRouter.post('/', publicFormLimiter, async (req, res, next) => {
                 details: error.errors.map(e => ({ path: e.path.join('.'), message: e.message })),
             });
         }
-        next(error);
-    }
-});
-
-// GET /api/v1/admin/feedback — list all feedback (admin only)
-export const adminFeedbackRouter = Router();
-
-adminFeedbackRouter.get('/', requireAdmin, async (_req, res, next) => {
-    try {
-        const entries = await prisma.eventFeedback.findMany({
-            orderBy: { createdAt: 'desc' },
-        });
-        const total = entries.length;
-        const averageRating = total
-            ? Math.round((entries.reduce((sum, e) => sum + e.rating, 0) / total) * 10) / 10
-            : 0;
-        res.json({ total, averageRating, entries });
-    } catch (error) {
         next(error);
     }
 });
