@@ -20,6 +20,8 @@ model Registration {
   phoneNumber          String?
   idNumber             String?
   dob                  String?
+  // Phase 1 copy of dob as a real date (database trigger, migration 20261127000000).
+  dobDate              DateTime?          @db.Date
   gender               String?
   groupId              String?
   teamName             String?
@@ -29,6 +31,9 @@ model Registration {
   relationship         String?
   category             String?
   totalAmount          Float              @default(0)
+  // Phase 1: this rider's share of the entry's price, whole KES. Unlike totalAmount, a team's
+  // price is split over its members; the rows of an entry add up to its totalAmount.
+  amountKes            Int?
   payload              Json?
   pricing              Json?
   classifications      Json?
@@ -41,10 +46,174 @@ model Registration {
   serviceNumber        String?
   unit                 String?
   bikeHire             BikeHire?
+  // Assigned only once the registration is paid (or made complementary). Unique per event year.
+  bibNumber            String?
+  eventYear            Int                @default(2026)
+  event                Event              @relation(fields: [eventYear], references: [year], onDelete: Restrict)
+  // Account that registered and pays for this row (guardian / team captain / rider).
+  accountId            String?
+  account              Account?           @relation("RegistrationOwner", fields: [accountId], references: [id], onDelete: SetNull)
+  // The rider's own account, when it differs from the owner (team members, adult family riders).
+  participantAccountId String?
+  participantAccount   Account?           @relation("RegistrationParticipant", fields: [participantAccountId], references: [id], onDelete: SetNull)
+  // Set when an admin cancels the registration (rows are kept, never deleted).
+  cancelledAt          DateTime?
+  cancelledBy          String?
+  // Phase 4: the entry this row belongs to, and the reusable person record. The rider's details
+  // stay snapshotted on this row, so editing a profile later never changes past entries.
+  registrationGroupId  String?
+  registrationGroup    RegistrationGroup? @relation(fields: [registrationGroupId], references: [id], onDelete: SetNull)
+  riderProfileId       String?
+  riderProfile         RiderProfile?      @relation(fields: [riderProfileId], references: [id], onDelete: SetNull)
+  // Phase 2: the rider's place on the entry; 0 = the rider who registered. Team bibs follow it.
+  position             Int?
 
+  @@unique([eventYear, bibNumber])
+  // One entry per rider per event.
+  @@unique([eventYear, riderProfileId])
   @@index([groupId])
   @@index([email])
   @@index([phoneNumber])
+  @@index([accountId])
+  @@index([participantAccountId])
+  @@index([eventYear])
+  @@index([registrationGroupId])
+}
+
+// One per entry (individual, team or family): what was entered and paid for, per event year.
+model RegistrationGroup {
+  id                   String             @id @default(uuid())
+  // Registration.groupId of the rows it was built from (backfill); new groups use it too.
+  legacyGroupId        String?            @unique
+  eventYear            Int
+  event                Event              @relation(fields: [eventYear], references: [year], onDelete: Restrict)
+  accountId            String?
+  account              Account?           @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  circuitId            String
+  // Phase 1 copies (database trigger): the circuit row for (eventYear, circuitId), and type as an enum.
+  eventCircuitId       String?
+  eventCircuit         EventCircuit?      @relation(fields: [eventCircuitId], references: [id], onDelete: SetNull)
+  type                 String
+  entryType            EntryType?
+  teamName             String?
+  status               RegistrationStatus @default(UNPAID)
+  // "Payment failed" for the entry: set by services/payments.ts when the newest prompt fails,
+  // cleared when a new prompt starts or the entry is paid.
+  paymentFailed        Boolean            @default(false)
+  paymentFailureReason String?
+  // Price quote at registration time (lineItems, totalAmount) and the categories it used.
+  pricing              Json?
+  classifications      Json?
+  // Whole KES: the sum of the rows' amounts.
+  totalAmount          Int                @default(0)
+  // Phase 3: "<accountId>:<eventYear>" while this is the account's saved draft for the event (one
+  // per account per event); cleared once it is paid or cancelled (services/registrations/drafts.ts).
+  draftKey             String?            @unique
+  // Phase 3: the draft asks for a hire bike (held on its first rider's BikeHire row).
+  hireBike             Boolean            @default(false)
+  // Phase 3: the team captain or family guardian declared the entry military (priced by the
+  // existing rule in services/pricing.ts: free when declared).
+  declaredMilitary     Boolean            @default(false)
+  // Phase 3, family entries: the guardian is the account holder; children's emergency contact
+  // defaults to the guardian and this phone (else the account's phone).
+  guardianRelationship String?
+  guardianPhone        String?
+  // Phase 3: hash of the entry's pay-later link token (the link is only in the message); a new
+  // link replaces it (services/registrations/payLater.ts).
+  payLinkHash          String?            @unique
+  payLinkSentAt        DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  registrations        Registration[]
+  payments             Payment[]
+  invites              TeamInvite[]
+  waitlist             WaitlistEntry?
+
+  @@index([accountId, eventYear])
+  @@index([eventYear, status])
+  @@index([eventCircuitId])
+}
+
+// Phase 3: a team captain's invite to a member, who opens the link, logs in and fills in their
+// own details (services/registrations/teamInvites.ts). Only a hash of the link's token is kept;
+// sending the invite again makes a new link.
+model TeamInvite {
+  id                String            @id @default(uuid())
+  entryId           String
+  entry             RegistrationGroup @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  // What the captain typed, to greet the member and send the link.
+  firstName         String?
+  lastName          String?
+  // Order the captain listed them in.
+  position          Int               @default(0)
+  phone             String?
+  email             String?
+  tokenHash         String            @unique
+  // PENDING -> ACCEPTED (the member's rider row is registrationId) | REVOKED
+  status            String            @default("PENDING")
+  registrationId    String?           @unique
+  acceptedAccountId String?
+  sentAt            DateTime?
+  sendCount         Int               @default(0)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([entryId, status])
+  @@index([entryId, position])
+}
+
+// Phase 3: an entry waiting for a place once the event is full (services/registrations/waitlist.ts).
+// No payment is taken; organisers contact people in the order they joined.
+model WaitlistEntry {
+  id        String            @id @default(uuid())
+  eventYear Int
+  entryId   String            @unique
+  entry     RegistrationGroup @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  accountId String?
+  // Riders on the entry when it joined.
+  riders    Int
+  // WAITING -> LEFT (the account left) | PAID (the entry was paid after all)
+  status    String            @default("WAITING")
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([eventYear, status, createdAt])
+}
+
+// The reusable person record ("My riders"), owned by an account: the account holder, their
+// children, team mates. Registrations copy these details when made.
+model RiderProfile {
+  id                   String         @id @default(uuid())
+  accountId            String
+  account              Account        @relation("RiderProfileOwner", fields: [accountId], references: [id], onDelete: Cascade)
+  // The rider's own account, when they have one and it is not the owner's.
+  riderAccountId       String?
+  riderAccount         Account?       @relation("RiderProfileRider", fields: [riderAccountId], references: [id], onDelete: SetNull)
+  // How the same person is recognised within an account (see services/riderProfiles.ts).
+  matchKey             String
+  firstName            String
+  lastName             String
+  dob                  DateTime?      @db.Date
+  gender               String?
+  // Locked once set (COD-130): only admins change it.
+  idNumber             String?
+  email                String?
+  phoneNumber          String?
+  tshirtSize           String?
+  emergencyContactName String?
+  emergencyPhone       String?
+  isMilitary           Boolean        @default(false)
+  rank                 String?
+  service              String?
+  serviceNumber        String?
+  unit                 String?
+  archivedAt           DateTime?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  registrations        Registration[]
+
+  @@unique([accountId, matchKey])
+  @@index([riderAccountId])
 }
 
 model Admin {
@@ -52,10 +221,87 @@ model Admin {
   email        String         @unique
   passwordHash String
   name         String
+  // viewer (read only) | admin (read and change) | super_admin (also deletes and bulk messages).
   role         String         @default("admin")
   createdAt    DateTime       @default(now())
   lastLogin    DateTime?
+  // Set when a super admin disables the account: no login, sessions removed. Never deleted,
+  // so audit rows stay readable.
+  disabledAt   DateTime?
   sessions     AdminSession[]
+}
+
+// Race-day check-in: what a rider was handed at the desk, by whom (admin email) and when.
+// One row per rider, created on the first mark; a mark can be taken back (both fields null).
+model RiderCheckIn {
+  registrationId String    @id
+  eventYear      Int
+  bibGivenAt     DateTime?
+  bibGivenBy     String?
+  tshirtGivenAt  DateTime?
+  tshirtGivenBy  String?
+  bikeGivenAt    DateTime?
+  bikeGivenBy    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([eventYear])
+}
+
+// An admin's note about a refund on an entry (amount optional). Kept for the records: plain ids,
+// no foreign keys. The money itself is returned outside the app.
+model RefundNote {
+  id                  String   @id @default(uuid())
+  registrationGroupId String
+  registrationId      String?
+  amountKes           Int?
+  note                String
+  adminId             String?
+  adminEmail          String
+  createdAt           DateTime @default(now())
+
+  @@index([registrationGroupId])
+}
+
+// An invitation to become an admin. The link carries a random token; only its SHA-256 is kept.
+// Valid once, for 48 hours; the invitee sets their own password.
+model AdminInvite {
+  id          String    @id @default(uuid())
+  email       String
+  name        String
+  role        String
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  revokedAt   DateTime?
+  invitedById String?
+  createdAt   DateTime  @default(now())
+
+  @@index([email])
+}
+
+// One row per admin change (every successful non-GET admin request, plus data repair scripts),
+// and per participant change to their own account or riders (actorType "account").
+// adminEmail is copied so the row stays readable if the admin is deleted; for account rows it
+// holds the account's email or phone at the time.
+model AdminAuditLog {
+  id         String   @id @default(uuid())
+  createdAt  DateTime @default(now())
+  // admin | account
+  actorType  String   @default("admin")
+  adminId    String?
+  accountId  String?
+  adminEmail String
+  action     String // e.g. "PATCH /api/v1/admin/registrations/:id" or "script:repair-paid-registrations"
+  entityId   String?
+  status     Int?
+  ip         String?
+  details    Json?
+
+  @@index([createdAt])
+  @@index([adminId])
+  @@index([accountId])
+  @@index([entityId])
 }
 
 model AdminSession {
@@ -68,32 +314,77 @@ model AdminSession {
 }
 
 model Payment {
-  id                 String   @id @default(uuid())
-  registrationId     String?
-  raffleTicketIds    String[] // New: store array of ticket IDs for bulk payments
-  donationId         String?  // New: link to donation
-  checkoutRequestId  String?  @unique
-  merchantRequestId  String?
-  phone              String?
-  amount             Float
-  status             String   @default("PENDING")
-  failureReason      String?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  mpesaReceiptNumber String?
-  transactionDate    String?
-  mnoReference       String?  // New: generic bank reference
-  cbsReference       String?  // New: core banking system reference
-  paymentDetails     Json?    // New: store full callback payload
+  id                  String                @id @default(uuid())
+  // REGISTRATION | RAFFLE | DONATION | BIKE_HIRE. Every M-Pesa prompt is one row; callbacks
+  // are matched on checkoutRequestId here, never on the item's own column.
+  purpose             String?
+  registrationId      String?
+  raffleTicketIds     String[] // New: store array of ticket IDs for bulk payments
+  donationId          String? // New: link to donation
+  checkoutRequestId   String?               @unique
+  merchantRequestId   String?
+  phone               String?
+  amount              Float
+  // PENDING -> PAID | FAILED | EXPIRED | FLAGGED. A success also settles FAILED/EXPIRED (money
+  // was taken); a failure only settles PENDING. A success whose amount or phone does not match
+  // makes it FLAGGED, which only an admin can settle. See src/services/payments.ts.
+  status              String                @default("PENDING")
+  failureReason       String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  mpesaReceiptNumber  String?
+  transactionDate     String?
+  mnoReference        String? // New: generic bank reference
+  cbsReference        String? // New: core banking system reference
+  paymentDetails      Json? // New: store full callback payload
+  bikeHireId          String? // Payment for a bike hire added after registration
+  // Phase 1: real links and typed copies, filled by a database trigger from the columns above
+  // (registrationGroupId from registrationId's row, raffleTickets from raffleTicketIds).
+  registrationGroupId String?
+  registrationGroup   RegistrationGroup?    @relation(fields: [registrationGroupId], references: [id], onDelete: SetNull)
+  donation            Donation?             @relation(fields: [donationId], references: [id], onDelete: SetNull)
+  bikeHire            BikeHire?             @relation(fields: [bikeHireId], references: [id], onDelete: SetNull)
+  raffleTickets       PaymentRaffleTicket[]
+  purposeType         PaymentPurpose?
+  state               PaymentState?
+  amountKes           Int?
+  // Reconciliation (src/services/reconciliation.ts): when the gateway was last asked about this
+  // payment, how often, and what it said (PAID | FAILED | PENDING | UNKNOWN | ERROR: ...).
+  lastCheckedAt       DateTime?
+  checkCount          Int                   @default(0)
+  lastCheckResult     String?
+  // Set when a success callback did not match this payment (src/services/payments.ts);
+  // status is then FLAGGED until an admin accepts or rejects it.
+  flaggedAt           DateTime?
+  flagReason          String?
 
   @@index([registrationId])
   @@index([checkoutRequestId])
   @@index([donationId])
+  @@index([bikeHireId])
+  @@index([status, createdAt])
+  @@index([registrationGroupId])
+}
+
+// Phase 1: which raffle tickets a payment is for (replaces Payment.raffleTicketIds). A ticket
+// can have several payments (retries).
+model PaymentRaffleTicket {
+  paymentId      String
+  payment        Payment      @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  raffleTicketId String
+  raffleTicket   RaffleTicket @relation(fields: [raffleTicketId], references: [id], onDelete: Cascade)
+
+  @@id([paymentId, raffleTicketId])
+  @@index([raffleTicketId])
 }
 
 model PricingCategory {
-  id             String   @id @default(uuid())
+  id             String        @id @default(uuid())
   circuitId      String
+  // Phase 1 copies (database trigger): the circuit row for (eventYear, circuitId); price in whole KES.
+  eventCircuitId String?
+  eventCircuit   EventCircuit? @relation(fields: [eventCircuitId], references: [id], onDelete: SetNull)
+  priceKes       Int?
   type           String
   familyCategory String?
   minAge         Int?
@@ -104,11 +395,15 @@ model PricingCategory {
   colorCode      String
   hexColor       String
   remarks        String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  // Each event year has its own prices and bib ranges, so 2027 changes never touch 2026.
+  eventYear      Int           @default(2026)
+  event          Event         @relation(fields: [eventYear], references: [year], onDelete: Restrict)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
-  @@unique([circuitId, type, categoryName, familyCategory])
-  @@index([circuitId, type])
+  @@unique([eventYear, circuitId, type, categoryName, familyCategory])
+  @@index([eventYear, circuitId, type])
+  @@index([eventCircuitId])
 }
 
 model EmailLog {
@@ -124,25 +419,37 @@ model EmailLog {
 }
 
 model RaffleTicket {
-  id                 String   @id
-  firstName          String
-  lastName           String
-  email              String
-  phoneNumber        String?
-  status             String   @default("UNPAID")
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  checkoutRequestId  String?
-  paymentFailed      Boolean  @default(false)
-  gender             String?
-  idNumber           String?
-  failureReason      String?
-  mpesaCode          String?  // New: store Receipt Number directly
-  paymentDetails     Json?    // New: store full callback payload
-  referralCode       String?  // Referral code used at purchase
+  id                String                @id
+  firstName         String
+  lastName          String
+  email             String
+  phoneNumber       String?
+  status            String                @default("UNPAID")
+  // Phase 1 copy of status as an enum (database trigger).
+  state             RaffleTicketState?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  checkoutRequestId String?
+  paymentFailed     Boolean               @default(false)
+  gender            String?
+  idNumber          String?
+  failureReason     String?
+  mpesaCode         String? // New: store Receipt Number directly
+  paymentDetails    Json? // New: store full callback payload
+  referralCode      String? // Referral code used at purchase
+  // Assigned only once the ticket is paid. Unique per event year.
+  ticketNumber      String?
+  eventYear         Int                   @default(2026)
+  event             Event                 @relation(fields: [eventYear], references: [year], onDelete: Restrict)
+  accountId         String?
+  account           Account?              @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  payments          PaymentRaffleTicket[]
 
+  @@unique([eventYear, ticketNumber])
   @@index([email])
   @@index([referralCode])
+  @@index([accountId])
+  @@index([eventYear])
 }
 
 model Referral {
@@ -160,21 +467,32 @@ model Referral {
 }
 
 model Donation {
-  id                String   @id @default(uuid())
+  id                String         @id @default(uuid())
   amount            Float
+  // Phase 1 copies (database trigger): amount in whole KES, status as an enum.
+  amountKes         Int?
   name              String?
   email             String?
   phone             String?
-  status            String   @default("PENDING")
-  checkoutRequestId String?  @unique
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  status            String         @default("PENDING")
+  state             DonationState?
+  checkoutRequestId String?        @unique
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
   failureReason     String?
-  mpesaCode         String?  // New
-  paymentDetails    Json?    // New
+  mpesaCode         String? // New
+  paymentDetails    Json? // New
+  eventYear         Int            @default(2026)
+  event             Event          @relation(fields: [eventYear], references: [year], onDelete: Restrict)
+  // Optional: donations can be anonymous.
+  accountId         String?
+  account           Account?       @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  payments          Payment[]
 
   @@index([email])
   @@index([checkoutRequestId])
+  @@index([accountId])
+  @@index([eventYear])
 }
 
 enum RegistrationStatus {
@@ -186,13 +504,13 @@ enum RegistrationStatus {
 }
 
 model SmsLog {
-  id             String   @id @default(uuid())
-  phoneNumber    String
-  message        String
-  status         String
-  messageId      String?
-  cost           String?
-  sentAt         DateTime @default(now())
+  id          String   @id @default(uuid())
+  phoneNumber String
+  message     String
+  status      String
+  messageId   String?
+  cost        String?
+  sentAt      DateTime @default(now())
 
   @@index([phoneNumber])
   @@index([status])
@@ -200,7 +518,7 @@ model SmsLog {
 
 model ShortLink {
   id        String   @id // The short ID
-  url       String   // original URL
+  url       String // original URL
   createdAt DateTime @default(now())
   clicks    Int      @default(0)
 
@@ -208,37 +526,309 @@ model ShortLink {
 }
 
 model BikeHire {
-  id              String       @id @default(uuid())
-  registrationId  String       @unique
-  registration    Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
-  bikeType        String       @default("Standard")
-  status          String       @default("PENDING") // PENDING, PAID, COLLECTED, RETURNED
-  amount          Float        @default(1500)
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  id                String         @id @default(uuid())
+  registrationId    String         @unique
+  registration      Registration   @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  bikeType          String         @default("Standard")
+  status            String         @default("PENDING") // PENDING, PAID, COLLECTED, RETURNED
+  amount            Float          @default(1500)
+  // Phase 1 copies (database trigger): status as an enum, amount in whole KES.
+  state             BikeHireState?
+  amountKes         Int?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  checkoutRequestId String?        @unique
+  eventYear         Int            @default(2026)
+  event             Event          @relation(fields: [eventYear], references: [year], onDelete: Restrict)
+  accountId         String?
+  account           Account?       @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  payments          Payment[]
 
   @@index([registrationId])
+  @@index([accountId])
+  @@index([eventYear])
 }
 
 model NotifyInterest {
   id        String   @id @default(uuid())
   email     String   @unique
   firstName String?
+  // Phase 1: the event the person wants to hear about (services/eventYears.ts).
+  eventYear Int?
+  event     Event?   @relation(fields: [eventYear], references: [year], onDelete: Restrict)
   createdAt DateTime @default(now())
 
   @@index([email])
+  @@index([eventYear])
 }
 
 model EventFeedback {
   id           String   @id @default(uuid())
-  role         String   // CYCLIST | ATTENDEE | SPONSOR | ORGANISER
-  rating       Int      // 1-5 overall experience
+  role         String // CYCLIST | ATTENDEE | SPONSOR | ORGANISER
+  rating       Int // 1-5 overall experience
   firstName    String?
   lastName     String?
-  highlights   String?  // what went well
-  improvements String?  // what to improve
+  highlights   String? // what went well
+  improvements String? // what to improve
+  // Phase 1: the ride the feedback is about (services/eventYears.ts).
+  eventYear    Int?
+  event        Event?   @relation(fields: [eventYear], references: [year], onDelete: Restrict)
   createdAt    DateTime @default(now())
 
   @@index([role])
   @@index([createdAt])
+  @@index([eventYear])
+}
+
+// One row per yearly ride. Replaces the REGISTRATION_OPEN / RAFFLE_OPEN env flags and the
+// hard-coded raffle (1000) and bike hire (1500) prices. Registration or the raffle is open when
+// its opensAt has passed and its closesAt has not (see src/services/events.ts). The newest year
+// is the current event.
+model Event {
+  year                 Int                 @id
+  name                 String
+  // The ride day (date only).
+  date                 DateTime?           @db.Date
+  location             String?
+  registrationOpensAt  DateTime?
+  registrationClosesAt DateTime?
+  raffleOpensAt        DateTime?
+  raffleClosesAt       DateTime?
+  // Whole KES.
+  rafflePrice          Int                 @default(1000)
+  bikeHirePrice        Int                 @default(1500)
+  // Bikes available to hire for this event; null = no limit.
+  bikeStock            Int?
+  // Most riders this event takes; null = no limit.
+  riderCap             Int?
+  // The feedback form is open between these (docs/EVENT_LIFECYCLE_PLAN.md); null = not set.
+  feedbackOpensAt      DateTime?
+  feedbackClosesAt     DateTime?
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  circuits             EventCircuit[]
+  registrations        Registration[]
+  registrationGroups   RegistrationGroup[]
+  pricingCategories    PricingCategory[]
+  raffleTickets        RaffleTicket[]
+  donations            Donation[]
+  bikeHires            BikeHire[]
+  galleryPhotos        GalleryPhoto[]
+  notifyInterests      NotifyInterest[]
+  feedback             EventFeedback[]
+}
+
+// A circuit of one event year, with its team rules (Phase 1; was hard-coded in
+// routes/circuits.ts, client/src/constants.ts and validateTeamRules).
+model EventCircuit {
+  id                 String              @id @default(uuid())
+  eventYear          Int
+  event              Event               @relation(fields: [eventYear], references: [year], onDelete: Restrict)
+  // Registration.circuitId / PricingCategory.circuitId: blitz | recon | corporate | family
+  slug               String
+  title              String
+  subtitle           String?
+  description        String?
+  icon               String?
+  distanceKm         Int
+  // Start time on ride day, Nairobi time, "HH:MM".
+  startTime          String
+  isCompetitive      Boolean             @default(false)
+  // Entry types the circuit takes.
+  entryTypes         EntryType[]
+  // Team rules; null = no limit.
+  teamMinMembers     Int?
+  teamMaxMembers     Int?
+  teamRequiresFemale Boolean             @default(false)
+  sortOrder          Int                 @default(0)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  pricingCategories  PricingCategory[]
+  registrationGroups RegistrationGroup[]
+
+  @@unique([eventYear, slug])
+  @@index([eventYear, sortOrder])
+}
+
+enum EntryType {
+  INDIVIDUAL
+  TEAM
+  FAMILY
+}
+
+enum PaymentPurpose {
+  REGISTRATION
+  RAFFLE
+  DONATION
+  BIKE_HIRE
+}
+
+enum PaymentState {
+  PENDING
+  PAID
+  FAILED
+  EXPIRED
+  FLAGGED
+}
+
+enum RaffleTicketState {
+  UNPAID
+  PAID
+}
+
+enum DonationState {
+  PENDING
+  PAID
+  FAILED
+}
+
+enum BikeHireState {
+  PENDING
+  PAID
+  COLLECTED
+  RETURNED
+  CANCELLED
+}
+
+// ─── Participant accounts (passwordless, OTP login) ─────────────────────────
+
+model Account {
+  id                 String              @id @default(uuid())
+  firstName          String
+  lastName           String
+  // Normalised: lowercase email, phone as 2547XXXXXXXX / 2541XXXXXXXX. At least one is set.
+  email              String?             @unique
+  phone              String?             @unique
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  lastLoginAt        DateTime?
+  sessions           UserSession[]
+  registrations      Registration[]      @relation("RegistrationOwner")
+  participations     Registration[]      @relation("RegistrationParticipant")
+  raffleTickets      RaffleTicket[]
+  donations          Donation[]
+  bikeHires          BikeHire[]
+  riderProfiles      RiderProfile[]      @relation("RiderProfileOwner")
+  riderOf            RiderProfile[]      @relation("RiderProfileRider")
+  registrationGroups RegistrationGroup[]
+}
+
+model OtpCode {
+  id          String    @id @default(uuid())
+  channel     String // EMAIL | SMS
+  destination String // normalised email or phone
+  purpose     String // LOGIN | SIGNUP | ADD_CONTACT | CHANGE_CONTACT
+  codeHash    String
+  // Signup details or the account adding a contact, carried until verification.
+  context     Json?
+  attempts    Int       @default(0)
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([destination, createdAt])
+}
+
+model UserSession {
+  id        String   @id @default(uuid())
+  accountId String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+}
+
+// ─── Gallery (Cloudinary-hosted) ──────────────────────────────────────────────
+
+model GalleryPhoto {
+  id          String   @id @default(uuid())
+  eventYear   Int
+  event       Event    @relation(fields: [eventYear], references: [year], onDelete: Restrict)
+  album       String
+  publicId    String   @unique // Cloudinary public_id
+  width       Int
+  height      Int
+  caption     String?
+  sortOrder   Int      @default(0)
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@index([eventYear, album, sortOrder])
+}
+
+// Outbox for every email and SMS (see src/services/outbox.ts). Senders insert a row; the worker
+// (/api/cron/notifications, every minute) sends it, retrying with backoff. dedupeKey is unique,
+// so the same confirmation can never be queued twice. Login codes are sent at once and stored
+// here without the code.
+model Notification {
+  id            String    @id @default(uuid())
+  // EMAIL | SMS
+  channel       String
+  recipient     String
+  // e.g. "email:confirmation", "sms:payment-confirmed", "otp"
+  template      String
+  // The rendered message (email: from/to/subject/html/text/attachments; SMS: { message }),
+  // or the data a template renderer needs (see RENDERERS in outbox.ts).
+  payload       Json
+  dedupeKey     String    @unique
+  // PENDING -> SENDING -> SENT | FAILED (gave up) | SUPPRESSED (MESSAGING_DISABLED)
+  status        String    @default("PENDING")
+  attempts      Int       @default(0)
+  nextAttemptAt DateTime  @default(now())
+  lastError     String?
+  sentAt        DateTime?
+  // Extra bookkeeping, e.g. { emailLog: { registrationId, type } } for the admin email history
+  meta          Json?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([status, nextAttemptAt])
+  @@index([createdAt])
+  @@index([recipient])
+}
+
+// One row per reconciliation run (src/services/reconciliation.ts), shown to admins.
+model ReconciliationRun {
+  id           String    @id @default(uuid())
+  // cron | admin:<email> | script
+  trigger      String
+  startedAt    DateTime  @default(now())
+  finishedAt   DateTime?
+  checked      Int       @default(0)
+  paid         Int       @default(0)
+  failed       Int       @default(0)
+  stillPending Int       @default(0)
+  errors       Int       @default(0)
+  expired      Int       @default(0)
+  // Per payment: [{ paymentId, ref, result, settle, error? }]
+  details      Json?
+
+  @@index([startedAt])
+}
+
+// A payment callback (or status answer) that did not match its Payment: wrong amount or phone.
+// Never paid automatically; an admin accepts or rejects it (POST /api/v1/admin/payments/:id/resolve).
+model PaymentFlag {
+  id         String    @id @default(uuid())
+  paymentId  String
+  createdAt  DateTime  @default(now())
+  // callback | reconciliation
+  source     String
+  // AMOUNT_MISMATCH | PHONE_MISMATCH (comma-separated when both)
+  kind       String
+  expected   Json
+  received   Json
+  // What the payment's status was when the callback arrived
+  statusWas  String
+  details    Json?
+  resolvedAt DateTime?
+  resolvedBy String?
+  // ACCEPTED | REJECTED | SUPERSEDED (the payment was settled some other way)
+  resolution String?
+  note       String?
+
+  @@index([paymentId])
+  @@index([resolvedAt])
 }

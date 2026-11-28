@@ -95,6 +95,7 @@ const validFamilyDetails = {
         emergencyPhone: '0712345678',
         emergencyContactName: 'Other Parent',
         email: 'parent@example.com',
+        phoneNumber: '0712345670',
         relationship: 'parent',
         tshirtSize: 'M',
         participation: 'mom' as const,
@@ -113,8 +114,28 @@ const validFamilyDetails = {
 // Mock prisma for tests
 vi.mock('../../../storage/prisma.js', () => ({
     prisma: {
+        // As getPricingCategories selects them: whole-KES price and the circuit's slug.
         pricingCategory: {
-            findMany: vi.fn().mockResolvedValue(mockPricingCategories),
+            findMany: vi.fn().mockResolvedValue(mockPricingCategories.map(({ price, circuitId, ...c }) => ({ ...c, priceKes: price, eventCircuit: { slug: circuitId } }))),
+        },
+        // The 2026 circuits and team rules (migration 20261128000000_event_circuits_2026).
+        eventCircuit: {
+            findUnique: vi.fn(async ({ where }: { where: { eventYear_slug: { slug: string } } }) => {
+                const slug = where.eventYear_slug.slug;
+                if (!['blitz', 'recon', 'corporate', 'family'].includes(slug)) return null;
+                const team = slug === 'corporate' ? { min: 3, max: 5, female: false } : { min: 5, max: 5, female: true };
+                return {
+                    id: `circuit-${slug}`, eventYear: 2026, slug, title: `${slug.toUpperCase()} CIRCUIT`, distanceKm: slug === 'blitz' ? 120 : 60,
+                    entryTypes: slug === 'family' ? ['FAMILY'] : ['INDIVIDUAL', 'TEAM'],
+                    teamMinMembers: slug === 'family' ? null : team.min, teamMaxMembers: slug === 'family' ? null : team.max,
+                    teamRequiresFemale: slug !== 'family' && team.female,
+                };
+            }),
+        },
+        // No Event rows: the 2026 fallback event applies.
+        event: {
+            findFirst: vi.fn().mockResolvedValue(null),
+            findUnique: vi.fn().mockResolvedValue(null),
         },
         registration: {
             findUnique: vi.fn(),
@@ -126,14 +147,7 @@ vi.mock('../../../storage/prisma.js', () => ({
     },
 }));
 
-// Mock memoryRegistrations for tests
-vi.mock('../../../storage/memoryRegistrations.js', () => ({
-    findExistingRegistrationsByEmails: vi.fn().mockResolvedValue([]),
-    generateNextId: vi.fn().mockResolvedValue('REG-2001'),
-    createRegistration: vi.fn(),
-    getRegistration: vi.fn(),
-    updateRegistration: vi.fn(),
-}));
+
 
 describe('Registrations API', () => {
     beforeEach(() => {
@@ -188,7 +202,7 @@ describe('Registrations API', () => {
                 .expect(400);
 
             expect(response.body.error.message).toBe('Validation failed');
-            expect(response.body.error.details.formErrors).toContain('Competitive teams (120/60KM) must have at least one female rider.');
+            expect(response.body.error.details.formErrors).toContain('BLITZ CIRCUIT 120 KM teams must have at least one female rider.');
         });
 
         it('should return quote for valid family registration', async () => {
@@ -253,6 +267,13 @@ describe('Registrations API', () => {
 
             expect(response.body).toHaveProperty('ok', true);
             expect(response.body).toHaveProperty('database');
+        });
+
+        it('does not reveal the database error when the database is down', async () => {
+            const { prisma } = await import('../../../storage/prisma.js');
+            vi.mocked(prisma.$queryRaw).mockRejectedValueOnce(new Error('connect ECONNREFUSED db.internal:5432'));
+            const response = await request(app).get('/health').expect(503);
+            expect(response.body).toEqual({ ok: false, database: 'disconnected' });
         });
     });
 });

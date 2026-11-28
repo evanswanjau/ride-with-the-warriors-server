@@ -23,7 +23,7 @@ describe('Auth Middleware', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        mockReq = createMockRequest();
+        mockReq = createMockRequest({ method: 'GET', baseUrl: '/api/v1/admin/registrations' });
         mockRes = createMockResponse();
         mockNext = createMockNext();
     });
@@ -91,6 +91,17 @@ describe('Auth Middleware', () => {
             expect(mockRes.status).not.toHaveBeenCalled();
         });
 
+        it('should return 403 when the role is too low for the method', async () => {
+            mockReq.method = 'DELETE';
+            mockReq.headers.authorization = 'Bearer valid-test-token';
+            mockFindUnique.mockResolvedValue({ ...mockAdminSession, admin: { ...mockAdmin, role: 'admin' } });
+
+            await requireAdmin(mockReq, mockRes, mockNext);
+
+            expect(mockRes.status).toHaveBeenCalledWith(403);
+            expect(mockNext).not.toHaveBeenCalled();
+        });
+
         it('should return 500 on database error', async () => {
             mockReq.headers.authorization = 'Bearer some-token';
             mockFindUnique.mockRejectedValue(new Error('Database connection failed'));
@@ -101,6 +112,16 @@ describe('Auth Middleware', () => {
             expect(mockRes.json).toHaveBeenCalledWith({
                 error: { code: 'INTERNAL', message: 'Internal server error during authentication' },
             });
+            expect(mockNext).not.toHaveBeenCalled();
+        });
+
+        it('refuses a disabled admin even with a live session', async () => {
+            mockReq.headers.authorization = 'Bearer my-token-123';
+            mockFindUnique.mockResolvedValue({ ...mockAdminSession, admin: { ...mockAdmin, disabledAt: new Date() } });
+
+            await requireAdmin(mockReq, mockRes, mockNext);
+
+            expect(mockRes.status).toHaveBeenCalledWith(401);
             expect(mockNext).not.toHaveBeenCalled();
         });
 
@@ -123,6 +144,7 @@ describe('Auth Middleware', () => {
                             email: true,
                             name: true,
                             role: true,
+                            disabledAt: true,
                         },
                     },
                 },

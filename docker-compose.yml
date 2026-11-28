@@ -1,0 +1,39 @@
+# Local stack for development and tests. Nothing here talks to the internet.
+#   Postgres  localhost:54329  (databases: rwtw_dev, rwtw_test; user postgres / rwtw)
+#   Mailpit   http://localhost:8025 (inbox UI) — SMTP on localhost:1025
+# The mock DTB (M-Pesa) gateway runs on the host: `npm run mock:dtb` (http://localhost:4010).
+name: rwtw
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: rwtw
+      POSTGRES_DB: rwtw_dev
+    ports:
+      - "54329:5432"
+    volumes:
+      - rwtw-pg:/var/lib/postgresql/data
+      - ./dev/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./dev/dumps:/dumps
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d rwtw_dev"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  mailpit:
+    image: axllent/mailpit:v1.21
+    restart: unless-stopped
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+      MP_MAX_MESSAGES: "5000"
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+volumes:
+  rwtw-pg:

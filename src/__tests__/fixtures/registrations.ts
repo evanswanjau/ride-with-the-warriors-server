@@ -36,6 +36,7 @@ export const validFamilyDetails = {
         emergencyPhone: '0712345678',
         emergencyContactName: 'Other Parent',
         email: 'parent@example.com',
+        phoneNumber: '0712345670',
         relationship: 'parent',
         tshirtSize: 'M',
         participation: 'mom' as const,
@@ -67,7 +68,7 @@ export const invalidEmails = [
 ];
 
 export const invalidIdNumbers = [
-    '1234567',       // Too short (7 digits)
+    '123',           // Too short (IDs/passports are 4-10 digits)
     '12345678901',   // Too long (11 digits)
     'abcd1234',      // Contains letters
 ];

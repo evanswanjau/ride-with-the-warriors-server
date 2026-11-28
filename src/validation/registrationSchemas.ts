@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { FAMILY_AGE_BANDS } from '../services/registrations/familyAges.js';
 
 const kenyanPhoneRegex = /^(?:254|\+254|0)?(7|1)\d{8}$/;
 
@@ -124,10 +125,11 @@ export const familyDetailsSchema = z
     // Validate Cubs
     val.riders.cubs.forEach((rider, index) => {
       const age = getAge(rider.dob);
-      if (age < 4 || age > 8) {
+      const { min, max } = FAMILY_AGE_BANDS.cubs;
+      if (age < min || age > max) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `Cubs must be 4-8 years old (Rider ${index + 1} is ${age})`,
+          message: `Cubs must be ${min}-${max} years old (Rider ${index + 1} is ${age})`,
           path: ['riders', 'cubs', index, 'dob'],
         });
       }
@@ -136,10 +138,11 @@ export const familyDetailsSchema = z
     // Validate Champs
     val.riders.champs.forEach((rider, index) => {
       const age = getAge(rider.dob);
-      if (age < 9 || age > 13) {
+      const { min, max } = FAMILY_AGE_BANDS.champs;
+      if (age < min || age > max) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: `Champs must be 9-13 years old (Rider ${index + 1} is ${age})`,
+          message: `Champs must be ${min}-${max} years old (Rider ${index + 1} is ${age})`,
           path: ['riders', 'champs', index, 'dob'],
         });
       }
@@ -158,22 +161,19 @@ export const familyDetailsSchema = z
     // Validate Participating Parents (must be 18+)
     if (val.guardian.participation === 'mom' && val.guardian.dob) {
       const age = getAge(val.guardian.dob);
-      if (age < 18) {
+      if (age < FAMILY_AGE_BANDS.tigers.min) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: 'Parents must be at least 18 years old',
+          message: `Parents must be at least ${FAMILY_AGE_BANDS.tigers.min} years old`,
           path: ['guardian', 'dob'],
         });
       }
     }
   });
 
-export const circuitIdSchema = z.union([
-  z.literal('blitz'),
-  z.literal('recon'),
-  z.literal('corporate'),
-  z.literal('family'),
-]);
+// A circuit's slug; which circuits exist, and the entry types each takes, is in EventCircuit
+// (checked by the registration routes).
+const circuitIdSchema = z.string().trim().min(1).max(40);
 
 export const registrationTypeSchema = z.union([
   z.literal('individual'),
@@ -193,7 +193,7 @@ export const quoteRequestSchema = z
     if (val.circuitId !== 'family') {
       let dob: string | undefined;
       if (val.type === 'individual' && val.payload) {
-        dob = (val.payload as any).riderDetails?.dob;
+        dob = (val.payload as RegistrationPayload).riderDetails?.dob;
       }
       // Note: Team members are checked in the payload validation if we had full payload schemas here.
       // For now, focusing on the individual entry point in superRefine.
@@ -214,15 +214,35 @@ export const quoteRequestSchema = z
         }
       }
     }
-
-    if (val.circuitId === 'family' && val.type === 'team') {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Family circuit does not support team registration',
-        path: ['type'],
-      });
-    }
   });
 
 export type QuoteRequest = z.infer<typeof quoteRequestSchema>;
 
+
+export type RiderDetails = z.infer<typeof riderDetailsSchema>;
+export type TeamMember = z.infer<typeof teamMemberSchema>;
+export type TeamDetails = z.infer<typeof teamDetailsSchema>;
+export type JuniorRider = z.infer<typeof juniorRiderSchema>;
+export type FamilyDetails = z.infer<typeof familyDetailsSchema>;
+
+/**
+ * Shape of the `payload` JSON stored on a Registration row: the validated
+ * rider/team/family details plus the bookkeeping fields added when saving.
+ * Read defensively: old rows may not match exactly.
+ */
+export type RegistrationPayload = {
+  riderDetails?: RiderDetails;
+  teamDetails?: TeamDetails;
+  // Older rows may carry a guardian idNumber that the current schema strips.
+  familyDetails?: Omit<FamilyDetails, 'guardian'> & { guardian: FamilyDetails['guardian'] & { idNumber?: string } };
+  groupId?: string;
+  isPrimary?: boolean;
+  memberIndex?: number;
+  riderId?: string;
+};
+
+/** A payload that passed validation: exactly one of the three detail blocks. */
+export type ValidPayload =
+  | { riderDetails: RiderDetails }
+  | { teamDetails: TeamDetails }
+  | { familyDetails: FamilyDetails };

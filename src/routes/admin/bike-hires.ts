@@ -1,11 +1,18 @@
 import { Router } from 'express';
+import { requireAdmin } from '../../middleware/auth.js';
 import { prisma } from '../../storage/prisma.js';
+import { yearParam } from '../../services/events.js';
 
 export const bikeHiresRouter = Router();
 
+// Every route in this router is admin-only.
+bikeHiresRouter.use(requireAdmin);
+
 bikeHiresRouter.get('/', async (req, res, next) => {
     try {
+        const year = yearParam(req.query.year);
         const bikeHires = await prisma.bikeHire.findMany({
+            where: year ? { eventYear: year } : {},
             include: {
                 registration: {
                     select: {

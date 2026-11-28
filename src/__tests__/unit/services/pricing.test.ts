@@ -7,6 +7,7 @@ const mockPricingCategories = vi.hoisted(() => [
         id: 'cat-1',
         circuitId: 'blitz',
         type: 'individual',
+        eventYear: 2026,
         familyCategory: null,
         minAge: 19,
         maxAge: 49,
@@ -21,6 +22,7 @@ const mockPricingCategories = vi.hoisted(() => [
         id: 'cat-2',
         circuitId: 'blitz',
         type: 'individual',
+        eventYear: 2026,
         familyCategory: null,
         minAge: 50,
         maxAge: 999,
@@ -35,6 +37,7 @@ const mockPricingCategories = vi.hoisted(() => [
         id: 'cat-3',
         circuitId: 'recon',
         type: 'team',
+        eventYear: 2026,
         familyCategory: null,
         minAge: null,
         maxAge: null,
@@ -49,6 +52,7 @@ const mockPricingCategories = vi.hoisted(() => [
         id: 'cat-4',
         circuitId: 'family',
         type: 'family',
+        eventYear: 2026,
         familyCategory: 'cubs',
         minAge: 4,
         maxAge: 8,
@@ -63,6 +67,7 @@ const mockPricingCategories = vi.hoisted(() => [
         id: 'cat-5',
         circuitId: 'family',
         type: 'family',
+        eventYear: 2026,
         familyCategory: 'champs',
         minAge: 9,
         maxAge: 13,
@@ -79,7 +84,11 @@ const mockPricingCategories = vi.hoisted(() => [
 vi.mock('../../../storage/prisma.js', () => ({
     prisma: {
         pricingCategory: {
-            findMany: vi.fn().mockResolvedValue(mockPricingCategories),
+            findMany: vi.fn().mockResolvedValue(mockPricingCategories.map(({ price, circuitId, ...c }) => ({ ...c, priceKes: price, eventCircuit: { slug: circuitId } }))),
+        },
+        // No Event rows: the 2026 fallback (bike hire 1500) applies.
+        event: {
+            findFirst: vi.fn().mockResolvedValue(null),
         },
     },
 }));
@@ -175,6 +184,14 @@ describe('Pricing Service', () => {
             expect(classification.category).toBe('Rider');
             expect(classification.price).toBe(2000);
             expect(classification.regRange).toBe('TBD');
+        });
+    });
+
+    describe('calculateAge on the ride day', () => {
+        it('counts the age on the given date', () => {
+            const rideDay = new Date('2027-07-04T00:00:00Z');
+            expect(calculateAge('2009-07-04', rideDay)).toBe(18);
+            expect(calculateAge('2009-07-05', rideDay)).toBe(17);
         });
     });
 

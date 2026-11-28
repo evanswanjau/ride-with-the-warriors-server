@@ -13,5 +13,7 @@ export default defineConfig({
             exclude: ['src/__tests__/**', 'src/index.ts'],
         },
         testTimeout: 10000,
+        // Database tests share one local DB and clean it between tests: run files one at a time.
+        fileParallelism: !process.env.DATABASE_URL,
     },
 });

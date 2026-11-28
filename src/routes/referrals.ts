@@ -10,12 +10,12 @@ referralsRouter.post('/click', async (req, res) => {
     if (!code) return res.status(400).json({ error: { code: 'VALIDATION', message: 'code is required' } });
 
     const upper = code.toUpperCase().trim();
-    const referral = await (prisma.referral as any).findUnique({ where: { code: upper } });
+    const referral = await prisma.referral.findUnique({ where: { code: upper } });
     if (!referral || !referral.isActive) {
       return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Referral code not found or inactive' } });
     }
 
-    await (prisma.referral as any).update({
+    await prisma.referral.update({
       where: { code: upper },
       data: { clicks: { increment: 1 } },
     });
@@ -31,7 +31,7 @@ referralsRouter.post('/click', async (req, res) => {
 referralsRouter.get('/validate/:code', async (req, res) => {
   try {
     const code = req.params.code.toUpperCase().trim();
-    const referral = await (prisma.referral as any).findUnique({
+    const referral = await prisma.referral.findUnique({
       where: { code },
       select: { code: true, influencerName: true, isActive: true },
     });

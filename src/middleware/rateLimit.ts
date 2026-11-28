@@ -1,4 +1,14 @@
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
+
+/**
+ * Per-IP limits are off in the test suite and when RATE_LIMITS_DISABLED=true
+ * (local E2E runs log in many times from one machine). src/config.ts refuses
+ * RATE_LIMITS_DISABLED in UAT and production. Tests that check a limiter set
+ * RATE_LIMITS_FORCE=true.
+ */
+export const rateLimitsOff = () =>
+  process.env.RATE_LIMITS_FORCE !== 'true' &&
+  (process.env.NODE_ENV === 'test' || process.env.RATE_LIMITS_DISABLED === 'true');
 
 /**
  * Rate limiter for raffle ticket creation.
@@ -16,6 +26,7 @@ export const raffleRateLimiter = rateLimit({
     }
   },
   skipSuccessfulRequests: false,
+  skip: rateLimitsOff,
 });
 
 /**
@@ -31,5 +42,47 @@ export const sensitiveActionLimiter = rateLimit({
       code: 'TOO_MANY_REQUESTS',
       message: 'Too many attempts. Please try again later.'
     }
-  }
+  },
+  skip: rateLimitsOff,
+});
+
+const limit = (windowMs: number, max: number, message: string) => rateLimit({
+  windowMs,
+  limit: max,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: { code: 'TOO_MANY_REQUESTS', message } },
+  skip: rateLimitsOff,
+});
+
+/** Contact form: 5 per hour per IP. */
+export const enquiryLimiter = limit(60 * 60 * 1000, 5, 'Too many messages. Please try again in an hour, or call 0703 752 118.');
+
+/** Donations (create and pay): 20 per 15 minutes per IP. */
+export const donationLimiter = limit(15 * 60 * 1000, 20, 'Too many donation attempts. Please try again later.');
+
+/** Price quotes and registration duplicate checks: 60 per 15 minutes per IP. */
+export const quoteLimiter = limit(15 * 60 * 1000, 60, 'Too many requests. Please wait a few minutes and try again.');
+
+/** Feedback and notify-me forms: 10 per hour per IP. */
+export const publicFormLimiter = limit(60 * 60 * 1000, 10, 'Too many submissions. Please try again later.');
+
+/**
+ * Admin login: 10 failed attempts per 15 minutes for one email from one IP.
+ * Successful logins do not count.
+ */
+export const adminLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  keyGenerator: (req) => `${ipKeyGenerator(req.ip ?? '')}|${String(req.body?.email ?? '').toLowerCase()}`,
+  message: {
+    error: {
+      code: 'TOO_MANY_REQUESTS',
+      message: 'Too many failed logins. Please wait 15 minutes and try again.'
+    }
+  },
+  skip: rateLimitsOff,
 });

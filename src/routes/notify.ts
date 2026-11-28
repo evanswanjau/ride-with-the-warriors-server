@@ -1,7 +1,9 @@
 import { Router } from 'express';
+import { publicFormLimiter } from '../middleware/rateLimit.js';
 import { z } from 'zod';
 import { prisma } from '../storage/prisma.js';
 import { requireAdmin } from '../middleware/auth.js';
+import { notifyEventYear } from '../services/eventYears.js';
 
 export const notifyRouter = Router();
 
@@ -11,14 +13,14 @@ const subscribeSchema = z.object({
 });
 
 // POST /api/v1/notify — store an interest email
-notifyRouter.post('/', async (req, res, next) => {
+notifyRouter.post('/', publicFormLimiter, async (req, res, next) => {
     try {
         const { email, firstName } = subscribeSchema.parse(req.body);
 
         const result = await prisma.notifyInterest.upsert({
             where: { email },
             update: { firstName: firstName ?? undefined },
-            create: { email, firstName: firstName ?? null },
+            create: { email, firstName: firstName ?? null, eventYear: await notifyEventYear() },
         });
 
         console.log(`[notify] 2027 interest captured: ${email} (id: ${result.id})`);

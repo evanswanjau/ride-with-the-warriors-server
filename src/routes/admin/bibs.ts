@@ -1,9 +1,11 @@
 import { Router } from 'express';
+import type { Prisma } from '../../generated/client/index.js';
 import { randomUUID } from 'crypto';
 import { prisma } from '../../storage/prisma.js';
 import { requireAdmin, AuthenticatedRequest } from '../../middleware/auth.js';
 import { getPricingCategories } from '../../services/pricing.js';
 import { generateBibPdf, BibEntry } from '../../services/bibPdfService.js';
+import { yearParam } from '../../services/events.js';
 
 export const adminBibsRouter = Router();
 
@@ -28,14 +30,18 @@ setInterval(() => {
 }, 60_000);
 
 // ── Shared filter → bibs helper ───────────────────────────────────────────────
-async function buildBibs(query: any): Promise<{ bibs: BibEntry[]; filename: string } | { error: string; code: string }> {
+async function buildBibs(query: Record<string, unknown>): Promise<{ bibs: BibEntry[]; filename: string } | { error: string; code: string }> {
     const { circuitId, type, status, category, isMilitary, dateFrom } = query;
 
-    const where: any = {};
-    if (circuitId) where.circuitId = circuitId;
-    if (type)      where.type = type;
-    if (status)    where.status = status;
-    if (category)  where.category = category;
+    // Only rows that have been paid (or made complementary) have a bib to print.
+    const where: Prisma.RegistrationWhereInput = { bibNumber: { not: null } };
+    // ?year=2027 prints one event's bibs (bib numbers start again each year).
+    const year = yearParam(query.year);
+    if (year) where.eventYear = year;
+    // Circuit, type and team name are the entry's.
+    if (circuitId || type) where.registrationGroup = { ...(circuitId ? { circuitId: String(circuitId) } : {}), ...(type ? { type: String(type) } : {}) };
+    if (status)    where.status = status as Prisma.RegistrationWhereInput['status'];
+    if (category)  where.category = category as string;
     if (isMilitary !== undefined && isMilitary !== '') {
         where.isMilitary = isMilitary === 'true';
     }
@@ -44,26 +50,28 @@ async function buildBibs(query: any): Promise<{ bibs: BibEntry[]; filename: stri
         if (!isNaN(from.getTime())) where.createdAt = { gte: from };
     }
 
-    const regsRaw = await (prisma.registration as any).findMany({
+    const regsRaw = await prisma.registration.findMany({
         where,
-        orderBy: [{ category: 'asc' }, { id: 'asc' }],
+        orderBy: [{ category: 'asc' }, { bibNumber: 'asc' }],
+        select: { bibNumber: true, firstName: true, lastName: true, category: true, eventYear: true, registrationGroup: { select: { circuitId: true, type: true, teamName: true } } },
+        take: 5000,
     });
 
     if (!regsRaw.length) return { error: 'No registrations match the current filters.', code: 'NOT_FOUND' };
 
     const pricingCats = await getPricingCategories();
 
-    const bibs: BibEntry[] = regsRaw.map((reg: any) => ({
-        id:        reg.id,
+    const bibs: BibEntry[] = regsRaw.map((reg) => ({
+        id:        reg.bibNumber as string,
         firstName: reg.firstName || '',
         lastName:  reg.lastName  || '',
         category:  reg.category  || '',
         hexColor:  pricingCats.find(
-            (c: any) => c.categoryName === reg.category && c.circuitId === reg.circuitId
+            (c) => c.categoryName === reg.category && c.circuitId === reg.registrationGroup?.circuitId
         )?.hexColor || '#000000',
-        circuitId: reg.circuitId || '',
-        teamName:  reg.teamName  || null,
-        type:      reg.type      || 'individual',
+        circuitId: reg.registrationGroup?.circuitId || '',
+        teamName:  reg.registrationGroup?.teamName || null,
+        type:      reg.registrationGroup?.type || 'individual',
     }));
 
     const statusLabel  = status === 'PAID' ? 'Paid' : status === 'UNPAID' ? 'Unpaid' : 'All';
@@ -103,7 +111,7 @@ adminBibsRouter.post('/generate/start', requireAdmin, async (req: AuthenticatedR
 
         res.json({ jobId, total: bibs.length });
 
-    } catch (err: any) {
+    } catch (err) {
         console.error('[Bib PDF] Start error:', err);
         res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to start PDF generation' } });
     }

@@ -1,5 +1,15 @@
-import type { QuoteRequest } from '../validation/registrationSchemas.js';
+import type { PricingCategory } from '../generated/client/index.js';
+import type { QuoteRequest, RegistrationPayload } from '../validation/registrationSchemas.js';
 import { prisma } from '../storage/prisma.js';
+import { currentEvent, type EventRow } from './events.js';
+
+/** A pricing category as the quote logic needs it. `price` is the whole-KES price (priceKes). */
+export type PricingCategoryRow = Omit<PricingCategory, 'createdAt' | 'updatedAt' | 'priceKes' | 'price' | 'eventCircuitId'> & { price: number; eventCircuitId?: string | null };
+
+const CATEGORY_SELECT = {
+  id: true, eventCircuitId: true, eventCircuit: { select: { slug: true } }, type: true, familyCategory: true, minAge: true, maxAge: true,
+  categoryName: true, regRange: true, priceKes: true, colorCode: true, hexColor: true, remarks: true, eventYear: true,
+} as const;
 
 export type Classification = {
   category: string;
@@ -30,41 +40,50 @@ export type QuoteResult = {
   classifications: Classification[];
 };
 
-export function calculateAge(dob: string): number | null {
+/** Age in whole years on `asOf` (today by default; quotes use the event's ride day). */
+export function calculateAge(dob: string, asOf?: Date | null): number | null {
   if (!dob) return null;
   const birthDate = new Date(dob);
-  const today = new Date();
+  const today = asOf ?? new Date();
   let age = today.getFullYear() - birthDate.getFullYear();
   const m = today.getMonth() - birthDate.getMonth();
   if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) age--;
   return age;
 }
 
-// In-memory cache for pricing categories to avoid DB hits on every quote
-let categoryCache: any[] | null = null;
-let lastCacheUpdate: number = 0;
+// Per-year in-memory cache, so a quote does not hit the DB every time.
+const categoryCache = new Map<number, { rows: PricingCategoryRow[]; at: number }>();
 const CACHE_TTL = 60 * 1000; // 1 minute
 
-export async function getPricingCategories() {
+/** Forget cached categories (after an admin copies or edits pricing). */
+export function clearPricingCache() {
+  categoryCache.clear();
+}
+
+/** The pricing categories (prices and bib ranges) of one event year; the current event's by default. */
+export async function getPricingCategories(eventYear?: number): Promise<PricingCategoryRow[]> {
+  const year = eventYear ?? (await currentEvent()).year;
   const now = Date.now();
-  if (categoryCache && now - lastCacheUpdate < CACHE_TTL) {
-    return categoryCache;
+  const cached = categoryCache.get(year);
+  if (cached && now - cached.at < CACHE_TTL) {
+    return cached.rows;
   }
 
   try {
-    categoryCache = await prisma.pricingCategory.findMany();
-    lastCacheUpdate = now;
-    return categoryCache;
+    const found = await prisma.pricingCategory.findMany({ where: { eventYear: year }, select: CATEGORY_SELECT, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] });
+    // priceKes and eventCircuitId are filled by a database trigger on every write; circuitId is
+    // the circuit's slug, as the API has always returned it.
+    const rows = found.map(({ priceKes, eventCircuit, ...c }) => ({ ...c, circuitId: eventCircuit?.slug ?? '', price: priceKes ?? 0 }));
+    categoryCache.set(year, { rows, at: now });
+    return rows;
   } catch (err) {
     console.error('[Pricing Service] Failed to fetch categories from DB:', err);
-    // Return empty or throw? For now let's hope it's not empty. 
-    // We could return a hardcoded fallback if needed.
-    return categoryCache || [];
+    return cached?.rows ?? [];
   }
 }
 
 export function getClassification(
-  categories: any[],
+  categories: PricingCategoryRow[],
   circuitId: QuoteRequest['circuitId'],
   type: QuoteRequest['type'],
   age: number | null = null,
@@ -125,6 +144,8 @@ export function getClassification(
 }
 
 export async function buildQuote(input: {
+  /** The event being entered (its year picks the prices); the current event when omitted. */
+  event?: Pick<EventRow, 'year' | 'bikeHirePrice'> & Partial<Pick<EventRow, 'date'>>;
   circuitId: QuoteRequest['circuitId'];
   type: QuoteRequest['type'];
   payload:
@@ -132,14 +153,16 @@ export async function buildQuote(input: {
   | { teamDetails: { teamName: string } }
   | { familyDetails: { riders: Record<'cubs' | 'champs' | 'tigers', Array<unknown>> } };
 }): Promise<QuoteResult> {
-  const categories = await getPricingCategories();
+  const event = input.event ?? await currentEvent();
+  const categories = await getPricingCategories(event.year);
   const lineItems: PricingLineItem[] = [];
   const classifications: Classification[] = [];
   let totalAmount = 0;
 
   if (input.type === 'individual') {
     const rider = (input.payload as { riderDetails: { firstName: string; dob: string; isMilitary?: boolean; service?: string; rank?: string; serviceNumber?: string } }).riderDetails;
-    const age = calculateAge(rider.dob);
+    // Age categories are decided by the rider's age on the ride day.
+    const age = calculateAge(rider.dob, event.date ?? null);
     const classification = getClassification(categories, input.circuitId, 'individual', age);
 
     const isMilitary = rider.isMilitary || !!rider.service || !!rider.rank || !!rider.serviceNumber;
@@ -158,12 +181,12 @@ export async function buildQuote(input: {
     const team = (input.payload as { teamDetails: { teamName: string; isMilitary?: boolean } }).teamDetails;
     const classification = getClassification(categories, input.circuitId, 'team');
     
-    const teamPrice = (input.payload as any).teamDetails?.isMilitary ? 0 : classification.price;
+    const teamPrice = (input.payload as RegistrationPayload).teamDetails?.isMilitary ? 0 : classification.price;
     totalAmount = teamPrice;
     
     classifications.push(classification);
     lineItems.push({
-      label: `Team: ${team.teamName}${(input.payload as any).teamDetails?.isMilitary ? ' (Military)' : ''}`,
+      label: `Team: ${team.teamName}${(input.payload as RegistrationPayload).teamDetails?.isMilitary ? ' (Military)' : ''}`,
       amount: teamPrice,
       category: classification.category,
       regRange: classification.regRange,
@@ -206,13 +229,13 @@ export async function buildQuote(input: {
     }
   }
 
-  const payload = input.payload as any;
+  const payload = input.payload as RegistrationPayload;
   const shouldHire = payload?.riderDetails?.hireBike || 
                      payload?.teamDetails?.hireBike || 
                      payload?.familyDetails?.guardian?.hireBike;
 
   if (shouldHire) {
-    const bikeHireFee = 1500;
+    const bikeHireFee = event.bikeHirePrice;
     totalAmount += bikeHireFee;
     lineItems.push({
       label: 'Bike Hire',

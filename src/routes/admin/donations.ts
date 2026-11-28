@@ -1,6 +1,8 @@
 import { Router } from 'express';
+import type { Prisma } from '../../generated/client/index.js';
 import { prisma } from '../../storage/prisma.js';
 import { requireAdmin } from '../../middleware/auth.js';
+import { yearParam } from '../../services/events.js';
 
 export const adminDonationsRouter = Router();
 
@@ -13,8 +15,10 @@ adminDonationsRouter.get('/', requireAdmin, async (req, res) => {
 
         const { status, search } = req.query;
 
-        const where: any = {};
-        if (status) where.status = String(status).toUpperCase();
+        const where: Prisma.DonationWhereInput = {};
+        const year = yearParam(req.query.year);
+        if (year) where.eventYear = year;
+        if (status) where.status = String(status).toUpperCase() as Prisma.DonationWhereInput['status'];
         
         if (search) {
             const s = String(search).trim();
@@ -52,24 +56,24 @@ adminDonationsRouter.get('/', requireAdmin, async (req, res) => {
 });
 
 // Statistics for donations
-adminDonationsRouter.get('/stats/summary', requireAdmin, async (_req, res) => {
+// ?year=2026 for one event's donations; every year by default.
+adminDonationsRouter.get('/stats/summary', requireAdmin, async (req, res) => {
     try {
-        const [totalCount, paidCount, unpaidCount, revenueResult] = await Promise.all([
-            prisma.donation.count(),
-            prisma.donation.count({ where: { status: 'PAID' } }),
-            prisma.donation.count({ where: { status: { not: 'PAID' } } }),
-            prisma.donation.aggregate({
-                where: { status: 'PAID' },
-                _sum: { amount: true },
-            }),
+        const year = yearParam(req.query.year);
+        const where = year ? { eventYear: year } : {};
+        const [totalCount, paidCount, revenueResult] = await Promise.all([
+            prisma.donation.count({ where }),
+            prisma.donation.count({ where: { ...where, state: 'PAID' } }),
+            prisma.donation.aggregate({ where: { ...where, state: 'PAID' }, _sum: { amountKes: true } }),
         ]);
+        const unpaidCount = totalCount - paidCount;
 
         res.json({
             summary: {
                 totalCount,
                 paidCount,
                 unpaidCount,
-                totalAmount: revenueResult._sum?.amount ?? 0,
+                totalAmount: revenueResult._sum.amountKes ?? 0,
             },
         });
     } catch (error) {
